@@ -1,6 +1,12 @@
 package cn.org.openygt.common.service;
 
+import cn.org.openygt.common.dto.DeviceFaultStatDTO;
+import cn.org.openygt.common.dto.DeviceUtilizationDTO;
+import cn.org.openygt.common.dto.EqDeviceDTO;
+
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 设备物联模块对外服务接口。
@@ -9,11 +15,11 @@ import java.math.BigDecimal;
  */
 public interface EquipmentService {
 
-    Object getDeviceByCode(String deviceCode);
+    EqDeviceDTO getDeviceByCode(String deviceCode);
 
-    Object getDeviceById(Long deviceId);
+    EqDeviceDTO getDeviceById(Long deviceId);
 
-    Object getOrCreateDevice(String deviceCode, int defaultType);
+    EqDeviceDTO getOrCreateDevice(String deviceCode, int defaultType);
 
     void updateDeviceStatus(Long deviceId, String status);
 
@@ -25,6 +31,8 @@ public interface EquipmentService {
 
     void releaseDevice(Long deviceId);
 
+    void reserveDevice(Long taskId, Long deviceId);
+
     void checkTemperatureAlarm(Long deviceId, BigDecimal temperature);
 
     String getDeviceStatus(Long deviceId);
@@ -34,4 +42,12 @@ public interface EquipmentService {
     String getDeviceCode(Long deviceId);
 
     Long getDeviceId(String deviceCode);
+
+    // ---- 统计扩展（评审03新增，供 analytics 使用） ----
+
+    Integer getOnlineDeviceCount();
+
+    List<DeviceFaultStatDTO> getFaultStats(LocalDateTime start, LocalDateTime end);
+
+    DeviceUtilizationDTO getDeviceUtilization(Long deviceId, LocalDateTime start, LocalDateTime end);
 }

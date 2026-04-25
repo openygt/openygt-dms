@@ -295,7 +295,7 @@ package cn.org.openygt.common.service;
 import cn.org.openygt.common.dto.InspectionResult;
 import cn.org.openygt.common.enums.InspectionResultType;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -365,7 +365,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -398,11 +398,15 @@ public class QualityServiceImpl implements QualityService {
         if (task == null) {
             throw new IllegalArgumentException("任务不存在: taskId=" + taskId);
         }
+        // 注：当前版本 prod_task.status 存储中文状态值，使用 getLabel() 比对。
+        // V6 迁移后将统一改为枚举名存储，此处需同步改为 name() 比对。
         if (!TaskStatus.WAIT_QC.getLabel().equals(task.getStatus())) {
             throw new IllegalStateException("任务不在待质检状态，当前状态: " + task.getStatus());
         }
 
         // 枚举驱动状态映射
+        // 注：nextStatus 当前返回中文标签（与 prod_task.status 存储格式一致）。
+        // V6 迁移后统一改为枚举名，届时同步改为 TaskStatus.XXX.name()。
         String nextStatus;
         Integer isException = 0;
         String exceptionReason = null;
@@ -449,7 +453,7 @@ public class QualityServiceImpl implements QualityService {
         ir.setNextStatus(nextStatus);
         ir.setOperatorId(operatorId);
         ir.setRemark(remark);
-        ir.setInspectedAt(new Date());
+        ir.setInspectedAt(LocalDateTime.now());
         ir.setIsException(isException);
         ir.setExceptionReason(exceptionReason);
 
@@ -501,9 +505,9 @@ public class QualityServiceImpl implements QualityService {
 |--------|------|------|
 | 不修改 `prod_task` | `QualityServiceImpl` 仅 INSERT `qt_inspection` | 模块边界清晰，`dms-production` 负责任务生命周期 |
 | 状态校验通过 SPI | `productionQueryService.getTaskById(taskId)` | 只读反查，解耦表结构 |
-| 枚举存储格式 | `result.name()` → 数据库 | 统一使用枚举名，避免中文存储 |
+| 枚举存储格式 | `result` 字段存枚举名，`nextStatus` 当前存中文标签 | `result` 已改为枚举；`nextStatus` 因下游 `prod_task.status` 仍存中文，暂保持中文。V6 统一迁移为枚举名 |
 | `isException` 逻辑 | PASS=0，其余=1 | 与 `dms-production` 的 `Task.isException` 语义保持一致 |
-| `nextStatus` 返回 | `InspectionResult.nextStatus` 为中文标签 | 保持与 `TaskStatus.getLabel()` 一致，便于 `dms-production` 直接使用 |
+| `nextStatus` 返回 | `InspectionResult.nextStatus` 当前为中文标签 | 保持与 `TaskStatus.getLabel()` 及 `prod_task.status` 存储格式一致。V6 统一改为枚举名 |
 
 ---
 

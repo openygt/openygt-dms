@@ -61,7 +61,7 @@ dms-print
 | G7 | 直接修改 `prod_task` | `doPrint()` 中直接 `taskMapper.updateById(task)` 修改 `printStatus` / `printTime` / `printDeviceId` | **禁止操作**，打印完成后通过回调或 SPI 反向通知（可选，当前由 production 轮询或自行维护） | P0 | 模块边界 |
 | G8 | 状态历史侵入 | `recordHistory()` 直接写入 `prod_task_status_history` | **禁止操作**，状态历史由 `dms-production` 自行维护 | P0 | 模块边界 |
 | G9 | `prt_task` 缺 `max_retry` | 实体无 `maxRetry` 字段 | 新增 `max_retry` 字段（默认 3） | P0 | PRT-003 |
-| G10 | 时间字段类型 | `java.util.Date` | `java.time.LocalDateTime`（跟随 V1.4 全局规范） | P1 | 数据一致性 |
+| G10 | 时间字段类型 | `java.time.LocalDateTime` | `java.time.LocalDateTime`（跟随 V1.4 全局规范） | P1 | 数据一致性 |
 
 ### 2.2 致命级差距详解（含关键代码片段）
 
@@ -148,7 +148,7 @@ private void doPrint(Task task, Long deviceId, String deviceCode, String operato
     taskMapper.updateById(task);        // ❌ 直接修改 prod_task
     // 执行打印（同步模拟）
     task.setPrintStatus("PRINTED");
-    task.setPrintTime(new Date());
+    task.setPrintTime(LocalDateTime.now());
     taskMapper.updateById(task);        // ❌ 直接修改 prod_task
     // ...
 }
@@ -858,7 +858,10 @@ public class PrintTaskEventListener {
 
     private final PrintServiceImpl printServiceImpl;
 
-    @EventListener
+    // 注：当前迭代采用同步执行，尚未引入 Spring Event 机制。
+    // 阶段二如需异步化，应使用 @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    // 确保事务提交后才触发异步打印，避免读取到未提交数据。
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onPrintTaskSubmitted(PrintTaskSubmittedEvent event) {
         printServiceImpl.handlePrintTaskEvent(event);
     }
@@ -1056,7 +1059,8 @@ dms-production (调用方)          dms-print (PrintServiceImpl)          异步
 
 **为什么不使用 `@Async` 直接注解 SPI 方法？**
 - `@Transactional` 和 `@Async` 若同时注解在同一方法上，`@Async` 会创建新线程，导致事务上下文丢失。
-- 解决方案：**SPI 方法只做事务性数据操作，然后通过 `ApplicationEventPublisher` 发布事件，由 `@EventListener` + `@Async` 执行异步逻辑**。
+- 解决方案：**SPI 方法只做事务性数据操作，当前迭代采用同步执行**。
+  阶段二如需异步化，应通过 `ApplicationEventPublisher` 发布事件，由 `@TransactionalEventListener(phase = AFTER_COMMIT)` + `@Async` 执行异步逻辑，确保事务提交后才触发打印。
 
 **为什么不使用 MQ（如 RabbitMQ / Kafka）？**
 - 当前系统规模下，单机线程池已足够。
@@ -1346,7 +1350,7 @@ private ProdTaskDTO getTaskOrThrow(Long taskId) {
 // task.setPrintStatus("PRINTING");
 // taskMapper.updateById(task);
 // task.setPrintStatus("PRINTED");
-// task.setPrintTime(new Date());
+// task.setPrintTime(LocalDateTime.now());
 // taskMapper.updateById(task);
 ```
 

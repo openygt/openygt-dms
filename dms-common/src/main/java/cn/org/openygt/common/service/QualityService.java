@@ -1,6 +1,12 @@
 package cn.org.openygt.common.service;
 
 import cn.org.openygt.common.dto.InspectionResult;
+import cn.org.openygt.common.dto.InspectionSummaryDTO;
+import cn.org.openygt.common.dto.InspectionTrendDTO;
+import cn.org.openygt.common.enums.InspectionResultType;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 质量追溯模块对外服务接口。
@@ -9,22 +15,13 @@ import cn.org.openygt.common.dto.InspectionResult;
  */
 public interface QualityService {
 
-    /**
-     * 对指定任务执行质检。
-     *
-     * @param taskId     任务 ID
-     * @param result     质检结果：通过 / 让步放行 / 返工 / 报废
-     * @param operatorId 操作人
-     * @param remark     备注
-     * @return 质检结果，包含生成的质检记录 ID 及任务下一状态
-     */
-    InspectionResult inspect(Long taskId, String result, String operatorId, String remark);
+    InspectionResult inspect(Long taskId, InspectionResultType result, String operatorId, String remark);
 
-    /**
-     * 查询任务最新的质检记录。
-     *
-     * @param taskId 任务 ID
-     * @return 质检结果
-     */
     InspectionResult getInspectionByTaskId(Long taskId);
+
+    // ---- 统计扩展（评审03新增，供 analytics 使用） ----
+
+    InspectionSummaryDTO getInspectionSummary(LocalDateTime start, LocalDateTime end);
+
+    List<InspectionTrendDTO> getInspectionTrend(String groupBy);
 }

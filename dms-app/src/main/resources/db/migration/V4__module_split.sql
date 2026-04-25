@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS qt_inspection (
     result VARCHAR(20) NOT NULL,
     operator_id VARCHAR(50),
     remark TEXT,
+    inspected_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     deleted INTEGER DEFAULT 0

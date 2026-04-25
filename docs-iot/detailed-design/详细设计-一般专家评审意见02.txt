@@ -1,0 +1,111 @@
+  第二轮审阅新增发现                                                                                                                           
+                                                                                                                                               
+  🔴 新发现的关键问题                                                                                                                          
+                                                                                                                                               
+  17. dms-quality inspect() 状态校验使用 getLabel() 而非 name()（运行时必定出错）                                                              
+                                                                                                                                               
+  - 位置：dms-quality-详细设计.md §5.2 第 401 行                                                                                               
+  - 代码：                                                                                                                                     
+  if (!TaskStatus.WAIT_QC.getLabel().equals(task.getStatus())) {                                                                               
+  - 问题：数据库 prod_task.status 存储的是枚举名 "WAIT_QC"，而 getLabel() 返回中文 "待质检"。比较结果永远为                                    
+  true（两者不相等），意味着任何状态的任务都能通过"待质检"校验，包括已完成的（COMPLETED）或已报废的（SCRAPPED）任务。                          
+  - 后果：已完成的任务可以被再次提交质检，导致状态机逆向流转，数据一致性被破坏。                                                               
+  - 修复：改为 TaskStatus.WAIT_QC.name().equals(task.getStatus())                                                                              
+                                                                                                                                               
+  18. dms-quality nextStatus 返回中文 label，dms-production 无法直接使用                                                                       
+                                                                                                                                               
+  - 位置：dms-quality-详细设计.md §5.2 第 412-427 行                                                                                           
+  - 代码：        
+  nextStatus = TaskStatus.WAIT_HANDOVER.getLabel(); // 返回 "待交接"                                                                           
+  - 问题：InspectionResult.nextStatus 返回中文 "待交接"，但 dms-production 的 transition() 方法期望接收的是枚举名（如 "WAIT_HANDOVER"），因为  
+  prod_task.status 存储的是枚举名。                                                                                                            
+  - 修复：改为 TaskStatus.WAIT_HANDOVER.name()。同时文档 §5.3 第 506 行的设计决策表也需要修正（'nextStatus 为中文标签' → 改为 '枚举名'）。     
+                                                                                                                                               
+  19. dms-quality 任务状态校验逻辑与应用层存储格式全面不匹配                                                                                   
+                                                                                                                                               
+  - 第 401 行用中文 label 比枚举名                                                                                                             
+  - 第 412-427 行用中文 label 做 nextStatus
+  - 第 505 行设计决策声称"保持与 TaskStatus.getLabel() 一致"                                                                                   
+  - 而 dms-common 文档第 249 行明确说明："数据库存储使用枚举名（如 WAIT_SOAK），展示层使用 getLabel()"                                         
+  - 结论：dms-quality 整个状态处理方向错了——业务层（Service）应该用 .name()，只有前端展示才用 .getLabel()                                      
+                                                                                                                                               
+  20. @TransactionalEventListener 缺失导致异步打印事务时序问题                                                                                 
+                                                                                                                                               
+  - 位置：dms-print-详细设计.md §5.2 / §8.1                                                                                                    
+  - 问题：        
+    a. submitPrintTask() 在 @Transactional 事务中发布 PrintTaskSubmittedEvent                                                                  
+    b. Spring 默认事件是同步发布的，监听器在事务提交前开始执行                                                                                 
+    c. 即使加了 @Async，异步线程读取 prt_task 时可能读到事务提交前的旧状态                                                                     
+    d. 如果主事务回滚，但异步线程已开始执行打印，会产生"打印了但任务未提交"的不一致                                                            
+  - 修复：使用 @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT) 替代 @EventListener，确保在事务提交后才触发异步打印          
+                                                                                                                                               
+  21. dms-quality QualityService.getInspectionSummary 参数仍为 Date 类型                                                                       
+                                                                                                                                               
+  - 位置：dms-quality §5.1 第 336 行                                                                                                           
+  - 代码：InspectionSummaryDTO getInspectionSummary(Date startDate, Date endDate)
+  - 冲突：dms-common 规范要求全系统统一使用 java.time.LocalDateTime                                                                            
+  - dms-analytics §3.4 也要求此方法，但若参数类型不统一，跨模块 SPI 调用会出问题                                                               
+  - 修复：改为 LocalDateTime                                                                                                                   
+                                                                                                                                               
+  ---                                                                                                                                          
+  🟠 新增高优先级问题                                                                                                                          
+                                                                                                                                               
+  22. 两个 V5 迁移脚本命名冲突
+                                                                                                                                               
+  - dms-masterdata 要求：V5__masterdata_enhance.sql                                                                                            
+  - 数据库迁移-V5 要求：V5__v1_4_refactor.sql
+  - DatabaseInitConfig 按数组顺序执行，若使用 Flyway，两个 V5* 版本号相同会冲突                                                                
+  - 如果使用自定义 DatabaseInitConfig（数组顺序执行）：两个 V5 脚本都能跑，但顺序需明确                                                        
+  - 如果迁移到 Flyway：版本号必须递增（V5 → V6），不能有两个 V5                                                                                
+  - 建议：统一为一个 V5__v1_4_refactor.sql，masterdata 的 DDL 合并到主 V5 脚本中；或 masterdata 使用 V5.1__masterdata_enhance.sql（Flyway      
+  支持小数点版本）                                                                                                                             
+                                                                                                                                               
+  23. dms-print 中 handlePrintTaskEvent 的 AOP 代理不生效                                                                                      
+                  
+  - 位置：dms-print-详细设计.md §5.2                                                                                                           
+  - 问题：handlePrintTaskEvent 是 PrintServiceImpl 的实例方法，标注了 @Async("printExecutor") 和 @Transactional。但在 PrintTaskEventListener
+  中通过 printServiceImpl.handlePrintTaskEvent(event) 直接调用——这是内部方法调用，Spring AOP 代理不生效，@Async 和 @Transactional 注解被忽略。 
+  - 修复：将异步方法抽到独立的 @Service Bean 中，或将事件监听器逻辑直接写在 @Service 中
+                                                                                                                                               
+  24. InspectionSummaryDTO / InspectionTrendDTO 归属未确定                                                                                     
+                                                                                                                                               
+  - dms-quality §7.2 说"建议置于 dms-common 或 dms-quality"                                                                                    
+  - dms-analytics §3.4 期望通过 QualityService.getInspectionSummary() 获取返回数据
+  - 但如果这两个 DTO 定义在 dms-quality 中，dms-common 的 QualityService 接口无法引用它们（依赖方向错误：dms-common → dms-quality）            
+  - 结论：这两个 DTO 必须定义在 dms-common 中。文档需要明确这一决策，删除"或 dms-quality"的模糊描述。                                          
+                                                                                                                                               
+  25. dms-quality qt_inspection 缺少业务字段 inspected_at                                                                                      
+                                                                                                                                               
+  - 当前 DDL 只有 created_at，语义上等于质检时间                                                                                               
+  - 但如果业务需要"先创建草稿，后填写质检结果"，created_at 不能代表质检时间
+  - 建议：新增 inspected_at DATETIME 字段，由 Service 层在写入质检结果时显式设置                                                               
+                                                                                                                                               
+  26. dms-masterdata Controller 返回实体对象可能暴露内部字段
+                                                                                                                                               
+  - POST /api/v1/md/hospitals 返回 ApiResponse<Hospital>
+  - Hospital 继承 BaseEntity，包含 deleted、tenantId 等内部字段
+  - 前端序列化后会暴露逻辑删除字段，存在安全隐患                                                                                               
+  - 建议：新增 HospitalResponse / SchemeResponse DTO 或使用 @JsonIgnore
+                                                                                                                                               
+  ---             
+  🟡 新增中优先级问题
+                     
+  27. dms-print 状态值硬编码为字符串字面量
+                                                                                                                                               
+  - "PENDING"、"PRINTING"、"SUCCESS"、"FAILED" 在多处硬编码
+  - 拼写错误（如 "PENDNG"）编译器无法发现                                                                                                      
+  - 建议：提取为 PrintTaskStatus 枚举或常量类
+                                                                                                                                               
+  28. DecoctSchemeInitializer 缺少 @Transactional
+                                                                                                                                               
+  - 6 条 INSERT 在自动提交模式下执行，若第 3 条失败，前 2 条已落库
+  - 导致内置方案部分存在，下次启动因 count > 0 不会补充
+  - 建议：加 @Transactional 确保全成功或全回滚                                                                                                 
+   
+  29. InspectionResult 中 result 字段和 nextStatus 字段类型不明确                                                                              
+                  
+  - ir.setResult(result.name()) — 存枚举名（String）                                                                                           
+  - ir.setNextStatus(nextStatus) — 存中文 label（String）
+  - 但 dms-production 的 doQualityInspect() 收到 InspectionResult 后，需要从 nextStatus 反推出枚举名才能调用 transition()                      
+  - 建议：将 nextStatus 的类型改为 TaskStatus（枚举），或 String 但存储 .name() 而非 .getLabel()
+                                                                                                    

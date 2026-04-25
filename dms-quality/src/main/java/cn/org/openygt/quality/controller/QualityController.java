@@ -2,12 +2,12 @@ package cn.org.openygt.quality.controller;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.common.dto.InspectionResult;
+import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.QualityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 /**
@@ -29,7 +29,7 @@ public class QualityController {
      * 执行质检。
      *
      * @param taskId     任务 ID
-     * @param result     质检结果：通过 / 让步放行 / 返工 / 报废
+     * @param result     质检结果枚举
      * @param operatorId 操作人
      * @param remark     备注
      * @return 质检结果
@@ -37,7 +37,7 @@ public class QualityController {
     @PostMapping("/inspect")
     public ApiResponse<InspectionResult> inspect(
             @RequestParam @NotNull Long taskId,
-            @RequestParam @NotBlank String result,
+            @RequestParam @NotNull InspectionResultType result,
             @RequestParam(required = false) String operatorId,
             @RequestParam(required = false) String remark) {
         return ApiResponse.success(qualityService.inspect(taskId, result, operatorId, remark));

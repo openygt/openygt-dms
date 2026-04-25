@@ -204,7 +204,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 仅审计字段基类（无逻辑删除）。
@@ -220,10 +220,10 @@ public abstract class BaseAuditEntity {
     private String tenantId = "default";
 
     @TableField("created_at")
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
     @TableField("updated_at")
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
 }
 ```
 
@@ -636,7 +636,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Slf4j
 @Component
@@ -663,7 +663,7 @@ public class JwtTokenProvider {
      * 生成 Access Token
      */
     public String generateToken(String username, String tenantId) {
-        Date now = new Date();
+        Date now = LocalDateTime.now();
         Date expiry = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()

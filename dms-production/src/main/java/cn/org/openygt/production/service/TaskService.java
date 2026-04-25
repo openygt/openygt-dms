@@ -1,5 +1,6 @@
 package cn.org.openygt.production.service;
 
+import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.production.entity.HandoverDetail;
 import cn.org.openygt.production.entity.StepLog;
 import cn.org.openygt.production.entity.Task;
@@ -23,7 +24,7 @@ public interface TaskService {
     Task endWrap(Long taskId, String operatorId);
 
     Task confirmLabel(Long taskId, String operatorId);
-    Task qualityInspect(Long taskId, String result, String operatorId, String remark);
+    Task qualityInspect(Long taskId, InspectionResultType result, String operatorId, String remark);
     Task handover(Long taskId, Integer bagCount, String handoverType, String handoverUser, String remark, Boolean isFinal);
 
     StepLog pauseStep(Long stepLogId, String reason);

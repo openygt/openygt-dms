@@ -53,7 +53,7 @@ dms-common
 
 | 差距项 | 现状 | 目标 | 类型 | 优先级 |
 |--------|------|------|------|--------|
-| BaseEntity 时间类型 | `java.util.Date` | `java.time.LocalDateTime` | 修改 | P0 |
+| BaseEntity 时间类型 | `java.time.LocalDateTime` | `java.time.LocalDateTime` | 修改 | P0 |
 | BaseAuditEntity | **不存在** | 新增审计基类（无 `deleted`） | 新增 | P0 |
 | InspectionResultType 枚举 | **不存在** | PASS/CONCESSION/REWORK/SCRAP | 新增 | P0 |
 | EqDeviceDTO | **不存在** | 设备查询统一返回类型 | 新增 | P0 |
@@ -65,7 +65,7 @@ dms-common
 | PrintService.getPrintQueue | `Object` | `List<PrintTaskDTO>` | 修改 | P0 |
 | QualityService.inspect 参数 | `String result` | `InspectionResultType result` | 修改 | P0 |
 | ProductionQueryService | **不存在** | 新增只读查询 SPI | 新增 | P0 |
-| InspectionResult 时间类型 | `java.util.Date` | `java.time.LocalDateTime` | 修改 | P0 |
+| InspectionResult 时间类型 | `java.time.LocalDateTime` | `java.time.LocalDateTime` | 修改 | P0 |
 
 ---
 
@@ -168,7 +168,7 @@ public abstract class BaseEntity {
 | `deleted` | `Integer` | `@TableLogic` | `0` | 逻辑删除 |
 
 **现状修改点**：
-- 将 `java.util.Date` 改为 `java.time.LocalDateTime`（`createdAt`、`updatedAt`）
+- 将 `java.time.LocalDateTime` 改为 `java.time.LocalDateTime`（`createdAt`、`updatedAt`）
 - 增加 `@TableField("tenant_id")` 显式映射（现状已有）
 - 增加类级 Javadoc
 
@@ -507,7 +507,7 @@ public class InspectionResult implements Serializable {
 ```
 
 **修改点**：
-- `inspectedAt` 由 `java.util.Date` 改为 `java.time.LocalDateTime`
+- `inspectedAt` 由 `java.time.LocalDateTime` 改为 `java.time.LocalDateTime`
 - 增加 `Serializable` 接口（为微服务拆分预留）
 - 增加 `serialVersionUID`
 
@@ -1178,12 +1178,15 @@ public interface ProductionQueryService {
 
 ### 7.1 异常策略
 
-`dms-common` 作为公共基础模块，**不定义新的业务异常类**。统一使用 JDK 标准异常：
+`dms-common` 作为公共基础模块，以 JDK 标准异常为主，同时定义少量高频业务异常类供各模块复用：
 
 | 异常类 | 使用场景 | HTTP 映射（由 GlobalExceptionHandler） |
 |--------|----------|----------------------------------------|
-| `IllegalArgumentException` | 参数非法、资源不存在、枚举值不匹配 | 400 Bad Request |
-| `IllegalStateException` | 状态冲突、资源已被占用、前置条件不满足 | 409 Conflict |
+| `IllegalArgumentException` | 参数非法、枚举值不匹配 | 400 Bad Request |
+| `IllegalStateException` | 状态冲突、资源已被占用 | 409 Conflict |
+| `UnauthorizedException` | 未登录或 Token 无效 | 401 Unauthorized |
+| `ForbiddenException` | 无权限访问 | 403 Forbidden |
+| `ResourceNotFoundException` | 资源不存在 | 404 Not Found |
 | `Exception`（兜底） | 未预期的系统错误 | 500 Internal Server Error |
 
 ### 7.2 GlobalExceptionHandler（全局异常处理器）
@@ -1233,6 +1236,24 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiResponse<?> handleIllegalState(IllegalStateException e) {
         return ApiResponse.error(409, e.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiResponse<?> handleUnauthorized(UnauthorizedException e) {
+        return ApiResponse.error(401, e.getMessage());
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiResponse<?> handleForbidden(ForbiddenException e) {
+        return ApiResponse.error(403, e.getMessage());
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiResponse<?> handleNotFound(ResourceNotFoundException e) {
+        return ApiResponse.error(404, e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
@@ -1347,7 +1368,7 @@ public void testEqDeviceDTOSerialization() throws Exception {
 
 | 行号范围 | 修改内容 |
 |----------|----------|
-| 9 | `import java.util.Date;` → `import java.time.LocalDateTime;` |
+| 9 | `import java.time.LocalDateTime;` → `import java.time.LocalDateTime;` |
 | 20-22 | `private Date createdAt;` / `private Date updatedAt;` → `private LocalDateTime createdAt;` / `private LocalDateTime updatedAt;` |
 | 12 | 增加类级 Javadoc（可选，建议同步） |
 
@@ -1355,7 +1376,7 @@ public void testEqDeviceDTOSerialization() throws Exception {
 
 | 行号范围 | 修改内容 |
 |----------|----------|
-| 5 | `import java.util.Date;` → `import java.time.LocalDateTime;` |
+| 5 | `import java.time.LocalDateTime;` → `import java.time.LocalDateTime;` |
 | 10-11 | `public class InspectionResult {` → `public class InspectionResult implements Serializable {` |
 | 12 | 新增 `private static final long serialVersionUID = 1L;` |
 | 19 | `private Date inspectedAt;` → `private LocalDateTime inspectedAt;` |

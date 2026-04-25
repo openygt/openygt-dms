@@ -561,7 +561,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -595,7 +595,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -620,7 +620,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -673,7 +673,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -1203,7 +1203,7 @@ EquipmentService → DB: 触发温度告警（如超阈值）
 package cn.org.openygt.common.service;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -1588,7 +1588,7 @@ public Task startDecoct(Long taskId, String deviceCode, String operatorId) {
     // 5. 状态流转
     transition(task, TaskStatus.DECOCTING, operatorId, "开始煎药，绑定设备: " + deviceCode);
     task.setDecoctDeviceId(deviceId);
-    task.setStageStartTime(new Date());
+    task.setStageStartTime(LocalDateTime.now());
     task.setCurrentStageDuration(0);
     taskMapper.updateById(task);
 
@@ -1908,7 +1908,7 @@ void startDecoct_shouldSetStageStartTimeNotDecoctStartTime() {
 
 1. **删除 `synchronized` 关键字**：`startDecoct`, `startWrap`, `bindDevice` 三个方法。
 2. **引入悲观锁**：在三个方法开头调用 `taskMapper.selectByIdForUpdate(taskId)`。
-3. **删除旧字段引用**：移除所有 `setSoakStartTime`/`setSoakEndTime`/`setDecoctStartTime`/`setDecoctEndTime`/`setPourStartTime`/`setPourEndTime`/`setWrapStartTime`/`setWrapEndTime`，统一替换为 `setStageStartTime(new Date())`。
+3. **删除旧字段引用**：移除所有 `setSoakStartTime`/`setSoakEndTime`/`setDecoctStartTime`/`setDecoctEndTime`/`setPourStartTime`/`setPourEndTime`/`setWrapStartTime`/`setWrapEndTime`，统一替换为 `setStageStartTime(LocalDateTime.now())`。
 4. **重构 `doQualityInspect`**：
    - 参数改为 `InspectionResultType result`
    - `switch` 改为枚举 switch（Java 14+）或 if-else
@@ -1978,10 +1978,20 @@ ALTER TABLE prod_step_log MODIFY COLUMN device_id BIGINT;
 package cn.org.openygt.common.enums;
 
 public enum InspectionResultType {
-    PASS,        // 通过
-    CONCESSION,  // 让步放行
-    REWORK,      // 返工
-    SCRAP        // 报废
+    PASS("通过"),
+    CONCESSION("让步放行"),
+    REWORK("返工"),
+    SCRAP("报废");
+
+    private final String label;
+
+    InspectionResultType(String label) {
+        this.label = label;
+    }
+
+    public String getLabel() {
+        return label;
+    }
 }
 ```
 
@@ -1994,7 +2004,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 /**
  * 审计实体基类（无逻辑删除）。
@@ -2005,8 +2015,8 @@ public abstract class BaseAuditEntity {
     @TableId(type = IdType.AUTO)
     private Long id;
     private String tenantId = "default";
-    private Date createdAt;
-    private Date updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
 ```
 
