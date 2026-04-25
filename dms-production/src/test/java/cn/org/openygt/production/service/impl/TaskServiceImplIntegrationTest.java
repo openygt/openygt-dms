@@ -1,6 +1,7 @@
 package cn.org.openygt.production.service.impl;
 
 import cn.org.openygt.production.BaseProductionTest;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
  * 集成测试通过 H2 数据库验证 MyBatis-Plus Mapper 的 SQL 正确性，
  * 与 {@link TaskServiceImplTest}（纯 Mockito 单元测试）互补。
  */
+@Disabled("骨架代码：需补充跨模块 SPI Bean 配置后启用")
 class TaskServiceImplIntegrationTest extends BaseProductionTest {
 
     @Test
