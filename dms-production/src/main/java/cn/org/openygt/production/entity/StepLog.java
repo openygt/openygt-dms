@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Data
 @TableName("prod_step_log")
@@ -16,10 +16,10 @@ public class StepLog {
     private Long taskId;
     private Long parentId;
     private String stepType;
-    private String deviceId;
+    private Long deviceId;
     private String operatorId;
-    private Date startedAt;
-    private Date endedAt;
+    private LocalDateTime startedAt;
+    private LocalDateTime endedAt;
     private Integer isPaused;
     private String pauseReason;
     private Integer pauseDuration;
@@ -30,6 +30,6 @@ public class StepLog {
     private BigDecimal wasteAmount;
     private String wasteUnit;
     private Integer isRetry;
-    private Date createdAt;
-    private Date updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

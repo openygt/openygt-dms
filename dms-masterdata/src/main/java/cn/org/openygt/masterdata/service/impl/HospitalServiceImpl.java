@@ -53,6 +53,10 @@ public class HospitalServiceImpl implements HospitalService {
     @Override
     @Transactional
     public void delete(Long id) {
+        Hospital existing = hospitalMapper.selectById(id);
+        if (existing == null) {
+            throw new IllegalArgumentException("医院不存在: " + id);
+        }
         hospitalMapper.deleteById(id);
     }
 }

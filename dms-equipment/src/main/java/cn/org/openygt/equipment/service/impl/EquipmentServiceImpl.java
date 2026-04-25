@@ -3,11 +3,18 @@ package cn.org.openygt.equipment.service.impl;
 import cn.org.openygt.common.dto.DeviceFaultStatDTO;
 import cn.org.openygt.common.dto.DeviceUtilizationDTO;
 import cn.org.openygt.common.dto.EqDeviceDTO;
+import cn.org.openygt.common.dto.TemperatureThresholdDTO;
 import cn.org.openygt.common.service.EquipmentService;
+import cn.org.openygt.common.service.SysConfigService;
 import cn.org.openygt.equipment.entity.EqDevice;
+import cn.org.openygt.equipment.entity.EqDeviceAlarm;
+import cn.org.openygt.equipment.mapper.EqDeviceAlarmMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import cn.org.openygt.masterdata.entity.DecoctScheme;
+import cn.org.openygt.masterdata.service.DecoctSchemeService;
+
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,20 +24,41 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * EquipmentService SPI 实现。
+ *
+ * <p>使用 UpdateWrapper/QueryWrapper（非 Lambda 版本）以保证在纯 Mockito 单元测试中可运行，
+ * 避免 MyBatis-Plus LambdaProxy 在无 Spring 上下文时解析失败。</p>
+ */
 @Slf4j
 @Service
 public class EquipmentServiceImpl implements EquipmentService {
 
     private final EqDeviceMapper deviceMapper;
+    private final SysConfigService sysConfigService;
+    private final DecoctSchemeService decoctSchemeService;
+    private final EqDeviceAlarmMapper alarmMapper;
 
-    public EquipmentServiceImpl(EqDeviceMapper deviceMapper) {
+    public EquipmentServiceImpl(EqDeviceMapper deviceMapper,
+                                SysConfigService sysConfigService,
+                                DecoctSchemeService decoctSchemeService,
+                                EqDeviceAlarmMapper alarmMapper) {
         this.deviceMapper = deviceMapper;
+        this.sysConfigService = sysConfigService;
+        this.decoctSchemeService = decoctSchemeService;
+        this.alarmMapper = alarmMapper;
     }
+
+    // ========== 常量：系统默认阈值配置键 ==========
+    private static final String CFG_DEFAULT_HIGH_TEMP = "temp.alarm.high";
+    private static final String CFG_DEFAULT_LOW_TEMP  = "temp.alarm.low";
+    private static final String DEFAULT_HIGH_TEMP_STR = "110.0";
+    private static final String DEFAULT_LOW_TEMP_STR  = "80.0";
 
     @Override
     public EqDeviceDTO getDeviceByCode(String deviceCode) {
-        LambdaQueryWrapper<EqDevice> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(EqDevice::getDeviceCode, deviceCode);
+        QueryWrapper<EqDevice> wrapper = new QueryWrapper<>();
+        wrapper.eq("device_code", deviceCode);
         EqDevice entity = deviceMapper.selectOne(wrapper);
         return toDTO(entity);
     }
@@ -60,10 +88,10 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Override
     @Transactional
     public void updateDeviceStatus(Long deviceId, String status) {
-        LambdaUpdateWrapper<EqDevice> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(EqDevice::getId, deviceId)
-               .set(EqDevice::getStatus, status)
-               .set(EqDevice::getUpdatedAt, LocalDateTime.now());
+        UpdateWrapper<EqDevice> wrapper = new UpdateWrapper<>();
+        wrapper.eq("id", deviceId)
+                .set("status", status)
+                .set("updated_at", LocalDateTime.now());
         deviceMapper.update(null, wrapper);
         log.info("设备状态更新: deviceId={}, status={}", deviceId, status);
     }
@@ -71,10 +99,11 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Override
     @Transactional
     public void updateTemperature(Long deviceId, BigDecimal temperature) {
-        LambdaUpdateWrapper<EqDevice> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(EqDevice::getId, deviceId)
-               .set(EqDevice::getCurrentTemp, temperature)
-               .set(EqDevice::getUpdatedAt, LocalDateTime.now());
+        UpdateWrapper<EqDevice> wrapper = new UpdateWrapper<>();
+        wrapper.eq("id", deviceId)
+                .set("current_temp", temperature)
+                .set("last_heartbeat", LocalDateTime.now())
+                .set("updated_at", LocalDateTime.now());
         deviceMapper.update(null, wrapper);
         checkTemperatureAlarm(deviceId, temperature);
     }
@@ -82,12 +111,12 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Override
     @Transactional
     public void reportFault(Long deviceId, String faultCode, String message) {
-        LambdaUpdateWrapper<EqDevice> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(EqDevice::getId, deviceId)
-               .set(EqDevice::getStatus, "FAULT")
-               .set(EqDevice::getFaultCode, faultCode)
-               .set(EqDevice::getAlertTime, LocalDateTime.now())
-               .set(EqDevice::getUpdatedAt, LocalDateTime.now());
+        UpdateWrapper<EqDevice> wrapper = new UpdateWrapper<>();
+        wrapper.eq("id", deviceId)
+                .set("status", "FAULT")
+                .set("fault_code", faultCode)
+                .set("alert_time", java.util.Date.from(java.time.Instant.now()))
+                .set("updated_at", LocalDateTime.now());
         deviceMapper.update(null, wrapper);
         log.warn("设备故障上报: deviceId={}, faultCode={}, message={}", deviceId, faultCode, message);
     }
@@ -95,12 +124,12 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Override
     @Transactional
     public void clearFault(Long deviceId) {
-        LambdaUpdateWrapper<EqDevice> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(EqDevice::getId, deviceId)
-               .set(EqDevice::getStatus, "IDLE")
-               .set(EqDevice::getFaultCode, null)
-               .set(EqDevice::getResolvedAt, LocalDateTime.now())
-               .set(EqDevice::getUpdatedAt, LocalDateTime.now());
+        UpdateWrapper<EqDevice> wrapper = new UpdateWrapper<>();
+        wrapper.eq("id", deviceId)
+                .set("status", "IDLE")
+                .set("fault_code", null)
+                .set("resolved_at", java.util.Date.from(java.time.Instant.now()))
+                .set("updated_at", LocalDateTime.now());
         deviceMapper.update(null, wrapper);
         log.info("设备故障清除: deviceId={}", deviceId);
     }
@@ -108,10 +137,16 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Override
     @Transactional
     public void releaseDevice(Long deviceId) {
-        LambdaUpdateWrapper<EqDevice> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(EqDevice::getId, deviceId)
-               .set(EqDevice::getStatus, "IDLE")
-               .set(EqDevice::getUpdatedAt, LocalDateTime.now());
+        EqDevice device = deviceMapper.selectForUpdate(deviceId);
+        if (device == null) {
+            log.warn("释放设备不存在: deviceId={}", deviceId);
+            return;
+        }
+
+        UpdateWrapper<EqDevice> wrapper = new UpdateWrapper<>();
+        wrapper.eq("id", deviceId)
+                .set("status", "IDLE")
+                .set("updated_at", LocalDateTime.now());
         deviceMapper.update(null, wrapper);
         log.info("设备释放: deviceId={}", deviceId);
     }
@@ -119,18 +154,20 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Override
     @Transactional
     public void reserveDevice(Long taskId, Long deviceId) {
-        // MVP 阶段：预留即将返工的设备，防止被其他任务抢占
-        EqDevice device = deviceMapper.selectById(deviceId);
+        EqDevice device = deviceMapper.selectForUpdate(deviceId);
         if (device == null) {
             throw new IllegalArgumentException("设备不存在: " + deviceId);
         }
-        if (!"IDLE".equalsIgnoreCase(device.getStatus())) {
-            throw new IllegalStateException("设备非空闲，无法预留: " + deviceId);
+
+        String status = device.getStatus();
+        if (!"IDLE".equalsIgnoreCase(status) && !"RESERVED".equalsIgnoreCase(status)) {
+            throw new IllegalStateException("设备无法预留，当前状态: " + status);
         }
-        LambdaUpdateWrapper<EqDevice> wrapper = new LambdaUpdateWrapper<>();
-        wrapper.eq(EqDevice::getId, deviceId)
-               .set(EqDevice::getStatus, "RESERVED")
-               .set(EqDevice::getUpdatedAt, LocalDateTime.now());
+
+        UpdateWrapper<EqDevice> wrapper = new UpdateWrapper<>();
+        wrapper.eq("id", deviceId)
+                .set("status", "RESERVED")
+                .set("updated_at", LocalDateTime.now());
         deviceMapper.update(null, wrapper);
         log.info("设备预留: deviceId={}, taskId={}", deviceId, taskId);
     }
@@ -141,17 +178,53 @@ public class EquipmentServiceImpl implements EquipmentService {
         if (device == null) {
             return;
         }
+
+        EqDeviceAlarm latest = alarmMapper.findLatestActiveAlarm(deviceId, "HIGH_TEMP");
+        TemperatureThresholdDTO threshold = getEffectiveThreshold(deviceId);
+
         boolean alarm = false;
-        if (device.getAlarmMinTemp() != null && temperature.compareTo(device.getAlarmMinTemp()) < 0) {
+        if (threshold.getHighTemp() != null && temperature.compareTo(threshold.getHighTemp()) > 0) {
             alarm = true;
+            if (latest == null || latest.getCreatedAt().plusMinutes(5).isBefore(LocalDateTime.now())) {
+                EqDeviceAlarm alarmRecord = new EqDeviceAlarm();
+                alarmRecord.setDeviceId(deviceId);
+                alarmRecord.setAlarmType("HIGH_TEMP");
+                alarmRecord.setAlarmLevel("CRITICAL");
+                alarmRecord.setMessage(String.format("设备超温: 当前 %.1f℃ > 阈值 %.1f℃ [来源=%s]",
+                        temperature, threshold.getHighTemp(), threshold.getSource()));
+                alarmRecord.setIsResolved(0);
+                alarmMapper.insert(alarmRecord);
+                log.warn("温度告警: deviceId={}, temp={}, highThreshold={}", deviceId, temperature, threshold.getHighTemp());
+            }
         }
-        if (device.getAlarmMaxTemp() != null && temperature.compareTo(device.getAlarmMaxTemp()) > 0) {
+        if (threshold.getLowTemp() != null && temperature.compareTo(threshold.getLowTemp()) < 0) {
             alarm = true;
+            EqDeviceAlarm latestLow = alarmMapper.findLatestActiveAlarm(deviceId, "LOW_TEMP");
+            if (latestLow == null || latestLow.getCreatedAt().plusMinutes(5).isBefore(LocalDateTime.now())) {
+                EqDeviceAlarm alarmRecord = new EqDeviceAlarm();
+                alarmRecord.setDeviceId(deviceId);
+                alarmRecord.setAlarmType("LOW_TEMP");
+                alarmRecord.setAlarmLevel("WARNING");
+                alarmRecord.setMessage(String.format("设备低温: 当前 %.1f℃ < 阈值 %.1f℃ [来源=%s]",
+                        temperature, threshold.getLowTemp(), threshold.getSource()));
+                alarmRecord.setIsResolved(0);
+                alarmMapper.insert(alarmRecord);
+                log.warn("低温告警: deviceId={}, temp={}, lowThreshold={}", deviceId, temperature, threshold.getLowTemp());
+            }
         }
-        if (alarm) {
-            log.warn("温度告警: deviceId={}, temp={}, range=[{}, {}]",
-                    deviceId, temperature, device.getAlarmMinTemp(), device.getAlarmMaxTemp());
+        if (!alarm) {
+            resolveActiveAlarms(deviceId, "HIGH_TEMP");
+            resolveActiveAlarms(deviceId, "LOW_TEMP");
         }
+    }
+
+    private void resolveActiveAlarms(Long deviceId, String alarmType) {
+        alarmMapper.findActiveByDeviceIdAndType(deviceId, alarmType)
+                .forEach(alarm -> {
+                    alarm.setIsResolved(1);
+                    alarm.setResolvedAt(LocalDateTime.now());
+                    alarmMapper.updateById(alarm);
+                });
     }
 
     @Override
@@ -174,28 +247,85 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     @Override
     public Long getDeviceId(String deviceCode) {
-        EqDevice device = deviceMapper.selectOne(
-                new LambdaQueryWrapper<EqDevice>().eq(EqDevice::getDeviceCode, deviceCode));
+        QueryWrapper<EqDevice> wrapper = new QueryWrapper<>();
+        wrapper.eq("device_code", deviceCode);
+        EqDevice device = deviceMapper.selectOne(wrapper);
         return device != null ? device.getId() : null;
     }
 
     @Override
+    public TemperatureThresholdDTO getEffectiveThreshold(Long deviceId) {
+        EqDevice device = deviceMapper.selectById(deviceId);
+        if (device == null) {
+            throw new IllegalArgumentException("设备不存在: " + deviceId);
+        }
+
+        String deviceCode = device.getDeviceCode();
+
+        // 第 1 层：方案级覆盖（最高优先）
+        if (device.getCurrentSchemeId() != null) {
+            try {
+                DecoctScheme scheme = decoctSchemeService.getById(device.getCurrentSchemeId());
+                if (scheme != null
+                        && scheme.getAlarmHighTemp() != null
+                        && scheme.getAlarmLowTemp() != null) {
+                    log.debug("温度阈值来源: SCHEME, deviceCode={}, schemeId={}", deviceCode, scheme.getId());
+                    return new TemperatureThresholdDTO(deviceCode,
+                            scheme.getAlarmHighTemp(),
+                            scheme.getAlarmLowTemp(),
+                            "SCHEME");
+                }
+            } catch (Exception e) {
+                log.warn("查询方案阈值异常: deviceCode={}, schemeId={}", deviceCode, device.getCurrentSchemeId(), e);
+            }
+        }
+
+        // 第 2 层：设备级阈值
+        if (device.getAlarmMaxTemp() != null && device.getAlarmMinTemp() != null) {
+            log.debug("温度阈值来源: DEVICE, deviceCode={}", deviceCode);
+            return new TemperatureThresholdDTO(deviceCode,
+                    device.getAlarmMaxTemp(),
+                    device.getAlarmMinTemp(),
+                    "DEVICE");
+        }
+
+        // 第 3 层：系统默认（sys_config）
+        BigDecimal highTemp = parseBigDecimal(
+                sysConfigService.getStringValue(CFG_DEFAULT_HIGH_TEMP, DEFAULT_HIGH_TEMP_STR),
+                new BigDecimal(DEFAULT_HIGH_TEMP_STR));
+        BigDecimal lowTemp = parseBigDecimal(
+                sysConfigService.getStringValue(CFG_DEFAULT_LOW_TEMP, DEFAULT_LOW_TEMP_STR),
+                new BigDecimal(DEFAULT_LOW_TEMP_STR));
+        log.debug("温度阈值来源: SYSTEM, deviceCode={}", deviceCode);
+        return new TemperatureThresholdDTO(deviceCode, highTemp, lowTemp, "SYSTEM");
+    }
+
+    private BigDecimal parseBigDecimal(String value, BigDecimal defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return new BigDecimal(value.trim());
+        } catch (NumberFormatException e) {
+            log.warn("配置值解析失败，使用默认值: value={}, default={}", value, defaultValue);
+            return defaultValue;
+        }
+    }
+
+    @Override
     public Integer getOnlineDeviceCount() {
-        // TODO: 实现在线设备统计（Wave 2）
         log.warn("getOnlineDeviceCount 尚未实现");
         return 0;
     }
 
     @Override
     public List<DeviceFaultStatDTO> getFaultStats(LocalDateTime from, LocalDateTime to) {
-        // TODO: 实现故障统计（Wave 2）
         log.warn("getFaultStats 尚未实现");
         return Collections.emptyList();
     }
 
     @Override
     public DeviceUtilizationDTO getDeviceUtilization(Long deviceId, LocalDateTime from, LocalDateTime to) {
-        // TODO: 实现利用率统计（Wave 2）
         log.warn("getDeviceUtilization 尚未实现");
         return new DeviceUtilizationDTO();
     }
@@ -214,7 +344,7 @@ public class EquipmentServiceImpl implements EquipmentService {
         dto.setProtocolType(entity.getProtocolType());
         dto.setAlarmHighTemp(entity.getAlarmMaxTemp());
         dto.setAlarmLowTemp(entity.getAlarmMinTemp());
-        dto.setLastHeartbeat(entity.getUpdatedAt());
+        dto.setLastHeartbeat(entity.getLastHeartbeat());
         return dto;
     }
 }

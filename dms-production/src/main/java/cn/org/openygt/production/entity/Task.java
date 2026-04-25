@@ -7,7 +7,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Data
 @TableName("prod_task")
@@ -24,19 +24,19 @@ public class Task {
     private BigDecimal currentTemp;
     private BigDecimal targetTemp;
     private Integer soakDuration;
-    private Date soakStartTime;
-    private Date soakEndTime;
-    private Date decoctStartTime;
-    private Date decoctEndTime;
-    private Date pourStartTime;
-    private Date pourEndTime;
-    private Date wrapStartTime;
-    private Date wrapEndTime;
-    private Date completeTime;
+    private LocalDateTime soakStartTime;
+    private LocalDateTime soakEndTime;
+    private LocalDateTime decoctStartTime;
+    private LocalDateTime decoctEndTime;
+    private LocalDateTime pourStartTime;
+    private LocalDateTime pourEndTime;
+    private LocalDateTime wrapStartTime;
+    private LocalDateTime wrapEndTime;
+    private LocalDateTime completeTime;
     private Integer currentStageDuration;
     private Long printDeviceId;
     private String printStatus;
-    private Date printTime;
+    private LocalDateTime printTime;
     private String currentStep;
     private String poolId;
     private Integer printCopies;
@@ -47,9 +47,9 @@ public class Task {
     private BigDecimal actualCost;
     private String handoverType;
     private String handoverUser;
-    private Date handoverTime;
+    private LocalDateTime handoverTime;
     @TableLogic
     private Integer deleted;
-    private Date createdAt;
-    private Date updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

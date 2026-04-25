@@ -3,6 +3,7 @@ package cn.org.openygt.common.service;
 import cn.org.openygt.common.dto.DeviceFaultStatDTO;
 import cn.org.openygt.common.dto.DeviceUtilizationDTO;
 import cn.org.openygt.common.dto.EqDeviceDTO;
+import cn.org.openygt.common.dto.TemperatureThresholdDTO;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -32,6 +33,11 @@ public interface EquipmentService {
     void releaseDevice(Long deviceId);
 
     void reserveDevice(Long taskId, Long deviceId);
+
+    /**
+     * 查询设备生效温度阈值（三层继承：SYSTEM / DEVICE / SCHEME）。
+     */
+    TemperatureThresholdDTO getEffectiveThreshold(Long deviceId);
 
     void checkTemperatureAlarm(Long deviceId, BigDecimal temperature);
 

@@ -1,7 +1,10 @@
 package cn.org.openygt.equipment.service.impl;
 
+import cn.org.openygt.equipment.dto.TemperatureLogDTO;
 import cn.org.openygt.equipment.entity.EqDevice;
+import cn.org.openygt.equipment.entity.EqTemperatureLog;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
+import cn.org.openygt.equipment.mapper.EqTemperatureLogMapper;
 import cn.org.openygt.equipment.service.EqDeviceService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -9,14 +12,20 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 public class EqDeviceServiceImpl implements EqDeviceService {
 
     private final EqDeviceMapper deviceMapper;
+    private final EqTemperatureLogMapper temperatureLogMapper;
 
-    public EqDeviceServiceImpl(EqDeviceMapper deviceMapper) {
+    public EqDeviceServiceImpl(EqDeviceMapper deviceMapper, EqTemperatureLogMapper temperatureLogMapper) {
         this.deviceMapper = deviceMapper;
+        this.temperatureLogMapper = temperatureLogMapper;
     }
+
+    // ... existing CRUD methods unchanged ...
 
     @Override
     public EqDevice getById(Long id) {
@@ -56,8 +65,8 @@ public class EqDeviceServiceImpl implements EqDeviceService {
         LambdaQueryWrapper<EqDevice> wrapper = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.like(EqDevice::getDeviceCode, keyword)
-                   .or()
-                   .like(EqDevice::getName, keyword);
+                    .or()
+                    .like(EqDevice::getName, keyword);
         }
         wrapper.orderByDesc(EqDevice::getCreatedAt);
         return deviceMapper.selectPage(new Page<>(page, size), wrapper);
@@ -92,5 +101,24 @@ public class EqDeviceServiceImpl implements EqDeviceService {
     @Transactional
     public void delete(Long id) {
         deviceMapper.deleteById(id);
+    }
+
+    @Override
+    public IPage<TemperatureLogDTO> getTemperatureLogs(Long deviceId, LocalDateTime start, LocalDateTime end, int page, int size) {
+        LambdaQueryWrapper<EqTemperatureLog> wrapper = new LambdaQueryWrapper<EqTemperatureLog>()
+                .eq(EqTemperatureLog::getDeviceId, deviceId)
+                .between(EqTemperatureLog::getRecordedAt, start, end)
+                .orderByDesc(EqTemperatureLog::getRecordedAt);
+        return temperatureLogMapper.selectPage(new Page<>(page, size), wrapper)
+                .convert(this::toTemperatureLogDTO);
+    }
+
+    private TemperatureLogDTO toTemperatureLogDTO(EqTemperatureLog log) {
+        TemperatureLogDTO dto = new TemperatureLogDTO();
+        dto.setId(log.getId());
+        dto.setDeviceId(log.getDeviceId());
+        dto.setTemperature(log.getTemperature());
+        dto.setRecordedAt(log.getRecordedAt());
+        return dto;
     }
 }

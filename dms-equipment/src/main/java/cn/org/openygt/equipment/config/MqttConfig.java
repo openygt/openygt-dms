@@ -1,9 +1,12 @@
 package cn.org.openygt.equipment.config;
 
 import cn.org.openygt.common.service.EquipmentService;
-import lombok.extern.slf4j.Slf4j;
+import cn.org.openygt.equipment.dto.DeviceStatusPayload;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
@@ -15,11 +18,15 @@ import java.math.BigDecimal;
  * MQTT 配置与消息处理器。
  *
  * <p>Topic 格式: /openygt/{tenantId}/{deviceCode}/{messageType}</p>
- * <p>messageType: status / fault / online / offline</p>
+ * <p>messageType: status / heartbeat / fault / online / offline</p>
+ *
+ * <p>★ JSON 解析修复：status 消息使用 ObjectMapper 解析完整 JSON，
+ * 替代直接 new BigDecimal(payload.trim())。</p>
  */
-@Slf4j
 @Configuration
 public class MqttConfig {
+
+    private static final Logger log = LoggerFactory.getLogger(MqttConfig.class);
 
     @Value("${mqtt.broker-url}")
     private String brokerUrl;
@@ -31,10 +38,12 @@ public class MqttConfig {
     private String topicSubscription;
 
     private final EquipmentService equipmentService;
+    private final ObjectMapper objectMapper;
     private MqttClient mqttClient;
 
-    public MqttConfig(EquipmentService equipmentService) {
+    public MqttConfig(EquipmentService equipmentService, ObjectMapper objectMapper) {
         this.equipmentService = equipmentService;
+        this.objectMapper = objectMapper;
     }
 
     @PostConstruct
@@ -52,19 +61,22 @@ public class MqttConfig {
             String subscribeTopic = "/openygt/" + topicSubscription;
             mqttClient.subscribe(subscribeTopic, (topic, msg) -> {
                 String payload = new String(msg.getPayload());
-                log.info("MQTT received: topic={}, payload={}", topic, payload);
+                log.debug("MQTT received: topic={}, payload={}", topic, payload);
                 handleMessage(topic, payload);
             });
 
-            log.info("MQTT subscribed to {}", subscribeTopic);
+            log.info("MQTT connected and subscribed to {}", subscribeTopic);
         } catch (Exception e) {
             log.error("MQTT连接失败", e);
         }
     }
 
+    /**
+     * 消息处理核心。
+     * status 消息使用 ObjectMapper 解析 JSON，其余类型保持 string 处理。
+     */
     private void handleMessage(String topic, String payload) {
         try {
-            // 格式: /openygt/{tenantId}/{deviceCode}/{messageType}
             String[] parts = topic.split("/");
             if (parts.length < 5) {
                 log.warn("Topic格式不匹配: {}", topic);
@@ -77,13 +89,17 @@ public class MqttConfig {
             Long deviceId = equipmentService.getDeviceId(deviceCode);
             if (deviceId == null) {
                 log.warn("未知设备: {}, tenantId={}", deviceCode, tenantId);
-                return;
+                // 自动注册设备
+                equipmentService.getOrCreateDevice(deviceCode, 1);
+                deviceId = equipmentService.getDeviceId(deviceCode);
             }
 
             switch (messageType) {
                 case "status":
-                    BigDecimal temp = new BigDecimal(payload.trim());
-                    equipmentService.updateTemperature(deviceId, temp);
+                    handleStatusMessage(deviceId, payload);
+                    break;
+                case "heartbeat":
+                    equipmentService.updateDeviceStatus(deviceId, "IDLE");
                     break;
                 case "fault":
                     equipmentService.reportFault(deviceId, payload.trim(), "MQTT上报故障");
@@ -99,6 +115,35 @@ public class MqttConfig {
             }
         } catch (Exception e) {
             log.error("处理MQTT消息失败: topic={}", topic, e);
+        }
+    }
+
+    /**
+     * 处理状态上报消息。
+     * ★ 修复：使用 ObjectMapper 解析 JSON，替代直接 new BigDecimal(payload.trim())
+     */
+    private void handleStatusMessage(Long deviceId, String payload) {
+        try {
+            DeviceStatusPayload statusPayload = objectMapper.readValue(payload, DeviceStatusPayload.class);
+
+            if (statusPayload.getTemperature() != null) {
+                equipmentService.updateTemperature(deviceId, statusPayload.getTemperature());
+            }
+
+            if (statusPayload.getFaultCode() != null && !statusPayload.getFaultCode().isEmpty()) {
+                equipmentService.reportFault(deviceId, statusPayload.getFaultCode(), "状态上报故障");
+            } else if (statusPayload.getStatus() != null) {
+                equipmentService.updateDeviceStatus(deviceId, statusPayload.getStatus());
+            }
+        } catch (Exception e) {
+            log.error("状态消息解析失败: deviceId={}, payload={}", deviceId, payload, e);
+            // 兼容旧格式：直接解析为温度值
+            try {
+                BigDecimal temp = new BigDecimal(payload.trim());
+                equipmentService.updateTemperature(deviceId, temp);
+            } catch (Exception ignored) {
+                // 兼容失败，已记录错误
+            }
         }
     }
 

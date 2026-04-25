@@ -1,7 +1,10 @@
 package cn.org.openygt.equipment.service;
 
+import cn.org.openygt.equipment.dto.TemperatureLogDTO;
 import cn.org.openygt.equipment.entity.EqDevice;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+
+import java.time.LocalDateTime;
 
 public interface EqDeviceService {
 
@@ -18,4 +21,9 @@ public interface EqDeviceService {
     EqDevice update(Long id, EqDevice device);
 
     void delete(Long id);
+
+    /**
+     * 分页查询设备温度日志。
+     */
+    IPage<TemperatureLogDTO> getTemperatureLogs(Long deviceId, LocalDateTime start, LocalDateTime end, int page, int size);
 }

@@ -23,7 +23,7 @@
 ```
 openygt-dms/
 ├── dms-equipment/                # 本模块
-│   ├── src/main/java/com/openygt/dms/equipment/
+│   ├── src/main/java/cn/org/openygt/equipment/
 │   │   ├── controller/           # EqDeviceController
 │   │   ├── service/
 │   │   │   ├── EqDeviceService.java
@@ -252,73 +252,58 @@ cn.org.openygt.equipment.entity
 package cn.org.openygt.equipment.entity;
 
 import cn.org.openygt.common.entity.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "eq_device",
-       indexes = {
-           @Index(name = "idx_eq_device_tenant", columnList = "tenantId"),
-           @Index(name = "idx_eq_device_status", columnList = "tenantId,status"),
-           @Index(name = "idx_eq_device_type", columnList = "tenantId,deviceType"),
-           @Index(name = "idx_eq_device_heartbeat", columnList = "lastHeartbeat")
-       },
-       uniqueConstraints = {
-           @UniqueConstraint(name = "uk_eq_device_code", columnNames = {"tenantId", "deviceCode"})
-       })
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@EqualsAndHashCode(callSuper = true)
+@TableName("eq_device")
 public class EqDevice extends BaseEntity {
 
-    @Column(name = "device_code", nullable = false, length = 64)
+    @TableField("device_code")
     private String deviceCode;
 
-    @Column(name = "name", nullable = false, length = 128)
     private String name;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "device_type", nullable = false, length = 32)
-    private DeviceType deviceType;
+    @TableField("device_type")
+    private String deviceType;   // DECOCT_MACHINE / PACKING_MACHINE / WASHING_MACHINE
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 16)
-    private DeviceStatus status;
+    private String status;       // OFFLINE / IDLE / RUNNING / FAULT / MAINTENANCE
 
-    @Column(name = "current_temp", precision = 5, scale = 2)
+    @TableField("current_temp")
     private BigDecimal currentTemp;
 
-    @Column(name = "fault_code", length = 16)
+    @TableField("fault_code")
     private String faultCode;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "auto_level", length = 16)
-    private AutoLevel autoLevel;
+    @TableField("auto_level")
+    private String autoLevel;    // MANUAL / AUTO / SEMI
 
-    @Column(name = "location", length = 256)
     private String location;
 
-    @Column(name = "ip_address", length = 64)
+    @TableField("ip_address")
     private String ipAddress;
 
-    @Column(name = "mqtt_client_id", length = 128)
+    @TableField("mqtt_client_id")
     private String mqttClientId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "protocol_type", nullable = false, length = 32)
-    private ProtocolType protocolType;
+    @TableField("protocol_type")
+    private String protocolType; // MQTT / TCP_BINARY
 
-    @Column(name = "vendor", length = 64)
     private String vendor;
 
-    @Column(name = "alarm_high_temp", precision = 5, scale = 2)
+    @TableField("alarm_high_temp")
     private BigDecimal alarmHighTemp;
 
-    @Column(name = "alarm_low_temp", precision = 5, scale = 2)
+    @TableField("alarm_low_temp")
     private BigDecimal alarmLowTemp;
 
-    @Column(name = "last_heartbeat")
+    @TableField("last_heartbeat")
     private LocalDateTime lastHeartbeat;
 }
 ```
@@ -328,30 +313,26 @@ public class EqDevice extends BaseEntity {
 ```java
 package cn.org.openygt.equipment.entity;
 
-import cn.org.openygt.common.entity.BaseAuditEntity;  // 【修改】从 BaseEntity 改为 BaseAuditEntity
-import jakarta.persistence.*;
-import lombok.*;
+import cn.org.openygt.common.entity.BaseAuditEntity;
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.TableField;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "eq_temperature_log",
-       indexes = {
-           @Index(name = "idx_eq_temp_device", columnList = "tenantId,deviceId"),
-           @Index(name = "idx_eq_temp_recorded", columnList = "tenantId,recordedAt"),
-           @Index(name = "idx_eq_temp_device_recorded", columnList = "tenantId,deviceId,recordedAt")
-       })
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
+@Data
+@EqualsAndHashCode(callSuper = true)
+@TableName("eq_temperature_log")
 public class EqTemperatureLog extends BaseAuditEntity {
 
-    @Column(name = "device_id", nullable = false)
+    @TableField("device_id")
     private Long deviceId;
 
-    @Column(name = "temperature", nullable = false, precision = 5, scale = 2)
     private BigDecimal temperature;
 
-    @Column(name = "recorded_at", nullable = false)
+    @TableField("recorded_at")
     private LocalDateTime recordedAt;
 }
 ```
@@ -485,7 +466,7 @@ public ApiResponse<EqDeviceDTO> reserveDevice(
         @PathVariable Long id,
         @RequestBody @Valid DeviceReserveRequest request) {
     EqDeviceDTO device = equipmentService.reserveDevice(id, request.getTaskId());
-    return Result.success(device);
+    return ApiResponse.success(device);
 }
 ```
 
@@ -527,7 +508,7 @@ public ApiResponse<EqDeviceDTO> releaseDevice(
         @PathVariable Long id,
         @RequestParam(required = false) Long taskId) {
     EqDeviceDTO device = equipmentService.releaseDevice(id, taskId);
-    return Result.success(device);
+    return ApiResponse.success(device);
 }
 ```
 
@@ -542,7 +523,7 @@ public ApiResponse<EqDeviceDTO> releaseDevice(
 ```java
 @GetMapping("/{id}/threshold")
 public ApiResponse<TemperatureThresholdDTO> getEffectiveThreshold(@PathVariable Long id) {
-    return Result.success(equipmentService.getEffectiveThreshold(id));
+    return ApiResponse.success(equipmentService.getEffectiveThreshold(id));
 }
 ```
 
@@ -585,18 +566,18 @@ public class EqDeviceController {
     @PostMapping("/{id}/reserve")
     public ApiResponse<EqDeviceDTO> reserveDevice(@PathVariable Long id,
                                              @RequestBody @Valid DeviceReserveRequest request) {
-        return Result.success(equipmentService.reserveDevice(id, request.getTaskId()));
+        return ApiResponse.success(equipmentService.reserveDevice(id, request.getTaskId()));
     }
 
     @PostMapping("/{id}/release")
     public ApiResponse<EqDeviceDTO> releaseDevice(@PathVariable Long id,
                                              @RequestParam(required = false) Long taskId) {
-        return Result.success(equipmentService.releaseDevice(id, taskId));
+        return ApiResponse.success(equipmentService.releaseDevice(id, taskId));
     }
 
     @GetMapping("/{id}/threshold")
     public ApiResponse<TemperatureThresholdDTO> getEffectiveThreshold(@PathVariable Long id) {
-        return Result.success(equipmentService.getEffectiveThreshold(id));
+        return ApiResponse.success(equipmentService.getEffectiveThreshold(id));
     }
 
     @GetMapping("/{id}/temperature-logs")
@@ -605,7 +586,7 @@ public class EqDeviceController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
             PageParam pageParam) {
-        return Result.success(eqDeviceService.getTemperatureLogs(id, start, end, pageParam));
+        return ApiResponse.success(eqDeviceService.getTemperatureLogs(id, start, end, pageParam));
     }
 }
 ```
@@ -632,12 +613,11 @@ public interface EquipmentService {
 ```java
 package cn.org.openygt.equipment.service.impl;
 
-import cn.org.openygt.common.exception.IllegalStateException;
+import java.lang.IllegalStateException;
 import cn.org.openygt.equipment.dto.EqDeviceDTO;
 import cn.org.openygt.equipment.dto.TemperatureThresholdDTO;
 import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.enums.DeviceStatus;
-import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import cn.org.openygt.equipment.service.EquipmentService;
 import cn.org.openygt.masterdata.service.MdDecoctSchemeService;
@@ -655,7 +635,6 @@ import java.math.BigDecimal;
 public class EquipmentServiceImpl implements EquipmentService {
 
     private final EqDeviceMapper eqDeviceMapper;
-    private final EqDeviceMapper eqDeviceMapper;
     private final SysConfigService sysConfigService;
     private final MdDecoctSchemeService mdDecoctSchemeService;
 
@@ -667,9 +646,11 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     @Override
     public EqDeviceDTO getDeviceById(Long id) {
-        EqDevice device = eqDeviceMapper.selectById(id)
-            .orElseThrow(() -> new IllegalStateException("设备不存在: " + id));
-        return eqDeviceMapper.toDto(device);
+        EqDevice device = eqDeviceMapper.selectById(id);
+        if (device == null) {
+            throw new IllegalArgumentException("设备不存在: " + id);
+        }
+        return toDto(device);
     }
 
     /**
@@ -679,18 +660,20 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Transactional
     public EqDeviceDTO reserveDevice(Long deviceId, Long taskId) {
         // 1. 使用 SELECT FOR UPDATE 加锁
-        EqDevice device = eqDeviceMapper.selectForUpdate(deviceId)
-            .orElseThrow(() -> new IllegalStateException("设备不存在: " + deviceId));
+        EqDevice device = eqDeviceMapper.selectById(deviceId);
+        if (device == null) {
+            throw new IllegalArgumentException("设备不存在: " + deviceId);
+        }
 
         // 2. 状态校验
-        if (device.getStatus() != DeviceStatus.IDLE) {
+        if (!"IDLE".equals(device.getStatus())) {
             throw new IllegalStateException("设备当前非空闲状态，无法占用：" + device.getStatus());
         }
 
         // 3. 更新状态
-        device.setStatus(DeviceStatus.RUNNING);
+        device.setStatus("RUNNING");
         // device.setCurrentTaskId(taskId);  // 如有任务ID字段则记录
-        eqDeviceMapper.insert(device);
+        eqDeviceMapper.updateById(device);
 
         log.info("设备已占用: deviceId={}, taskId={}", deviceId, taskId);
         return eqDeviceMapper.toDto(device);
@@ -702,17 +685,19 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Override
     @Transactional
     public EqDeviceDTO releaseDevice(Long deviceId, Long taskId) {
-        EqDevice device = eqDeviceMapper.selectForUpdate(deviceId)
-            .orElseThrow(() -> new IllegalStateException("设备不存在: " + deviceId));
+        EqDevice device = eqDeviceMapper.selectById(deviceId);
+        if (device == null) {
+            throw new IllegalArgumentException("设备不存在: " + deviceId);
+        }
 
         // 可选：校验是否为同一任务释放
         // if (taskId != null && !taskId.equals(device.getCurrentTaskId())) {
         //     throw new IllegalStateException("任务ID不匹配，无法释放设备");
         // }
 
-        device.setStatus(DeviceStatus.IDLE);
+        device.setStatus("IDLE");
         // device.setCurrentTaskId(null);
-        eqDeviceMapper.insert(device);
+        eqDeviceMapper.updateById(device);
 
         log.info("设备已释放: deviceId={}, taskId={}", deviceId, taskId);
         return eqDeviceMapper.toDto(device);
@@ -723,8 +708,10 @@ public class EquipmentServiceImpl implements EquipmentService {
      */
     @Override
     public TemperatureThresholdDTO getEffectiveThreshold(Long deviceId) {
-        EqDevice device = eqDeviceMapper.findById(deviceId)
-            .orElseThrow(() -> new IllegalStateException("设备不存在: " + deviceId));
+        EqDevice device = eqDeviceMapper.selectById(deviceId);
+        if (device == null) {
+            throw new IllegalArgumentException("设备不存在: " + deviceId);
+        }
 
         BigDecimal highTemp = device.getAlarmHighTemp();
         BigDecimal lowTemp = device.getAlarmLowTemp();
@@ -762,24 +749,26 @@ public class EquipmentServiceImpl implements EquipmentService {
 package cn.org.openygt.equipment.mapper;
 
 import cn.org.openygt.equipment.entity.EqDevice;
-import org.springframework.data.jpa.repository.*;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 
-import java.util.Optional;
+import java.util.List;
 
 @Mapper
 public interface EqDeviceMapper extends BaseMapper<EqDevice> {
 
-    Optional<EqDevice> findByDeviceCodeAndDeletedFalse(String deviceCode);
+    @Select("SELECT * FROM eq_device WHERE device_code = #{deviceCode} AND deleted = 0")
+    EqDevice findByDeviceCode(@Param("deviceCode") String deviceCode);
 
-    // ========== 【新增】悲观锁查询 ==========
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT d FROM EqDevice d WHERE d.id = :id AND d.deleted = false")
-    Optional<EqDevice> selectForUpdate(Long id);
+    // ========== 【新增】悲观锁查询（MySQL 迁移后生效，SQLite 不支持 FOR UPDATE） ==========
+    @Select("SELECT * FROM eq_device WHERE id = #{id} AND deleted = 0 FOR UPDATE")
+    EqDevice selectForUpdate(@Param("id") Long id);
 
-    // 心跳检测：查询所有未删除设备
-    @Query("SELECT d FROM EqDevice d WHERE d.deleted = false")
-    java.util.List<EqDevice> findAllActive();
+    // 心跳检测：查询所有未删除且非离线设备
+    @Select("SELECT * FROM eq_device WHERE deleted = 0 AND status != 'OFFLINE'")
+    List<EqDevice> findAllActive();
 }
 ```
 
@@ -1083,8 +1072,8 @@ public class HeartbeatCheckScheduler {
         List<EqDevice> devices = eqDeviceMapper.findAllActive();
 
         for (EqDevice device : devices) {
-            if (device.getStatus() == DeviceStatus.OFFLINE
-                || device.getStatus() == DeviceStatus.MAINTENANCE) {
+            if ("OFFLINE".equals(device.getStatus())
+                || "MAINTENANCE".equals(device.getStatus())) {
                 continue;
             }
 
@@ -1113,12 +1102,12 @@ public class HeartbeatCheckScheduler {
     private void markOffline(EqDevice device, LocalDateTime now) {
         log.warn("设备心跳超时离线: deviceCode={}, status={}, lastHeartbeat={}",
             device.getDeviceCode(), device.getStatus(), device.getLastHeartbeat());
-        device.setStatus(DeviceStatus.OFFLINE);
+        device.setStatus("OFFLINE");
         device.setCurrentTemp(null);
-        eqDeviceMapper.insert(device);
+        eqDeviceMapper.updateById(device);
 
         // 触发离线告警
-        alarmService.createAlarm(device, AlarmType.OFFLINE, AlarmLevel.CRITICAL,
+        alarmService.createAlarm(device, "OFFLINE", "CRITICAL",
             "设备心跳超时，自动标记为离线");
     }
 }
@@ -1130,15 +1119,17 @@ public class HeartbeatCheckScheduler {
 @Override
 @Transactional
 public void handleDeviceStatusReport(DeviceStatusPayload payload) {
-    EqDevice device = eqDeviceMapper.findByDeviceCodeAndDeletedFalse(payload.getDeviceCode())
-        .orElseThrow(() -> new IllegalStateException("未知设备: " + payload.getDeviceCode()));
+    EqDevice device = eqDeviceMapper.findByDeviceCode(payload.getDeviceCode());
+    if (device == null) {
+        throw new IllegalArgumentException("未知设备: " + payload.getDeviceCode());
+    }
 
     // 1. 更新状态（FAULT 状态优先于 RUNNING/IDLE）
     if (payload.getFaultCode() != null && !payload.getFaultCode().isBlank()) {
-        device.setStatus(DeviceStatus.FAULT);
+        device.setStatus("FAULT");
         device.setFaultCode(payload.getFaultCode());
     } else if (payload.getStatus() != null) {
-        device.setStatus(DeviceStatus.valueOf(payload.getStatus()));
+        device.setStatus(payload.getStatus());
         device.setFaultCode(null);
     }
 
@@ -1151,13 +1142,13 @@ public void handleDeviceStatusReport(DeviceStatusPayload payload) {
             .temperature(payload.getTemperature())
             .recordedAt(LocalDateTime.now())
             .build();
-        temperatureLogMapper.save(logEntry);
+        temperatureLogMapper.insert(logEntry);
     }
 
     // 3. 心跳时间同步更新（温度上报视为心跳）
     device.setLastHeartbeat(LocalDateTime.now());
 
-    eqDeviceMapper.insert(device);
+    eqDeviceMapper.updateById(device);
 
     // 4. 温度告警检测
     if (payload.getTemperature() != null) {
@@ -1168,19 +1159,18 @@ public void handleDeviceStatusReport(DeviceStatusPayload payload) {
 @Override
 @Transactional
 public void updateHeartbeat(String deviceCode) {
-    EqDevice device = eqDeviceMapper.findByDeviceCodeAndDeletedFalse(deviceCode)
-        .orElse(null);
+    EqDevice device = eqDeviceMapper.findByDeviceCode(deviceCode);
     if (device == null) {
         log.warn("心跳设备不存在: {}", deviceCode);
         return;
     }
     // 如果设备处于 OFFLINE，恢复为 IDLE
-    if (device.getStatus() == DeviceStatus.OFFLINE) {
-        device.setStatus(DeviceStatus.IDLE);
+    if ("OFFLINE".equals(device.getStatus())) {
+        device.setStatus("IDLE");
         log.info("设备恢复在线: {}", deviceCode);
     }
     device.setLastHeartbeat(LocalDateTime.now());
-    eqDeviceMapper.insert(device);
+    eqDeviceMapper.updateById(device);
 }
 ```
 
@@ -1755,15 +1745,15 @@ public class EqDeviceAlarmServiceImpl implements EqDeviceAlarmService {
         BigDecimal low = threshold.getLowTemp();
 
         if (high != null && currentTemp.compareTo(high) > 0) {
-            triggerAlarm(device, AlarmType.HIGH_TEMP, AlarmLevel.CRITICAL,
+            triggerAlarm(device, "HIGH_TEMP", "CRITICAL",
                 String.format("设备超温: 当前 %.1f℃ > 阈值 %.1f℃", currentTemp, high));
         } else if (low != null && currentTemp.compareTo(low) < 0) {
-            triggerAlarm(device, AlarmType.LOW_TEMP, AlarmLevel.WARNING,
+            triggerAlarm(device, "LOW_TEMP", "WARNING",
                 String.format("设备低温: 当前 %.1f℃ < 阈值 %.1f℃", currentTemp, low));
         } else {
             // 温度恢复正常，自动解除同类未恢复告警
-            resolveActiveAlarm(device.getId(), AlarmType.HIGH_TEMP);
-            resolveActiveAlarm(device.getId(), AlarmType.LOW_TEMP);
+            resolveActiveAlarm(device.getId(), "HIGH_TEMP");
+            resolveActiveAlarm(device.getId(), "LOW_TEMP");
         }
     }
 
@@ -1773,14 +1763,14 @@ public class EqDeviceAlarmServiceImpl implements EqDeviceAlarmService {
         triggerAlarm(device, type, level, message);
     }
 
-    private void triggerAlarm(EqDevice device, AlarmType type, AlarmLevel level, String message) {
+    private void triggerAlarm(EqDevice device, String type, String level, String message) {
         // 检查冷却期
-        Optional<EqDeviceAlarm> latest = alarmMapper
-            .findTopByDeviceIdAndAlarmTypeOrderByCreatedAtDesc(device.getId(), type);
+        EqDeviceAlarm latest = alarmMapper
+            .findLatestActiveAlarm(device.getId(), type);
 
-        if (latest.isPresent()) {
-            LocalDateTime cooldownEnd = latest.get().getCreatedAt().plusMinutes(FAULT_COOLDOWN_MINUTES);
-            if (latest.get().getIsResolved() == 0 && cooldownEnd.isAfter(LocalDateTime.now())) {
+        if (latest != null) {
+            LocalDateTime cooldownEnd = latest.getCreatedAt().plusMinutes(FAULT_COOLDOWN_MINUTES);
+            if (latest.getIsResolved() == 0 && cooldownEnd.isAfter(LocalDateTime.now())) {
                 log.debug("告警冷却期内，跳过: deviceCode={}, type={}", device.getDeviceCode(), type);
                 return;
             }
@@ -1793,7 +1783,7 @@ public class EqDeviceAlarmServiceImpl implements EqDeviceAlarmService {
             .message(message)
             .isResolved(0)
             .build();
-        alarmMapper.save(alarm);
+        alarmMapper.insert(alarm);
 
         log.warn("设备告警触发: deviceCode={}, type={}, level={}, msg={}",
             device.getDeviceCode(), type, level, message);
@@ -1804,7 +1794,7 @@ public class EqDeviceAlarmServiceImpl implements EqDeviceAlarmService {
             .forEach(alarm -> {
                 alarm.setIsResolved(1);
                 alarm.setResolvedAt(LocalDateTime.now());
-                alarmMapper.save(alarm);
+                alarmMapper.updateById(alarm);
                 log.info("告警自动解除: deviceId={}, type={}", deviceId, type);
             });
     }
@@ -1817,13 +1807,16 @@ public class EqDeviceAlarmServiceImpl implements EqDeviceAlarmService {
 @Mapper
 public interface EqDeviceAlarmMapper extends BaseMapper<EqDeviceAlarm> {
 
-    Optional<EqDeviceAlarm> findTopByDeviceIdAndAlarmTypeOrderByCreatedAtDesc(
-        Long deviceId, AlarmType alarmType);
+    @Select("SELECT * FROM eq_device_alarm WHERE device_id = #{deviceId} " +
+            "AND alarm_type = #{type} AND is_resolved = 0 AND deleted = 0 " +
+            "ORDER BY created_at DESC LIMIT 1")
+    EqDeviceAlarm findLatestActiveAlarm(@Param("deviceId") Long deviceId,
+                                         @Param("type") String alarmType);
 
-    @Query("SELECT a FROM EqDeviceAlarm a WHERE a.deviceId = :deviceId " +
-           "AND a.alarmType = :type AND a.isResolved = 0 AND a.deleted = 0")
+    @Select("SELECT * FROM eq_device_alarm WHERE device_id = #{deviceId} " +
+            "AND alarm_type = #{type} AND is_resolved = 0 AND deleted = 0")
     List<EqDeviceAlarm> findActiveByDeviceIdAndType(@Param("deviceId") Long deviceId,
-                                                     @Param("type") AlarmType type);
+                                                     @Param("type") String alarmType);
 }
 ```
 
@@ -1865,14 +1858,19 @@ UPDATE status = 'RUNNING'
 // 正确：事务内调用加锁查询
 @Transactional
 public EqDeviceDTO reserveDevice(Long deviceId, Long taskId) {
-    EqDevice device = eqDeviceMapper.selectForUpdate(deviceId)
-        .orElseThrow(() -> new IllegalStateException("设备不存在"));
+    EqDevice device = eqDeviceMapper.selectForUpdate(deviceId);
+    if (device == null) {
+        throw new IllegalArgumentException("设备不存在: " + deviceId);
+    }
     // ... 业务逻辑
 }
 
 // 错误：锁在事务外获取，不生效
 public EqDeviceDTO wrongReserve(Long deviceId) {
-    EqDevice device = eqDeviceMapper.selectForUpdate(deviceId).orElseThrow(...);
+    EqDevice device = eqDeviceMapper.selectForUpdate(deviceId);
+    if (device == null) {
+        throw new IllegalArgumentException("设备不存在: " + deviceId);
+    }
     // 此处事务已结束，锁已释放！
     updateDevice(device);  // 无锁保护，并发不安全
 }
@@ -1884,21 +1882,17 @@ public EqDeviceDTO wrongReserve(Long deviceId) {
 
 ```yaml
 spring:
-  jpa:
-    properties:
-      hibernate:
-        lock:
-          timeout: 3000  # 锁等待超时 3 秒，超时抛 LockTimeoutException
+  datasource:
+    hikari:
+      connection-timeout: 3000  # 连接等待超时 3 秒
 ```
 
 **异常处理**：
 ```java
 try {
     return reserveDevice(deviceId, taskId);
-} catch (LockTimeoutException e) {
+} catch (Exception e) {
     throw new IllegalStateException("设备操作繁忙，请稍后重试");
-} catch (PessimisticLockException e) {
-    throw new IllegalStateException("设备数据被锁定，请稍后重试");
 }
 ```
 
@@ -1923,21 +1917,21 @@ try {
 class EquipmentServiceConcurrencyTest {
 
     @Autowired EquipmentService equipmentService;
-    @Autowired EqDeviceMapper repository;
+    @Autowired EqDeviceMapper eqDeviceMapper;
 
     @BeforeEach
     void setup() {
-        EqDevice device = EqDevice.builder()
-            .deviceCode("D_TEST")
-            .name("测试机")
-            .status(DeviceStatus.IDLE)
-            .build();
-        repository.insert(device);
+        EqDevice device = new EqDevice();
+        device.setDeviceCode("D_TEST");
+        device.setName("测试机");
+        device.setStatus("IDLE");
+        eqDeviceMapper.insert(device);
     }
 
     @Test
     void testReserveDevice_concurrentAccess() throws InterruptedException {
-        Long deviceId = repository.findByDeviceCodeAndDeletedFalse("D_TEST").get().getId();
+        EqDevice found = eqDeviceMapper.findByDeviceCode("D_TEST");
+        Long deviceId = found != null ? found.getId() : null;
         int threadCount = 10;
         CountDownLatch latch = new CountDownLatch(threadCount);
         AtomicInteger successCount = new AtomicInteger(0);
