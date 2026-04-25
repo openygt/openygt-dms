@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -247,8 +248,7 @@ class TaskServiceImplTest {
     }
 
     // ========================================================================
-    //  测试用例骨架（方法体待架构师提交后填充）
-    //  标注了预期行为，架构师请根据重构后的实体和方法签名调整断言
+    //  填充的测试方法（适配架构师重构后的实体和状态机）
     // ========================================================================
 
     // ==================== startSoak ====================
@@ -256,23 +256,26 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("startSoak: 待泡药 → 泡药中，记录开始时间、工时记录、工序日志")
     void testStartSoakSuccess() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待泡药");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // Task result = taskService.startSoak(1L, "OP01");
-        // assertEquals("泡药中", result.getStatus());
-        // verify(taskMapper).updateById(task);
-        // verify(workRecordMapper).insert(argThat(r -> "SOAK".equals(r.getAction())));
-        // verify(stepLogMapper).insert(argThat(s -> "SOAK".equals(s.getStepType())));
+        Task task = mockTask(1L, "待泡药");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        Task result = taskService.startSoak(1L, "OP01");
+
+        assertEquals("泡药中", result.getStatus());
+        assertNotNull(result.getSoakStartTime());
+        verify(taskMapper).updateById(task);
+        verify(workRecordMapper).insert(argThat((WorkRecord r) -> "SOAK".equals(r.getAction())));
+        verify(stepLogMapper).insert(argThat((StepLog s) -> "SOAK".equals(s.getStepType())));
+        verify(historyMapper).insert(any(TaskStatusHistory.class));
     }
 
     @Test
     @DisplayName("startSoak: 状态非待泡药抛 IllegalStateException")
     void testStartSoakWrongStatus() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "煎药中");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // assertThrows(IllegalStateException.class, () -> taskService.startSoak(1L, "OP01"));
+        Task task = mockTask(1L, "煎药中");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        assertThrows(IllegalStateException.class, () -> taskService.startSoak(1L, "OP01"));
     }
 
     // ==================== endSoak ====================
@@ -280,23 +283,25 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("endSoak: 泡药中 → 待煎药，计算耗时，关闭工序日志")
     void testEndSoakSuccess() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "泡药中");
-        // task.setSoakStartTime(LocalDateTime.now().minusMinutes(30));
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // Task result = taskService.endSoak(1L, "OP01");
-        // assertEquals("待煎药", result.getStatus());
-        // assertEquals(30, result.getCurrentStageDuration());
-        // verify(workRecordMapper).insert(argThat(r -> "SOAK".equals(r.getAction()) && r.getWorkTime() == 30));
+        Task task = mockTask(1L, "泡药中");
+        task.setSoakStartTime(LocalDateTime.now().minusMinutes(30));
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        Task result = taskService.endSoak(1L, "OP01");
+
+        assertEquals("待煎药", result.getStatus());
+        assertEquals(30, result.getCurrentStageDuration());
+        verify(workRecordMapper).insert(argThat((WorkRecord r) -> "SOAK".equals(r.getAction()) && r.getWorkTime() == 30));
+        verify(historyMapper).insert(any(TaskStatusHistory.class));
     }
 
     @Test
     @DisplayName("endSoak: 状态非泡药中抛 IllegalStateException")
     void testEndSoakWrongStatus() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待泡药");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // assertThrows(IllegalStateException.class, () -> taskService.endSoak(1L, "OP01"));
+        Task task = mockTask(1L, "待泡药");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        assertThrows(IllegalStateException.class, () -> taskService.endSoak(1L, "OP01"));
     }
 
     // ==================== startPour ====================
@@ -304,21 +309,24 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("startPour: 待出液 → 出液中，记录开始时间和工序日志")
     void testStartPourSuccess() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待出液");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // Task result = taskService.startPour(1L, "OP01");
-        // assertEquals("出液中", result.getStatus());
-        // verify(stepLogMapper).insert(argThat(s -> "POUR".equals(s.getStepType())));
+        Task task = mockTask(1L, "待出液");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        Task result = taskService.startPour(1L, "OP01");
+
+        assertEquals("出液中", result.getStatus());
+        assertEquals(Integer.valueOf(0), result.getCurrentStageDuration());
+        verify(stepLogMapper).insert(argThat((StepLog s) -> "POUR".equals(s.getStepType())));
+        verify(historyMapper).insert(any(TaskStatusHistory.class));
     }
 
     @Test
     @DisplayName("startPour: 状态非待出液抛 IllegalStateException")
     void testStartPourWrongStatus() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "泡药中");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // assertThrows(IllegalStateException.class, () -> taskService.startPour(1L, "OP01"));
+        Task task = mockTask(1L, "泡药中");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        assertThrows(IllegalStateException.class, () -> taskService.startPour(1L, "OP01"));
     }
 
     // ==================== endPour ====================
@@ -326,39 +334,43 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("endPour: 出液中 → 待包装，计算耗时，关闭工序日志")
     void testEndPourSuccess() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "出液中");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // Task result = taskService.endPour(1L, "OP01");
-        // assertEquals("待包装", result.getStatus());
+        Task task = mockTask(1L, "出液中");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        Task result = taskService.endPour(1L, "OP01");
+
+        assertEquals("待包装", result.getStatus());
+        verify(historyMapper).insert(any(TaskStatusHistory.class));
     }
 
     @Test
     @DisplayName("endPour: auto 级别自动触发 startWrap（绑定包装机）")
     void testEndPourAutoTriggersWrap() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "出液中");
-        // task.setDecoctDeviceId(10L);
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // when(equipmentService.getAutoLevel(10L)).thenReturn("auto");
-        // when(equipmentService.getDeviceCode(10L)).thenReturn("D001");
-        // // startWrap 需要 selectByIdForUpdate 返回待包装状态的任务
-        // Task wrapReady = mockTask(1L, "待包装");
-        // when(taskMapper.selectByIdForUpdate(1L)).thenReturn(wrapReady);
-        // when(equipmentService.getDeviceId("D001")).thenReturn(20L);
-        // when(equipmentService.getDeviceStatus(20L)).thenReturn("idle");
-        // Task result = taskService.endPour(1L, "OP01");
-        // assertEquals("包装中", result.getStatus());
-        // assertEquals(Long.valueOf(20L), result.getPackageDeviceId());
+        Task task = mockTask(1L, "出液中");
+        task.setDecoctDeviceId(10L);
+        when(taskMapper.selectById(1L)).thenReturn(task);
+        when(equipmentService.getAutoLevel(10L)).thenReturn("auto");
+        when(equipmentService.getDeviceCode(10L)).thenReturn("D001");
+        // startWrap 需要 selectByIdForUpdate + 设备绑定
+        Task wrapReady = mockTask(1L, "待包装");
+        when(taskMapper.selectByIdForUpdate(1L)).thenReturn(wrapReady);
+        when(equipmentService.getDeviceId("D001")).thenReturn(20L);
+        when(equipmentService.getDeviceStatus(20L)).thenReturn("idle");
+
+        Task result = taskService.endPour(1L, "OP01");
+
+        assertEquals("包装中", result.getStatus());
+        assertEquals(Long.valueOf(20L), result.getPackageDeviceId());
+        verify(equipmentService).updateDeviceStatus(20L, "running");
     }
 
     @Test
     @DisplayName("endPour: 状态非出液中抛 IllegalStateException")
     void testEndPourWrongStatus() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "出液");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // assertThrows(IllegalStateException.class, () -> taskService.endPour(1L, "OP01"));
+        Task task = mockTask(1L, "出液");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        assertThrows(IllegalStateException.class, () -> taskService.endPour(1L, "OP01"));
     }
 
     // ==================== startWrap ====================
@@ -366,35 +378,39 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("startWrap: 待包装 → 包装中，绑定包装机 + 记录创建")
     void testStartWrapSuccess() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待包装");
-        // when(taskMapper.selectByIdForUpdate(1L)).thenReturn(task);
-        // when(equipmentService.getDeviceId("W001")).thenReturn(20L);
-        // when(equipmentService.getDeviceStatus(20L)).thenReturn("idle");
-        // Task result = taskService.startWrap(1L, "W001", "OP01");
-        // assertEquals("包装中", result.getStatus());
-        // assertEquals(Long.valueOf(20L), result.getPackageDeviceId());
-        // verify(equipmentService).updateDeviceStatus(20L, "running");
+        Task task = mockTask(1L, "待包装");
+        when(taskMapper.selectByIdForUpdate(1L)).thenReturn(task);
+        when(equipmentService.getDeviceId("W001")).thenReturn(20L);
+        when(equipmentService.getDeviceStatus(20L)).thenReturn("idle");
+
+        Task result = taskService.startWrap(1L, "W001", "OP01");
+
+        assertEquals("包装中", result.getStatus());
+        assertEquals(Long.valueOf(20L), result.getPackageDeviceId());
+        verify(equipmentService).updateDeviceStatus(20L, "running");
+        verify(workRecordMapper).insert(argThat((WorkRecord r) -> "WRAP".equals(r.getAction())));
+        verify(stepLogMapper).insert(argThat((StepLog s) -> "WRAP".equals(s.getStepType())));
+        verify(historyMapper).insert(any(TaskStatusHistory.class));
     }
 
     @Test
     @DisplayName("startWrap: 包装机非空闲抛 IllegalStateException")
     void testStartWrapDeviceNotIdle() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待包装");
-        // when(taskMapper.selectByIdForUpdate(1L)).thenReturn(task);
-        // when(equipmentService.getDeviceId("W001")).thenReturn(20L);
-        // when(equipmentService.getDeviceStatus(20L)).thenReturn("running");
-        // assertThrows(IllegalStateException.class, () -> taskService.startWrap(1L, "W001", "OP01"));
+        Task task = mockTask(1L, "待包装");
+        when(taskMapper.selectByIdForUpdate(1L)).thenReturn(task);
+        when(equipmentService.getDeviceId("W001")).thenReturn(20L);
+        when(equipmentService.getDeviceStatus(20L)).thenReturn("running");
+
+        assertThrows(IllegalStateException.class, () -> taskService.startWrap(1L, "W001", "OP01"));
     }
 
     @Test
     @DisplayName("startWrap: 状态非待包装抛 IllegalStateException")
     void testStartWrapWrongStatus() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "出液中");
-        // when(taskMapper.selectByIdForUpdate(1L)).thenReturn(task);
-        // assertThrows(IllegalStateException.class, () -> taskService.startWrap(1L, "W001", "OP01"));
+        Task task = mockTask(1L, "出液中");
+        when(taskMapper.selectByIdForUpdate(1L)).thenReturn(task);
+
+        assertThrows(IllegalStateException.class, () -> taskService.startWrap(1L, "W001", "OP01"));
     }
 
     // ==================== endWrap ====================
@@ -402,22 +418,25 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("endWrap: 包装中 → 待贴标，释放包装机 + 记录工时")
     void testEndWrapSuccess() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "包装中");
-        // task.setPackageDeviceId(20L);
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // Task result = taskService.endWrap(1L, "OP01");
-        // assertEquals("待贴标", result.getStatus());
-        // verify(equipmentService).releaseDevice(20L);
+        Task task = mockTask(1L, "包装中");
+        task.setPackageDeviceId(20L);
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        Task result = taskService.endWrap(1L, "OP01");
+
+        assertEquals("待贴标", result.getStatus());
+        verify(equipmentService).releaseDevice(20L);
+        verify(workRecordMapper).insert(argThat((WorkRecord r) -> "WRAP".equals(r.getAction())));
+        verify(historyMapper).insert(any(TaskStatusHistory.class));
     }
 
     @Test
     @DisplayName("endWrap: 状态非包装中抛 IllegalStateException")
     void testEndWrapWrongStatus() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待包装");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // assertThrows(IllegalStateException.class, () -> taskService.endWrap(1L, "OP01"));
+        Task task = mockTask(1L, "待包装");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        assertThrows(IllegalStateException.class, () -> taskService.endWrap(1L, "OP01"));
     }
 
     // ==================== confirmLabel ====================
@@ -425,21 +444,23 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("confirmLabel: 待贴标 → 待质检，创建并关闭 LABEL 工序日志")
     void testConfirmLabelSuccess() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待贴标");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // Task result = taskService.confirmLabel(1L, "OP01");
-        // assertEquals("待质检", result.getStatus());
-        // verify(stepLogMapper).insert(argThat(s -> "LABEL".equals(s.getStepType())));
+        Task task = mockTask(1L, "待贴标");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        Task result = taskService.confirmLabel(1L, "OP01");
+
+        assertEquals("待质检", result.getStatus());
+        verify(stepLogMapper).insert(argThat((StepLog s) -> "LABEL".equals(s.getStepType())));
+        verify(historyMapper).insert(any(TaskStatusHistory.class));
     }
 
     @Test
     @DisplayName("confirmLabel: 状态非待贴标抛 IllegalStateException")
     void testConfirmLabelWrongStatus() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待质检");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // assertThrows(IllegalStateException.class, () -> taskService.confirmLabel(1L, "OP01"));
+        Task task = mockTask(1L, "待质检");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        assertThrows(IllegalStateException.class, () -> taskService.confirmLabel(1L, "OP01"));
     }
 
     // ==================== qualityInspect 补充 ====================
@@ -447,13 +468,15 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("qualityInspect: CONCESSION 让步放行——待交接 + 异常标记")
     void testQualityInspectConcession() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待质检");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // taskService.qualityInspect(1L, InspectionResultType.CONCESSION, "OP01", "轻微糊味，允许放行");
-        // assertEquals("待交接", task.getStatus());
-        // assertEquals(Integer.valueOf(1), task.getIsException());
-        // verify(taskMapper).updateById(task);
+        Task task = mockTask(1L, "待质检");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        taskService.qualityInspect(1L, InspectionResultType.CONCESSION, "OP01", "轻微糊味，允许放行");
+
+        assertEquals("待交接", task.getStatus());
+        assertEquals(Integer.valueOf(1), task.getIsException());
+        verify(taskMapper).updateById(task);
+        verify(historyMapper).insert(any(TaskStatusHistory.class));
     }
 
     // ==================== handover ====================
@@ -461,33 +484,38 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("handover: 最终交接——已完成 + 记录交接时间")
     void testHandoverFinal() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待交接");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // Task result = taskService.handover(1L, 10, "自取", "张三", "10袋", true);
-        // assertEquals("已完成", result.getStatus());
-        // assertNotNull(result.getCompleteTime());
-        // verify(handoverDetailMapper).insert(any(HandoverDetail.class));
+        Task task = mockTask(1L, "待交接");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        Task result = taskService.handover(1L, 10, "自取", "张三", "10袋", true);
+
+        assertEquals("已完成", result.getStatus());
+        assertNotNull(result.getCompleteTime());
+        verify(handoverDetailMapper).insert(any(HandoverDetail.class));
+        verify(historyMapper).insert(argThat((TaskStatusHistory h) -> "已完成".equals(h.getToStatus())));
     }
 
     @Test
     @DisplayName("handover: 非最终交接——已部分完成")
     void testHandoverPartial() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待交接");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // Task result = taskService.handover(1L, 5, "快递", "李四", "5袋", false);
-        // assertEquals("已部分完成", result.getStatus());
-        // assertNull(result.getCompleteTime());
+        Task task = mockTask(1L, "待交接");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        Task result = taskService.handover(1L, 5, "快递", "李四", "5袋", false);
+
+        assertEquals("已部分完成", result.getStatus());
+        assertNull(result.getCompleteTime());
+        verify(historyMapper).insert(argThat((TaskStatusHistory h) -> "已部分完成".equals(h.getToStatus())));
     }
 
     @Test
     @DisplayName("handover: 状态不在 [待交接, 已部分完成] 抛 IllegalStateException")
     void testHandoverWrongStatus() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "煎药中");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // assertThrows(IllegalStateException.class, () -> taskService.handover(1L, 10, "自取", "王五", null, true));
+        Task task = mockTask(1L, "煎药中");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        assertThrows(IllegalStateException.class, () ->
+                taskService.handover(1L, 10, "自取", "王五", null, true));
     }
 
     // ==================== pauseStep / resumeStep ====================
@@ -495,44 +523,47 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("pauseStep: 正常暂停工序记录")
     void testPauseStepSuccess() {
-        // TODO: 架构师提交后填充
-        // StepLog step = new StepLog();
-        // step.setId(1L);
-        // when(stepLogMapper.selectById(1L)).thenReturn(step);
-        // StepLog result = taskService.pauseStep(1L, "设备故障");
-        // assertEquals(Integer.valueOf(1), result.getIsPaused());
-        // assertEquals("设备故障", result.getPauseReason());
-        // verify(stepLogMapper).updateById(step);
+        StepLog step = new StepLog();
+        step.setId(1L);
+        when(stepLogMapper.selectById(1L)).thenReturn(step);
+
+        StepLog result = taskService.pauseStep(1L, "设备故障");
+
+        assertEquals(Integer.valueOf(1), result.getIsPaused());
+        assertEquals("设备故障", result.getPauseReason());
+        verify(stepLogMapper).updateById(step);
     }
 
     @Test
     @DisplayName("pauseStep: 工序记录不存在抛 IllegalArgumentException")
     void testPauseStepNotFound() {
-        // TODO: 架构师提交后填充
-        // when(stepLogMapper.selectById(99L)).thenReturn(null);
-        // assertThrows(IllegalArgumentException.class, () -> taskService.pauseStep(99L, "原因"));
+        when(stepLogMapper.selectById(99L)).thenReturn(null);
+
+        assertThrows(IllegalArgumentException.class, () -> taskService.pauseStep(99L, "原因"));
     }
 
     @Test
     @DisplayName("resumeStep: 正常恢复工序，累加暂停时长")
     void testResumeStepSuccess() {
-        // TODO: 架构师提交后填充
-        // StepLog step = new StepLog();
-        // step.setId(1L);
-        // step.setPauseDuration(5);
-        // when(stepLogMapper.selectById(1L)).thenReturn(step);
-        // StepLog result = taskService.resumeStep(1L);
-        // assertEquals(Integer.valueOf(0), result.getIsPaused());
-        // // pauseDuration 应在原基础上增加 (now - updatedAt) 分钟
-        // assertTrue(result.getPauseDuration() >= 5);
+        StepLog step = new StepLog();
+        step.setId(1L);
+        step.setPauseDuration(5);
+        when(stepLogMapper.selectById(1L)).thenReturn(step);
+
+        StepLog result = taskService.resumeStep(1L);
+
+        assertEquals(Integer.valueOf(0), result.getIsPaused());
+        // pauseDuration 应在原基础 5 上增加 (now - updatedAt) 分钟
+        assertTrue(result.getPauseDuration() >= 5);
+        verify(stepLogMapper).updateById(step);
     }
 
     @Test
     @DisplayName("resumeStep: 工序记录不存在抛 IllegalArgumentException")
     void testResumeStepNotFound() {
-        // TODO: 架构师提交后填充
-        // when(stepLogMapper.selectById(99L)).thenReturn(null);
-        // assertThrows(IllegalArgumentException.class, () -> taskService.resumeStep(99L));
+        when(stepLogMapper.selectById(99L)).thenReturn(null);
+
+        assertThrows(IllegalArgumentException.class, () -> taskService.resumeStep(99L));
     }
 
     // ==================== queryStepLogs / queryHandoverDetails ====================
@@ -540,17 +571,17 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("queryStepLogs: 按 taskId 查询工序记录，按 startedAt 升序")
     void testQueryStepLogs() {
-        // TODO: 架构师提交后填充
-        // taskService.queryStepLogs(1L);
-        // verify(stepLogMapper).selectList(any(LambdaQueryWrapper.class));
+        taskService.queryStepLogs(1L);
+
+        verify(stepLogMapper).selectList(any());
     }
 
     @Test
     @DisplayName("queryHandoverDetails: 按 taskId 查询交接明细，按 handoverTime 降序")
     void testQueryHandoverDetails() {
-        // TODO: 架构师提交后填充
-        // taskService.queryHandoverDetails(1L);
-        // verify(handoverDetailMapper).selectList(any(LambdaQueryWrapper.class));
+        taskService.queryHandoverDetails(1L);
+
+        verify(handoverDetailMapper).selectList(any());
     }
 
     // ==================== updateTemperature ====================
@@ -558,34 +589,36 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("updateTemperature: 正常温度上报，更新当前温度 + 设备温度 + 告警检查")
     void testUpdateTemperatureSuccess() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "煎药中");
-        // when(equipmentService.getDeviceId("D001")).thenReturn(10L);
-        // when(taskMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(task);
-        // Task result = taskService.updateTemperature("D001", BigDecimal.valueOf(98.5));
-        // assertEquals(0, BigDecimal.valueOf(98.5).compareTo(result.getCurrentTemp()));
-        // verify(equipmentService).updateTemperature(10L, BigDecimal.valueOf(98.5));
-        // verify(equipmentService).checkTemperatureAlarm(10L, BigDecimal.valueOf(98.5));
+        Task task = mockTask(1L, "煎药中");
+        when(equipmentService.getDeviceId("D001")).thenReturn(10L);
+        when(taskMapper.selectOne(any())).thenReturn(task);
+
+        Task result = taskService.updateTemperature("D001", BigDecimal.valueOf(98.5));
+
+        assertEquals(0, BigDecimal.valueOf(98.5).compareTo(result.getCurrentTemp()));
+        verify(equipmentService).updateTemperature(10L, BigDecimal.valueOf(98.5));
+        verify(equipmentService).checkTemperatureAlarm(10L, BigDecimal.valueOf(98.5));
     }
 
     @Test
     @DisplayName("updateTemperature: 设备编码不存在返回 null")
     void testUpdateTemperatureDeviceNotFound() {
-        // TODO: 架构师提交后填充
-        // when(equipmentService.getDeviceId("UNKNOWN")).thenReturn(null);
-        // assertNull(taskService.updateTemperature("UNKNOWN", BigDecimal.valueOf(100)));
+        when(equipmentService.getDeviceId("UNKNOWN")).thenReturn(null);
+
+        assertNull(taskService.updateTemperature("UNKNOWN", BigDecimal.valueOf(100)));
     }
 
     @Test
     @DisplayName("updateTemperature: 待煎药状态—温度上报自动推进到煎药中")
     void testUpdateTemperatureAutoAdvance() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待煎药");
-        // when(equipmentService.getDeviceId("D001")).thenReturn(10L);
-        // when(taskMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(task);
-        // Task result = taskService.updateTemperature("D001", BigDecimal.valueOf(95));
-        // assertEquals("煎药中", result.getStatus());
-        // verify(historyMapper).insert(argThat(h -> "待煎药".equals(h.getFromStatus()) && "煎药中".equals(h.getToStatus())));
+        Task task = mockTask(1L, "待煎药");
+        when(equipmentService.getDeviceId("D001")).thenReturn(10L);
+        when(taskMapper.selectOne(any())).thenReturn(task);
+
+        Task result = taskService.updateTemperature("D001", BigDecimal.valueOf(95));
+
+        assertEquals("煎药中", result.getStatus());
+        verify(historyMapper).insert(argThat((TaskStatusHistory h) -> "待煎药".equals(h.getFromStatus()) && "煎药中".equals(h.getToStatus())));
     }
 
     // ==================== getById / clearAll ====================
@@ -593,18 +626,18 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("getById: 返回 taskMapper.selectById 结果")
     void testGetById() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待泡药");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // assertEquals(task, taskService.getById(1L));
+        Task task = mockTask(1L, "待泡药");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        assertEquals(task, taskService.getById(1L));
     }
 
     @Test
     @DisplayName("clearAll: 委托 taskMapper.delete(null) 执行")
     void testClearAll() {
-        // TODO: 架构师提交后填充
-        // when(taskMapper.delete(null)).thenReturn(5);
-        // assertEquals(5, taskService.clearAll());
+        when(taskMapper.delete(any())).thenReturn(5);
+
+        assertEquals(5, taskService.clearAll());
     }
 
     // ==================== queryTasks ====================
@@ -612,9 +645,9 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("queryTasks: 按状态和设备 ID 分页查询")
     void testQueryTasksWithFilters() {
-        // TODO: 架构师提交后填充
-        // taskService.queryTasks("煎药中", 10L, 1, 20);
-        // verify(taskMapper).selectPage(any(Page.class), any(LambdaQueryWrapper.class));
+        taskService.queryTasks("煎药中", 10L, 1, 20);
+
+        verify(taskMapper).selectPage(any(), any());
     }
 
     // ==================== queryPrintTasks ====================
@@ -622,17 +655,17 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("queryPrintTasks: 查询待贴标且打印状态为 PENDING/FAILED 的任务")
     void testQueryPrintTasksDefault() {
-        // TODO: 架构师提交后填充
-        // taskService.queryPrintTasks(null);
-        // verify(taskMapper).selectList(any(LambdaQueryWrapper.class));
+        taskService.queryPrintTasks(null);
+
+        verify(taskMapper).selectList(any());
     }
 
     @Test
     @DisplayName("queryPrintTasks: 按指定 printStatus 过滤")
     void testQueryPrintTasksWithStatus() {
-        // TODO: 架构师提交后填充
-        // taskService.queryPrintTasks("FAILED");
-        // verify(taskMapper).selectList(any(LambdaQueryWrapper.class));
+        taskService.queryPrintTasks("FAILED");
+
+        verify(taskMapper).selectList(any());
     }
 
     // ==================== retryPrint ====================
@@ -640,25 +673,29 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("retryPrint: 重试打印成功——重置状态 + 委托打印服务")
     void testRetryPrintSuccess() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待贴标");
-        // task.setPrintStatus("FAILED");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // when(printService.getPrintStatus(1L)).thenReturn("PRINTED");
-        // when(equipmentService.getDeviceId("P001")).thenReturn(30L);
-        // Task result = taskService.retryPrint(1L, "P001", "OP01");
-        // assertEquals("PRINTED", result.getPrintStatus());
-        // verify(printService).retryPrint(1L, "P001", "OP01");
+        Task task = mockTask(1L, "待贴标");
+        task.setPrintStatus("FAILED");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+        when(printService.getPrintStatus(1L)).thenReturn("PRINTED");
+        when(equipmentService.getDeviceId("P001")).thenReturn(30L);
+
+        Task result = taskService.retryPrint(1L, "P001", "OP01");
+
+        assertEquals("PRINTED", result.getPrintStatus());
+        assertEquals(Long.valueOf(30L), result.getPrintDeviceId());
+        verify(printService).retryPrint(1L, "P001", "OP01");
+        verify(historyMapper).insert(argThat((TaskStatusHistory h) -> "PRINTED".equals(h.getToStatus())));
     }
 
     @Test
     @DisplayName("retryPrint: 打印状态不允许重试抛 IllegalStateException")
     void testRetryPrintWrongStatus() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待贴标");
-        // task.setPrintStatus("PRINTING");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // assertThrows(IllegalStateException.class, () -> taskService.retryPrint(1L, "P001", "OP01"));
+        Task task = mockTask(1L, "待贴标");
+        task.setPrintStatus("PRINTING");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        assertThrows(IllegalStateException.class, () ->
+                taskService.retryPrint(1L, "P001", "OP01"));
     }
 
     // ==================== forceStatus 补充 ====================
@@ -666,36 +703,146 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("forceStatus: 强制推进到包装中——绑定包装机 + 状态覆盖")
     void testForceStatusToWrap() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待包装");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // EqDeviceDTO dto = new EqDeviceDTO();
-        // dto.setId(20L);
-        // when(equipmentService.getOrCreateDevice("W001", 2)).thenReturn(dto);
-        // Task result = taskService.forceStatus(1L, "包装中", "OP01", "W001", "强制包装");
-        // assertEquals("包装中", result.getStatus());
-        // assertEquals(Long.valueOf(20L), result.getPackageDeviceId());
-        // verify(equipmentService).updateDeviceStatus(20L, "running");
+        Task task = mockTask(1L, "待包装");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+        EqDeviceDTO dto = new EqDeviceDTO();
+        dto.setId(20L);
+        when(equipmentService.getOrCreateDevice("W001", 2)).thenReturn(dto);
+
+        Task result = taskService.forceStatus(1L, "包装中", "OP01", "W001", "强制包装");
+
+        assertEquals("包装中", result.getStatus());
+        assertEquals(Long.valueOf(20L), result.getPackageDeviceId());
+        verify(equipmentService).updateDeviceStatus(20L, "running");
+        verify(historyMapper).insert(argThat((TaskStatusHistory h) -> "包装中".equals(h.getToStatus())));
     }
 
     @Test
     @DisplayName("forceStatus: 无设备编码的纯状态强制推进")
     void testForceStatusNoDevice() {
-        // TODO: 架构师提交后填充
-        // Task task = mockTask(1L, "待质检");
-        // when(taskMapper.selectById(1L)).thenReturn(task);
-        // Task result = taskService.forceStatus(1L, "待交接", "OP01", null, "人为跳过质检");
-        // assertEquals("待交接", result.getStatus());
-        // verify(equipmentService, never()).getOrCreateDevice(any(), anyInt());
+        Task task = mockTask(1L, "待质检");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        Task result = taskService.forceStatus(1L, "待交接", "OP01", null, "人为跳过质检");
+
+        assertEquals("待交接", result.getStatus());
+        assertEquals("OP01", result.getOperatorId());
+        verify(equipmentService, never()).getOrCreateDevice(any(), anyInt());
+        verify(historyMapper).insert(argThat((TaskStatusHistory h) -> "待交接".equals(h.getToStatus())));
     }
 
     // ==================== 任务不存在 ====================
 
     @Test
-    @DisplayName("所有状态变更方法：任务不存在抛 IllegalArgumentException")
-    void testAllMethodsThrowWhenTaskNotFound() {
-        // TODO: 架构师提交后填充
-        // 对每个需要查询任务的方法，验证 taskId=99 且 taskMapper.selectById 返回 null 时
-        // 抛出 IllegalArgumentException("任务不存在")
+    @DisplayName("startSoak: 任务不存在抛 IllegalArgumentException")
+    void testStartSoakTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () -> taskService.startSoak(99L, "OP01"));
+    }
+
+    @Test
+    @DisplayName("endSoak: 任务不存在抛 IllegalArgumentException")
+    void testEndSoakTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () -> taskService.endSoak(99L, "OP01"));
+    }
+
+    @Test
+    @DisplayName("endDecoct: 任务不存在抛 IllegalArgumentException")
+    void testEndDecoctTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () -> taskService.endDecoct(99L, "OP01"));
+    }
+
+    @Test
+    @DisplayName("startPour: 任务不存在抛 IllegalArgumentException")
+    void testStartPourTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () -> taskService.startPour(99L, "OP01"));
+    }
+
+    @Test
+    @DisplayName("endPour: 任务不存在抛 IllegalArgumentException")
+    void testEndPourTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () -> taskService.endPour(99L, "OP01"));
+    }
+
+    @Test
+    @DisplayName("endWrap: 任务不存在抛 IllegalArgumentException")
+    void testEndWrapTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () -> taskService.endWrap(99L, "OP01"));
+    }
+
+    @Test
+    @DisplayName("confirmLabel: 任务不存在抛 IllegalArgumentException")
+    void testConfirmLabelTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () -> taskService.confirmLabel(99L, "OP01"));
+    }
+
+    @Test
+    @DisplayName("qualityInspect: 任务不存在抛 IllegalArgumentException")
+    void testQualityInspectTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () ->
+                taskService.qualityInspect(99L, InspectionResultType.PASS, "OP01", null));
+    }
+
+    @Test
+    @DisplayName("handover: 任务不存在抛 IllegalArgumentException")
+    void testHandoverTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () ->
+                taskService.handover(99L, 10, "自取", "张三", null, true));
+    }
+
+    @Test
+    @DisplayName("printLabel: 任务不存在抛 IllegalArgumentException")
+    void testPrintLabelTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () ->
+                taskService.printLabel(99L, "P001", "OP01"));
+    }
+
+    @Test
+    @DisplayName("retryPrint: 任务不存在抛 IllegalArgumentException")
+    void testRetryPrintTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () ->
+                taskService.retryPrint(99L, "P001", "OP01"));
+    }
+
+    @Test
+    @DisplayName("forceStatus: 任务不存在抛 IllegalArgumentException")
+    void testForceStatusTaskNotFound() {
+        when(taskMapper.selectById(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () ->
+                taskService.forceStatus(99L, "待交接", "OP01", null, null));
+    }
+
+    @Test
+    @DisplayName("bindDevice: 任务不存在抛 IllegalArgumentException")
+    void testBindDeviceTaskNotFound() {
+        when(taskMapper.selectByIdForUpdate(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () ->
+                taskService.bindDevice(99L, "D001"));
+    }
+
+    @Test
+    @DisplayName("startDecoct: 任务不存在抛 IllegalArgumentException")
+    void testStartDecoctTaskNotFound() {
+        when(taskMapper.selectByIdForUpdate(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () ->
+                taskService.startDecoct(99L, "D001", "OP01"));
+    }
+
+    @Test
+    @DisplayName("startWrap: 任务不存在抛 IllegalArgumentException")
+    void testStartWrapTaskNotFound() {
+        when(taskMapper.selectByIdForUpdate(99L)).thenReturn(null);
+        assertThrows(IllegalArgumentException.class, () ->
+                taskService.startWrap(99L, "W001", "OP01"));
     }
 }
