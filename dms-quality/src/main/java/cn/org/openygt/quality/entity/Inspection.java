@@ -23,4 +23,10 @@ public class Inspection extends BaseEntity {
     private String operatorId;
     private String remark;
     private LocalDateTime inspectedAt;
+
+    /** 是否异常：0=正常，1=异常（CONCESSION/REWORK/SCRAP 均置 1） */
+    private Integer isException;
+
+    /** 异常原因摘要 */
+    private String exceptionReason;
 }

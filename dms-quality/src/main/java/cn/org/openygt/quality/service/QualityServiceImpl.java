@@ -31,12 +31,15 @@ public class QualityServiceImpl implements QualityService {
         }
 
         // 写入质检记录（dms-quality 仅负责 qt_inspection 表）
+        boolean isException = isExceptionResult(result);
         Inspection inspection = new Inspection();
         inspection.setTaskId(taskId);
         inspection.setResult(result);
         inspection.setOperatorId(operatorId);
         inspection.setRemark(remark);
         inspection.setInspectedAt(LocalDateTime.now());
+        inspection.setIsException(isException ? 1 : 0);
+        inspection.setExceptionReason(isException ? remark : null);
         inspectionMapper.insert(inspection);
 
         InspectionResult ir = new InspectionResult();
@@ -47,7 +50,7 @@ public class QualityServiceImpl implements QualityService {
         ir.setOperatorId(operatorId);
         ir.setRemark(remark);
         ir.setInspectedAt(LocalDateTime.now());
-        ir.setIsException(isExceptionResult(result) ? 1 : null);
+        ir.setIsException(isExceptionResult(result) ? 1 : 0);
         ir.setExceptionReason(isExceptionResult(result) ? remark : null);
 
         log.info("质检完成: taskId={}, result={}, operatorId={}", taskId, result, operatorId);
@@ -72,6 +75,8 @@ public class QualityServiceImpl implements QualityService {
         ir.setOperatorId(inspection.getOperatorId());
         ir.setRemark(inspection.getRemark());
         ir.setInspectedAt(inspection.getInspectedAt());
+        ir.setIsException(inspection.getIsException());
+        ir.setExceptionReason(inspection.getExceptionReason());
         return ir;
     }
 
@@ -104,6 +109,8 @@ public class QualityServiceImpl implements QualityService {
     }
 
     private boolean isExceptionResult(InspectionResultType result) {
-        return result == InspectionResultType.CONCESSION || result == InspectionResultType.SCRAP;
+        return result == InspectionResultType.CONCESSION
+                || result == InspectionResultType.REWORK
+                || result == InspectionResultType.SCRAP;
     }
 }
