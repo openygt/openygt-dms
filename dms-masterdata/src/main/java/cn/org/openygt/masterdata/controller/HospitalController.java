@@ -1,10 +1,15 @@
 package cn.org.openygt.masterdata.controller;
 
 import cn.org.openygt.common.dto.ApiResponse;
+import cn.org.openygt.masterdata.dto.HospitalResponse;
 import cn.org.openygt.masterdata.entity.Hospital;
 import cn.org.openygt.masterdata.service.HospitalService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/md/hospitals")
@@ -17,30 +22,40 @@ public class HospitalController {
     }
 
     @PostMapping
-    public ApiResponse<Hospital> create(@RequestBody Hospital hospital) {
-        return ApiResponse.success(hospitalService.create(hospital));
+    public ApiResponse<HospitalResponse> create(@RequestBody Hospital hospital) {
+        return ApiResponse.success(toResponse(hospitalService.create(hospital)));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<Hospital> update(@PathVariable Long id, @RequestBody Hospital hospital) {
-        return ApiResponse.success(hospitalService.update(id, hospital));
+    public ApiResponse<HospitalResponse> update(@PathVariable Long id, @RequestBody Hospital hospital) {
+        return ApiResponse.success(toResponse(hospitalService.update(id, hospital)));
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<Hospital> getById(@PathVariable Long id) {
-        return ApiResponse.success(hospitalService.getById(id));
+    public ApiResponse<HospitalResponse> getById(@PathVariable Long id) {
+        return ApiResponse.success(toResponse(hospitalService.getById(id)));
     }
 
     @GetMapping
-    public ApiResponse<IPage<Hospital>> list(
+    public ApiResponse<IPage<HospitalResponse>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(hospitalService.list(page, size));
+        IPage<Hospital> entityPage = hospitalService.list(page, size);
+        // 使用 MyBatis-Plus 的 convert 方法转换记录类型
+        IPage<HospitalResponse> respPage = entityPage.convert(this::toResponse);
+        return ApiResponse.success(respPage);
     }
 
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         hospitalService.delete(id);
         return ApiResponse.success();
+    }
+
+    private HospitalResponse toResponse(Hospital entity) {
+        if (entity == null) return null;
+        HospitalResponse resp = new HospitalResponse();
+        BeanUtils.copyProperties(entity, resp);
+        return resp;
     }
 }

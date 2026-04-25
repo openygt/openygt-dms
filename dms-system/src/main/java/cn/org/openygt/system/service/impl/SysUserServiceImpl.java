@@ -1,11 +1,15 @@
 package cn.org.openygt.system.service.impl;
 
+import cn.org.openygt.common.dto.LoginRequest;
+import cn.org.openygt.common.dto.TokenResponse;
+import cn.org.openygt.common.util.JwtUtil;
 import cn.org.openygt.system.entity.SysUser;
 import cn.org.openygt.system.mapper.SysUserMapper;
 import cn.org.openygt.system.service.SysUserService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,15 +17,21 @@ import org.springframework.transaction.annotation.Transactional;
 public class SysUserServiceImpl implements SysUserService {
 
     private final SysUserMapper userMapper;
+    private final BCryptPasswordEncoder passwordEncoder;
 
-    public SysUserServiceImpl(SysUserMapper userMapper) {
+    public SysUserServiceImpl(SysUserMapper userMapper, BCryptPasswordEncoder passwordEncoder) {
         this.userMapper = userMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     @Transactional
     public SysUser create(SysUser user) {
         user.setStatus("ACTIVE");
+        // 密码加密存储
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         userMapper.insert(user);
         return user;
     }
@@ -34,6 +44,10 @@ public class SysUserServiceImpl implements SysUserService {
             throw new IllegalArgumentException("用户不存在: " + id);
         }
         user.setId(id);
+        // 若更新密码，需重新加密
+        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        }
         userMapper.updateById(user);
         return userMapper.selectById(id);
     }
@@ -70,5 +84,27 @@ public class SysUserServiceImpl implements SysUserService {
     @Transactional
     public void delete(Long id) {
         userMapper.deleteById(id);
+    }
+
+    @Override
+    public TokenResponse login(LoginRequest request) {
+        SysUser user = getByUsername(request.getUsername());
+        if (user == null) {
+            throw new IllegalArgumentException("用户名或密码错误");
+        }
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("用户名或密码错误");
+        }
+        if (!"ACTIVE".equals(user.getStatus())) {
+            throw new IllegalStateException("用户已被禁用");
+        }
+        String token = JwtUtil.generateToken(user.getId(), user.getUsername());
+        TokenResponse response = new TokenResponse();
+        response.setToken(token);
+        response.setTokenType("Bearer");
+        response.setExpiresIn(86400L);
+        response.setUserId(user.getId());
+        response.setUsername(user.getUsername());
+        return response;
     }
 }

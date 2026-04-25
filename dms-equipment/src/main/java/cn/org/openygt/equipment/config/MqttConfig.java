@@ -11,6 +11,12 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.math.BigDecimal;
 
+/**
+ * MQTT 配置与消息处理器。
+ *
+ * <p>Topic 格式: /openygt/{tenantId}/{deviceCode}/{messageType}</p>
+ * <p>messageType: status / fault / online / offline</p>
+ */
 @Slf4j
 @Configuration
 public class MqttConfig {
@@ -21,7 +27,7 @@ public class MqttConfig {
     @Value("${mqtt.client-id}")
     private String clientId;
 
-    @Value("${mqtt.topic-subscription}")
+    @Value("${mqtt.topic-subscription:+/+/+}")
     private String topicSubscription;
 
     private final EquipmentService equipmentService;
@@ -42,13 +48,15 @@ public class MqttConfig {
             options.setKeepAliveInterval(20);
             mqttClient.connect(options);
 
-            mqttClient.subscribe(topicSubscription, (topic, msg) -> {
+            // 订阅 /openygt/tenantId/deviceCode/messageType 格式
+            String subscribeTopic = "/openygt/" + topicSubscription;
+            mqttClient.subscribe(subscribeTopic, (topic, msg) -> {
                 String payload = new String(msg.getPayload());
                 log.info("MQTT received: topic={}, payload={}", topic, payload);
                 handleMessage(topic, payload);
             });
 
-            log.info("MQTT subscribed to {}", topicSubscription);
+            log.info("MQTT subscribed to {}", subscribeTopic);
         } catch (Exception e) {
             log.error("MQTT连接失败", e);
         }
@@ -56,16 +64,19 @@ public class MqttConfig {
 
     private void handleMessage(String topic, String payload) {
         try {
+            // 格式: /openygt/{tenantId}/{deviceCode}/{messageType}
             String[] parts = topic.split("/");
-            if (parts.length < 3) {
+            if (parts.length < 5) {
+                log.warn("Topic格式不匹配: {}", topic);
                 return;
             }
-            String deviceCode = parts[1];
-            String messageType = parts[2];
+            String tenantId = parts[2];
+            String deviceCode = parts[3];
+            String messageType = parts[4];
 
             Long deviceId = equipmentService.getDeviceId(deviceCode);
             if (deviceId == null) {
-                log.warn("未知设备: {}", deviceCode);
+                log.warn("未知设备: {}, tenantId={}", deviceCode, tenantId);
                 return;
             }
 

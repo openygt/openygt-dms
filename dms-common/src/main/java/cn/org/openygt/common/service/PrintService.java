@@ -1,5 +1,9 @@
 package cn.org.openygt.common.service;
 
+import cn.org.openygt.common.dto.PrintTaskDTO;
+
+import java.util.List;
+
 /**
  * 打印中心模块对外服务接口。
  * 定义在 dms-common，由 dms-print 实现。
@@ -11,5 +15,5 @@ public interface PrintService {
 
     void retryPrint(Long taskId, String deviceCode, String operatorId);
 
-    Object getPrintQueue();
+    List<PrintTaskDTO> getPrintQueue();
 }

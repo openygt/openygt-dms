@@ -9,7 +9,7 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Configuration
 @MapperScan("cn.org.openygt.**.mapper")
@@ -24,12 +24,12 @@ public class MybatisPlusConfig implements MetaObjectHandler {
 
     @Override
     public void insertFill(MetaObject metaObject) {
-        this.strictInsertFill(metaObject, "createdAt", Date.class, new Date());
-        this.strictInsertFill(metaObject, "updatedAt", Date.class, new Date());
+        this.strictInsertFill(metaObject, "createdAt", LocalDateTime.class, LocalDateTime.now());
+        this.strictInsertFill(metaObject, "updatedAt", LocalDateTime.class, LocalDateTime.now());
     }
 
     @Override
     public void updateFill(MetaObject metaObject) {
-        this.strictUpdateFill(metaObject, "updatedAt", Date.class, new Date());
+        this.strictUpdateFill(metaObject, "updatedAt", LocalDateTime.class, LocalDateTime.now());
     }
 }

@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Data
 public abstract class BaseEntity {
@@ -17,9 +17,9 @@ public abstract class BaseEntity {
     @TableField("tenant_id")
     private String tenantId = "default";
 
-    private Date createdAt;
+    private LocalDateTime createdAt;
 
-    private Date updatedAt;
+    private LocalDateTime updatedAt;
 
     @TableLogic
     private Integer deleted = 0;

@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Data
 @TableName("prt_task")
@@ -28,9 +28,11 @@ public class PrintTask {
 
     private Integer retryCount;
 
-    private Date createdAt;
+    private Integer maxRetry;
 
-    private Date updatedAt;
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 
     private Integer deleted;
 }

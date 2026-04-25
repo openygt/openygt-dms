@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 
@@ -21,7 +22,8 @@ public class DatabaseInitConfig implements CommandLineRunner {
         "V1__init.sql",
         "V2__refactor.sql",
         "V3__new_flow.sql",
-        "V4__module_split.sql"
+        "V4__module_split.sql",
+        "V5__v1_4_refactor.sql"
     };
 
     private final DataSource dataSource;
@@ -56,16 +58,20 @@ public class DatabaseInitConfig implements CommandLineRunner {
     }
 
     private boolean hasRun(Connection conn, String script) throws Exception {
-        try (Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                 "SELECT COUNT(*) FROM sys_migration WHERE script = '" + script + "'")) {
-            return rs.next() && rs.getInt(1) > 0;
+        String sql = "SELECT COUNT(*) FROM sys_migration WHERE script = ?";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, script);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
         }
     }
 
     private void markRun(Connection conn, String script) throws Exception {
-        try (Statement stmt = conn.createStatement()) {
-            stmt.execute("INSERT INTO sys_migration (script) VALUES ('" + script + "')");
+        String sql = "INSERT INTO sys_migration (script) VALUES (?)";
+        try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, script);
+            stmt.executeUpdate();
         }
     }
 }

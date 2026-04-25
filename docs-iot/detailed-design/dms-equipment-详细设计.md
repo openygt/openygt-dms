@@ -39,10 +39,10 @@ openygt-dms/
 │   │   │       └── DonghuayuanTcpAdapter.java  # MVP 唯一实现
 │   │   ├── mqtt/                 # MQTT 配置与消息处理
 │   │   │   └── MqttConfig.java
-│   │   ├── entity/               # JPA 实体
+│   │   ├── entity/               # MyBatis-Plus 实体
 │   │   ├── dto/                  # 数据传输对象
 │   │   ├── mapper/               # MapStruct 映射器
-│   │   ├── repository/           # Spring Data JPA Repository
+│   │   ├── repository/           # MyBatis-Plus Mapper
 │   │   └── enums/                # 状态、类型、告警等级枚举
 │   └── pom.xml
 ```
@@ -113,7 +113,7 @@ CREATE TABLE eq_device (
     device_code     VARCHAR(64) NOT NULL,
     name            VARCHAR(128) NOT NULL,
     device_type     VARCHAR(32) NOT NULL COMMENT 'DECOCT_MACHINE/PACKING_MACHINE/WASHING_MACHINE',
-    status          VARCHAR(16) NOT NULL DEFAULT 'OFFLINE' COMMENT 'OFFLINE/IDLE/RUNNING/ALARM/MAINTENANCE',
+    status          VARCHAR(16) NOT NULL DEFAULT 'OFFLINE' COMMENT 'OFFLINE/IDLE/RUNNING/FAULT/MAINTENANCE',
     current_temp    DECIMAL(5,2),
     fault_code      VARCHAR(16),
     auto_level      VARCHAR(16) DEFAULT 'MANUAL' COMMENT 'MANUAL/AUTO/SEMI',
@@ -181,9 +181,7 @@ CREATE TABLE eq_temperature_log (
     device_id       BIGINT NOT NULL,
     temperature     DECIMAL(5,2) NOT NULL,
     recorded_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    created_by      BIGINT,
     created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_by      BIGINT,
     updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY idx_eq_temp_device (tenant_id, device_id),
     KEY idx_eq_temp_recorded (tenant_id, recorded_at),
@@ -202,7 +200,7 @@ CREATE TABLE eq_temperature_log (
 | device_code | VARCHAR(64) | 是 | 设备编码，租户内唯一 |
 | name | VARCHAR(128) | 是 | 设备名称 |
 | device_type | VARCHAR(32) | 是 | 设备类型枚举 |
-| status | VARCHAR(16) | 是 | 设备状态：OFFLINE/IDLE/RUNNING/ALARM/MAINTENANCE |
+| status | VARCHAR(16) | 是 | 设备状态：OFFLINE/IDLE/RUNNING/FAULT/MAINTENANCE |
 | current_temp | DECIMAL(5,2) | 否 | 当前温度（℃） |
 | fault_code | VARCHAR(16) | 否 | 设备故障码 |
 | auto_level | VARCHAR(16) | 否 | 自动化等级 |
@@ -225,7 +223,7 @@ CREATE TABLE eq_temperature_log (
 | device_id | BIGINT | 是 | 关联设备ID |
 | temperature | DECIMAL(5,2) | 是 | 记录温度 |
 | recorded_at | DATETIME | 是 | 温度记录时间（设备上报时间） |
-| created_by / created_at / updated_by / updated_at | — | 是 | BaseAuditEntity 审计字段 |
+| created_at / updated_at | — | 是 | BaseAuditEntity 审计字段 |
 
 ### 3.3 索引设计说明
 
@@ -241,7 +239,7 @@ CREATE TABLE eq_temperature_log (
 ### 4.1 包结构
 
 ```
-com.openygt.dms.equipment.entity
+cn.org.openygt.equipment.entity
 ├── EqDevice.java            # 设备主实体（继承 BaseEntity）
 ├── EqDeviceConnection.java  # 设备关联实体（继承 BaseEntity）
 ├── EqDeviceAlarm.java       # 告警实体（继承 BaseEntity）
@@ -251,9 +249,9 @@ com.openygt.dms.equipment.entity
 ### 4.2 EqDevice
 
 ```java
-package com.openygt.dms.equipment.entity;
+package cn.org.openygt.equipment.entity;
 
-import com.openygt.dms.common.entity.BaseEntity;
+import cn.org.openygt.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -328,9 +326,9 @@ public class EqDevice extends BaseEntity {
 ### 4.3 EqTemperatureLog（关键修改点）
 
 ```java
-package com.openygt.dms.equipment.entity;
+package cn.org.openygt.equipment.entity;
 
-import com.openygt.dms.common.entity.BaseAuditEntity;  // 【修改】从 BaseEntity 改为 BaseAuditEntity
+import cn.org.openygt.common.entity.BaseAuditEntity;  // 【修改】从 BaseEntity 改为 BaseAuditEntity
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -368,7 +366,7 @@ public enum DeviceStatus {
     OFFLINE,     // 离线
     IDLE,        // 在线空闲
     RUNNING,     // 运行中
-    ALARM,       // 告警中
+    FAULT,       // 告警中
     MAINTENANCE  // 维护中
 }
 
@@ -434,7 +432,7 @@ public class EqDeviceDTO {
 @Data @NoArgsConstructor @AllArgsConstructor
 public class DeviceStatusPayload {
     private String deviceCode;
-    private String status;        // "IDLE" / "RUNNING" / "ALARM"
+    private String status;        // "IDLE" / "RUNNING" / "FAULT"
     private BigDecimal temperature;
     private String faultCode;     // 可能为 null
 }
@@ -465,25 +463,25 @@ public class TemperatureThresholdDTO {
 
 | 方法 | 路径 | 说明 | 权限 |
 |------|------|------|------|
-| GET | `/api/v1/equipment/devices` | 分页查询设备列表 | equipment:read |
-| GET | `/api/v1/equipment/devices/{id}` | 查询设备详情 | equipment:read |
-| POST | `/api/v1/equipment/devices` | 创建设备 | equipment:write |
-| PUT | `/api/v1/equipment/devices/{id}` | 修改设备 | equipment:write |
-| DELETE | `/api/v1/equipment/devices/{id}` | 删除设备（软删） | equipment:write |
-| POST | `/api/v1/equipment/devices/{id}/reserve` | 占用设备 | equipment:operate |
-| POST | `/api/v1/equipment/devices/{id}/release` | 释放设备 | equipment:operate |
-| GET | `/api/v1/equipment/devices/{id}/threshold` | 查询生效温度阈值 | equipment:read |
-| GET | `/api/v1/equipment/devices/{id}/temperature-logs` | 查询温度曲线 | equipment:read |
-| GET | `/api/v1/equipment/alarms` | 分页查询告警列表 | equipment:read |
-| POST | `/api/v1/equipment/alarms/{id}/resolve` | 手动解除告警 | equipment:operate |
+| GET | `/api/v1/eq/devices` | 分页查询设备列表 | equipment:read |
+| GET | `/api/v1/eq/devices/{id}` | 查询设备详情 | equipment:read |
+| POST | `/api/v1/eq/devices` | 创建设备 | equipment:write |
+| PUT | `/api/v1/eq/devices/{id}` | 修改设备 | equipment:write |
+| DELETE | `/api/v1/eq/devices/{id}` | 删除设备（软删） | equipment:write |
+| POST | `/api/v1/eq/devices/{id}/reserve` | 占用设备 | equipment:operate |
+| POST | `/api/v1/eq/devices/{id}/release` | 释放设备 | equipment:operate |
+| GET | `/api/v1/eq/devices/{id}/threshold` | 查询生效温度阈值 | equipment:read |
+| GET | `/api/v1/eq/devices/{id}/temperature-logs` | 查询温度曲线 | equipment:read |
+| GET | `/api/v1/eq/alarms` | 分页查询告警列表 | equipment:read |
+| POST | `/api/v1/eq/alarms/{id}/resolve` | 手动解除告警 | equipment:operate |
 
 ### 5.2 关键接口详细设计
 
-#### 5.2.1 占用设备 —— POST /api/v1/equipment/devices/{id}/reserve
+#### 5.2.1 占用设备 —— POST /api/v1/eq/devices/{id}/reserve
 
 ```java
 @PostMapping("/{id}/reserve")
-public Result<EqDeviceDTO> reserveDevice(
+public ApiResponse<EqDeviceDTO> reserveDevice(
         @PathVariable Long id,
         @RequestBody @Valid DeviceReserveRequest request) {
     EqDeviceDTO device = equipmentService.reserveDevice(id, request.getTaskId());
@@ -521,11 +519,11 @@ public Result<EqDeviceDTO> reserveDevice(
 }
 ```
 
-#### 5.2.2 释放设备 —— POST /api/v1/equipment/devices/{id}/release
+#### 5.2.2 释放设备 —— POST /api/v1/eq/devices/{id}/release
 
 ```java
 @PostMapping("/{id}/release")
-public Result<EqDeviceDTO> releaseDevice(
+public ApiResponse<EqDeviceDTO> releaseDevice(
         @PathVariable Long id,
         @RequestParam(required = false) Long taskId) {
     EqDeviceDTO device = equipmentService.releaseDevice(id, taskId);
@@ -539,11 +537,11 @@ public Result<EqDeviceDTO> releaseDevice(
 3. 状态变更为 `IDLE`；
 4. `taskId` 用于校验是否为同一任务释放（可选，如传入则校验匹配）。
 
-#### 5.2.3 查询生效温度阈值 —— GET /api/v1/equipment/devices/{id}/threshold
+#### 5.2.3 查询生效温度阈值 —— GET /api/v1/eq/devices/{id}/threshold
 
 ```java
 @GetMapping("/{id}/threshold")
-public Result<TemperatureThresholdDTO> getEffectiveThreshold(@PathVariable Long id) {
+public ApiResponse<TemperatureThresholdDTO> getEffectiveThreshold(@PathVariable Long id) {
     return Result.success(equipmentService.getEffectiveThreshold(id));
 }
 ```
@@ -564,18 +562,18 @@ public Result<TemperatureThresholdDTO> getEffectiveThreshold(@PathVariable Long 
 ### 5.3 Controller 完整代码
 
 ```java
-package com.openygt.dms.equipment.controller;
+package cn.org.openygt.equipment.controller;
 
-import com.openygt.dms.common.core.Result;
-import com.openygt.dms.equipment.dto.*;
-import com.openygt.dms.equipment.service.EquipmentService;
-import com.openygt.dms.equipment.service.EqDeviceService;
+import cn.org.openygt.common.dto.ApiResponse;
+import cn.org.openygt.equipment.dto.*;
+import cn.org.openygt.equipment.service.EquipmentService;
+import cn.org.openygt.equipment.service.EqDeviceService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/equipment/devices")
+@RequestMapping("/api/v1/eq/devices")
 @RequiredArgsConstructor
 public class EqDeviceController {
 
@@ -585,24 +583,24 @@ public class EqDeviceController {
     // ... 基础 CRUD 已存在，略 ...
 
     @PostMapping("/{id}/reserve")
-    public Result<EqDeviceDTO> reserveDevice(@PathVariable Long id,
+    public ApiResponse<EqDeviceDTO> reserveDevice(@PathVariable Long id,
                                              @RequestBody @Valid DeviceReserveRequest request) {
         return Result.success(equipmentService.reserveDevice(id, request.getTaskId()));
     }
 
     @PostMapping("/{id}/release")
-    public Result<EqDeviceDTO> releaseDevice(@PathVariable Long id,
+    public ApiResponse<EqDeviceDTO> releaseDevice(@PathVariable Long id,
                                              @RequestParam(required = false) Long taskId) {
         return Result.success(equipmentService.releaseDevice(id, taskId));
     }
 
     @GetMapping("/{id}/threshold")
-    public Result<TemperatureThresholdDTO> getEffectiveThreshold(@PathVariable Long id) {
+    public ApiResponse<TemperatureThresholdDTO> getEffectiveThreshold(@PathVariable Long id) {
         return Result.success(equipmentService.getEffectiveThreshold(id));
     }
 
     @GetMapping("/{id}/temperature-logs")
-    public Result<PageResult<TemperatureLogDTO>> getTemperatureLogs(
+    public ApiResponse<PageApiResponse<TemperatureLogDTO>> getTemperatureLogs(
             @PathVariable Long id,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
@@ -619,7 +617,7 @@ public class EqDeviceController {
 ### 6.1 接口定义
 
 ```java
-package com.openygt.dms.equipment.service;
+package cn.org.openygt.equipment.service;
 
 public interface EquipmentService {
     EqDeviceDTO getDeviceById(Long id);
@@ -632,18 +630,18 @@ public interface EquipmentService {
 ### 6.2 EquipmentServiceImpl 完整实现
 
 ```java
-package com.openygt.dms.equipment.service.impl;
+package cn.org.openygt.equipment.service.impl;
 
-import com.openygt.dms.common.exception.BusinessException;
-import com.openygt.dms.equipment.dto.EqDeviceDTO;
-import com.openygt.dms.equipment.dto.TemperatureThresholdDTO;
-import com.openygt.dms.equipment.entity.EqDevice;
-import com.openygt.dms.equipment.enums.DeviceStatus;
-import com.openygt.dms.equipment.mapper.EqDeviceMapper;
-import com.openygt.dms.equipment.repository.EqDeviceRepository;
-import com.openygt.dms.equipment.service.EquipmentService;
-import com.openygt.dms.masterdata.service.MdDecoctSchemeService;
-import com.openygt.dms.system.service.SysConfigService;
+import cn.org.openygt.common.exception.IllegalStateException;
+import cn.org.openygt.equipment.dto.EqDeviceDTO;
+import cn.org.openygt.equipment.dto.TemperatureThresholdDTO;
+import cn.org.openygt.equipment.entity.EqDevice;
+import cn.org.openygt.equipment.enums.DeviceStatus;
+import cn.org.openygt.equipment.mapper.EqDeviceMapper;
+import cn.org.openygt.equipment.mapper.EqDeviceMapper;
+import cn.org.openygt.equipment.service.EquipmentService;
+import cn.org.openygt.masterdata.service.MdDecoctSchemeService;
+import cn.org.openygt.system.service.SysConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -656,7 +654,7 @@ import java.math.BigDecimal;
 @RequiredArgsConstructor
 public class EquipmentServiceImpl implements EquipmentService {
 
-    private final EqDeviceRepository eqDeviceRepository;
+    private final EqDeviceMapper eqDeviceMapper;
     private final EqDeviceMapper eqDeviceMapper;
     private final SysConfigService sysConfigService;
     private final MdDecoctSchemeService mdDecoctSchemeService;
@@ -669,8 +667,8 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     @Override
     public EqDeviceDTO getDeviceById(Long id) {
-        EqDevice device = eqDeviceRepository.findById(id)
-            .orElseThrow(() -> new BusinessException("设备不存在: " + id));
+        EqDevice device = eqDeviceMapper.selectById(id)
+            .orElseThrow(() -> new IllegalStateException("设备不存在: " + id));
         return eqDeviceMapper.toDto(device);
     }
 
@@ -681,18 +679,18 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Transactional
     public EqDeviceDTO reserveDevice(Long deviceId, Long taskId) {
         // 1. 使用 SELECT FOR UPDATE 加锁
-        EqDevice device = eqDeviceRepository.findByIdForUpdate(deviceId)
-            .orElseThrow(() -> new BusinessException("设备不存在: " + deviceId));
+        EqDevice device = eqDeviceMapper.selectForUpdate(deviceId)
+            .orElseThrow(() -> new IllegalStateException("设备不存在: " + deviceId));
 
         // 2. 状态校验
         if (device.getStatus() != DeviceStatus.IDLE) {
-            throw new BusinessException("设备当前非空闲状态，无法占用：" + device.getStatus());
+            throw new IllegalStateException("设备当前非空闲状态，无法占用：" + device.getStatus());
         }
 
         // 3. 更新状态
         device.setStatus(DeviceStatus.RUNNING);
         // device.setCurrentTaskId(taskId);  // 如有任务ID字段则记录
-        eqDeviceRepository.save(device);
+        eqDeviceMapper.insert(device);
 
         log.info("设备已占用: deviceId={}, taskId={}", deviceId, taskId);
         return eqDeviceMapper.toDto(device);
@@ -704,17 +702,17 @@ public class EquipmentServiceImpl implements EquipmentService {
     @Override
     @Transactional
     public EqDeviceDTO releaseDevice(Long deviceId, Long taskId) {
-        EqDevice device = eqDeviceRepository.findByIdForUpdate(deviceId)
-            .orElseThrow(() -> new BusinessException("设备不存在: " + deviceId));
+        EqDevice device = eqDeviceMapper.selectForUpdate(deviceId)
+            .orElseThrow(() -> new IllegalStateException("设备不存在: " + deviceId));
 
         // 可选：校验是否为同一任务释放
         // if (taskId != null && !taskId.equals(device.getCurrentTaskId())) {
-        //     throw new BusinessException("任务ID不匹配，无法释放设备");
+        //     throw new IllegalStateException("任务ID不匹配，无法释放设备");
         // }
 
         device.setStatus(DeviceStatus.IDLE);
         // device.setCurrentTaskId(null);
-        eqDeviceRepository.save(device);
+        eqDeviceMapper.insert(device);
 
         log.info("设备已释放: deviceId={}, taskId={}", deviceId, taskId);
         return eqDeviceMapper.toDto(device);
@@ -725,8 +723,8 @@ public class EquipmentServiceImpl implements EquipmentService {
      */
     @Override
     public TemperatureThresholdDTO getEffectiveThreshold(Long deviceId) {
-        EqDevice device = eqDeviceRepository.findById(deviceId)
-            .orElseThrow(() -> new BusinessException("设备不存在: " + deviceId));
+        EqDevice device = eqDeviceMapper.findById(deviceId)
+            .orElseThrow(() -> new IllegalStateException("设备不存在: " + deviceId));
 
         BigDecimal highTemp = device.getAlarmHighTemp();
         BigDecimal lowTemp = device.getAlarmLowTemp();
@@ -758,26 +756,26 @@ public class EquipmentServiceImpl implements EquipmentService {
 }
 ```
 
-### 6.3 Repository 层扩展（悲观锁）
+### 6.3 Mapper 层扩展（悲观锁）（悲观锁）
 
 ```java
-package com.openygt.dms.equipment.repository;
+package cn.org.openygt.equipment.mapper;
 
-import com.openygt.dms.equipment.entity.EqDevice;
+import cn.org.openygt.equipment.entity.EqDevice;
 import org.springframework.data.jpa.repository.*;
-import org.springframework.stereotype.Repository;
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import java.util.Optional;
 
-@Repository
-public interface EqDeviceRepository extends JpaRepository<EqDevice, Long>, JpaSpecificationExecutor<EqDevice> {
+@Mapper
+public interface EqDeviceMapper extends BaseMapper<EqDevice> {
 
     Optional<EqDevice> findByDeviceCodeAndDeletedFalse(String deviceCode);
 
     // ========== 【新增】悲观锁查询 ==========
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT d FROM EqDevice d WHERE d.id = :id AND d.deleted = false")
-    Optional<EqDevice> findByIdForUpdate(Long id);
+    Optional<EqDevice> selectForUpdate(Long id);
 
     // 心跳检测：查询所有未删除设备
     @Query("SELECT d FROM EqDevice d WHERE d.deleted = false")
@@ -789,9 +787,9 @@ public interface EqDeviceRepository extends JpaRepository<EqDevice, Long>, JpaSp
 
 | 异常场景 | 异常类 | HTTP 状态码 | 错误消息 |
 |---------|--------|------------|---------|
-| 设备不存在 | `BusinessException` | 404 | 设备不存在: {id} |
-| 设备非空闲 | `BusinessException` | 409 | 设备当前非空闲状态，无法占用: {status} |
-| 任务ID不匹配 | `BusinessException` | 409 | 任务ID不匹配，无法释放设备 |
+| 设备不存在 | `IllegalStateException` | 404 | 设备不存在: {id} |
+| 设备非空闲 | `IllegalStateException` | 409 | 设备当前非空闲状态，无法占用: {status} |
+| 任务ID不匹配 | `IllegalStateException` | 409 | 任务ID不匹配，无法释放设备 |
 | 乐观锁冲突（备用） | `OptimisticLockException` | 409 | 数据已被修改，请重试 |
 
 ---
@@ -826,7 +824,7 @@ Topic 统一采用 `/openygt/{tenantId}/{deviceCode}/{messageType}` 格式。
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | deviceCode | String | 是 | 设备编码，对应 eq_device.device_code |
-| status | String | 是 | IDLE / RUNNING / ALARM / MAINTENANCE |
+| status | String | 是 | IDLE / RUNNING / FAULT / MAINTENANCE |
 | temperature | Number | 否 | 当前温度（℃），保留1位小数 |
 | faultCode | String | 否 | 故障码，无故障为 null 或省略 |
 
@@ -883,11 +881,11 @@ MqttConfig.handleMessage(String topic, String payload)
 ### 7.4 MqttConfig 完整实现
 
 ```java
-package com.openygt.dms.equipment.mqtt;
+package cn.org.openygt.equipment.mqtt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.openygt.dms.equipment.dto.DeviceStatusPayload;
-import com.openygt.dms.equipment.service.EqDeviceService;
+import cn.org.openygt.equipment.dto.DeviceStatusPayload;
+import cn.org.openygt.equipment.service.EqDeviceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -1041,18 +1039,18 @@ public class MqttConfig {
 |---------|---------|------|
 | IDLE（空闲） | 120 秒 | 空闲时更敏感，快速发现离线 |
 | RUNNING（运行） | 600 秒 | 运行中允许更长超时，避免误报 |
-| ALARM（告警） | 120 秒 | 告警状态同空闲敏感级别 |
+| FAULT（告警） | 120 秒 | 告警状态同空闲敏感级别 |
 | MAINTENANCE（维护） | 不检测 | 维护中不触发离线 |
 
 #### 7.5.2 心跳检测定时任务
 
 ```java
-package com.openygt.dms.equipment.scheduler;
+package cn.org.openygt.equipment.scheduler;
 
-import com.openygt.dms.equipment.entity.EqDevice;
-import com.openygt.dms.equipment.enums.DeviceStatus;
-import com.openygt.dms.equipment.repository.EqDeviceRepository;
-import com.openygt.dms.equipment.service.EqDeviceAlarmService;
+import cn.org.openygt.equipment.entity.EqDevice;
+import cn.org.openygt.equipment.enums.DeviceStatus;
+import cn.org.openygt.equipment.mapper.EqDeviceMapper;
+import cn.org.openygt.equipment.service.EqDeviceAlarmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -1067,10 +1065,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class HeartbeatCheckScheduler {
 
-    private final EqDeviceRepository eqDeviceRepository;
+    private final EqDeviceMapper eqDeviceMapper;
     private final EqDeviceAlarmService alarmService;
 
-    // IDLE/ALARM 超时秒数
+    // IDLE/FAULT 超时秒数
     private static final long IDLE_TIMEOUT_SECONDS = 120;
     // RUNNING 超时秒数
     private static final long RUNNING_TIMEOUT_SECONDS = 600;
@@ -1082,7 +1080,7 @@ public class HeartbeatCheckScheduler {
     @Transactional
     public void checkHeartbeatTimeout() {
         LocalDateTime now = LocalDateTime.now();
-        List<EqDevice> devices = eqDeviceRepository.findAllActive();
+        List<EqDevice> devices = eqDeviceMapper.findAllActive();
 
         for (EqDevice device : devices) {
             if (device.getStatus() == DeviceStatus.OFFLINE
@@ -1106,7 +1104,7 @@ public class HeartbeatCheckScheduler {
 
     private long getTimeoutSeconds(DeviceStatus status) {
         return switch (status) {
-            case IDLE, ALARM -> IDLE_TIMEOUT_SECONDS;
+            case IDLE, FAULT -> IDLE_TIMEOUT_SECONDS;
             case RUNNING -> RUNNING_TIMEOUT_SECONDS;
             default -> IDLE_TIMEOUT_SECONDS;
         };
@@ -1117,7 +1115,7 @@ public class HeartbeatCheckScheduler {
             device.getDeviceCode(), device.getStatus(), device.getLastHeartbeat());
         device.setStatus(DeviceStatus.OFFLINE);
         device.setCurrentTemp(null);
-        eqDeviceRepository.save(device);
+        eqDeviceMapper.insert(device);
 
         // 触发离线告警
         alarmService.createAlarm(device, AlarmType.OFFLINE, AlarmLevel.CRITICAL,
@@ -1132,12 +1130,12 @@ public class HeartbeatCheckScheduler {
 @Override
 @Transactional
 public void handleDeviceStatusReport(DeviceStatusPayload payload) {
-    EqDevice device = eqDeviceRepository.findByDeviceCodeAndDeletedFalse(payload.getDeviceCode())
-        .orElseThrow(() -> new BusinessException("未知设备: " + payload.getDeviceCode()));
+    EqDevice device = eqDeviceMapper.findByDeviceCodeAndDeletedFalse(payload.getDeviceCode())
+        .orElseThrow(() -> new IllegalStateException("未知设备: " + payload.getDeviceCode()));
 
-    // 1. 更新状态（ALARM 状态优先于 RUNNING/IDLE）
+    // 1. 更新状态（FAULT 状态优先于 RUNNING/IDLE）
     if (payload.getFaultCode() != null && !payload.getFaultCode().isBlank()) {
-        device.setStatus(DeviceStatus.ALARM);
+        device.setStatus(DeviceStatus.FAULT);
         device.setFaultCode(payload.getFaultCode());
     } else if (payload.getStatus() != null) {
         device.setStatus(DeviceStatus.valueOf(payload.getStatus()));
@@ -1153,13 +1151,13 @@ public void handleDeviceStatusReport(DeviceStatusPayload payload) {
             .temperature(payload.getTemperature())
             .recordedAt(LocalDateTime.now())
             .build();
-        temperatureLogRepository.save(logEntry);
+        temperatureLogMapper.save(logEntry);
     }
 
     // 3. 心跳时间同步更新（温度上报视为心跳）
     device.setLastHeartbeat(LocalDateTime.now());
 
-    eqDeviceRepository.save(device);
+    eqDeviceMapper.insert(device);
 
     // 4. 温度告警检测
     if (payload.getTemperature() != null) {
@@ -1170,7 +1168,7 @@ public void handleDeviceStatusReport(DeviceStatusPayload payload) {
 @Override
 @Transactional
 public void updateHeartbeat(String deviceCode) {
-    EqDevice device = eqDeviceRepository.findByDeviceCodeAndDeletedFalse(deviceCode)
+    EqDevice device = eqDeviceMapper.findByDeviceCodeAndDeletedFalse(deviceCode)
         .orElse(null);
     if (device == null) {
         log.warn("心跳设备不存在: {}", deviceCode);
@@ -1182,7 +1180,7 @@ public void updateHeartbeat(String deviceCode) {
         log.info("设备恢复在线: {}", deviceCode);
     }
     device.setLastHeartbeat(LocalDateTime.now());
-    eqDeviceRepository.save(device);
+    eqDeviceMapper.insert(device);
 }
 ```
 
@@ -1239,9 +1237,9 @@ public void updateHeartbeat(String deviceCode) {
 ### 8.3 核心接口：DeviceAdapter
 
 ```java
-package com.openygt.dms.equipment.adapter;
+package cn.org.openygt.equipment.adapter;
 
-import com.openygt.dms.equipment.dto.DeviceCommandDTO;
+import cn.org.openygt.equipment.dto.DeviceCommandDTO;
 
 /**
  * 设备适配器接口 —— 所有协议适配器必须实现
@@ -1285,7 +1283,7 @@ public interface DeviceAdapter {
 ### 8.4 适配器注册中心：AdapterRegistry
 
 ```java
-package com.openygt.dms.equipment.adapter;
+package cn.org.openygt.equipment.adapter;
 
 import org.springframework.stereotype.Component;
 
@@ -1327,9 +1325,9 @@ public class AdapterRegistry {
 ### 8.5 MQTT 抽象基类：AbstractMqttAdapter
 
 ```java
-package com.openygt.dms.equipment.adapter;
+package cn.org.openygt.equipment.adapter;
 
-import com.openygt.dms.equipment.dto.DeviceCommandDTO;
+import cn.org.openygt.equipment.dto.DeviceCommandDTO;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -1374,9 +1372,9 @@ public abstract class AbstractMqttAdapter implements DeviceAdapter {
 ### 8.6 TCP 二进制抽象基类：AbstractTcpBinaryAdapter
 
 ```java
-package com.openygt.dms.equipment.adapter;
+package cn.org.openygt.equipment.adapter;
 
-import com.openygt.dms.equipment.dto.DeviceCommandDTO;
+import cn.org.openygt.equipment.dto.DeviceCommandDTO;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -1454,7 +1452,7 @@ public abstract class AbstractTcpBinaryAdapter implements DeviceAdapter {
         // 通过 ChannelGroup 或 deviceCode→Channel 映射找到对应连接发送
         Channel channel = findChannelByDeviceCode(deviceCode);
         if (channel == null || !channel.isActive()) {
-            throw new BusinessException("设备未连接: " + deviceCode);
+            throw new IllegalStateException("设备未连接: " + deviceCode);
         }
         byte[] frame = encodeCommand(command);
         channel.writeAndFlush(frame);
@@ -1491,12 +1489,12 @@ public abstract class AbstractTcpBinaryAdapter implements DeviceAdapter {
 #### 8.7.2 东华原适配器完整代码
 
 ```java
-package com.openygt.dms.equipment.adapter.vendor;
+package cn.org.openygt.equipment.adapter.vendor;
 
-import com.openygt.dms.equipment.adapter.AbstractTcpBinaryAdapter;
-import com.openygt.dms.equipment.adapter.AdapterRegistry;
-import com.openygt.dms.equipment.dto.DeviceCommandDTO;
-import com.openygt.dms.equipment.service.EqDeviceService;
+import cn.org.openygt.equipment.adapter.AbstractTcpBinaryAdapter;
+import cn.org.openygt.equipment.adapter.AdapterRegistry;
+import cn.org.openygt.equipment.dto.DeviceCommandDTO;
+import cn.org.openygt.equipment.service.EqDeviceService;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -1721,14 +1719,14 @@ public class DonghuayuanTcpAdapter extends AbstractTcpBinaryAdapter {
 ### 9.2 告警服务实现
 
 ```java
-package com.openygt.dms.equipment.service.impl;
+package cn.org.openygt.equipment.service.impl;
 
-import com.openygt.dms.equipment.entity.EqDevice;
-import com.openygt.dms.equipment.entity.EqDeviceAlarm;
-import com.openygt.dms.equipment.enums.*;
-import com.openygt.dms.equipment.repository.EqDeviceAlarmRepository;
-import com.openygt.dms.equipment.service.EquipmentService;
-import com.openygt.dms.equipment.service.EqDeviceAlarmService;
+import cn.org.openygt.equipment.entity.EqDevice;
+import cn.org.openygt.equipment.entity.EqDeviceAlarm;
+import cn.org.openygt.equipment.enums.*;
+import cn.org.openygt.equipment.mapper.EqDeviceAlarmMapper;
+import cn.org.openygt.equipment.service.EquipmentService;
+import cn.org.openygt.equipment.service.EqDeviceAlarmService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -1743,11 +1741,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class EqDeviceAlarmServiceImpl implements EqDeviceAlarmService {
 
-    private final EqDeviceAlarmRepository alarmRepository;
+    private final EqDeviceAlarmMapper alarmMapper;
     private final EquipmentService equipmentService;
 
     // 告警抑制间隔：同一设备同类告警 5 分钟内不重复触发
-    private static final long ALARM_COOLDOWN_MINUTES = 5;
+    private static final long FAULT_COOLDOWN_MINUTES = 5;
 
     @Override
     @Transactional
@@ -1777,11 +1775,11 @@ public class EqDeviceAlarmServiceImpl implements EqDeviceAlarmService {
 
     private void triggerAlarm(EqDevice device, AlarmType type, AlarmLevel level, String message) {
         // 检查冷却期
-        Optional<EqDeviceAlarm> latest = alarmRepository
+        Optional<EqDeviceAlarm> latest = alarmMapper
             .findTopByDeviceIdAndAlarmTypeOrderByCreatedAtDesc(device.getId(), type);
 
         if (latest.isPresent()) {
-            LocalDateTime cooldownEnd = latest.get().getCreatedAt().plusMinutes(ALARM_COOLDOWN_MINUTES);
+            LocalDateTime cooldownEnd = latest.get().getCreatedAt().plusMinutes(FAULT_COOLDOWN_MINUTES);
             if (latest.get().getIsResolved() == 0 && cooldownEnd.isAfter(LocalDateTime.now())) {
                 log.debug("告警冷却期内，跳过: deviceCode={}, type={}", device.getDeviceCode(), type);
                 return;
@@ -1795,29 +1793,29 @@ public class EqDeviceAlarmServiceImpl implements EqDeviceAlarmService {
             .message(message)
             .isResolved(0)
             .build();
-        alarmRepository.save(alarm);
+        alarmMapper.save(alarm);
 
         log.warn("设备告警触发: deviceCode={}, type={}, level={}, msg={}",
             device.getDeviceCode(), type, level, message);
     }
 
     private void resolveActiveAlarm(Long deviceId, AlarmType type) {
-        alarmRepository.findActiveByDeviceIdAndType(deviceId, type)
+        alarmMapper.findActiveByDeviceIdAndType(deviceId, type)
             .forEach(alarm -> {
                 alarm.setIsResolved(1);
                 alarm.setResolvedAt(LocalDateTime.now());
-                alarmRepository.save(alarm);
+                alarmMapper.save(alarm);
                 log.info("告警自动解除: deviceId={}, type={}", deviceId, type);
             });
     }
 }
 ```
 
-### 9.3 告警 Repository 扩展
+### 9.3 告警 Mapper 扩展
 
 ```java
-@Repository
-public interface EqDeviceAlarmRepository extends JpaRepository<EqDeviceAlarm, Long> {
+@Mapper
+public interface EqDeviceAlarmMapper extends BaseMapper<EqDeviceAlarm> {
 
     Optional<EqDeviceAlarm> findTopByDeviceIdAndAlarmTypeOrderByCreatedAtDesc(
         Long deviceId, AlarmType alarmType);
@@ -1842,7 +1840,7 @@ public interface EqDeviceAlarmRepository extends JpaRepository<EqDeviceAlarm, Lo
 
 ### 10.2 悲观锁实现
 
-采用 JPA `@Lock(LockModeType.PESSIMISTIC_WRITE)`（即 `SELECT ... FOR UPDATE`）。
+采用 MyBatis-Plus `@Select("SELECT * FROM eq_device WHERE id = #{id} FOR UPDATE")`（即 `SELECT ... FOR UPDATE`）。
 
 **加锁流程**：
 ```
@@ -1867,14 +1865,14 @@ UPDATE status = 'RUNNING'
 // 正确：事务内调用加锁查询
 @Transactional
 public EqDeviceDTO reserveDevice(Long deviceId, Long taskId) {
-    EqDevice device = eqDeviceRepository.findByIdForUpdate(deviceId)
-        .orElseThrow(() -> new BusinessException("设备不存在"));
+    EqDevice device = eqDeviceMapper.selectForUpdate(deviceId)
+        .orElseThrow(() -> new IllegalStateException("设备不存在"));
     // ... 业务逻辑
 }
 
 // 错误：锁在事务外获取，不生效
 public EqDeviceDTO wrongReserve(Long deviceId) {
-    EqDevice device = eqDeviceRepository.findByIdForUpdate(deviceId).orElseThrow(...);
+    EqDevice device = eqDeviceMapper.selectForUpdate(deviceId).orElseThrow(...);
     // 此处事务已结束，锁已释放！
     updateDevice(device);  // 无锁保护，并发不安全
 }
@@ -1898,9 +1896,9 @@ spring:
 try {
     return reserveDevice(deviceId, taskId);
 } catch (LockTimeoutException e) {
-    throw new BusinessException("设备操作繁忙，请稍后重试");
+    throw new IllegalStateException("设备操作繁忙，请稍后重试");
 } catch (PessimisticLockException e) {
-    throw new BusinessException("设备数据被锁定，请稍后重试");
+    throw new IllegalStateException("设备数据被锁定，请稍后重试");
 }
 ```
 
@@ -1913,7 +1911,7 @@ try {
 | 层级 | 范围 | 工具 | 覆盖率目标 |
 |------|------|------|-----------|
 | 单元测试 | Service / Adapter / Util | JUnit 5 + Mockito | ≥ 80% |
-| 集成测试 | Repository + H2 数据库 | @DataJpaTest | 关键查询 |
+| 集成测试 | Mapper + SQLite 数据库 | @MybatisPlusTest | 关键查询 |
 | 协议测试 | MQTT / TCP 帧编解码 | 自定义 ByteBuf 测试 | 全部分支 |
 
 ### 11.2 关键测试用例
@@ -1925,7 +1923,7 @@ try {
 class EquipmentServiceConcurrencyTest {
 
     @Autowired EquipmentService equipmentService;
-    @Autowired EqDeviceRepository repository;
+    @Autowired EqDeviceMapper repository;
 
     @BeforeEach
     void setup() {
@@ -1934,7 +1932,7 @@ class EquipmentServiceConcurrencyTest {
             .name("测试机")
             .status(DeviceStatus.IDLE)
             .build();
-        repository.save(device);
+        repository.insert(device);
     }
 
     @Test
@@ -1951,7 +1949,7 @@ class EquipmentServiceConcurrencyTest {
                 try {
                     equipmentService.reserveDevice(deviceId, taskId);
                     successCount.incrementAndGet();
-                } catch (BusinessException e) {
+                } catch (IllegalStateException e) {
                     if (e.getMessage().contains("非空闲")) {
                         conflictCount.incrementAndGet();
                     }
@@ -2006,7 +2004,7 @@ class MqttConfigTest {
 @ExtendWith(MockitoExtension.class)
 class EquipmentServiceThresholdTest {
 
-    @Mock EqDeviceRepository deviceRepo;
+    @Mock EqDeviceMapper deviceMapper;
     @Mock SysConfigService sysConfigService;
     @InjectMocks EquipmentServiceImpl service;
 
@@ -2017,7 +2015,7 @@ class EquipmentServiceThresholdTest {
             .alarmHighTemp(new BigDecimal("105.0"))
             .alarmLowTemp(new BigDecimal("85.0"))
             .build();
-        when(deviceRepo.findById(1L)).thenReturn(Optional.of(device));
+        deviceMapper.selectById(1L);(device));
 
         TemperatureThresholdDTO result = service.getEffectiveThreshold(1L);
 
@@ -2032,7 +2030,7 @@ class EquipmentServiceThresholdTest {
             .alarmHighTemp(null)
             .alarmLowTemp(null)
             .build();
-        when(deviceRepo.findById(1L)).thenReturn(Optional.of(device));
+        deviceMapper.selectById(1L);(device));
         when(sysConfigService.getDecimalValue(any(), any())).thenReturn(new BigDecimal("110.0"));
 
         TemperatureThresholdDTO result = service.getEffectiveThreshold(1L);
@@ -2081,12 +2079,12 @@ CREATE TABLE eq_temperature_log (...);  -- 见第三章DDL，无 deleted 字段
 | 1 | 新增枚举类 `ProtocolType`、`AlarmType`、`AlarmLevel` | `equipment.enums` |
 | 2 | 修改 `EqTemperatureLog` 继承 `BaseAuditEntity` | `equipment.entity` |
 | 3 | 新增 `EqDeviceAlarm`、`EqDeviceConnection` 实体 | `equipment.entity` |
-| 4 | 新增 Repository：`EqDeviceAlarmRepository`、`EqTemperatureLogRepository` | `equipment.repository` |
-| 5 | 扩展 `EqDeviceRepository` 加 `findByIdForUpdate` | `equipment.repository` |
+| 4 | 新增 Mapper：`EqDeviceAlarmMapper`、`EqTemperatureLogMapper` | `equipment.mapper` |
+| 5 | 扩展 `EqDeviceMapper` 加 `selectForUpdate` | `equipment.mapper` |
 | 6 | 重写 `MqttConfig.handleMessage` 支持 JSON 解析 | `equipment.mqtt` |
 | 7 | 新增 `EqDeviceAlarmService` + `Impl` | `equipment.service` |
 | 8 | 修改 `EquipmentServiceImpl`：返回值改 `EqDeviceDTO`，实现 `reserveDevice`/`releaseDevice` | `equipment.service.impl` |
-| 9 | 删除 `synchronized` 关键字，改用 `findByIdForUpdate` | `equipment.service.impl` |
+| 9 | 删除 `synchronized` 关键字，改用 `selectForUpdate` | `equipment.service.impl` |
 | 10 | 新增适配器框架包 `equipment.adapter` 及东华原实现 | `equipment.adapter` |
 | 11 | 新增心跳检测定时任务 `HeartbeatCheckScheduler` | `equipment.scheduler` |
 | 12 | 补充 Controller 接口：`reserve`、`release`、`threshold` | `equipment.controller` |

@@ -8,6 +8,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+/**
+ * 全局异常处理器。
+ *
+ * <p>统一捕获各类异常，转换为标准 ApiResponse 格式返回。</p>
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -35,6 +40,24 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiResponse<?> handleIllegalState(IllegalStateException e) {
         return ApiResponse.error(409, e.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ApiResponse<?> handleUnauthorized(UnauthorizedException e) {
+        return ApiResponse.error(401, e.getMessage());
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ApiResponse<?> handleForbidden(ForbiddenException e) {
+        return ApiResponse.error(403, e.getMessage());
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ApiResponse<?> handleNotFound(ResourceNotFoundException e) {
+        return ApiResponse.error(404, e.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
