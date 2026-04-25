@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>煎药室大屏看板</title>
+    <style>
+        :root {
+            --bg: #070b14;
+            --panel: #0f1525;
+            --card: #141c2f;
+            --border: #1e2a45;
+            --text: #e2e8f0;
+            --text-dim: #64748b;
+            --green: #22c55e;
+            --blue: #3b82f6;
+            --red: #ef4444;
+            --orange: #f97316;
+            --purple: #a855f7;
+            --cyan: #06b6d4;
+            --yellow: #eab308;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            height: 64px;
+            background: linear-gradient(90deg, rgba(6,182,212,0.15) 0%, rgba(59,130,246,0.15) 100%);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            flex-shrink: 0;
+        }
+        .header-title { font-size: 24px; font-weight: 700; color: var(--cyan); letter-spacing: 2px; }
+        .header-time { font-size: 16px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+        .header-status { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--text-dim); }
+        .header-status .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); }
+        .header-status .dot.offline { background: var(--red); box-shadow: none; }
+
+        .main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto 1fr 1fr;
+            gap: 16px;
+            padding: 16px 24px 24px;
+            overflow: hidden;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .card-header {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--cyan);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .card-header::before {
+            content: '';
+            width: 4px;
+            height: 14px;
+            background: var(--cyan);
+            border-radius: 2px;
+        }
+
+        /* 顶部统计卡片 */
+        .stats-row {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+        }
+        .stat-icon.blue { background: rgba(59,130,246,0.15); }
+        .stat-icon.green { background: rgba(34,197,94,0.15); }
+        .stat-icon.orange { background: rgba(249,115,22,0.15); }
+        .stat-icon.red { background: rgba(239,68,68,0.15); }
+        .stat-value { font-size: 32px; font-weight: 700; color: var(--text); line-height: 1; }
+        .stat-label { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+
+        /* 状态分布 */
+        .status-bars { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        .status-bar-item { display: flex; align-items: center; gap: 10px; }
+        .status-bar-label { width: 70px; font-size: 13px; color: var(--text-dim); text-align: right; flex-shrink: 0; }
+        .status-bar-track { flex: 1; height: 24px; background: var(--bg); border-radius: 6px; overflow: hidden; position: relative; }
+        .status-bar-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; }
+        .status-bar-fill span { font-size: 12px; font-weight: 600; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+        .status-bar-count { width: 40px; font-size: 16px; font-weight: 700; color: var(--text); text-align: right; flex-shrink: 0; }
+
+        /* 设备网格 */
+        .device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; overflow-y: auto; }
+        .device-item {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .device-item.idle { border-color: rgba(34,197,94,0.4); }
+        .device-item.busy { border-color: rgba(59,130,246,0.4); }
+        .device-item.fault { border-color: rgba(239,68,68,0.6); animation: faultPulse 2s infinite; }
+        .device-item.offline { opacity: 0.5; }
+        .device-item-icon { font-size: 22px; margin-bottom: 6px; }
+        .device-item-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+        .device-item-temp { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+        .device-item-status { font-size: 11px; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+        .device-item-status.idle { background: rgba(34,197,94,0.15); color: var(--green); }
+        .device-item-status.busy { background: rgba(59,130,246,0.15); color: var(--blue); }
+        .device-item-status.fault { background: rgba(239,68,68,0.15); color: var(--red); }
+        .device-item-status.offline { background: rgba(100,116,139,0.15); color: var(--text-dim); }
+        @keyframes faultPulse { 0%,100%{box-shadow:0 0 0 transparent} 50%{box-shadow:0 0 10px rgba(239,68,68,0.3)} }
+
+        /* 告警列表 */
+        .alarm-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+        .alarm-item {
+            background: var(--bg);
+            border-left: 3px solid var(--red);
+            border-radius: 6px;
+            padding: 10px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .alarm-item.warn { border-left-color: var(--orange); }
+        .alarm-item.info { border-left-color: var(--blue); }
+        .alarm-content { font-size: 13px; color: var(--text); }
+        .alarm-time { font-size: 11px; color: var(--text-dim); white-space: nowrap; margin-left: 8px; }
+        .alarm-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 20px; }
+
+        /* 最近任务 */
+        .task-list { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+        .task-row {
+            background: var(--bg);
+            border-radius: 6px;
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+        .task-row .task-id { color: var(--cyan); font-weight: 600; width: 60px; }
+        .task-row .task-patient { color: var(--text); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0 8px; }
+        .task-row .task-status { font-size: 11px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-title">🌿 煎药室智慧大屏</div>
+        <div class="header-status">
+            <span class="dot" id="connDot"></span>
+            <span id="connText">连接中...</span>
+        </div>
+        <div class="header-time" id="clock">--:--:--</div>
+    </div>
+    <div class="main">
+        <!-- 顶部统计 -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-icon blue">📋</div>
+                <div>
+                    <div class="stat-value" id="statPrescription">0</div>
+                    <div class="stat-label">今日处方数</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange">🔥</div>
+                <div>
+                    <div class="stat-value" id="statActive">0</div>
+                    <div class="stat-label">进行中任务</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green">📡</div>
+                <div>
+                    <div class="stat-value" id="statOnlineRate">0%</div>
+                    <div class="stat-label">设备在线率</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red">⚠️</div>
+                <div>
+                    <div class="stat-value" id="statAlarm">0</div>
+                    <div class="stat-label">当前告警</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 状态分布 -->
+        <div class="card">
+            <div class="card-header">📊 任务状态分布</div>
+            <div class="status-bars" id="statusBars"></div>
+        </div>
+
+        <!-- 设备状态 -->
+        <div class="card">
+            <div class="card-header">🔧 设备实时状态</div>
+            <div class="device-grid" id="deviceGrid"></div>
+        </div>
+
+        <!-- 最近告警 -->
+        <div class="card">
+            <div class="card-header">⚠️ 最近告警</div>
+            <div class="alarm-list" id="alarmList">
+                <div class="alarm-empty">暂无告警</div>
+            </div>
+        </div>
+
+        <!-- 最近任务 -->
+        <div class="card" style="grid-column: 2 / 4;">
+            <div class="card-header">📋 最近任务</div>
+            <div class="task-list" id="taskList"></div>
+        </div>
+    </div>
+
+<script>
+const API_BASE = '';
+const STATUS_META = [
+    { key: 'PENDING', label: '待泡药', color: '#64748b' },
+    { key: 'SOAKING', label: '泡药中', color: '#3b82f6' },
+    { key: 'SOAKED', label: '待煎药', color: '#06b6d4' },
+    { key: 'BOUND', label: '已绑定', color: '#8b5cf6' },
+    { key: 'PROCESSING', label: '煎药中', color: '#f97316' },
+    { key: 'DECOCTED', label: '煎药完成', color: '#f59e0b' },
+    { key: 'POURING', label: '出液中', color: '#a855f7' },
+    { key: 'WRAPPED', label: '待包装', color: '#ec4899' },
+    { key: 'WRAPPING', label: '包装中', color: '#eab308' },
+    { key: 'COMPLETED', label: '已完成', color: '#22c55e' }
+];
+const STATUS_NAME = {};
+STATUS_META.forEach(s => STATUS_NAME[s.key] = s.label);
+
+let allTasks = [];
+let devices = [];
+let alarms = [];
+
+// 预定义设备模板（后端若无设备列表则使用）
+const DEVICE_TEMPLATES = [
+    { deviceCode: 'DEV001', name: '煎药机 #1', type: 'decoct', status: 'IDLE', currentTemp: 25 },
+    { deviceCode: 'DEV002', name: '煎药机 #2', type: 'decoct', status: 'IDLE', currentTemp: 25 },
+    { deviceCode: 'DEV003', name: '煎药机 #3', type: 'decoct', status: 'IDLE', currentTemp: 25 },
+    { deviceCode: 'DEV004', name: '包装机 #1', type: 'wrap', status: 'IDLE', currentTemp: 25 },
+    { deviceCode: 'DEV005', name: '配方秤 #1', type: 'scale', status: 'IDLE', currentTemp: 25 },
+    { deviceCode: 'DEV006', name: '工单打印机 #1', type: 'printer', status: 'IDLE', currentTemp: 25 }
+];
+
+function updateClock() {
+    const now = new Date();
+    document.getElementById('clock').textContent = now.toLocaleTimeString('zh-CN', { hour12: false });
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+async function apiGet(path) {
+    try {
+        const res = await fetch(`${API_BASE}${path}`);
+        if (!res.ok) return { code: res.status, data: null };
+        return await res.json();
+    } catch (e) { return { code: 500, message: e.message, data: null }; }
+}
+
+async function fetchTasks() {
+    const data = await apiGet('/api/tasks?page=1&size=100');
+    if (data.code === 200 && data.data) {
+        allTasks = data.data.records || [];
+        updateStats();
+        renderStatusBars();
+        renderTaskList();
+        updateDevicesFromTasks();
+    } else {
+        allTasks = [];
+    }
+    updateConnection(data.code === 200);
+}
+
+async function fetchDevices() {
+    // 尝试调用设备列表接口，若不存在则使用模板
+    const data = await apiGet('/api/devices');
+    if (data.code === 200 && data.data && data.data.records) {
+        // 后端返回分页对象，将 deviceType 映射为前端 type 字符串
+        devices = (data.data.records || []).map(d => ({
+            ...d,
+            type: d.deviceType === 1 ? 'decoct' : d.deviceType === 2 ? 'wrap' : d.deviceType === 4 ? 'printer' : 'scale'
+        }));
+    } else if (data.code === 200 && Array.isArray(data.data)) {
+        devices = data.data.map(d => ({
+            ...d,
+            type: d.deviceType === 1 ? 'decoct' : d.deviceType === 2 ? 'wrap' : d.deviceType === 4 ? 'printer' : 'scale'
+        }));
+    } else {
+        // 使用模板，并根据任务状态更新
+        devices = JSON.parse(JSON.stringify(DEVICE_TEMPLATES));
+    }
+    renderDeviceGrid();
+}
+
+async function fetchAlarms() {
+    const data = await apiGet('/api/alarms?page=1&size=20');
+    if (data.code === 200 && Array.isArray(data.data)) {
+        alarms = data.data;
+    } else {
+        alarms = [];
+    }
+    renderAlarms();
+}
+
+function updateConnection(ok) {
+    const dot = document.getElementById('connDot');
+    const txt = document.getElementById('connText');
+    if (ok) { dot.className = 'dot'; txt.textContent = '数据实时更新中'; }
+    else { dot.className = 'dot offline'; txt.textContent = '连接断开'; }
+}
+
+function updateStats() {
+    const total = allTasks.length;
+    const active = allTasks.filter(t => t.status !== 'COMPLETED').length;
+    document.getElementById('statPrescription').textContent = total;
+    document.getElementById('statActive').textContent = active;
+
+    // 设备在线率：基于设备状态（若无后端设备数据，默认80%）
+    const online = devices.filter(d => d.status !== 'OFFLINE' && d.status !== 'FAULT').length;
+    const rate = devices.length > 0 ? Math.round((online / devices.length) * 100) : 80;
+    document.getElementById('statOnlineRate').textContent = rate + '%';
+
+    // 告警数：设备故障 + 模拟任务超时（暂无真实告警接口）
+    const faultCount = devices.filter(d => d.status === 'FAULT').length;
+    const overdueCount = allTasks.filter(t => {
+        if (t.status === 'COMPLETED') return false;
+        const created = t.createdAt ? new Date(t.createdAt) : null;
+        if (!created) return false;
+        return (Date.now() - created.getTime()) > 2 * 60 * 60 * 1000; // 超过2小时
+    }).length;
+    document.getElementById('statAlarm').textContent = faultCount + overdueCount;
+}
+
+function renderStatusBars() {
+    const container = document.getElementById('statusBars');
+    const counts = {};
+    STATUS_META.forEach(s => counts[s.key] = 0);
+    allTasks.forEach(t => { if (counts[t.status] !== undefined) counts[t.status]++; });
+    const max = Math.max(1, ...Object.values(counts));
+
+    // 大屏需要合并展示：待泡药/泡药中/待煎药/煎药中/待包装/包装中/已完成
+    const groups = [
+        { label: '待泡药', keys: ['PENDING'], color: '#64748b' },
+        { label: '泡药中', keys: ['SOAKING'], color: '#3b82f6' },
+        { label: '待煎药', keys: ['SOAKED','BOUND'], color: '#06b6d4' },
+        { label: '煎药中', keys: ['PROCESSING','DECOCTED','POURING'], color: '#f97316' },
+        { label: '待包装', keys: ['WRAPPED'], color: '#ec4899' },
+        { label: '包装中', keys: ['WRAPPING'], color: '#eab308' },
+        { label: '已完成', keys: ['COMPLETED'], color: '#22c55e' }
+    ];
+
+    container.innerHTML = groups.map(g => {
+        const count = g.keys.reduce((sum, k) => sum + (counts[k] || 0), 0);
+        const pct = Math.round((count / max) * 100);
+        return `
+            <div class="status-bar-item">
+                <div class="status-bar-label">${g.label}</div>
+                <div class="status-bar-track">
+                    <div class="status-bar-fill" style="width:${pct}%;background:${g.color};"><span>${count > 0 ? count : ''}</span></div>
+                </div>
+                <div class="status-bar-count">${count}</div>
+            </div>`;
+    }).join('');
+}
+
+function updateDevicesFromTasks() {
+    // 根据任务中的设备绑定信息更新本地设备状态
+    const boundMap = {};
+    allTasks.forEach(t => {
+        if (t.deviceCode && t.status !== 'COMPLETED') {
+            boundMap[t.deviceCode] = { status: 'BUSY', temp: t.currentTemp };
+        }
+    });
+    devices.forEach(d => {
+        if (boundMap[d.deviceCode || d.id]) {
+            const info = boundMap[d.deviceCode || d.id];
+            if (d.status !== 'FAULT' && d.status !== 'OFFLINE') {
+                d.status = info.status;
+                if (info.temp !== undefined && info.temp !== null) d.currentTemp = info.temp;
+            }
+        } else if (d.status !== 'FAULT' && d.status !== 'OFFLINE') {
+            d.status = 'IDLE';
+        }
+    });
+    renderDeviceGrid();
+}
+
+function renderDeviceGrid() {
+    const container = document.getElementById('deviceGrid');
+    if (devices.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-dim);font-size:12px;text-align:center;padding:20px;">暂无设备数据</div>';
+        return;
+    }
+    container.innerHTML = devices.map(dev => {
+        const code = dev.deviceCode || dev.id || '-';
+        const name = dev.name || code;
+        const status = dev.status || 'IDLE';
+        const temp = dev.currentTemp !== undefined && dev.currentTemp !== null ? dev.currentTemp : '-';
+        const typeIcon = dev.type === 'decoct' ? '🔥' : dev.type === 'wrap' ? '📋' : dev.type === 'printer' ? '🖨️' : '⚖️';
+        const statusText = { IDLE:'空闲', BUSY:'运行中', FAULT:'故障', OFFLINE:'离线' }[status] || status;
+        const tempHtml = dev.type === 'printer' ? '' : `<div class="device-item-temp" style="color:${status==='FAULT'? 'var(--red)' : 'var(--text)'}">${temp !== '-' ? temp + '℃' : '--'}</div>`;
+        return `
+            <div class="device-item ${status.toLowerCase()}">
+                <div class="device-item-icon">${typeIcon}</div>
+                <div class="device-item-name">${name}</div>
+                ${tempHtml}
+                <div class="device-item-status ${status.toLowerCase()}">${statusText}</div>
+            </div>`;
+    }).join('');
+}
+
+function renderAlarms() {
+    const container = document.getElementById('alarmList');
+    // 同时从设备故障和任务超时生成告警
+    const items = [];
+    devices.filter(d => d.status === 'FAULT').forEach(d => {
+        items.push({ level: 'err', content: `设备故障: ${d.name || d.deviceCode} - ${d.faultCode || '未知故障'}`, time: new Date() });
+    });
+    allTasks.forEach(t => {
+        if (t.status === 'COMPLETED') return;
+        const created = t.createdAt ? new Date(t.createdAt) : null;
+        if (created && (Date.now() - created.getTime()) > 2 * 60 * 60 * 1000) {
+            items.push({ level: 'warn', content: `任务 #${t.id} 已超时2小时未完结 [${STATUS_NAME[t.status] || t.status}]`, time: created });
+        }
+    });
+    // 合并外部告警
+    alarms.forEach(a => {
+        items.push({ level: a.level || 'err', content: a.content || a.message || JSON.stringify(a), time: a.createdAt ? new Date(a.createdAt) : new Date() });
+    });
+
+    if (items.length === 0) {
+        container.innerHTML = '<div class="alarm-empty">🎉 当前无告警</div>';
+        return;
+    }
+    container.innerHTML = items.slice(0, 20).map(a => {
+        const cls = a.level === 'warn' ? 'warn' : a.level === 'info' ? 'info' : '';
+        const timeStr = a.time ? a.time.toLocaleTimeString('zh-CN', { hour12:false }) : '--';
+        return `<div class="alarm-item ${cls}"><div class="alarm-content">${escapeHtml(a.content)}</div><div class="alarm-time">${timeStr}</div></div>`;
+    }).join('');
+}
+
+function renderTaskList() {
+    const container = document.getElementById('taskList');
+    const list = allTasks.slice(0, 12);
+    if (list.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-dim);font-size:12px;text-align:center;padding:20px;">暂无任务</div>';
+        return;
+    }
+    const statusColors = {
+        'PENDING':'#64748b','SOAKING':'#3b82f6','SOAKED':'#06b6d4','BOUND':'#8b5cf6',
+        'PROCESSING':'#f97316','DECOCTED':'#f59e0b','POURING':'#a855f7','WRAPPED':'#ec4899',
+        'WRAPPING':'#eab308','COMPLETED':'#22c55e'
+    };
+    container.innerHTML = list.map(t => {
+        const sColor = statusColors[t.status] || '#64748b';
+        const sName = STATUS_NAME[t.status] || t.status;
+        return `
+            <div class="task-row">
+                <span class="task-id">#${t.id}</span>
+                <span class="task-patient">处方${t.prescriptionId || '-'} | ${t.patientName || '未知患者'}</span>
+                <span class="task-status" style="background:${sColor}22;color:${sColor}">${sName}</span>
+            </div>`;
+    }).join('');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div'); div.textContent = text; return div.innerHTML;
+}
+
+async function refreshAll() {
+    await fetchTasks();
+    await fetchDevices();
+    await fetchAlarms();
+}
+
+refreshAll();
+setInterval(refreshAll, 5000);
+</script>
+</body>
+</html>

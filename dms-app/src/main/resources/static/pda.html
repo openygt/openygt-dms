@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PDA 煎药操作终端</title>
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --surface: #141c2f;
+            --border: #1e2a45;
+            --text: #e2e8f0;
+            --text-dim: #94a3b8;
+            --green: #22c55e;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --orange: #f97316;
+            --cyan: #06b6d4;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+        body { display: flex; justify-content: center; }
+        .app { width: 100%; max-width: 375px; height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* Toast */
+        .toast-container { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        .toast { background: rgba(20,28,47,0.95); border: 1px solid var(--border); color: var(--text); padding: 10px 16px; border-radius: 8px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); animation: toastIn 0.3s ease; max-width: 340px; word-break: break-all; }
+        .toast.success { border-color: var(--green); }
+        .toast.error { border-color: var(--red); }
+        .toast.warn { border-color: var(--orange); }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 顶部栏 */
+        .appbar { height: 52px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; flex-shrink: 0; }
+        .appbar-title { font-size: 16px; font-weight: 600; }
+        .appbar-action { font-size: 13px; color: var(--cyan); background: none; border: none; cursor: pointer; }
+
+        /* 页面 */
+        .page { flex: 1; overflow-y: auto; padding: 12px; display: none; }
+        .page.active { display: block; }
+
+        /* 登录 */
+        .login-box { margin-top: 80px; text-align: center; }
+        .login-logo { font-size: 48px; margin-bottom: 8px; }
+        .login-title { font-size: 20px; font-weight: 700; margin-bottom: 32px; color: var(--cyan); }
+        .login-input { width: 100%; padding: 14px 16px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 10px; font-size: 16px; margin-bottom: 16px; text-align: center; }
+        .login-input:focus { outline: none; border-color: var(--cyan); }
+        .login-btn { width: 100%; padding: 14px; border: none; background: var(--cyan); color: #000; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        .login-btn:active { opacity: 0.9; }
+
+        /* 任务列表 */
+        .section-title { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .task-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .task-card:active { transform: scale(0.98); }
+        .task-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .task-card-id { font-size: 18px; font-weight: 700; color: var(--cyan); }
+        .task-card-status { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+        .task-card-info { font-size: 14px; color: var(--text-dim); line-height: 1.6; }
+        .task-card-info strong { color: var(--text); }
+
+        /* 操作页 */
+        .op-header { text-align: center; margin-bottom: 16px; }
+        .op-header .op-id { font-size: 22px; font-weight: 700; color: var(--cyan); }
+        .op-header .op-status { font-size: 14px; color: var(--text-dim); margin-top: 4px; }
+
+        .op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .op-btn {
+            padding: 18px 8px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            color: var(--text);
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .op-btn:active { transform: scale(0.96); }
+        .op-btn .icon { font-size: 22px; }
+        .op-btn.start { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.08); }
+        .op-btn.start:active { background: rgba(34,197,94,0.15); }
+        .op-btn.end { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.08); }
+        .op-btn.end:active { background: rgba(239,68,68,0.15); }
+        .op-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+        .op-device-select { width: 100%; padding: 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 10px; font-size: 14px; margin-bottom: 12px; }
+        .op-device-select:focus { outline: none; border-color: var(--cyan); }
+
+        .scan-btn {
+            width: 100%;
+            padding: 20px;
+            border: 2px dashed var(--cyan);
+            background: rgba(6,182,212,0.08);
+            color: var(--cyan);
+            border-radius: 14px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 700;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        .scan-btn:active { background: rgba(6,182,212,0.15); }
+
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--text-dim); }
+        .empty-state .icon { font-size: 40px; margin-bottom: 8px; }
+
+        /* 状态颜色 */
+        .st-PENDING { background: rgba(100,116,139,0.15); color: #94a3b8; }
+        .st-SOAKING { background: rgba(59,130,246,0.15); color: #60a5fa; }
+        .st-SOAKED { background: rgba(6,182,212,0.15); color: #22d3ee; }
+        .st-BOUND { background: rgba(139,92,246,0.15); color: #a78bfa; }
+        .st-PROCESSING { background: rgba(249,115,22,0.15); color: #fb923c; }
+        .st-DECOCTED { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .st-POURING { background: rgba(168,85,247,0.15); color: #c084fc; }
+        .st-WRAPPED { background: rgba(236,72,153,0.15); color: #f472b6; }
+        .st-WRAPPING { background: rgba(234,179,8,0.15); color: #facc15; }
+        .st-COMPLETED { background: rgba(34,197,94,0.15); color: #4ade80; }
+    </style>
+</head>
+<body>
+<div class="app">
+    <div class="appbar">
+        <div class="appbar-title">📱 PDA煎药终端</div>
+        <button class="appbar-action" id="logoutBtn" style="display:none;" onclick="logout()">退出</button>
+    </div>
+
+    <!-- 登录页 -->
+    <div class="page active" id="pageLogin">
+        <div class="login-box">
+            <div class="login-logo">🌿</div>
+            <div class="login-title">煎药室 PDA</div>
+            <input type="text" class="login-input" id="operatorId" placeholder="请输入工号" maxlength="20" inputmode="numeric" />
+            <button class="login-btn" onclick="login()">登 录</button>
+        </div>
+    </div>
+
+    <!-- 任务列表 -->
+    <div class="page" id="pageTasks">
+        <div class="section-title">今日任务</div>
+        <div id="taskList"></div>
+    </div>
+
+    <!-- 操作页 -->
+    <div class="page" id="pageOps">
+        <button class="appbar-action" style="position:absolute;top:14px;left:16px;background:none;border:none;" onclick="backToTasks()">← 返回</button>
+        <div class="op-header">
+            <div class="op-id" id="opTaskId">--</div>
+            <div class="op-status" id="opTaskStatus">--</div>
+        </div>
+        <div style="margin-bottom:10px;">
+            <select class="op-device-select" id="opDeviceSelect">
+                <option value="">-- 选择设备 --</option>
+                <option value="DEV001">🔥 煎药机 #1</option>
+                <option value="DEV002">🔥 煎药机 #2</option>
+                <option value="DEV003">🔥 煎药机 #3</option>
+                <option value="DEV004">📋 包装机 #1</option>
+            </select>
+        </div>
+        <button class="scan-btn" onclick="simulateScan()">
+            <span style="font-size:28px;">📷</span>
+            <span>点击模拟扫码</span>
+        </button>
+        <div class="op-grid" id="opGrid"></div>
+
+        <!-- 强制操作 -->
+        <div style="margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
+            <div style="font-size:12px;color:var(--red);font-weight:600;margin-bottom:10px;cursor:pointer;" onclick="toggleForce()">
+                ⚠️ 强制操作 <span id="forceToggle">▼</span>
+            </div>
+            <div id="forcePanel" style="display:none;">
+                <select class="op-device-select" id="forceStatus">
+                    <option value="">-- 选择目标状态 --</option>
+                    <option value="SOAKING">💧 泡药中 (SOAKING)</option>
+                    <option value="SOAKED">💧 泡药结束 (SOAKED)</option>
+                    <option value="PROCESSING">🔥 煎药中 (PROCESSING)</option>
+                    <option value="DECOCTED">🔥 煎药完成 (DECOCTED)</option>
+                    <option value="POURING">🧪 出液中 (POURING)</option>
+                    <option value="WRAPPING">📋 包装中 (WRAPPING)</option>
+                    <option value="COMPLETED">✅ 已完成 (COMPLETED)</option>
+                    <option value="CANCELLED">❌ 取消 (CANCELLED)</option>
+                </select>
+                <select class="op-device-select" id="forceDevice">
+                    <option value="">-- 选择设备(可选) --</option>
+                    <option value="DEV001">🔥 煎药机 #1</option>
+                    <option value="DEV002">🔥 煎药机 #2</option>
+                    <option value="DEV003">🔥 煎药机 #3</option>
+                    <option value="DEV004">📋 包装机 #1</option>
+                </select>
+                <input type="text" class="op-device-select" id="forceRemark" placeholder="强制原因(可选)" style="margin-bottom:8px;" />
+                <button class="op-btn end" style="width:100%;background:rgba(239,68,68,0.15);color:var(--red);border-color:rgba(239,68,68,0.5);" onclick="doForceAction()">
+                    <span class="icon">⚡</span>
+                    <span>强制执行</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const API_BASE = '';
+const STATUS_MAP = {
+    'PENDING': '待泡药', 'SOAKING': '泡药中', 'SOAKED': '待煎药',
+    'BOUND': '已绑定', 'PROCESSING': '煎药中', 'DECOCTED': '煎药完成',
+    'POURING': '出液中', 'WRAPPED': '待包装', 'WRAPPING': '包装中', 'COMPLETED': '已完成'
+};
+
+let operator = localStorage.getItem('pda_operator') || '';
+let tasks = [];
+let currentTask = null;
+
+function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function toast(msg, type='success') {
+    const box = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = msg;
+    box.appendChild(el);
+    setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.3s'; setTimeout(()=>el.remove(),300); }, 2500);
+}
+
+function login() {
+    const val = document.getElementById('operatorId').value.trim();
+    if (!val) { toast('请输入工号', 'error'); return; }
+    operator = val;
+    localStorage.setItem('pda_operator', operator);
+    document.getElementById('logoutBtn').style.display = 'block';
+    toast(`欢迎，工号 ${operator}`);
+    showPage('pageTasks');
+    loadTasks();
+}
+
+function logout() {
+    operator = '';
+    localStorage.removeItem('pda_operator');
+    document.getElementById('logoutBtn').style.display = 'none';
+    showPage('pageLogin');
+}
+
+function backToTasks() {
+    showPage('pageTasks');
+    loadTasks();
+}
+
+async function api(method, path, body) {
+    try {
+        const opts = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) opts.body = JSON.stringify(body);
+        const res = await fetch(`${API_BASE}${path}`, opts);
+        return await res.json();
+    } catch (e) { return { code: 500, message: e.message }; }
+}
+
+async function loadTasks() {
+    const data = await api('GET', '/api/tasks?page=1&size=50');
+    if (data.code === 200 && data.data) {
+        tasks = data.data.records || [];
+        renderTasks();
+    } else {
+        tasks = [];
+        renderTasks();
+        toast('加载任务失败', 'error');
+    }
+}
+
+function renderTasks() {
+    const container = document.getElementById('taskList');
+    const active = tasks.filter(t => t.status !== 'COMPLETED');
+    if (active.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">🎉</div><div>今日暂无待处理任务</div></div>';
+        return;
+    }
+    container.innerHTML = active.map(t => `
+        <div class="task-card" onclick="openTask(${t.id})">
+            <div class="task-card-header">
+                <span class="task-card-id">#${t.id}</span>
+                <span class="task-card-status st-${t.status}">${STATUS_MAP[t.status] || t.status}</span>
+            </div>
+            <div class="task-card-info">
+                <div>处方 <strong>#${t.prescriptionId || '-'}</strong></div>
+                <div>当前温度: <strong>${t.currentTemp != null ? t.currentTemp + '℃' : '--'}</strong></div>
+                <div>设备: <strong>${t.deviceCode || '未绑定'}</strong></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function openTask(taskId) {
+    currentTask = tasks.find(t => t.id === taskId);
+    if (!currentTask) { toast('任务不存在', 'error'); return; }
+    document.getElementById('opTaskId').textContent = `任务 #${currentTask.id}`;
+    document.getElementById('opTaskStatus').textContent = `${STATUS_MAP[currentTask.status] || currentTask.status} | 处方 #${currentTask.prescriptionId || '-'}`;
+    // 预选中已有设备
+    const sel = document.getElementById('opDeviceSelect');
+    sel.value = currentTask.deviceCode || '';
+    renderOpButtons();
+    showPage('pageOps');
+}
+
+function renderOpButtons() {
+    const st = currentTask ? currentTask.status : '';
+    const ops = [
+        { key:'soakStart', label:'开始泡药', icon:'💧', type:'start', show: st==='PENDING' },
+        { key:'soakEnd', label:'结束泡药', icon:'💧', type:'end', show: st==='SOAKING' },
+        { key:'decoctStart', label:'开始煎药', icon:'🔥', type:'start', show: st==='SOAKED' },
+        { key:'decoctEnd', label:'结束煎药', icon:'🔥', type:'end', show: st==='PROCESSING' },
+        { key:'pourStart', label:'开始出液', icon:'🧪', type:'start', show: st==='DECOCTED' },
+        { key:'pourEnd', label:'结束出液', icon:'🧪', type:'end', show: st==='POURING' },
+        { key:'wrapStart', label:'开始包装', icon:'📋', type:'start', show: st==='WRAPPED' },
+        { key:'wrapEnd', label:'结束包装', icon:'📋', type:'end', show: st==='WRAPPING' }
+    ];
+    const grid = document.getElementById('opGrid');
+    const visible = ops.filter(o => o.show);
+    if (visible.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-dim);padding:20px;">当前状态无可用操作</div>';
+        return;
+    }
+    grid.innerHTML = visible.map(o => `
+        <button class="op-btn ${o.type}" onclick="doAction('${o.key}')">
+            <span class="icon">${o.icon}</span>
+            <span>${o.label}</span>
+        </button>
+    `).join('');
+}
+
+async function doAction(action) {
+    if (!currentTask) return;
+    const taskId = currentTask.id;
+    const deviceId = document.getElementById('opDeviceSelect').value;
+    let result;
+
+    switch (action) {
+        case 'soakStart':
+            result = await api('POST', `/api/tasks/${taskId}/soak/start`, { operatorId: operator });
+            if (result.code === 200 || result.code === 404) {
+                updateLocalTaskStatus(taskId, 'SOAKING');
+                toast('泡药已开始', 'success');
+            } else { toast(result.message || '操作失败', 'error'); }
+            break;
+        case 'soakEnd':
+            result = await api('POST', `/api/tasks/${taskId}/soak/end`, { operatorId: operator });
+            if (result.code === 200 || result.code === 404) {
+                updateLocalTaskStatus(taskId, 'SOAKED');
+                toast('泡药已结束', 'success');
+            } else { toast(result.message || '操作失败', 'error'); }
+            break;
+        case 'decoctStart':
+            if (!deviceId) { toast('请先选择煎药机', 'warn'); return; }
+            result = await api('POST', `/api/tasks/${taskId}/bind`, { deviceCode: deviceId });
+            if (result.code === 200) {
+                updateLocalTaskStatus(taskId, 'BOUND');
+                setTimeout(() => { updateLocalTaskStatus(taskId, 'PROCESSING'); renderOpButtons(); }, 2000);
+                toast('煎药已启动', 'success');
+            } else { toast(result.message || '绑定失败', 'error'); }
+            break;
+        case 'decoctEnd':
+            result = await api('POST', `/api/tasks/${taskId}/complete`, { operatorId: operator });
+            if (result.code === 200 || result.code === 404) {
+                updateLocalTaskStatus(taskId, 'DECOCTED');
+                toast('煎药已结束', 'success');
+            } else { toast(result.message || '操作失败', 'error'); }
+            break;
+        case 'pourStart':
+            result = await api('POST', `/api/tasks/${taskId}/pour/start`, { operatorId: operator });
+            if (result.code === 200 || result.code === 404) {
+                updateLocalTaskStatus(taskId, 'POURING');
+                toast('出液已开始', 'success');
+            } else { toast(result.message || '操作失败', 'error'); }
+            break;
+        case 'pourEnd':
+            result = await api('POST', `/api/tasks/${taskId}/pour/end`, { operatorId: operator });
+            if (result.code === 200 || result.code === 404) {
+                updateLocalTaskStatus(taskId, 'WRAPPED');
+                toast('出液已结束', 'success');
+            } else { toast(result.message || '操作失败', 'error'); }
+            break;
+        case 'wrapStart':
+            if (!deviceId) { toast('请先选择包装机', 'warn'); return; }
+            result = await api('POST', `/api/tasks/${taskId}/wrap/start`, { operatorId: operator, deviceCode: deviceId });
+            if (result.code === 200 || result.code === 404) {
+                updateLocalTaskStatus(taskId, 'WRAPPING');
+                toast('包装已开始', 'success');
+            } else { toast(result.message || '操作失败', 'error'); }
+            break;
+        case 'wrapEnd':
+            result = await api('POST', `/api/tasks/${taskId}/wrap/end`, { operatorId: operator });
+            if (result.code === 200 || result.code === 404) {
+                updateLocalTaskStatus(taskId, 'COMPLETED');
+                toast('任务已完成', 'success');
+                setTimeout(() => { backToTasks(); }, 800);
+            } else { toast(result.message || '操作失败', 'error'); }
+            break;
+    }
+    renderOpButtons();
+}
+
+function toggleForce() {
+    const panel = document.getElementById('forcePanel');
+    const arrow = document.getElementById('forceToggle');
+    panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    arrow.textContent = panel.style.display === 'none' ? '▼' : '▲';
+}
+
+async function doForceAction() {
+    if (!currentTask) return;
+    const targetStatus = document.getElementById('forceStatus').value;
+    const deviceCode = document.getElementById('forceDevice').value;
+    const remark = document.getElementById('forceRemark').value.trim();
+    if (!targetStatus) { toast('请选择目标状态', 'warn'); return; }
+    if (!confirm(`确认强制将任务 #${currentTask.id} 推进到 [${targetStatus}]？\n此操作将跳过所有状态校验，请谨慎使用！`)) return;
+
+    const result = await api('POST', `/api/tasks/${currentTask.id}/force`, {
+        targetStatus: targetStatus,
+        operatorId: operator,
+        deviceCode: deviceCode || null,
+        remark: remark || null
+    });
+    if (result.code === 200) {
+        updateLocalTaskStatus(currentTask.id, targetStatus);
+        toast('强制操作成功: ' + targetStatus, 'success');
+        renderOpButtons();
+        if (targetStatus === 'COMPLETED' || targetStatus === 'CANCELLED') {
+            setTimeout(() => { backToTasks(); }, 800);
+        }
+    } else {
+        toast(result.message || '强制操作失败', 'error');
+    }
+}
+
+function simulateScan() {
+    toast('模拟扫码成功: RX-' + Math.floor(Math.random()*9000+1000), 'success');
+}
+
+function updateLocalTaskStatus(taskId, newStatus) {
+    const t = tasks.find(x => x.id === taskId);
+    if (t) { t.status = newStatus; }
+    if (currentTask && currentTask.id === taskId) {
+        currentTask.status = newStatus;
+        document.getElementById('opTaskStatus').textContent = `${STATUS_MAP[newStatus] || newStatus} | 处方 #${currentTask.prescriptionId || '-'}`;
+    }
+}
+
+// 自动刷新任务列表
+setInterval(() => { if (operator && document.getElementById('pageTasks').classList.contains('active')) loadTasks(); }, 5000);
+
+// 若已登录自动进入
+if (operator) {
+    document.getElementById('logoutBtn').style.display = 'block';
+    showPage('pageTasks');
+    loadTasks();
+}
+</script>
+</body>
+</html>

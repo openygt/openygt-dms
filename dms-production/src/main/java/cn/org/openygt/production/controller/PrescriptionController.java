@@ -1,0 +1,38 @@
+package cn.org.openygt.production.controller;
+
+import cn.org.openygt.common.dto.ApiResponse;
+import cn.org.openygt.production.dto.PrescriptionCreateRequest;
+import cn.org.openygt.production.entity.Prescription;
+import cn.org.openygt.production.service.PrescriptionService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/v1/prod/prescriptions")
+@RequiredArgsConstructor
+public class PrescriptionController {
+
+    private final PrescriptionService prescriptionService;
+
+    @PostMapping
+    public ApiResponse<Prescription> create(@Validated @RequestBody PrescriptionCreateRequest request) {
+        return ApiResponse.success(prescriptionService.create(request));
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<Prescription> getById(@PathVariable Long id) {
+        Prescription p = prescriptionService.getById(id);
+        return p == null ? ApiResponse.error(404, "处方不存在") : ApiResponse.success(p);
+    }
+
+    @GetMapping
+    public ApiResponse<IPage<Prescription>> list(
+            @RequestParam(required = false) Long hospitalId,
+            @RequestParam(required = false) Integer patientType,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.success(prescriptionService.list(hospitalId, patientType, page, size));
+    }
+}

@@ -1,0 +1,123 @@
+● 全部文档已重新审读。上一轮提出的 18 个问题中，大部分已正确修订。以下是本轮审核意见，只列出仍存在的问题和新引入的问题。
+                                                                                                                                               
+  ---                                                                                                                                          
+  一、上轮遗留未修（必须补齐）                                                                                                                 
+                                                                                                                                               
+  1. dms-masterdata 的 SchemeCreateRequest 仍缺少新增字段
+                                                                                                                                               
+  上轮第 12 条明确指出：评审后 md_decoct_scheme 新增了 trace_code、alarm_high_temp、alarm_low_temp，但 DTO 未同步。V1.2 的                     
+  dms-masterdata-需求与概设.md 第四节 SchemeCreateRequest 代码（第 157-171 行）仍然没有这三个字段。                                            
+                                                                                                                                               
+  修订：SchemeCreateRequest 和 SchemeUpdateRequest 补充 traceCode、alarmHighTemp、alarmLowTemp。                                               
+   
+  2. DeviceAdapter.parseStatusMessage(Object) 仍在公共接口中                                                                                   
+                  
+  上轮第 10 条指出 parseStatusMessage(Object rawMessage) 暴露了协议差异，应下沉为适配器内部逻辑。dms-equipment V1.2 第四节 4.3（第 200-212     
+  行）接口定义未变，仍保留该方法。
+                                                                                                                                               
+  修订：从 DeviceAdapter 公共接口中移除 parseStatusMessage，协议解析由各适配器内部 MessageHandler 完成，解析后统一回调                         
+  EquipmentService.updateDeviceStatus()。
+                                                                                                                                               
+  3. InspectionResult DTO 的 inspectedAt 仍用 Date                                                                                             
+   
+  dms-common V1.2 已将 BaseEntity 的时间字段改为 LocalDateTime（第 59-60 行），但 InspectionResult（第 346-357 行）的 inspectedAt 仍然是       
+  Date。同一模块内时间类型不一致。
+                                                                                                                                               
+  修订：InspectionResult.inspectedAt 改为 LocalDateTime。                                                                                      
+   
+  4. EqDeviceDTO 的 lastHeartbeat 仍用 Date                                                                                                    
+                  
+  同上，EqDeviceDTO（第 377 行）的 lastHeartbeat 仍然是 Date。                                                                                 
+                  
+  修订：改为 LocalDateTime。                                                                                                                   
+                  
+  ---                                                                                                                                          
+  二、本轮新发现的问题
+                                                                                                                                               
+  5. dms-common 需求清单缺少 ProductionQueryService 条目
+                                                                                                                                               
+  dms-common V1.2 第三节 3.12 已经定义了 ProductionQueryService SPI 及其配套                                                                   
+  DTO（ProdTaskDTO、CapacityDailyDTO、TaskStatusHistoryDTO），但第二节需求清单（第 24-41 行）没有对应的需求编号。COM-008~`COM-010` 覆盖了前三个
+   SPI，新增的第四个 SPI 没有编号。                                                                                                            
+                  
+  修订：补充 COM-016 ProductionQueryService SPI、COM-017 ProdTaskDTO、COM-018 CapacityDailyDTO / TaskStatusHistoryDTO。                        
+   
+  6. dms-analytics 模块边界描述与修订后的实现矛盾                                                                                              
+                  
+  dms-analytics V1.2 第一节模块边界（第 17 行）仍写着"✅ 可读取所有业务表进行聚合统计（只读）"，但第六节 6.1 已明确"禁止直接写跨模块           ─
+  SQL"。边界描述与开发规范自相矛盾。
+                                                                                                                                               
+  修订：将模块边界改为"✅ 通过 ProductionQueryService / EquipmentService / QualityService SPI 获取统计数据"。                                  ─
+   
+  7. dms-analytics 的 AnalyticsMapper 定位不清                                                                                                 
+                  
+  第五节类结构（第 168 行）仍保留 AnalyticsMapper.java，注释为"自定义统计 SQL（注解方式）"。但开发规范第 2                                     
+  条已禁止跨模块直接读表。如果所有数据都通过 SPI 获取，AnalyticsMapper 的职责是什么？
+                                                                                                                                               
+  修订：要么删除 AnalyticsMapper（纯 SPI 模式，Service 层做内存聚合），要么明确其仅用于读取本模块 ops_                                         
+  前缀的视图/汇总表。当前文档两种方案混在一起，开发人员会困惑。
+                                                                                                                                               
+  8. ProductionQueryService 缺少设备和质检维度的查询方法                                                                                       
+   
+  dms-analytics 需要设备利用率（OPS-002，依赖 eq_device_alarm）、质检合格率（OPS-005，依赖                                                     
+  qt_inspection）、监控大屏的在线设备数和告警数（OPS-006）。但 ProductionQueryService 只提供了生产任务维度的查询。设备和质检数据仍然没有合法的
+  SPI 获取途径。                                                                                                                               
+                  
+  修订方案（二选一）：                                                                                                                         
+  - 方案 A：在 EquipmentService 中补充 getOnlineDeviceCount()、getFaultStats(Date, Date) 等统计方法；在 QualityService 中补充
+  getInspectionSummary(Date, Date) 等统计方法                                                                                                  
+  - 方案 B：新增 EquipmentQueryService 和 QualityQueryService 只读 SPI，与 ProductionQueryService 对称
+                                                                                                                                               
+  推荐方案 A，在现有 SPI 上扩展，避免接口膨胀。                                                                                                
+                                                                                                                                               
+  9. dms-production 集成检查清单第一条与 BaseAuditEntity 矛盾                                                                                  
+                                                                                                                                               
+  dms-production V1.2 第九节集成检查清单第一条（第 507 行）："所有 prod_ 表实体继承 BaseEntity"。但第三节 3.3 已明确 prod_task_status_history  
+  继承 BaseAuditEntity。检查清单会导致审查人员误判。
+                                                                                                                                               
+  修订：改为"业务表继承 BaseEntity，审计表（prod_task_status_history）继承 BaseAuditEntity"。                                                  
+   
+  10. dms-equipment 集成检查清单同样的问题                                                                                                     
+                  
+  dms-equipment V1.2 第八节（第 395 行）："所有 eq_ 表实体继承 BaseEntity"。但 eq_temperature_log 已改为继承 BaseAuditEntity。                 
+                  
+  修订：同上，区分业务表和审计表的继承基类。                                                                                                   
+                  
+  11. dms-equipment 开发规范编号重复                                                                                                           
+                  
+  第七节开发规范（第 357-388 行）有两个编号 8：第一个是"多租户排除清单"，第二个是"温度日志归档"。                                              
+                  
+  修订：第二个改为编号 9。                                                                                                                     
+                  
+  12. 集成开发总计划 风险与注意事项未同步更新                                                                                                  
+                  
+  第九节（第 416-423 行）仍然写着：                                                                                                            
+  - 第 2 条："下一迭代需通过 SPI 或 dms-common 的 DTO 解耦"——但 P0-1 已将此列为当前迭代必须完成
+  - 第 5 条："使用了 synchronized，后续若拆分为微服务需改为分布式锁"——但 P1-3 已将 synchronized 改为数据库悲观锁                               
+                                                                                                                
+  这些风险项的描述还停留在 V1.0 的状态，与 V1.2 的里程碑计划矛盾。                                                                             
+                                                                                                                                               
+  修订：更新风险描述，反映当前迭代的实际修正计划。已纳入当前迭代的问题从"风险"降级为"进行中"，补充真正的剩余风险（如 SQLite→MySQL              
+  迁移的数据兼容性验证、东华原协议文档获取的不确定性等）。                                                                                     
+                                                                                                                                               
+  13. QualityService.inspect() 参数类型应为枚举而非 String                                                                                     
+   
+  dms-common V1.2 已定义了 InspectionResultType 枚举，QualityService 的 Javadoc 也说"result 质检结果枚举名"，但方法签名仍然是 String result（第
+   330 行）。既然已经有了枚举，直接用枚举类型做参数更安全，编译期就能拦截非法值。
+                                                                                                                                               
+  修订建议：inspect(Long taskId, InspectionResultType result, String operatorId, String remark)。如果考虑 REST 层反序列化便利性，至少在 Service
+   实现层做 InspectionResultType.valueOf(result) 转换并在 Javadoc 中标注。
+                                                                                                                                               
+  ---                                                                                                                                          
+  三、总结
+                                                                                                                                               
+  上轮 18 个问题中，14 个已正确修订（analytics SPI 化、BaseAuditEntity 拆分、synchronized 删除、错误码规范、数据流图、Flyway
+  版本规划、PrintTaskDTO、ProdTaskDTO、prt_record.operator_id、心跳策略统一、prod_step_log.device_id                                           
+  类型统一、多租户排除清单、阶段编号修正、InspectionResultType 枚举）。
+                                                                                                                                               
+  本轮剩余 13 个问题，按优先级：                                                                                                               
+  - 必须修（影响开发正确性）：1、2、5、6、7、8、9、10
+  - 应该修（一致性/规范性）：3、4、11、12、13                                                                                                  
+                                             
+  整体文档质量已经很高，核心架构决策清晰。修完这轮后可以进入 Sprint 开发。                                                                     
+                                                                               

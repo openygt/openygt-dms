@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>煎药室数字孪生仿真器 v3.0</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.esm.js"></script>
+<style>
+:root {
+  --bg:#0b1120; --panel:#111827; --border:#1f2937; --text:#e5e7eb; --text-dim:#9ca3af;
+  --green:#10b981; --blue:#3b82f6; --red:#ef4444; --orange:#f97316; --purple:#8b5cf6;
+  --cyan:#06b6d4; --yellow:#eab308; --pink:#ec4899;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+  font-size:13px; height:100vh; overflow:hidden; display:flex; flex-direction:column;
+}
+.topbar {
+  height:42px; background:var(--panel); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; padding:0 18px; flex-shrink:0;
+}
+.topbar .title { font-size:15px; font-weight:700; color:var(--cyan); letter-spacing:0.5px; }
+.topbar .status-group { display:flex; gap:18px; align-items:center; }
+.status-item { display:flex; align-items:center; gap:6px; font-size:12px; }
+.status-dot { width:8px; height:8px; border-radius:50%; }
+.status-dot.online { background:var(--green); box-shadow:0 0 6px var(--green); }
+.status-dot.offline { background:var(--red); }
+.status-dot.warn { background:var(--orange); animation:blink 1s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.main { flex:1; display:flex; overflow:hidden; }
+.panel { background:var(--panel); border-right:1px solid var(--border); display:flex; flex-direction:column; overflow:hidden; }
+.panel-left { width:260px; flex-shrink:0; }
+.panel-center { flex:1; border-right:1px solid var(--border); position:relative; }
+.panel-right { width:300px; flex-shrink:0; border-right:none; }
+.panel-header {
+  padding:10px 12px; font-size:12px; font-weight:700; color:var(--cyan);
+  border-bottom:1px solid var(--border); background:rgba(6,182,212,0.06); flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.panel-body { flex:1; overflow-y:auto; padding:10px; }
+.device-card {
+  background:rgba(17,24,39,0.7); border:1px solid var(--border); border-radius:8px;
+  padding:10px; margin-bottom:8px; transition:all 0.3s; cursor:pointer;
+}
+.device-card:hover { border-color:var(--cyan); }
+.device-card.fault { border-color:var(--red); animation:faultPulse 1.5s infinite; }
+.device-card.selected { border-color:var(--cyan); box-shadow:0 0 0 2px rgba(6,182,212,0.2); }
+@keyframes faultPulse { 0%,100%{box-shadow:0 0 0 transparent} 50%{box-shadow:0 0 10px rgba(239,68,68,0.35)} }
+.device-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+.device-name { font-weight:700; font-size:12px; }
+.device-badge { font-size:10px; padding:1px 6px; border-radius:4px; font-weight:600; }
+.badge-idle { background:rgba(16,185,129,0.15); color:var(--green); }
+.badge-busy { background:rgba(59,130,246,0.15); color:var(--blue); }
+.badge-fault { background:rgba(239,68,68,0.15); color:var(--red); }
+.device-info { display:flex; gap:10px; margin-bottom:6px; font-size:11px; color:var(--text-dim); }
+.device-temp { font-size:16px; font-weight:800; color:var(--text); }
+.device-temp.hot { color:var(--orange); }
+.device-temp.critical { color:var(--red); animation:blink 0.8s infinite; }
+.fault-buttons { display:flex; flex-wrap:wrap; gap:3px; margin-top:6px; }
+.fault-btn { font-size:9px; padding:2px 6px; border:1px solid var(--border); background:transparent; color:var(--text-dim); border-radius:3px; cursor:pointer; }
+.fault-btn:hover { border-color:var(--red); color:var(--red); background:rgba(239,68,68,0.1); }
+.fault-btn.active { border-color:var(--red); color:var(--red); background:rgba(239,68,68,0.2); }
+.clear-fault-btn { font-size:10px; padding:3px 8px; border:1px solid var(--green); background:rgba(16,185,129,0.1); color:var(--green); border-radius:4px; cursor:pointer; margin-top:6px; width:100%; }
+
+.floor-plan { position:relative; width:100%; height:100%; background:linear-gradient(135deg,#070c18 0%,#0b1220 100%); overflow:hidden; }
+.zone-label {
+  position:absolute; font-size:11px; color:var(--text-dim); font-weight:600;
+  letter-spacing:1px; padding:3px 8px; border:1px dashed var(--border); border-radius:6px;
+  background:rgba(17,24,39,0.5);
+}
+.device-node {
+  position:absolute; width:64px; height:64px; border-radius:10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  border:2px solid var(--border); background:var(--panel); cursor:pointer;
+  transition:all 0.3s; z-index:10; font-size:10px; text-align:center;
+}
+.device-node:hover { transform:scale(1.1); z-index:20; }
+.device-node.idle { border-color:var(--green); box-shadow:0 0 12px rgba(16,185,129,0.25); }
+.device-node.busy { border-color:var(--blue); box-shadow:0 0 12px rgba(59,130,246,0.25); }
+.device-node.fault { border-color:var(--red); box-shadow:0 0 16px rgba(239,68,68,0.4); animation:faultPulse 1.5s infinite; }
+.device-node.offline { border-color:var(--text-dim); opacity:0.5; }
+.node-icon { font-size:18px; margin-bottom:1px; }
+.node-name { font-size:9px; font-weight:700; }
+.node-temp { font-size:10px; margin-top:1px; }
+.connection-line {
+  position:absolute; height:2px; background:linear-gradient(90deg,var(--green),var(--blue));
+  opacity:0.5; z-index:5; transform-origin:left center;
+}
+.connection-label {
+  position:absolute; font-size:9px; color:var(--cyan); background:rgba(11,17,32,0.8);
+  padding:1px 4px; border-radius:3px; z-index:6; border:1px solid var(--border);
+}
+.task-float {
+  position:absolute; background:rgba(17,24,39,0.95); border:1px solid var(--cyan);
+  border-radius:6px; padding:5px 8px; font-size:10px; z-index:15;
+  box-shadow:0 4px 12px rgba(0,0,0,0.4); max-width:130px;
+}
+.task-float .task-id { color:var(--cyan); font-weight:700; }
+.task-float .task-status { color:var(--text-dim); font-size:9px; margin-top:1px; }
+
+.control-section { margin-bottom:12px; }
+.control-section-title {
+  font-size:11px; font-weight:700; color:var(--text-dim); margin-bottom:6px;
+  display:flex; align-items:center; gap:5px;
+}
+.control-section-title::before { content:''; width:3px; height:10px; background:var(--cyan); border-radius:2px; }
+.btn {
+  width:100%; padding:7px 10px; border:1px solid var(--border); background:var(--panel);
+  color:var(--text); border-radius:5px; cursor:pointer; font-size:11px; margin-bottom:5px;
+  transition:all 0.2s; text-align:left; display:flex; align-items:center; justify-content:space-between;
+}
+.btn:hover { background:rgba(6,182,212,0.08); border-color:var(--cyan); }
+.btn-primary { border-color:var(--blue); background:rgba(59,130,246,0.08); }
+.btn-primary:hover { background:rgba(59,130,246,0.15); }
+.btn-success { border-color:var(--green); background:rgba(16,185,129,0.08); }
+.btn-success:hover { background:rgba(16,185,129,0.15); }
+.btn-danger { border-color:var(--red); background:rgba(239,68,68,0.08); }
+.btn-danger:hover { background:rgba(239,68,68,0.15); }
+.btn-warn { border-color:var(--orange); background:rgba(249,115,22,0.08); }
+.btn-warn:hover { background:rgba(249,115,22,0.15); }
+.btn:disabled { opacity:0.35; cursor:not-allowed; }
+.input-group { margin-bottom:5px; }
+.input-group label { display:block; font-size:10px; color:var(--text-dim); margin-bottom:2px; }
+.input-group input, .input-group select {
+  width:100%; padding:5px 7px; border:1px solid var(--border); background:var(--bg);
+  color:var(--text); border-radius:4px; font-size:11px;
+}
+.input-group input:focus, .input-group select:focus { outline:none; border-color:var(--cyan); }
+
+.bottom-panel {
+  height:160px; background:var(--panel); border-top:1px solid var(--border);
+  display:flex; flex-direction:column; flex-shrink:0;
+}
+.log-toolbar { display:flex; justify-content:space-between; align-items:center; padding:5px 12px; border-bottom:1px solid var(--border); }
+.log-tabs { display:flex; gap:3px; }
+.log-tab { font-size:10px; padding:2px 8px; border:1px solid var(--border); background:transparent; color:var(--text-dim); border-radius:4px; cursor:pointer; }
+.log-tab.active { background:var(--cyan); color:#fff; border-color:var(--cyan); }
+.log-actions { display:flex; gap:5px; }
+.log-actions button { font-size:10px; padding:2px 8px; border:1px solid var(--border); background:transparent; color:var(--text-dim); border-radius:4px; cursor:pointer; }
+.log-content { flex:1; overflow-y:auto; padding:6px 12px; font-family:"SF Mono",Monaco,Consolas,monospace; font-size:11px; line-height:1.5; }
+.log-line { margin-bottom:2px; word-break:break-all; }
+.log-time { color:var(--text-dim); }
+.log-tag { font-weight:700; padding:0 3px; border-radius:3px; }
+.log-tag-mqtt { color:var(--purple); } .log-tag-api { color:var(--blue); }
+.log-tag-warn { color:var(--orange); } .log-tag-err { color:var(--red); }
+.log-tag-info { color:var(--green); }
+
+.task-queue {
+  position:absolute; top:8px; right:8px; width:170px;
+  background:rgba(11,17,32,0.95); border:1px solid var(--border); border-radius:8px;
+  padding:8px; z-index:30;
+}
+.task-queue-title { font-size:10px; font-weight:700; color:var(--cyan); margin-bottom:6px; }
+.task-queue-item {
+  font-size:10px; padding:3px 5px; border-radius:4px; margin-bottom:3px;
+  background:rgba(17,24,39,0.7); display:flex; justify-content:space-between;
+}
+.t-id { color:var(--text); } .t-status { font-size:9px; }
+.status-soaking { color:var(--blue); } .status-decocting { color:var(--orange); }
+.status-pouring { color:var(--purple); } .status-wrapping { color:var(--yellow); }
+.status-completed { color:var(--green); }
+
+.temp-chart-container {
+  position:absolute; bottom:8px; left:8px; width:220px; height:90px;
+  background:rgba(11,17,32,0.9); border:1px solid var(--border); border-radius:8px;
+  padding:6px; z-index:25;
+}
+.temp-chart-title { font-size:9px; font-weight:700; color:var(--cyan); margin-bottom:4px; }
+.temp-chart-canvas { width:100%; height:68px; }
+
+.connection-legend {
+  position:absolute; bottom:8px; right:190px; z-index:25;
+  background:rgba(11,17,32,0.9); border:1px solid var(--border); border-radius:6px;
+  padding:6px 10px; font-size:10px;
+}
+.connection-legend-item { display:flex; align-items:center; gap:6px; margin-bottom:3px; }
+.connection-legend-line { width:20px; height:2px; border-radius:1px; }
+
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+.soak-bucket {
+  position:absolute; width:48px; height:48px; border-radius:50%;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  border:2px solid var(--border); background:var(--panel); cursor:pointer;
+  transition:all 0.3s; z-index:10; font-size:9px; text-align:center;
+}
+.soak-bucket:hover { transform:scale(1.1); }
+.soak-bucket.idle { border-color:var(--green); }
+.soak-bucket.active { border-color:var(--blue); box-shadow:0 0 12px rgba(59,130,246,0.3); }
+.soak-bucket.done { border-color:var(--green); background:rgba(16,185,129,0.1); }
+.bucket-icon { font-size:16px; }
+.bucket-name { font-size:8px; font-weight:700; }
+.bucket-timer { font-size:10px; color:var(--cyan); font-weight:700; }
+
+.work-order-printer {
+  position:absolute; top:40px; left:10px; width:90px; height:70px;
+  background:rgba(11,17,32,0.95); border:1px solid var(--border); border-radius:8px;
+  padding:6px; z-index:30; text-align:center;
+}
+.work-order-printer-title { font-size:10px; font-weight:700; color:var(--cyan); margin-bottom:4px; }
+.work-order-printer-icon { font-size:22px; }
+.work-order-printer-status { font-size:9px; color:var(--text-dim); margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="title">🌿 煎药室数字孪生仿真器 v3.0</div>
+  <div class="status-group">
+    <div class="status-item"><span class="status-dot online" id="backendDot"></span><span>API:<span id="backendTxt">检测中</span></span></div>
+    <div class="status-item"><span class="status-dot offline" id="mqttDot"></span><span>MQTT:<span id="mqttTxt">未连接</span></span></div>
+    <div class="status-item"><span>设备:<strong id="deviceCount">0</strong></span></div>
+    <div class="status-item"><span>任务:<strong id="taskCount">0</strong></span></div>
+  </div>
+</div>
+<div class="main">
+  <div class="panel panel-left">
+    <div class="panel-header">🔧 设备列表 <span style="font-weight:400;color:var(--text-dim)">(点击选中)</span></div>
+    <div class="panel-body" id="deviceListPanel"></div>
+  </div>
+  <div class="panel panel-center">
+    <div class="panel-header">🏭 煎药室 2D 平面图</div>
+    <div class="floor-plan" id="floorPlan">
+      <div class="zone-label" style="top:10px;left:10px;">📦 待处理区</div>
+      <div class="zone-label" style="top:10px;left:200px;">💧 泡药区</div>
+      <div class="zone-label" style="top:10px;left:420px;">🔥 煎药区</div>
+      <div class="zone-label" style="top:180px;left:200px;">🧪 出液区</div>
+      <div class="zone-label" style="top:180px;left:420px;">📋 包装区</div>
+      <div class="zone-label" style="top:320px;left:300px;">✅ 完成区</div>
+      <div class="task-queue">
+        <div class="task-queue-title">📋 当前任务队列</div>
+        <div id="taskQueueList"><div style="color:var(--text-dim);font-size:10px;text-align:center;padding:8px;">暂无任务</div></div>
+      </div>
+      <div class="work-order-printer" id="workOrderPrinter">
+        <div class="work-order-printer-title">🖨️ 工单打印</div>
+        <div class="work-order-printer-icon">📄</div>
+        <div class="work-order-printer-status" id="workOrderStatus">待机</div>
+      </div>
+      <div class="temp-chart-container">
+        <div class="temp-chart-title">📈 温度曲线 (<span id="chartDevName">--</span>)</div>
+        <canvas id="tempChart" class="temp-chart-canvas"></canvas>
+      </div>
+      <div class="connection-legend">
+        <div class="connection-legend-item"><div class="connection-legend-line" style="background:var(--green);"></div><span>设备连线</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel panel-right">
+    <div class="panel-header">🎮 业务操作控制台</div>
+    <div class="panel-body">
+      <div class="control-section">
+        <div class="control-section-title">处方仿真 (HIS推送)</div>
+        <div class="input-group"><label>患者姓名</label><input type="text" id="simPatientName" value="测试患者"/></div>
+        <div class="input-group"><label>药品清单</label><input type="text" id="simMedicineList" value="当归10g,黄芪15g,枸杞5g"/></div>
+        <button class="btn btn-primary" onclick="simulateHisPrescription()"><span>🏥 HIS推送处方</span><span>→</span></button>
+        <button class="btn btn-danger" onclick="clearAllTasks()"><span>🗑️ 清空所有任务</span><span>→</span></button>
+      </div>
+      <div class="control-section">
+        <div class="control-section-title">PDA 全流程操作</div>
+        <div class="input-group"><label>当前任务</label><select id="pdaTaskSelect"><option>请先推送处方</option></select></div>
+        <div class="input-group"><label>操作员工号</label><input type="text" id="operatorId" value="OP001"/></div>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-success" style="flex:1;" onclick="pdaAction('soakStart')">💧开始泡药</button>
+          <button class="btn btn-danger" style="flex:1;" onclick="pdaAction('soakEnd')">💧结束泡药</button>
+        </div>
+        <div class="input-group" style="margin-top:5px;"><label>选择煎药机</label><select id="decoctDeviceSelect"><option>--</option></select></div>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-success" style="flex:1;" onclick="pdaAction('decoctStart')">🔥开始煎药</button>
+          <button class="btn btn-danger" style="flex:1;" onclick="pdaAction('decoctEnd')">🔥结束煎药</button>
+        </div>
+        <div style="display:flex;gap:5px;margin-top:5px;">
+          <button class="btn btn-success" style="flex:1;" onclick="pdaAction('pourStart')">🧪开始出液</button>
+          <button class="btn btn-danger" style="flex:1;" onclick="pdaAction('pourEnd')">🧪结束出液</button>
+        </div>
+        <div class="input-group" style="margin-top:5px;"><label>选择包装机</label><select id="wrapDeviceSelect"><option>--</option></select></div>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-success" style="flex:1;" onclick="pdaAction('wrapStart')">📋开始包装</button>
+          <button class="btn btn-danger" style="flex:1;" onclick="pdaAction('wrapEnd')">📋结束包装</button>
+        </div>
+        <div style="display:flex;gap:5px;margin-top:5px;">
+          <button class="btn btn-success" style="flex:1;" onclick="pdaAction('labelConfirm')">🏷️确认贴标</button>
+        </div>
+      </div>
+      <div class="control-section">
+        <div class="control-section-title">🔍 质检操作</div>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-success" style="flex:1;" onclick="pdaAction('qualityPass')">✅通过</button>
+          <button class="btn btn-warn" style="flex:1;" onclick="pdaAction('qualityConcession')">⚠️让步</button>
+        </div>
+        <div style="display:flex;gap:5px;margin-top:5px;">
+          <button class="btn btn-danger" style="flex:1;" onclick="pdaAction('qualityRework')">🔨返工</button>
+          <button class="btn btn-danger" style="flex:1;" onclick="pdaAction('qualityScrap')">🗑️报废</button>
+        </div>
+      </div>
+      <div class="control-section">
+        <div class="control-section-title">📤 交接操作</div>
+        <div class="input-group"><label>袋数</label><input type="number" id="handoverBagCount" value="7" min="1"/></div>
+        <div class="input-group"><label>交接类型</label><input type="text" id="handoverType" value="患者自提"/></div>
+        <div style="display:flex;gap:5px;">
+          <button class="btn btn-success" style="flex:1;" onclick="pdaAction('handoverPart')">📤部分交接</button>
+          <button class="btn btn-primary" style="flex:1;" onclick="pdaAction('handoverFull')">📤完成交接</button>
+        </div>
+      </div>
+      <div class="control-section">
+        <div class="control-section-title">🖨️ 标签打印管理</div>
+        <div class="input-group"><label>待打印任务</label><select id="printTaskSelect"><option>请先完成包装</option></select></div>
+        <div class="input-group"><label>选择打印机</label><select id="printDeviceSelect"><option>--</option></select></div>
+        <button class="btn btn-success" onclick="printAction('print')">🖨️ 打印标签</button>
+        <button class="btn btn-warn" onclick="printAction('retry')">🔄 重试打印</button>
+        <div id="printQueueMini" style="margin-top:8px;font-size:10px;color:var(--text-dim);max-height:80px;overflow-y:auto;"></div>
+      </div>
+      <div class="control-section">
+        <div class="control-section-title">手动控制</div>
+        <div class="input-group"><label>选择设备调温</label><select id="manualDeviceSelect" onchange="updateManualTemp()"><option>--</option></select></div>
+        <input type="range" id="manualTempSlider" min="0" max="150" value="25" style="width:100%;" oninput="manualTempChange(this.value)"/>
+        <div style="text-align:right;font-size:12px;color:var(--orange);margin-top:2px;" id="manualTempValue">25℃</div>
+        <button class="btn btn-warn" onclick="forceCompleteTask()"><span>⚡ 强制完成当前任务</span></button>
+        <button class="btn" onclick="refreshAll()"><span>🔄 刷新全部数据</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="bottom-panel">
+  <div class="log-toolbar">
+    <div class="log-tabs">
+      <button class="log-tab active" onclick="setLogFilter('all')">全部</button>
+      <button class="log-tab" onclick="setLogFilter('mqtt')">MQTT</button>
+      <button class="log-tab" onclick="setLogFilter('api')">API</button>
+      <button class="log-tab" onclick="setLogFilter('warn')">告警</button>
+    </div>
+    <div class="log-actions">
+      <button onclick="pauseLog()" id="pauseBtn">暂停</button>
+      <button onclick="clearLog()">清空</button>
+    </div>
+  </div>
+  <div class="log-content" id="logContent"></div>
+</div>
+
+<script>
+const CONFIG = {
+  API_BASE: '',
+  MQTT_BROKER: 'ws://127.0.0.1:8083/mqtt',
+  MQTT_TOPIC_SUB: 'decoction/+/status',
+  REFRESH_INTERVAL: 3000,
+  MAX_LOG_LINES: 300,
+  OPERATOR_ID: 'SIM'
+};
+
+// ========== 设备定义：4煎药机 + 1包装机 + 1打印机 ==========
+let devices = [];
+let connections = [];
+let tasks = [];
+let logs = [];
+let logPaused = false;
+let logFilter = 'all';
+let mqttClient = null;
+let simInterval = null;
+let selectedDeviceId = null;
+let tempHistory = {}; // {deviceId: [temp1, temp2, ...]}
+
+const STATUS_MAP = {
+  '待泡药':'待泡药','泡药中':'泡药中','待煎药':'待煎药',
+  '煎药中':'煎药中','待出液':'待出液','出液中':'出液中',
+  '待包装':'待包装','包装中':'包装中','待贴标':'待贴标','待质检':'待质检','待交接':'待交接','已部分完成':'已部分完成','已完成':'已完成','已报废':'已报废'
+};
+const STATUS_COLOR = {
+  '待泡药':'','泡药中':'status-soaking','待煎药':'status-soaking',
+  '煎药中':'status-decocting','待出液':'status-decocting','出液中':'status-pouring',
+  '待包装':'status-pouring','包装中':'status-wrapping','待贴标':'status-wrapping','待质检':'status-wrapping','待交接':'status-wrapping','已部分完成':'status-wrapping','已完成':'status-completed','已报废':'status-completed'
+};
+
+function initDevices() {
+  devices = [
+    { id:'DEC001', name:'煎药机#1', type:'decoct', status:'idle', temp:25.0, targetTemp:100, boundTaskId:null, faultCode:null, x:380, y:45 },
+    { id:'DEC002', name:'煎药机#2', type:'decoct', status:'idle', temp:25.0, targetTemp:100, boundTaskId:null, faultCode:null, x:460, y:45 },
+    { id:'DEC003', name:'煎药机#3', type:'decoct', status:'idle', temp:25.0, targetTemp:100, boundTaskId:null, faultCode:null, x:540, y:45 },
+    { id:'DEC004', name:'煎药机#4', type:'decoct', status:'idle', temp:25.0, targetTemp:100, boundTaskId:null, faultCode:null, x:620, y:45 },
+    { id:'PACK001', name:'包装机#1', type:'wrap', status:'idle', temp:25.0, targetTemp:80, boundTaskId:null, faultCode:null, x:500, y:210 },
+    { id:'PRINT001', name:'工单打印机#1', type:'printer', status:'idle', temp:25.0, targetTemp:0, boundTaskId:null, faultCode:null, x:620, y:210 }
+  ];
+  connections = [
+    { from:'DEC001', to:'PACK001', isPrimary:true },
+    { from:'DEC002', to:'PACK001', isPrimary:true },
+    { from:'DEC003', to:'PACK001', isPrimary:false },
+    { from:'DEC004', to:'PACK001', isPrimary:false },
+    { from:'PACK001', to:'PRINT001', isPrimary:true }
+  ];
+  devices.forEach(d => tempHistory[d.id] = new Array(30).fill(25));
+  selectedDeviceId = devices[0].id;
+  updateDeviceCount();
+  populateSelects();
+  initSoakBuckets();
+  initBigBag();
+}
+let bigBag = null;
+function initBigBag() {
+  bigBag = { status:'idle', x:300, y:340 };
+}
+
+// ========== 泡药桶 ==========
+let soakBuckets = [];
+let soakTimers = {};
+function initSoakBuckets() {
+  soakBuckets = [
+    { id:'B1', name:'泡药桶#1', status:'idle', x:180, y:50 },
+    { id:'B2', name:'泡药桶#2', status:'idle', x:240, y:50 },
+    { id:'B3', name:'泡药桶#3', status:'idle', x:180, y:110 },
+    { id:'B4', name:'泡药桶#4', status:'idle', x:240, y:110 }
+  ];
+}
+function renderSoakBuckets(plan) {
+  soakBuckets.forEach(b => {
+    const el = document.createElement('div');
+    el.className = 'soak-bucket ' + b.status;
+    el.style.left = b.x + 'px';
+    el.style.top = b.y + 'px';
+    const timerText = soakTimers[b.id] ? soakTimers[b.id].text : '';
+    el.innerHTML = '<div class="bucket-icon">💧</div><div class="bucket-name">' + b.id + '</div>' + (timerText?'<div class="bucket-timer">'+timerText+'</div>':'');
+    plan.appendChild(el);
+  });
+}
+function startSoakTimer(bucketId, seconds) {
+  let remaining = seconds;
+  soakTimers[bucketId] = { text: formatTime(remaining) };
+  const interval = setInterval(function() {
+    remaining--;
+    if (remaining <= 0) {
+      clearInterval(interval);
+      delete soakTimers[bucketId];
+      var b = soakBuckets.find(function(x){return x.id===bucketId;});
+      if(b) { b.status = 'idle'; }
+      renderFloorPlan();
+    } else {
+      soakTimers[bucketId] = { text: formatTime(remaining) };
+      renderFloorPlan();
+    }
+  }, 1000);
+}
+function clearSoakBucket(bucketId) {
+  delete soakTimers[bucketId];
+  var b = soakBuckets.find(function(x){return x.id===bucketId;});
+  if(b) { b.status = 'idle'; }
+  renderFloorPlan();
+}
+function formatTime(s) {
+  var m = Math.floor(s/60);
+  var sec = s%60;
+  return m + ':' + (sec<10?'0'+sec:sec);
+}
+
+function populateSelects() {
+  const decoctSel = document.getElementById('decoctDeviceSelect');
+  const wrapSel = document.getElementById('wrapDeviceSelect');
+  const printSel = document.getElementById('printDeviceSelect');
+  const manSel = document.getElementById('manualDeviceSelect');
+  decoctSel.innerHTML = '<option value="">-- 选择 --</option>';
+  wrapSel.innerHTML = '<option value="">-- 选择 --</option>';
+  printSel.innerHTML = '<option value="">-- 选择 --</option>';
+  manSel.innerHTML = '<option value="">-- 选择 --</option>';
+  devices.filter(d=>d.type==='decoct').forEach(d=>decoctSel.add(new Option(d.name,d.id)));
+  devices.filter(d=>d.type==='wrap').forEach(d=>wrapSel.add(new Option(d.name,d.id)));
+  devices.filter(d=>d.type==='printer').forEach(d=>printSel.add(new Option(d.name,d.id)));
+  devices.forEach(d=>manSel.add(new Option(d.name,d.id)));
+  if(selectedDeviceId) manSel.value = selectedDeviceId;
+}
+function updateDeviceCount(){ document.getElementById('deviceCount').textContent = devices.length; }
+
+// ========== 物理仿真 ==========
+function startSimulation() {
+  if(simInterval) clearInterval(simInterval);
+  simInterval = setInterval(()=>{
+    devices.forEach(dev=>{
+      if(dev.faultCode==='PROBE_OPEN'){ dev.temp = NaN; }
+      else if(dev.faultCode==='DRY_BURN'){ dev.temp += Math.random()*3; if(dev.temp>150)dev.temp=150; }
+      else if(dev.status==='running'){
+        const diff = dev.targetTemp - dev.temp;
+        dev.temp += diff*0.06 + (Math.random()-0.5)*0.6;
+        if(Math.abs(diff)<5) dev.temp += (Math.random()-0.5)*0.3;
+      } else if(dev.status==='idle'){ dev.temp = dev.temp*0.97 + 25*0.03; }
+      if(!isNaN(dev.temp)){ dev.temp = Math.max(15, Math.min(150, dev.temp)); dev.temp = Math.round(dev.temp*10)/10; }
+      // 记录温度历史
+      tempHistory[dev.id].push(dev.temp||0);
+      if(tempHistory[dev.id].length>60) tempHistory[dev.id].shift();
+    });
+    renderDevices();
+    renderFloorPlan();
+    drawTempChart();
+    devices.forEach(dev=>{
+      if(dev.status==='running' && !dev.faultCode && Math.random()<0.25) reportDeviceTemp(dev);
+    });
+  }, 1000);
+}
+
+function reportDeviceTemp(dev) {
+  if(isNaN(dev.temp)) return;
+  fetch(`${CONFIG.API_BASE}/api/devices/temperature`,{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({deviceCode:dev.id, temperature:dev.temp})
+  }).then(r=>r.json()).then(data=>{
+    log('api',`POST /devices/temperature ${dev.id}=${dev.temp}℃ → code=${data.code}`);
+  }).catch(err=>log('err',`温度上报失败:${err.message}`));
+  if(mqttClient && mqttClient.connected){
+    mqttClient.publish(`decoction/${dev.id}/status`, String(dev.temp));
+    log('mqtt',`PUB decoction/${dev.id}/status → ${dev.temp}`);
+  }
+}
+
+// ========== 渲染 ==========
+function renderDevices() {
+  const panel = document.getElementById('deviceListPanel');
+  panel.innerHTML = devices.map(dev=>{
+    const statusClass = dev.status==='idle'?'idle':dev.status==='running'?'busy':dev.status==='fault'?'fault':'offline';
+    const statusText = {IDLE:'空闲',BUSY:'运行中',FAULT:'故障',OFFLINE:'离线'}[dev.status]||dev.status;
+    const tempDisplay = isNaN(dev.temp)?'---':`${dev.temp}℃`;
+    const tempClass = !isNaN(dev.temp)&&dev.temp>100?'critical':!isNaN(dev.temp)&&dev.temp>80?'hot':'';
+    const boundInfo = dev.boundTaskId?`<div style="font-size:9px;color:var(--cyan);margin-top:2px;">绑定任务#${dev.boundTaskId}</div>`:'';
+    const typeIcon = dev.type==='decoct'?'🔥':dev.type==='wrap'?'📋':'🖨️';
+    const typeName = dev.type==='decoct'?'煎药机':dev.type==='wrap'?'包装机':'打印机';
+    const selClass = selectedDeviceId===dev.id?'selected':'';
+    const faultBtns = dev.type==='decoct'?`
+      <button class="fault-btn ${dev.faultCode==='DRY_BURN'?'active':''}" onclick="event.stopPropagation();injectFault('${dev.id}','DRY_BURN')">干烧</button>
+      <button class="fault-btn ${dev.faultCode==='PROBE_OPEN'?'active':''}" onclick="event.stopPropagation();injectFault('${dev.id}','PROBE_OPEN')">探头开路</button>
+      <button class="fault-btn ${dev.faultCode==='NO_WATER'?'active':''}" onclick="event.stopPropagation();injectFault('${dev.id}','NO_WATER')">不进水</button>`
+      : dev.type==='wrap'?`
+      <button class="fault-btn ${dev.faultCode==='NO_BAG'?'active':''}" onclick="event.stopPropagation();injectFault('${dev.id}','NO_BAG')">缺袋</button>
+      <button class="fault-btn ${dev.faultCode==='VALVE_FAULT'?'active':''}" onclick="event.stopPropagation();injectFault('${dev.id}','VALVE_FAULT')">电磁阀</button>`
+      :`
+      <button class="fault-btn ${dev.faultCode==='PAPER_JAM'?'active':''}" onclick="event.stopPropagation();injectFault('${dev.id}','PAPER_JAM')">卡纸</button>
+      <button class="fault-btn ${dev.faultCode==='NO_INK'?'active':''}" onclick="event.stopPropagation();injectFault('${dev.id}','NO_INK')">缺墨</button>
+      <button class="fault-btn ${dev.faultCode==='NO_PAPER'?'active':''}" onclick="event.stopPropagation();injectFault('${dev.id}','NO_PAPER')">缺纸</button>`;
+    return `
+    <div class="device-card ${dev.faultCode?'fault':''} ${selClass}" id="card-${dev.id}" onclick="selectDevice('${dev.id}')">
+      <div class="device-header">
+        <span class="device-name">${typeIcon} ${dev.name}</span>
+        <span class="device-badge badge-${statusClass}">${statusText}</span>
+      </div>
+      <div class="device-info"><span>${typeName}</span>${dev.type!=='printer'?`<span>目标:${dev.targetTemp}℃</span>`:''}</div>
+      ${dev.type!=='printer'?`<div class="device-temp ${tempClass}">${tempDisplay}</div>`:''}
+      ${boundInfo}
+      <div class="fault-buttons">${faultBtns}</div>
+      ${dev.faultCode?`<button class="clear-fault-btn" onclick="event.stopPropagation();clearFault('${dev.id}')">✅ 清除故障</button>`:''}
+    </div>`;
+  }).join('');
+}
+
+function selectDevice(id) {
+  selectedDeviceId = id;
+  const dev = devices.find(d=>d.id===id);
+  document.getElementById('chartDevName').textContent = dev?dev.name:'--';
+  renderDevices();
+}
+
+function renderFloorPlan() {
+  const plan = document.getElementById('floorPlan');
+  // 清除所有动态元素（包括大袋子）
+  plan.querySelectorAll('.device-node,.connection-line,.connection-label,.task-float,.big-bag').forEach(el=>el.remove());
+
+  // 绘制配对连线
+  connections.forEach(conn=>{
+    const fromDev = devices.find(d=>d.id===conn.from);
+    const toDev = devices.find(d=>d.id===conn.to);
+    if(!fromDev||!toDev) return;
+    const x1 = fromDev.x + 32, y1 = fromDev.y + 64;
+    const x2 = toDev.x + 32, y2 = toDev.y;
+    const len = Math.sqrt((x2-x1)**2 + (y2-y1)**2);
+    const angle = Math.atan2(y2-y1, x2-x1) * 180 / Math.PI;
+    const line = document.createElement('div');
+    line.className = 'connection-line';
+    line.style.left = x1 + 'px';
+    line.style.top = y1 + 'px';
+    line.style.width = len + 'px';
+    line.style.transform = `rotate(${angle}deg)`;
+    line.style.background = conn.isPrimary
+      ? 'linear-gradient(90deg,var(--green),var(--blue))'
+      : 'linear-gradient(90deg,var(--text-dim),var(--text-dim))';
+    line.style.opacity = conn.isPrimary ? '0.6' : '0.25';
+    plan.appendChild(line);
+
+  });
+
+  // 设备节点
+  devices.forEach(dev=>{
+    const node = document.createElement('div');
+    node.className = `device-node ${dev.status.toLowerCase()} ${selectedDeviceId===dev.id?'selected':''}`;
+    node.style.left = dev.x + 'px';
+    node.style.top = dev.y + 'px';
+    const icon = dev.type==='decoct'?'🔥':dev.type==='wrap'?'📋':'🖨️';
+    const tempStr = isNaN(dev.temp)?'ERR':Math.round(dev.temp)+'℃';
+    node.innerHTML = `<div class="node-icon">${icon}</div><div class="node-name">${dev.id}</div>${dev.type!=='printer'?`<div class="node-temp ${!isNaN(dev.temp)&&dev.temp>100?'critical':''}">${tempStr}</div>`:''}`;
+    node.title = `${dev.name}\n类型:${dev.type==='decoct'?'煎药机':dev.type==='wrap'?'包装机':'打印机'}\n状态:${dev.status}\n温度:${tempStr}\n故障:${dev.faultCode||'无'}`;
+    node.onclick = ()=>selectDevice(dev.id);
+    plan.appendChild(node);
+  });
+
+  // 泡药桶
+  renderSoakBuckets(plan);
+
+  // 完成区大袋子：根据真实任务状态动态显示，只有待交接/已完成时才出现
+  const handoverCount = tasks.filter(function(t){return t.status==='待交接'||t.status==='已部分完成';}).length;
+  const doneCount = tasks.filter(function(t){return t.status==='已完成';}).length;
+  if(handoverCount > 0) {
+    const bagEl = document.createElement('div');
+    bagEl.className = 'big-bag idle';
+    bagEl.style.left = bigBag.x + 'px';
+    bagEl.style.top = bigBag.y + 'px';
+    bagEl.innerHTML = '<div class="big-bag-icon">🛍️</div><div class="big-bag-label">待交接</div>';
+    plan.appendChild(bagEl);
+  } else if(doneCount > 0) {
+    const bagEl = document.createElement('div');
+    bagEl.className = 'big-bag done';
+    bagEl.style.left = bigBag.x + 'px';
+    bagEl.style.top = bigBag.y + 'px';
+    bagEl.innerHTML = '<div class="big-bag-icon">✅</div><div class="big-bag-label">已完成</div>';
+    plan.appendChild(bagEl);
+  }
+
+  // 不再渲染任务浮动卡片，用户只需要一个示意框（big-bag）
+}
+
+// ========== 温度曲线 ==========
+function drawTempChart() {
+  const canvas = document.getElementById('tempChart');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = canvas.offsetWidth;
+  const h = canvas.height = canvas.offsetHeight;
+  const data = tempHistory[selectedDeviceId] || [];
+  if(data.length<2) return;
+  ctx.clearRect(0,0,w,h);
+  // 网格
+  ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+  ctx.lineWidth = 1;
+  for(let i=0;i<5;i++){ ctx.beginPath(); ctx.moveTo(0,i*h/4); ctx.lineTo(w,i*h/4); ctx.stroke(); }
+  // 曲线
+  const maxT = 150, minT = 0;
+  ctx.strokeStyle = '#06b6d4';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  data.forEach((t,i)=>{
+    const x = (i/(data.length-1))*w;
+    const y = h - ((t-minT)/(maxT-minT))*h;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // 填充
+  ctx.fillStyle = 'rgba(6,182,212,0.1)';
+  ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.closePath(); ctx.fill();
+  // 当前值
+  const last = data[data.length-1];
+  ctx.fillStyle = '#fff'; ctx.font = '10px sans-serif';
+  ctx.fillText(`${Math.round(last)}℃`, w-30, h - ((last-minT)/(maxT-minT))*h - 5);
+}
+
+// ========== 故障注入 ==========
+async function injectFault(deviceId, faultCode) {
+  const dev = devices.find(d=>d.id===deviceId);
+  if(!dev) return;
+  try {
+    // 先确保设备已注册到后端
+    await ensureDeviceRegistered(dev);
+    const res = await fetch(`${CONFIG.API_BASE}/api/devices/${deviceId}/fault`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({faultCode: faultCode, message: `${dev.name} ${faultCode}`})
+    });
+    const data = await res.json();
+    if(data.code===200) log('api',`故障注入成功: ${dev.name} → ${faultCode}`);
+    else log('warn',`故障注入后端返回: ${data.message}`);
+  } catch(err) { log('warn',`故障注入异常: ${err.message}`); }
+  dev.faultCode = faultCode;
+  dev.status = 'fault';
+  log('warn',`⚠️ 故障注入: ${dev.name} → ${faultCode}`);
+  renderDevices(); renderFloorPlan();
+}
+
+async function clearFault(deviceId) {
+  const dev = devices.find(d=>d.id===deviceId);
+  if(!dev) return;
+  try {
+    const res = await fetch(`${CONFIG.API_BASE}/api/devices/${deviceId}/fault`,{method:'DELETE'});
+    if(res.ok) log('api',`故障清除: ${dev.name}`);
+  } catch(err){}
+  dev.faultCode = null;
+  dev.status = dev.boundTaskId ? 'running' : 'idle';
+  log('info',`✅ 故障清除: ${dev.name} 恢复正常`);
+  renderDevices(); renderFloorPlan();
+}
+
+async function ensureDeviceRegistered(dev) {
+  try {
+    const res = await fetch(`${CONFIG.API_BASE}/api/devices/${dev.id}`);
+    if(!res.ok) {
+      // 设备不存在，自动注册
+      await fetch(`${CONFIG.API_BASE}/api/devices`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({deviceCode:dev.id, name:dev.name, deviceType: dev.type==='decoct'?1:dev.type==='wrap'?2:4, status:'idle'})
+      });
+      log('info',`自动注册设备: ${dev.name}`);
+    }
+  } catch(err){}
+}
+
+// ========== API 工具 ==========
+async function apiCall(method, path, body) {
+  const url = `${CONFIG.API_BASE}${path}`;
+  const opts = {method, headers:{'Content-Type':'application/json'}};
+  if(body) opts.body = JSON.stringify(body);
+  try {
+    const res = await fetch(url, opts);
+    const data = await res.json();
+    const bp = body ? JSON.stringify(body).slice(0,100):'';
+    log('api', `${method} ${path} ${bp} → code=${data.code}${data.code!==200?' msg='+data.message:''}`);
+    return data;
+  } catch(err) { log('err', `${method} ${path} 失败: ${err.message}`); return {code:500, message:err.message}; }
+}
+
+async function fetchPrintQueue() {
+  const data = await apiCall('GET','/api/tasks/print-queue',null);
+  if(data.code===200 && data.data){
+    const printTasks = data.data;
+    const sel = document.getElementById('printTaskSelect');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">-- 选择任务 --</option>';
+    printTasks.forEach(t=>{
+      const label = `任务#${t.id} [${t.printStatus==='PENDING'?'待打印':t.printStatus==='FAILED'?'打印失败':t.printStatus}]`;
+      sel.add(new Option(label, t.id));
+    });
+    if(current && printTasks.find(t=>String(t.id)===current)) sel.value = current;
+    // 迷你队列展示
+    const mini = document.getElementById('printQueueMini');
+    if(printTasks.length===0){ mini.innerHTML='暂无待打印任务'; }
+    else { mini.innerHTML = printTasks.slice(0,5).map(t=>`<div>• #${t.id} ${t.printStatus==='PENDING'?'🟡待打印':'🔴失败'}</div>`).join(''); }
+  }
+}
+
+async function printAction(action) {
+  const taskSel = document.getElementById('printTaskSelect');
+  const devSel = document.getElementById('printDeviceSelect');
+  const taskId = taskSel.value;
+  const deviceId = devSel.value;
+  const opId = document.getElementById('operatorId').value || CONFIG.OPERATOR_ID;
+  if(!taskId){ log('warn','请选择待打印任务'); return; }
+  if(!deviceId){ log('warn','请选择打印机'); return; }
+  let result;
+  if(action==='print'){
+    result = await apiCall('POST',`/api/tasks/${taskId}/print`,{deviceCode:deviceId, operatorId:opId});
+  } else {
+    result = await apiCall('POST',`/api/tasks/${taskId}/print/retry`,{deviceCode:deviceId, operatorId:opId});
+  }
+  if(result.code===200){
+    log('info',`标签打印成功: 任务#${taskId} → 打印机${deviceId}`);
+    await fetchPrintQueue();
+    await fetchTasks();
+  }
+}
+
+async function clearAllTasks() {
+  if(!confirm('确定要清空所有任务吗？此操作不可恢复。')) return;
+  const data = await apiCall('POST','/api/tasks/clear',{});
+  if(data.code===200){ log('info',`已清空 ${data.data} 个任务`); await fetchTasks(); }
+  else { log('warn',`清空任务失败: ${data.message}`); }
+}
+
+async function simulateHisPrescription() {
+  const name = document.getElementById('simPatientName').value || '模拟患者';
+  const medicine = document.getElementById('simMedicineList').value || '当归10g';
+  const data = await apiCall('POST','/api/prescriptions',{
+    patientName: name+'-'+Math.floor(Math.random()*1000),
+    medicineList: medicine,
+    remark:'仿真器自动生成'
+  });
+  if(data.code===200){
+    log('info',`处方创建成功 ID=${data.data.id}`);
+    await fetchTasks();
+    printWorkOrder(data.data);
+  }
+}
+function printWorkOrder(prescription) {
+  const statusEl = document.getElementById('workOrderStatus');
+  if(statusEl) statusEl.textContent = '打印中...';
+  log('info',`🖨️ 自动打印工单: 处方#${prescription.id} ${prescription.patientName}`);
+  setTimeout(function() {
+    if(statusEl) statusEl.textContent = '待机';
+    log('info',`✅ 工单打印完成: 处方#${prescription.id}`);
+  }, 1500);
+}
+
+async function pdaAction(action) {
+  const taskSel = document.getElementById('pdaTaskSelect');
+  const taskId = taskSel.value;
+  if(!taskId){ log('warn','请先选择任务'); return; }
+  const opId = document.getElementById('operatorId').value || CONFIG.OPERATOR_ID;
+  const decoctDev = document.getElementById('decoctDeviceSelect').value;
+  const wrapDev = document.getElementById('wrapDeviceSelect').value;
+  let result;
+  switch(action){
+    case 'soakStart':
+      result = await apiCall('POST',`/api/tasks/${taskId}/soak/start`,{operatorId:opId});
+      if(result.code===200) {
+        simulateTaskProgress(taskId,'泡药中');
+        // 找一个空闲泡药桶开始倒计时
+        var bucket = soakBuckets.find(function(b){return b.status==='idle';});
+        if(bucket){ bucket.status='active'; startSoakTimer(bucket.id, 30); }
+      }
+      break;
+    case 'soakEnd':
+      result = await apiCall('POST',`/api/tasks/${taskId}/soak/end`,{operatorId:opId});
+      if(result.code===200) {
+        simulateTaskProgress(taskId,'待煎药');
+        // 清除正在倒计时的泡药桶
+        soakBuckets.forEach(function(b){ if(b.status==='active') clearSoakBucket(b.id); });
+      }
+      break;
+    case 'decoctStart':
+      if(!decoctDev){ log('warn','请选择煎药机'); return; }
+      result = await apiCall('POST',`/api/tasks/${taskId}/decoct/start`,{deviceCode:decoctDev, operatorId:opId});
+      if(result.code===200){ bindDeviceToTask(decoctDev,taskId); simulateTaskProgress(taskId,'煎药中'); }
+      break;
+    case 'decoctEnd':
+      result = await apiCall('POST',`/api/tasks/${taskId}/decoct/end`,{operatorId:opId});
+      if(result.code===200) simulateTaskProgress(taskId,'待出液');
+      break;
+    case 'pourStart':
+      result = await apiCall('POST',`/api/tasks/${taskId}/pour/start`,{operatorId:opId});
+      if(result.code===200) simulateTaskProgress(taskId,'出液中');
+      break;
+    case 'pourEnd':
+      result = await apiCall('POST',`/api/tasks/${taskId}/pour/end`,{operatorId:opId});
+      if(result.code===200){ releaseDecoctDevice(taskId); simulateTaskProgress(taskId,'待包装'); }
+      break;
+    case 'wrapStart':
+      if(!wrapDev){ log('warn','请选择包装机'); return; }
+      result = await apiCall('POST',`/api/tasks/${taskId}/wrap/start`,{deviceCode:wrapDev, operatorId:opId});
+      if(result.code===200){ bindDeviceToTask(wrapDev,taskId); simulateTaskProgress(taskId,'包装中'); }
+      break;
+    case 'wrapEnd':
+      result = await apiCall('POST',`/api/tasks/${taskId}/wrap/end`,{operatorId:opId});
+      if(result.code===200){ releaseAllDevices(taskId); simulateTaskProgress(taskId,'待贴标'); }
+      break;
+    case 'labelConfirm':
+      result = await apiCall('POST',`/api/tasks/${taskId}/label/confirm`,{operatorId:opId});
+      if(result.code===200) {
+        simulateTaskProgress(taskId,'待质检');
+        if(bigBag) bigBag.status = 'idle'; // 显示大袋子（待交接状态）
+      }
+      break;
+    case 'qualityPass':
+      result = await apiCall('POST',`/api/tasks/${taskId}/quality`,{result:'通过', operatorId:opId, remark:'模拟质检通过'});
+      if(result.code===200) {
+        simulateTaskProgress(taskId,'待交接');
+        if(bigBag) bigBag.status = 'idle';
+      }
+      break;
+    case 'qualityConcession':
+      result = await apiCall('POST',`/api/tasks/${taskId}/quality`,{result:'让步放行', operatorId:opId, remark:'模拟让步放行'});
+      if(result.code===200) {
+        simulateTaskProgress(taskId,'待交接');
+        if(bigBag) bigBag.status = 'idle';
+      }
+      break;
+    case 'qualityRework':
+      result = await apiCall('POST',`/api/tasks/${taskId}/quality`,{result:'返工', operatorId:opId, remark:'模拟返工'});
+      if(result.code===200) simulateTaskProgress(taskId,'待煎药');
+      break;
+    case 'qualityScrap':
+      result = await apiCall('POST',`/api/tasks/${taskId}/quality`,{result:'报废', operatorId:opId, remark:'模拟报废'});
+      if(result.code===200) simulateTaskProgress(taskId,'已报废');
+      break;
+    case 'handoverPart':
+    case 'handoverFull':{
+      const bagCount = parseInt(document.getElementById('handoverBagCount').value || '7');
+      const hType = document.getElementById('handoverType').value || '患者自提';
+      result = await apiCall('POST',`/api/tasks/${taskId}/handover`,{bagCount:bagCount, handoverType:hType, handoverUser:opId, remark:action==='handoverPart'?'部分交接':'完成交接', isFinal: action==='handoverFull'});
+      if(result.code===200){
+        simulateTaskProgress(taskId, action==='handoverPart'?'已部分完成':'已完成');
+        if(bigBag) bigBag.status = 'done'; // 大袋子变色
+        log('info',`任务#${taskId} ${action==='handoverPart'?'部分交接':'完成交接'}，袋数=${bagCount}`);
+      }
+      break;
+    }
+  }
+  await fetchTasks();
+}
+
+function bindDeviceToTask(deviceId, taskId) {
+  const dev = devices.find(d=>d.id===deviceId);
+  if(dev){ dev.status='running'; dev.boundTaskId=taskId; dev.targetTemp = dev.type==='decoct'?100:80; }
+}
+function releaseDecoctDevice(taskId) {
+  devices.filter(d=>d.type==='decoct' && d.boundTaskId===taskId).forEach(d=>{ d.status='idle'; d.boundTaskId=null; d.targetTemp=0; });
+}
+function releaseAllDevices(taskId) {
+  devices.forEach(d=>{ if(d.boundTaskId===taskId){ d.status='idle'; d.boundTaskId=null; d.targetTemp=0; } });
+}
+function simulateTaskProgress(taskId, newStatus) {
+  const task = tasks.find(t=>String(t.id)===String(taskId));
+  if(task){ task.status=newStatus; renderTaskQueue(); renderFloorPlan(); log('info',`任务#${taskId} → ${newStatus} (${STATUS_MAP[newStatus]})`); }
+}
+
+async function forceCompleteTask() {
+  const taskId = document.getElementById('pdaTaskSelect').value;
+  if(!taskId){ log('warn','请选择任务'); return; }
+  releaseAllDevices(taskId);
+  simulateTaskProgress(taskId,'已完成');
+  log('warn',`任务#${taskId} 被强制完成`);
+  await fetchTasks();
+}
+
+async function fetchTasks() {
+  const data = await apiCall('GET','/api/tasks?page=1&size=50',null);
+  if(data.code===200 && data.data){
+    let allTasks = data.data.records || [];
+    // 过滤掉历史旧任务，只保留今天及以后的，避免平面图上堆积大量待交接卡片
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    tasks = allTasks.filter(function(t){
+      if(!t.createdAt) return true;
+      const created = new Date(t.createdAt);
+      return created >= today;
+    });
+    renderTaskQueue(); renderFloorPlan(); populateTaskSelect();
+    document.getElementById('taskCount').textContent = tasks.length;
+  }
+}
+function populateTaskSelect() {
+  const sel = document.getElementById('pdaTaskSelect');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">-- 选择任务 --</option>';
+  tasks.filter(function(t){return t.status!=='已完成';}).forEach(function(t){
+    sel.add(new Option(`任务#${t.id} [${STATUS_MAP[t.status]||t.status}]`, t.id));
+  });
+  if(current) sel.value = current;
+}
+function renderTaskQueue() {
+  const list = document.getElementById('taskQueueList');
+  const active = tasks.filter(function(t){return t.status!=='已完成';}).slice(0,10);
+  if(active.length===0){ list.innerHTML='<div style="color:var(--text-dim);font-size:10px;text-align:center;padding:8px;">暂无进行中任务</div>'; return; }
+  list.innerHTML = active.map(t=>`
+    <div class="task-queue-item">
+      <span class="t-id">#${t.id}</span>
+      <span class="t-status ${STATUS_COLOR[t.status]||''}">${STATUS_MAP[t.status]||t.status}</span>
+    </div>`).join('');
+}
+
+async function checkBackend() {
+  try {
+    const res = await fetch(`${CONFIG.API_BASE}/api/tasks?page=1&size=1`);
+    document.getElementById('backendDot').className = res.ok ? 'status-dot online' : 'status-dot offline';
+    document.getElementById('backendTxt').textContent = res.ok ? '在线' : '异常';
+  } catch(e) {
+    document.getElementById('backendDot').className = 'status-dot offline';
+    document.getElementById('backendTxt').textContent = '离线';
+  }
+}
+
+function connectMqtt() {
+  try {
+    mqttClient = mqtt.connect(CONFIG.MQTT_BROKER,{
+      clientId:'decoction-sim-'+Math.random().toString(36).substr(2,6),
+      clean:true, reconnectPeriod:5000, connectTimeout:10000
+    });
+    mqttClient.on('connect',()=>{
+      document.getElementById('mqttDot').className='status-dot online';
+      document.getElementById('mqttTxt').textContent='已连接';
+      log('mqtt',`MQTT连接成功`);
+      mqttClient.subscribe(CONFIG.MQTT_TOPIC_SUB);
+    });
+    mqttClient.on('message',(topic,msg)=>{
+      const payload = msg.toString();
+      log('mqtt',`RCV ${topic} → ${payload}`);
+      const m = topic.match(/decoction\/(\w+)\/status/);
+      if(m){ const dev=devices.find(d=>d.id===m[1]); if(dev){ const t=parseFloat(payload); if(!isNaN(t))dev.temp=t; } }
+    });
+    mqttClient.on('error',(err)=>log('err',`MQTT错误:${err.message}`));
+    mqttClient.on('offline',()=>{
+      document.getElementById('mqttDot').className='status-dot offline';
+      document.getElementById('mqttTxt').textContent='离线';
+    });
+  } catch(e){ log('warn',`MQTT初始化失败:${e.message}`); }
+}
+
+function updateManualTemp() {
+  const sel = document.getElementById('manualDeviceSelect');
+  const dev = devices.find(d=>d.id===sel.value);
+  if(dev&&!isNaN(dev.temp)){
+    document.getElementById('manualTempSlider').value = Math.round(dev.temp);
+    document.getElementById('manualTempValue').textContent = Math.round(dev.temp)+'℃';
+  }
+}
+function manualTempChange(val) {
+  document.getElementById('manualTempValue').textContent = val+'℃';
+  const dev = devices.find(d=>d.id===document.getElementById('manualDeviceSelect').value);
+  if(dev){ dev.temp=parseFloat(val); reportDeviceTemp(dev); renderDevices(); renderFloorPlan(); }
+}
+function refreshAll(){ fetchTasks(); fetchPrintQueue(); checkBackend(); log('info','手动刷新'); }
+
+// ========== 日志 ==========
+function log(tag,message){
+  const time = new Date().toLocaleTimeString('zh-CN',{hour12:false});
+  logs.push({time,tag,message});
+  if(logs.length>CONFIG.MAX_LOG_LINES) logs.shift();
+  if(!logPaused) renderLogs();
+}
+function renderLogs(){
+  const c = document.getElementById('logContent');
+  const filtered = logFilter==='all'?logs:logs.filter(l=>l.tag===logFilter||(logFilter==='warn'&&l.tag==='err'));
+  c.innerHTML = filtered.map(l=>{
+    const tc = 'log-tag-'+(l.tag==='err'?'err':l.tag);
+    const tn = {mqtt:'MQTT',api:'API',warn:'WARN',err:'ERR',info:'INFO'}[l.tag]||l.tag.toUpperCase();
+    return `<div class="log-line"><span class="log-time">${l.time}</span> <span class="log-tag ${tc}">${tn}</span> <span>${escapeHtml(l.message)}</span></div>`;
+  }).join('');
+  c.scrollTop = c.scrollHeight;
+}
+function setLogFilter(filter){ logFilter=filter; document.querySelectorAll('.log-tab').forEach(b=>b.classList.remove('active')); event.target.classList.add('active'); renderLogs(); }
+function pauseLog(){ logPaused=!logPaused; document.getElementById('pauseBtn').textContent=logPaused?'继续':'暂停'; }
+function clearLog(){ logs=[]; renderLogs(); }
+function escapeHtml(t){ const d=document.createElement('div'); d.textContent=t; return d.innerHTML; }
+
+// ========== 启动 ==========
+window.addEventListener('DOMContentLoaded',async ()=>{
+  initDevices();
+  renderDevices();
+  renderFloorPlan();
+  drawTempChart();
+  await registerAllVirtualDevices();
+  checkBackend();
+  connectMqtt();
+  fetchTasks();
+  startSimulation();
+  setInterval(fetchTasks, CONFIG.REFRESH_INTERVAL);
+  setInterval(checkBackend, 10000);
+  log('info','数字孪生仿真器 v3.0 启动');
+  log('info','设备: 4台煎药机 + 1台包装机 + 1台打印机');
+  log('info','配对: DEC001/002→主配PACK001, DEC003/004→备配PACK001');
+  log('info','状态机: 待泡药→泡药中→待煎药→煎药中→待出液→出液中→待包装→包装中→待贴标→待质检→待交接→已完成');
+});
+
+async function registerAllVirtualDevices() {
+  for (const dev of devices) {
+    try {
+      const res = await fetch(`${CONFIG.API_BASE}/api/devices`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          deviceCode: dev.id,
+          name: dev.name,
+          deviceType: dev.type==='decoct'?1:dev.type==='wrap'?2:4,
+          status:'idle',
+          alarmMinTemp:0,
+          alarmMaxTemp:120
+        })
+      });
+      const data = await res.json();
+      if (data.code===200) log('info',`注册设备: ${dev.name}`);
+      else if (data.code===409 || (data.message && data.message.includes('已存在'))) {
+        // 忽略已存在
+      } else if (res.status===409) {
+        // 唯一约束冲突，忽略
+      }
+    } catch(err) {
+      // 静默忽略，后端会在首次使用时自动创建
+    }
+  }
+}
+</script>
+</body>
+</html>
