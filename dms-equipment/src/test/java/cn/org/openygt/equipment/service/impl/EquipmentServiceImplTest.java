@@ -170,6 +170,73 @@ class EquipmentServiceImplTest {
             assertThat(result.getLowTemp()).isEqualByComparingTo(new BigDecimal("70.0"));
             assertThat(result.getSource()).isEqualTo("SYSTEM");
         }
+
+        @Test
+        @DisplayName("方案查询异常 → 回退到设备级")
+        void testSchemeException_fallsBackToDevice() {
+            EqDevice device = new EqDevice();
+            device.setId(1L);
+            device.setDeviceCode("D001");
+            device.setAlarmMaxTemp(new BigDecimal("105.0"));
+            device.setAlarmMinTemp(new BigDecimal("85.0"));
+            device.setCurrentSchemeId(100L);
+
+            when(deviceMapper.selectById(1L)).thenReturn(device);
+            when(decoctSchemeService.getById(100L)).thenThrow(new RuntimeException("DB异常"));
+
+            TemperatureThresholdDTO result = service.getEffectiveThreshold(1L);
+
+            assertThat(result.getHighTemp()).isEqualByComparingTo(new BigDecimal("105.0"));
+            assertThat(result.getSource()).isEqualTo("DEVICE");
+        }
+
+        @Test
+        @DisplayName("系统配置为空字符串 → 使用默认值")
+        void testEmptyConfig_fallsBackToDefault() {
+            EqDevice device = new EqDevice();
+            device.setId(1L);
+            device.setDeviceCode("D001");
+            device.setAlarmMaxTemp(null);
+            device.setAlarmMinTemp(null);
+
+            when(deviceMapper.selectById(1L)).thenReturn(device);
+            when(sysConfigService.getStringValue("temp.alarm.high", "110.0")).thenReturn("");
+            when(sysConfigService.getStringValue("temp.alarm.low", "80.0")).thenReturn("");
+
+            TemperatureThresholdDTO result = service.getEffectiveThreshold(1L);
+
+            assertThat(result.getHighTemp()).isEqualByComparingTo(new BigDecimal("110.0"));
+            assertThat(result.getLowTemp()).isEqualByComparingTo(new BigDecimal("80.0"));
+            assertThat(result.getSource()).isEqualTo("SYSTEM");
+        }
+
+        @Test
+        @DisplayName("系统配置为非法数字 → 使用默认值")
+        void testInvalidConfig_fallsBackToDefault() {
+            EqDevice device = new EqDevice();
+            device.setId(1L);
+            device.setDeviceCode("D001");
+            device.setAlarmMaxTemp(null);
+            device.setAlarmMinTemp(null);
+
+            when(deviceMapper.selectById(1L)).thenReturn(device);
+            when(sysConfigService.getStringValue("temp.alarm.high", "110.0")).thenReturn("not-a-number");
+            when(sysConfigService.getStringValue("temp.alarm.low", "80.0")).thenReturn("80.0");
+
+            TemperatureThresholdDTO result = service.getEffectiveThreshold(1L);
+
+            assertThat(result.getHighTemp()).isEqualByComparingTo(new BigDecimal("110.0"));
+        }
+
+        @Test
+        @DisplayName("设备不存在 → getEffectiveThreshold 抛出异常")
+        void testDeviceNotFound_getEffectiveThreshold_throws() {
+            when(deviceMapper.selectById(99L)).thenReturn(null);
+
+            assertThatThrownBy(() -> service.getEffectiveThreshold(99L))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("不存在");
+        }
     }
 
     @Nested
@@ -365,6 +432,7 @@ class EquipmentServiceImplTest {
 
             when(deviceMapper.selectById(1L)).thenReturn(device);
             when(alarmMapper.findLatestActiveAlarm(1L, "HIGH_TEMP")).thenReturn(null);
+            when(alarmMapper.findLatestActiveAlarm(1L, "LOW_TEMP")).thenReturn(recentAlarm);
 
             service.checkTemperatureAlarm(1L, new BigDecimal("75.0"));
 
@@ -396,6 +464,27 @@ class EquipmentServiceImplTest {
 
             verify(alarmMapper, never()).insert(any(EqDeviceAlarm.class));
             verify(alarmMapper, never()).findLatestActiveAlarm(anyLong(), anyString());
+        }
+
+        @Test
+        @DisplayName("温度恢复正常 → 解析活跃告警（lambda 路径）")
+        void testTempNormal_resolvesActiveAlarms_updatesTimestamp() {
+            EqDeviceAlarm activeAlarm = new EqDeviceAlarm();
+            activeAlarm.setId(1L);
+            activeAlarm.setDeviceId(1L);
+            activeAlarm.setIsResolved(0);
+
+            when(deviceMapper.selectById(1L)).thenReturn(device);
+            when(alarmMapper.findActiveByDeviceIdAndType(1L, "HIGH_TEMP"))
+                    .thenReturn(Collections.singletonList(activeAlarm));
+            when(alarmMapper.findActiveByDeviceIdAndType(1L, "LOW_TEMP"))
+                    .thenReturn(Collections.emptyList());
+
+            service.checkTemperatureAlarm(1L, new BigDecimal("90.0"));
+
+            verify(alarmMapper).updateById(activeAlarm);
+            assertThat(activeAlarm.getIsResolved()).isEqualTo(1);
+            assertThat(activeAlarm.getResolvedAt()).isNotNull();
         }
     }
 
@@ -574,6 +663,37 @@ class EquipmentServiceImplTest {
             service.clearFault(1L);
 
             verify(deviceMapper).update(isNull(), any(com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("桩方法 / 待实现接口")
+    class StubMethods {
+
+        @Test
+        @DisplayName("getOnlineDeviceCount 返回 0")
+        void testGetOnlineDeviceCount() {
+            assertThat(service.getOnlineDeviceCount()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("getFaultStats 返回空列表")
+        void testGetFaultStats() {
+            assertThat(service.getFaultStats(null, null)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("getDeviceUtilization 返回空 DTO")
+        void testGetDeviceUtilization() {
+            assertThat(service.getDeviceUtilization(1L, null, null)).isNotNull();
+        }
+
+        @Test
+        @DisplayName("getDeviceCode：设备不存在返回 null")
+        void testGetDeviceCode_notFound() {
+            when(deviceMapper.selectById(99L)).thenReturn(null);
+
+            assertThat(service.getDeviceCode(99L)).isNull();
         }
     }
 }
