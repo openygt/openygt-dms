@@ -15,5 +15,13 @@ public interface PrintService {
 
     void retryPrint(Long taskId, String deviceCode, String operatorId);
 
+    /**
+     * 查询指定生产任务的最新打印状态。
+     *
+     * @param taskId 生产任务 ID
+     * @return 打印状态（PENDING/PRINTED/FAILED 等），无记录返回 null
+     */
+    String getPrintStatus(Long taskId);
+
     List<PrintTaskDTO> getPrintQueue();
 }

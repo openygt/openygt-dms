@@ -1,0 +1,47 @@
+看完 TaskServiceImpl 的 549 行代码后，我对下一阶段工作有了更精确的判断。                                                                     
+   
+  ---                                                                                                                                          
+  下一阶段工作安排（按优先级排序）
+                                  
+  P0：dms-production 状态机代码治理（必须先做，阻塞联调）
+                                                                                                                                               
+  当前 TaskServiceImpl 有 6 个必须修复的问题，不修的话 simulator.py 全流程跑不通：
+                                                                                                                                               
+  1. 返工分支未预留设备（第 504-505 行）——REWORK 分支调用了 releaseDevice 而非                                                                 
+  reserveDevice，与概设/详设要求相反。返工后设备被释放，其他任务可以抢占，导致返工任务无设备可用
+  2. createStepLog 的 deviceId 参数仍为 String（第 522 行）——详设要求统一为 Long，但代码中 startDecoct（第 89 行）传入的是                     
+  deviceCode（String），而非 deviceId（Long）                                                                                                  
+  3. printLabel 直接修改 prod_task.printStatus（第 384 行）——违反模块边界，打印状态应由 dms-print 维护。当前代码在调用
+  printService.submitPrintTask 后又直接 task.setPrintStatus("PRINTED")，绕过了 print 模块的状态管理                                            
+  4. endDecoct 释放设备后又读 autoLevel（第 104-109 行）——先 releaseDevice（设备变 IDLE），再
+  getAutoLevel。逻辑上没问题，但如果释放和读取之间有并发任务抢占了设备，getAutoLevel 读到的可能是被抢占后的状态。应该在释放前先读 autoLevel    
+  5. 所有时间字段仍用 java.util.Date（第 19 行 import java.util.Date，全文 new Date()）——与 BaseEntity 的 LocalDateTime 不一致，MyBatis-Plus
+  自动填充会类型冲突                                                                                                                           
+  6. SoakTimeoutScheduler 需要验证是否从 SysConfigCache 读取超时阈值——详设要求从 sys_config 读，不能硬编码
+                                                                                                                                               
+  P1：dms-quality / dms-print 跨模块解耦验证                                                                                                   
+                                                                                                                                               
+  代码结构上 dms-quality 和 dms-print 已经清理了历史债务（Task.java/TaskMapper.java 已删除），但需要验证：                                     
+                  
+  - QualityServiceImpl 是否已注入 ProductionQueryService 替代直接查 prod_task                                                                  
+  - PrintServiceImpl 是否已移除对 dms-production 的 Maven 依赖
+  - 两个模块的 mvn compile -pl dms-quality / mvn compile -pl dms-print 能否独立编译通过                                                        
+                                                                                                                                               
+  P2：单元测试（当前 0 个测试文件）                                                                                                            
+                                                                                                                                               
+  121 个 main 文件，0 个 test 文件。验收标准要求 80% 覆盖率。建议按以下优先级补测试：                                                          
+                  
+  1. TaskServiceImpl 的 12 步状态机主干流程 + 4 种质检分支（最核心）                                                                           
+  2. SysConfigCache 的缓存命中/穿透/刷新
+  3. JwtUtil 的 Token 生成/校验/过期/刷新窗口                                                                                                  
+  4. DecoctSchemeInitializer 的幂等初始化
+                                                                                                                                               
+  P3：全流程联调（simulator.py V3）
+                                                                                                                                               
+  P0 和 P1 完成后，用 simulator.py 跑一遍 12 步全流程，验证状态机、设备绑定/释放、打印委托、质检分支的端到端正确性。                           
+   
+  ---                                                                                                                                          
+  建议给架构师的具体指令
+                        
+  先做 P0（dms-production 状态机治理），预计 1 天。完成后跑 mvn test（如果有测试的话）和 simulator.py 验证。P1 和 P2 可以并行——架构师做 P1
+  验证，同时安排一名开发补 P2 的单元测试。P3 在 P0+P1 完成后立即执行。         

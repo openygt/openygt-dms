@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
@@ -35,7 +36,9 @@ public class EqDevice extends BaseEntity {
     private Integer enabled;
     private String autoLevel;
     private String labelMode;
+    private Long currentSchemeId;
     private Date alertTime;
     private String resolvedBy;
     private Date resolvedAt;
+    private LocalDateTime lastHeartbeat;
 }

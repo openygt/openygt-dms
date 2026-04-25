@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Data
 @TableName("prod_task_status_history")
@@ -16,6 +16,6 @@ public class TaskStatusHistory {
     private String fromStatus;
     private String toStatus;
     private String operatorId;
-    private Date operateTime;
+    private LocalDateTime operateTime;
     private String remark;
 }

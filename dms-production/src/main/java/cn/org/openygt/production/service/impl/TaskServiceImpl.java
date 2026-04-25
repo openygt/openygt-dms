@@ -16,9 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -42,7 +42,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = getTaskOrThrow(taskId);
         assertStatus(task, "待泡药");
         transition(task, "泡药中", operatorId, "开始泡药");
-        task.setSoakStartTime(new Date());
+        task.setSoakStartTime(LocalDateTime.now());
         taskMapper.updateById(task);
         recordWork(taskId, operatorId, null, "SOAK", 0);
         createStepLog(taskId, "SOAK", null, operatorId, null);
@@ -55,7 +55,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = getTaskOrThrow(taskId);
         assertStatus(task, "泡药中");
         transition(task, "待煎药", operatorId, "泡药结束");
-        task.setSoakEndTime(new Date());
+        task.setSoakEndTime(LocalDateTime.now());
         int duration = calculateDuration(task.getSoakStartTime(), task.getSoakEndTime());
         task.setCurrentStageDuration(duration);
         taskMapper.updateById(task);
@@ -66,8 +66,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional
-    public synchronized Task startDecoct(Long taskId, String deviceCode, String operatorId) {
-        Task task = getTaskOrThrow(taskId);
+    public Task startDecoct(Long taskId, String deviceCode, String operatorId) {
+        Task task = taskMapper.selectByIdForUpdate(taskId);
+        if (task == null) throw new IllegalArgumentException("任务不存在");
         assertStatus(task, "待煎药");
         Long deviceId = equipmentService.getDeviceId(deviceCode);
         if (deviceId == null) {
@@ -81,11 +82,11 @@ public class TaskServiceImpl implements TaskService {
         equipmentService.updateDeviceStatus(deviceId, "running");
         transition(task, "煎药中", operatorId, "开始煎药，绑定设备: " + deviceCode);
         task.setDecoctDeviceId(deviceId);
-        task.setDecoctStartTime(new Date());
+        task.setDecoctStartTime(LocalDateTime.now());
         task.setCurrentStageDuration(0);
         taskMapper.updateById(task);
         recordWork(taskId, operatorId, null, "DECOCT", 0);
-        createStepLog(taskId, "DECOCT", deviceCode, operatorId, null);
+        createStepLog(taskId, "DECOCT", deviceId, operatorId, null);
         return task;
     }
 
@@ -95,18 +96,20 @@ public class TaskServiceImpl implements TaskService {
         Task task = getTaskOrThrow(taskId);
         assertStatus(task, "煎药中");
         transition(task, "待出液", operatorId, "煎药结束");
-        task.setDecoctEndTime(new Date());
+        task.setDecoctEndTime(LocalDateTime.now());
         int duration = calculateDuration(task.getDecoctStartTime(), task.getDecoctEndTime());
         task.setCurrentStageDuration(duration);
         taskMapper.updateById(task);
         recordWork(taskId, operatorId, null, "DECOCT", duration);
+        // 先读取设备自动化级别，再释放设备，避免并发抢占后读到错误状态
+        String autoLevel = null;
+        if (task.getDecoctDeviceId() != null) {
+            autoLevel = equipmentService.getAutoLevel(task.getDecoctDeviceId());
+        }
         equipmentService.releaseDevice(task.getDecoctDeviceId());
         closeLastStepLog(taskId, "DECOCT", "正常", null);
-        if (task.getDecoctDeviceId() != null) {
-            String autoLevel = equipmentService.getAutoLevel(task.getDecoctDeviceId());
-            if ("auto".equals(autoLevel)) {
-                task = startPour(taskId, operatorId);
-            }
+        if ("auto".equals(autoLevel)) {
+            task = startPour(taskId, operatorId);
         }
         return task;
     }
@@ -117,7 +120,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = getTaskOrThrow(taskId);
         assertStatus(task, "待出液");
         transition(task, "出液中", operatorId, "开始出液");
-        task.setPourStartTime(new Date());
+        task.setPourStartTime(LocalDateTime.now());
         task.setCurrentStageDuration(0);
         taskMapper.updateById(task);
         createStepLog(taskId, "POUR", null, operatorId, null);
@@ -130,7 +133,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = getTaskOrThrow(taskId);
         assertStatus(task, "出液中");
         transition(task, "待包装", operatorId, "出液结束");
-        task.setPourEndTime(new Date());
+        task.setPourEndTime(LocalDateTime.now());
         int duration = calculateDuration(task.getPourStartTime(), task.getPourEndTime());
         task.setCurrentStageDuration(duration);
         taskMapper.updateById(task);
@@ -148,9 +151,11 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public Task startWrap(Long taskId, String deviceCode, String operatorId) {
-        Task task = getTaskOrThrow(taskId);
+        Task task = taskMapper.selectByIdForUpdate(taskId);
+        if (task == null) throw new IllegalArgumentException("任务不存在");
         assertStatus(task, "待包装");
         Long deviceId;
+        // 设备绑定使用设备级同步（SQLite 下无真正行锁，MySQL 迁移后配合 FOR UPDATE 使用）
         synchronized (deviceCode.intern()) {
             deviceId = equipmentService.getDeviceId(deviceCode);
             if (deviceId == null) {
@@ -165,11 +170,11 @@ public class TaskServiceImpl implements TaskService {
         }
         transition(task, "包装中", operatorId, "开始包装，绑定包装机: " + deviceCode);
         task.setPackageDeviceId(deviceId);
-        task.setWrapStartTime(new Date());
+        task.setWrapStartTime(LocalDateTime.now());
         task.setCurrentStageDuration(0);
         taskMapper.updateById(task);
         recordWork(taskId, operatorId, null, "WRAP", 0);
-        createStepLog(taskId, "WRAP", deviceCode, operatorId, null);
+        createStepLog(taskId, "WRAP", deviceId, operatorId, null);
         return task;
     }
 
@@ -179,7 +184,7 @@ public class TaskServiceImpl implements TaskService {
         Task task = getTaskOrThrow(taskId);
         assertStatus(task, "包装中");
         transition(task, "待贴标", operatorId, "包装结束");
-        task.setWrapEndTime(new Date());
+        task.setWrapEndTime(LocalDateTime.now());
         int duration = calculateDuration(task.getWrapStartTime(), task.getWrapEndTime());
         task.setCurrentStageDuration(duration);
         taskMapper.updateById(task);
@@ -227,19 +232,19 @@ public class TaskServiceImpl implements TaskService {
         detail.setBagCount(bagCount);
         detail.setHandoverType(handoverType);
         detail.setHandoverUser(handoverUser);
-        detail.setHandoverTime(new Date());
+        detail.setHandoverTime(LocalDateTime.now());
         detail.setRemark(remark);
         handoverDetailMapper.insert(detail);
 
         task.setHandoverType(handoverType);
         task.setHandoverUser(handoverUser);
-        task.setHandoverTime(new Date());
+        task.setHandoverTime(LocalDateTime.now());
 
         boolean finalFlag = isFinal != null && isFinal;
         String targetStatus = finalFlag ? "已完成" : "已部分完成";
         transition(task, targetStatus, handoverUser, "扫码交接: " + handoverType + ", 袋数=" + bagCount + (finalFlag ? " (完成)" : " (部分)"));
         if (finalFlag) {
-            task.setCompleteTime(new Date());
+            task.setCompleteTime(LocalDateTime.now());
         }
         taskMapper.updateById(task);
         createStepLog(taskId, "HANDOVER", null, handoverUser, null);
@@ -265,7 +270,7 @@ public class TaskServiceImpl implements TaskService {
     public StepLog resumeStep(Long stepLogId) {
         StepLog step = stepLogMapper.selectById(stepLogId);
         if (step == null) throw new IllegalArgumentException("工序记录不存在");
-        int pausedMinutes = calculateDuration(step.getUpdatedAt(), new Date());
+        int pausedMinutes = calculateDuration(step.getUpdatedAt(), LocalDateTime.now());
         step.setPauseDuration((step.getPauseDuration() != null ? step.getPauseDuration() : 0) + pausedMinutes);
         step.setIsPaused(0);
         stepLogMapper.updateById(step);
@@ -291,11 +296,13 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public Task bindDevice(Long taskId, String deviceCode) {
-        Task task = getTaskOrThrow(taskId);
+        Task task = taskMapper.selectByIdForUpdate(taskId);
+        if (task == null) throw new IllegalArgumentException("任务不存在");
         if (!"待泡药".equals(task.getStatus()) && !"待煎药".equals(task.getStatus())) {
             throw new IllegalStateException("任务状态不允许绑定设备");
         }
         Long deviceId;
+        // 设备绑定使用设备级同步（SQLite 下无真正行锁，MySQL 迁移后配合 FOR UPDATE 使用）
         synchronized (deviceCode.intern()) {
             deviceId = equipmentService.getDeviceId(deviceCode);
             if (deviceId == null) {
@@ -376,8 +383,10 @@ public class TaskServiceImpl implements TaskService {
         Task task = getTaskOrThrow(taskId);
         assertStatus(task, "待贴标");
         printService.submitPrintTask(taskId, deviceCode, operatorId);
-        task.setPrintStatus("PRINTED");
-        task.setPrintTime(new Date());
+        // 打印状态由 dms-print 维护，通过 SPI 反查
+        String printStatus = printService.getPrintStatus(taskId);
+        task.setPrintStatus(printStatus != null ? printStatus : "PRINTED");
+        task.setPrintTime(LocalDateTime.now());
         Long deviceId = equipmentService.getDeviceId(deviceCode);
         task.setPrintDeviceId(deviceId);
         taskMapper.updateById(task);
@@ -399,8 +408,10 @@ public class TaskServiceImpl implements TaskService {
 
         printService.retryPrint(taskId, deviceCode, operatorId);
 
-        task.setPrintStatus("PRINTED");
-        task.setPrintTime(new Date());
+        // 打印状态由 dms-print 维护，通过 SPI 反查
+        String printStatus = printService.getPrintStatus(taskId);
+        task.setPrintStatus(printStatus != null ? printStatus : "PRINTED");
+        task.setPrintTime(LocalDateTime.now());
         Long deviceId = equipmentService.getDeviceId(deviceCode);
         task.setPrintDeviceId(deviceId);
         taskMapper.updateById(task);
@@ -415,7 +426,7 @@ public class TaskServiceImpl implements TaskService {
     public Task forceStatus(Long taskId, String targetStatus, String operatorId, String deviceCode, String remark) {
         Task task = getTaskOrThrow(taskId);
         String oldStatus = task.getStatus();
-        Date now = new Date();
+        LocalDateTime now = LocalDateTime.now();
         if ("煎药中".equals(targetStatus) && deviceCode != null && !deviceCode.isEmpty()) {
             EqDeviceDTO created = equipmentService.getOrCreateDevice(deviceCode, 1);
             Long devId = created != null ? created.getId() : equipmentService.getDeviceId(deviceCode);
@@ -463,7 +474,7 @@ public class TaskServiceImpl implements TaskService {
         history.setFromStatus(fromStatus);
         history.setToStatus(toStatus);
         history.setOperatorId(operatorId);
-        history.setOperateTime(new Date());
+        history.setOperateTime(LocalDateTime.now());
         history.setRemark(remark);
         historyMapper.insert(history);
     }
@@ -478,9 +489,9 @@ public class TaskServiceImpl implements TaskService {
         workRecordMapper.insert(record);
     }
 
-    private int calculateDuration(Date start, Date end) {
+    private int calculateDuration(LocalDateTime start, LocalDateTime end) {
         if (start == null || end == null) return 0;
-        return (int) TimeUnit.MILLISECONDS.toMinutes(end.getTime() - start.getTime());
+        return (int) ChronoUnit.MINUTES.between(start, end);
     }
 
     private void doQualityInspect(Task task, InspectionResultType result, String operatorId, String remark) {
@@ -495,12 +506,12 @@ public class TaskServiceImpl implements TaskService {
                 break;
             case REWORK:
                 transition(task, "待煎药", operatorId, "质检返工" + (remark != null ? ": " + remark : ""));
-                // 释放设备，防止返工任务被占用
+                // 返工预留设备：防止返工任务无设备可用（设备若已 IDLE 则预留，若仍 RUNNING 则保持）
                 if (task.getDecoctDeviceId() != null) {
-                    equipmentService.releaseDevice(task.getDecoctDeviceId());
+                    equipmentService.reserveDevice(task.getId(), task.getDecoctDeviceId());
                 }
                 if (task.getPackageDeviceId() != null) {
-                    equipmentService.releaseDevice(task.getPackageDeviceId());
+                    equipmentService.reserveDevice(task.getId(), task.getPackageDeviceId());
                 }
                 break;
             case SCRAP:
@@ -514,14 +525,14 @@ public class TaskServiceImpl implements TaskService {
     }
 
 
-    private void createStepLog(Long taskId, String stepType, String deviceId, String operatorId, Long parentId) {
+    private void createStepLog(Long taskId, String stepType, Long deviceId, String operatorId, Long parentId) {
         StepLog step = new StepLog();
         step.setTaskId(taskId);
         step.setStepType(stepType);
         step.setDeviceId(deviceId);
         step.setOperatorId(operatorId);
         step.setParentId(parentId);
-        step.setStartedAt(new Date());
+        step.setStartedAt(LocalDateTime.now());
         step.setResult("正常");
         stepLogMapper.insert(step);
     }
@@ -535,7 +546,7 @@ public class TaskServiceImpl implements TaskService {
                .last("LIMIT 1");
         StepLog step = stepLogMapper.selectOne(wrapper);
         if (step != null) {
-            step.setEndedAt(new Date());
+            step.setEndedAt(LocalDateTime.now());
             step.setResult(result);
             step.setAbortReason(abortReason);
             stepLogMapper.updateById(step);

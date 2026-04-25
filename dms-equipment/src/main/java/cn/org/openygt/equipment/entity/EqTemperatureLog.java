@@ -19,6 +19,7 @@ public class EqTemperatureLog extends BaseAuditEntity {
 
     private Long deviceId;
     private BigDecimal temperature;
+    private java.time.LocalDateTime recordedAt;   // 设备上报时间
     private Integer isAlarm;
     private String alarmReason;
 }

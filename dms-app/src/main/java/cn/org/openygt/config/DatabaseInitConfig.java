@@ -23,7 +23,9 @@ public class DatabaseInitConfig implements CommandLineRunner {
         "V2__refactor.sql",
         "V3__new_flow.sql",
         "V4__module_split.sql",
-        "V5__v1_4_refactor.sql"
+        "V5__v1_4_refactor.sql",
+        "V6__equipment_heartbeat.sql",
+        "V7__add_current_scheme_id.sql"
     };
 
     private final DataSource dataSource;
