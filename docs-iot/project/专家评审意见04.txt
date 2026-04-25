@@ -1,0 +1,68 @@
+ 全部文档已重新审读完毕。V1.3 版本修订质量很高，上轮 13 个问题中 11 个已正确修订。以下是本轮审核结果。
+                                                                                                                                               
+  ---                                                                                                                                          
+  已确认修复的问题（11/13）                                                                                                                    
+                                                                                                                                               
+  1. SchemeCreateRequest 补充了 traceCode、alarmHighTemp、alarmLowTemp — 已修复
+  2. DeviceAdapter.parseStatusMessage 已从公共接口移除 — 已修复                                                                                
+  3. InspectionResult.inspectedAt 改为 LocalDateTime — 已修复                                                                                  
+  4. EqDeviceDTO.lastHeartbeat 改为 LocalDateTime — 已修复                                                                                     
+  5. dms-common 需求清单补充了 COM-016/017/018 — 已修复                                                                                        
+  6. dms-analytics 模块边界改为 SPI 获取 + 禁止跨模块读表 — 已修复                                                                             
+  7. AnalyticsMapper 已标记删除，纯 SPI 模式 — 已修复                                                                                          
+  8. EquipmentService/QualityService 扩展了统计方法 — 已修复                                                                                   
+  9. dms-production 集成检查清单区分了 BaseEntity/BaseAuditEntity — 已修复                                                                     
+  10. dms-equipment 集成检查清单同步修正 — 已修复                                                                                              
+  11. 集成开发总计划风险与注意事项已更新为实际状态 — 已修复                                                                                    
+                                                                                                                                               
+  ---                                                                                                                                          
+  仍存在的问题（2 个遗留 + 3 个新发现）                                                                                                        
+                                                                                                                                               
+  1. dms-equipment 开发规范编号重复（遗留）
+                                                                                                                                               
+  第七节第 388-389 行，编号 9 和紧接着的编号 8 内容完全相同——都是"温度日志归档"。上轮指出编号重复，这次修了编号（8→9），但产生了重复条目：第   
+  388 行编号 9 和第 389 行编号 8 内容一模一样。                                                                                                
+                                                                                                                                               
+  修订：删除第 389 行重复的编号 8 条目。                                                                                                       
+   
+  2. QualityService.inspect() 签名在 dms-quality 文档中未同步（遗留）                                                                          
+                  
+  dms-common V1.3 中 QualityService.inspect 的签名已改为 InspectionResultType result（第 333 行），但 dms-quality V1.3 第四节 4.1 的 SPI       
+  接口代码（第 111 行）仍然是 String result。两份文档对同一接口的签名不一致，开发人员会不知道以哪个为准。
+                                                                                                                                               
+  修订：dms-quality 第 111 行同步改为 InspectionResultType result，与 dms-common 保持一致。同时明确"以 dms-common 为唯一权威定义"。            
+   
+  3. dms-system 集成检查清单缺少 SysLog 继承 BaseAuditEntity 的检查项（新发现）                                                                
+                  
+  dms-system V1.3 第三节 3.3 已明确 SysLog 继承 BaseAuditEntity，但第七节集成检查清单（第 266 行）只写了"SysUser, SysConfig 继承               
+  BaseEntity"，没有提及 SysLog 应继承 BaseAuditEntity。与 dms-production 和 dms-equipment 的检查清单修订方式不一致。
+                                                                                                                                               
+  修订：补充一条"- [ ] SysLog 继承 BaseAuditEntity（不含逻辑删除）"。                                                                          
+   
+  4. dms-analytics 第三节"数据来源"仍引用原始表名（新发现）                                                                                    
+                  
+  dms-analytics V1.3 第一节模块边界和第六节技术方案已明确"禁止直接跨模块读表，通过 SPI 获取"，但第三节"数据来源与统计口径"（第 46-95           
+  行）的所有指标仍然写着"数据来源：prod_task"、"数据来源：eq_device_alarm"、"数据来源：qt_inspection"。这会让开发人员误以为可以直接读这些表。
+                                                                                                                                               
+  修订：将"数据来源"列改为 SPI 方法名。例如：                                                                                                  
+  - "日煎药剂数"数据来源改为 ProductionQueryService.getDailyCapacity()
+  - "在线设备数"数据来源改为 EquipmentService.getOnlineDeviceCount()                                                                           
+  - "合格率"数据来源改为 QualityService.getInspectionSummary()      
+                                                                                                                                               
+  5. dms-analytics 第五节注释与实际方案矛盾（新发现）                                                                                          
+                                                                                                                                               
+  第 172 行写着"统计查询使用 MyBatis 的 @Select 注解直接写 SQL 返回 DTO"，但 AnalyticsMapper 已被删除，且开发规范禁止跨模块写                  
+  SQL。这句注释是旧版本遗留，与 V1.3 的 SPI 模式矛盾。                                                                                         
+                                                                                                                                               
+  修订：改为"统计数据通过 SPI 获取，Service 层做内存聚合后返回 DTO。本模块不定义 Entity 和 Mapper。"                                           
+   
+  ---                                                                                                                                          
+  总结            
+                                                                                                                                               
+  三轮评审后，文档从 V1.0 的 18 个问题收敛到 V1.3 的 5 个问题，且全部为低风险的文档一致性问题，没有架构级或数据正确性问题。
+                                                                                                                                               
+  核心架构决策全部到位：BaseEntity/BaseAuditEntity 拆分、SPI 异常契约、analytics 纯 SPI 模式、InspectionResultType 枚举化、设备统计/质检统计   
+  SPI 扩展、多租户排除清单、Flyway 版本规划、错误码分段。                                                                                      
+                                                                                                                                               
+  修完这 5 个文档一致性问题后，可以进入 Sprint 开发。                                                                                          
+   

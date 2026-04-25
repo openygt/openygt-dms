@@ -5,7 +5,7 @@
 > 表前缀：`sys_`  
 > API 前缀：`/api/v1/sys`  
 > 职责：系统级支撑能力，包括用户管理、系统配置、操作日志审计、RBAC 权限控制、**安全认证（JWT/X-Token）**、**数据加密**。  
-> 版本：V1.3（专家评审03后修订版）
+> 版本：V1.4（专家评审04后修订版）
 
 ---
 
@@ -264,6 +264,7 @@ cn.org.openygt.system
 ## 七、集成检查清单
 
 - [ ] `SysUser`, `SysConfig` 继承 `BaseEntity`
+- [ ] `SysLog` 继承 `BaseAuditEntity`（不含逻辑删除）
 - [ ] 密码使用 BCrypt 加密
 - [ ] `username` 和 `config_key` 有唯一性校验
 - [ ] 操作日志 AOP 切面已配置并生效

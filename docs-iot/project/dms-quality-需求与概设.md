@@ -5,7 +5,7 @@
 > 表前缀：`qt_`  
 > API 前缀：`/api/v1/qt`  
 > 职责：质量管理，包括质检执行、质检记录查询、质检追溯报表、**GMP合规映射**。  
-> 版本：V1.3（专家评审03后修订版）
+> 版本：V1.4（专家评审04后修订版）
 
 ---
 
@@ -108,10 +108,12 @@
 
 ```java
 public interface QualityService {
-    InspectionResult inspect(Long taskId, String result, String operatorId, String remark);
+    InspectionResult inspect(Long taskId, InspectionResultType result, String operatorId, String remark);
     InspectionResult getInspectionByTaskId(Long taskId);
 }
 ```
+
+> **权威定义**：`QualityService` 接口以 `dms-common` 中的定义为准。`dms-quality` 文档中的代码仅为引用，如有不一致请以 `dms-common` 版本为准。
 
 #### inspect 方法实现要求
 
