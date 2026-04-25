@@ -1,0 +1,35 @@
+# Maven
+target/
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Logs
+*.log
+*.pid
+
+# SQLite database files (development data, not schema)
+*.db
+*.db-shm
+*.db-wal
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Task runtime state
+tasks/.watchdog.log
+tasks/.watchdog.state
+
+# Temporary files
+*.tmp
+*.swp
+*~

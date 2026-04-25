@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>煎药室管理看板</title>
+</head>
+<body>
+    <h1>煎药室任务看板</h1>
+    <table border="1" id="taskTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>处方ID</th>
+                <th>设备编码</th>
+                <th>状态</th>
+                <th>当前温度</th>
+                <th>目标温度</th>
+                <th>创建时间</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+    <script>
+        async function loadTasks() {
+            try {
+                const resp = await fetch('/api/tasks?page=1&size=50');
+                const result = await resp.json();
+                if (result.code === 200) {
+                    const tbody = document.querySelector('#taskTable tbody');
+                    tbody.innerHTML = '';
+                    const records = result.data.records || [];
+                    records.forEach(task => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${task.id}</td>
+                            <td>${task.prescriptionId}</td>
+                            <td>${task.deviceCode || '-'}</td>
+                            <td>${task.status}</td>
+                            <td>${task.currentTemp || '-'}</td>
+                            <td>${task.targetTemp || '-'}</td>
+                            <td>${task.createdAt ? new Date(task.createdAt).toLocaleString() : '-'}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                    if (records.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" align="center">暂无数据</td></tr>';
+                    }
+                }
+            } catch (e) {
+                console.error('加载失败', e);
+            }
+        }
+
+        loadTasks();
+        setInterval(loadTasks, 5000);
+    </script>
+</body>
+</html>

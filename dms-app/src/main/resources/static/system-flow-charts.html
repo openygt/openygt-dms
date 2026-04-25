@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>煎药室管理系统 - 业务流程图 & 状态图</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #f5f7fa; padding: 20px; color: #333; }
+.container { max-width: 1200px; margin: 0 auto; }
+h1 { text-align: center; color: #1a1a1a; margin-bottom: 10px; }
+.subtitle { text-align: center; color: #666; margin-bottom: 40px; }
+.chart-box { background: #fff; border-radius: 12px; padding: 24px; margin-bottom: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.chart-box h2 { margin-top: 0; color: #2563eb; font-size: 18px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 20px; }
+.mermaid { text-align: center; }
+.legend { background: #f8fafc; border-radius: 8px; padding: 16px; margin-top: 16px; font-size: 13px; color: #475569; }
+.legend code { background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>煎药室管理系统</h1>
+<div class="subtitle">业务流程图 & 实体状态图</div>
+
+<!-- 1. 整体业务流程图 -->
+<div class="chart-box">
+<h2>1. 整体业务流程图</h2>
+<div class="mermaid">
+flowchart TD
+    A[创建处方<br/>POST /api/prescriptions] --> B[自动生成任务<br/>Task.status = PENDING]
+    B --> C[开始泡药<br/>startSoak]
+    C --> D[结束泡药<br/>endSoak]
+    D --> E[开始煎药<br/>startDecoct]
+    E --> F[绑定煎药机<br/>Device.status = BUSY]
+    F --> G[温度上报<br/>MQTT / HTTP]
+    G --> H{任务状态}
+    H -->|BOUND| I[自动推进<br/>BOUND → PROCESSING]
+    H -->|PROCESSING| J[煎药进行中]
+    I --> J
+    J --> K[结束煎药<br/>endDecoct]
+    K --> L[释放煎药机<br/>Device.status = IDLE]
+    L --> M[开始出液<br/>startPour]
+    M --> N[结束出液<br/>endPour]
+    N --> O[进入包装阶段]
+    O --> P[开始包装<br/>startWrap]
+    P --> Q[绑定包装机<br/>Device.status = BUSY]
+    Q --> R[包装进行中]
+    R --> S[结束包装<br/>endWrap]
+    S --> T[释放包装机<br/>Device.status = IDLE]
+    S --> U[自动打印标签]
+    U --> V{打印结果}
+    V -->|成功| W[Task.printStatus = PRINTED]
+    V -->|失败| X[Task.printStatus = FAILED]
+    W --> Y[任务完成<br/>Task.status = COMPLETED]
+    X --> Z[可手动重试打印<br/>retryPrint]
+    Z --> U
+
+    style A fill:#dbeafe,stroke:#2563eb
+    style Y fill:#dcfce7,stroke:#16a34a
+    style X fill:#fee2e2,stroke:#dc2626
+</div>
+<div class="legend">
+<b>说明：</b>蓝色为起点，绿色为正常终点，红色为异常分支。实线为主流程，虚线为自动触发。
+</div>
+</div>
+
+<!-- 2. Task 实体状态图 -->
+<div class="chart-box">
+<h2>2. Task（任务）实体状态图</h2>
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> PENDING: 创建处方自动生成
+
+    PENDING --> SOAKING: startSoak(开始泡药)
+    SOAKING --> SOAKED: endSoak(结束泡药)
+    SOAKED --> PROCESSING: startDecoct(开始煎药)
+
+    PENDING --> BOUND: bindDevice(扫码绑定设备)
+    BOUND --> PROCESSING: 温度上报自动推进
+
+    PROCESSING --> DECOCTED: endDecoct(结束煎药)
+    DECOCTED --> POURING: startPour(开始出液)
+    POURING --> WRAPPING: endPour(结束出液)
+
+    WRAPPING --> COMPLETED: endWrap(结束包装)
+
+    PENDING --> CANCELLED: forceStatus(强制取消)
+    SOAKING --> CANCELLED: forceStatus(强制取消)
+    SOAKED --> CANCELLED: forceStatus(强制取消)
+    BOUND --> CANCELLED: forceStatus(强制取消)
+    PROCESSING --> CANCELLED: forceStatus(强制取消)
+    DECOCTED --> CANCELLED: forceStatus(强制取消)
+    POURING --> CANCELLED: forceStatus(强制取消)
+    WRAPPING --> CANCELLED: forceStatus(强制取消)
+
+    COMPLETED --> [*]: 任务结束
+    CANCELLED --> [*]: 任务取消
+
+    note right of PROCESSING
+        煎药中:
+        - currentTemp 实时更新
+        - 设备状态 BUSY
+        - 温度超限触发告警
+    end note
+
+    note right of WRAPPING
+        包装阶段:
+        - 可绑定包装机
+        - 结束自动打印标签
+    end note
+</div>
+<div class="legend">
+<b>Task 状态值：</b><code>PENDING</code> <code>SOAKING</code> <code>SOAKED</code> <code>BOUND</code> <code>PROCESSING</code> <code>DECOCTED</code> <code>POURING</code> <code>WRAPPING</code> <code>COMPLETED</code> <code>CANCELLED</code>
+</div>
+</div>
+
+<!-- 3. Device 实体状态图 -->
+<div class="chart-box">
+<h2>3. Device（设备）实体状态图</h2>
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> IDLE: 设备注册/创建
+    IDLE --> BUSY: 绑定任务
+    BUSY --> IDLE: 任务阶段结束释放
+    BUSY --> FAULT: 设备故障上报
+    FAULT --> IDLE: 故障恢复
+
+    note right of IDLE
+        空闲状态:
+        - 可被新任务绑定
+        - currentTemp 可能仍有读数
+    end note
+
+    note right of BUSY
+        忙碌状态:
+        - 已绑定到某个任务
+        - 不可被其他任务占用
+    end note
+
+    note right of FAULT
+        故障状态:
+        - faultCode 有值
+        - 需人工干预恢复
+    end note
+</div>
+<div class="legend">
+<b>Device 状态值：</b><code>IDLE</code> <code>BUSY</code> <code>FAULT</code> &nbsp;&nbsp;|&nbsp;&nbsp; <b>设备类型：</b><code>1=煎药机</code> <code>2=包装机</code> <code>4=打印机</code>
+</div>
+</div>
+
+<!-- 4. 打印状态图 -->
+<div class="chart-box">
+<h2>4. Print（打印）状态图</h2>
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> PENDING: 包装完成触发自动打印
+    PENDING --> PRINTING: doPrintLabel(开始打印)
+    PRINTING --> PRINTED: 打印成功
+    PRINTING --> FAILED: 打印机故障/不可用
+    FAILED --> PENDING: retryPrint(重试打印)
+    PENDING --> PRINTING: printLabel(手动打印)
+    PRINTED --> [*]: 打印完成
+
+    note right of PENDING
+        待打印:
+        - 包装完成时自动触发
+        - 或手动调用打印接口
+    end note
+
+    note right of FAILED
+        打印失败原因:
+        - 打印机状态非 IDLE
+        - 未找到关联打印机
+        - 通信异常
+    end note
+</div>
+<div class="legend">
+<b>Print 状态值（Task.printStatus）：</b><code>null/PENDING</code> <code>PRINTING</code> <code>PRINTED</code> <code>FAILED</code>
+</div>
+</div>
+
+<!-- 5. 业务时序图 -->
+<div class="chart-box">
+<h2>5. 核心业务时序图</h2>
+<div class="mermaid">
+sequenceDiagram
+    autonumber
+    participant Op as 操作员/PDA
+    participant API as 后端 API
+    participant DB as 数据库
+    participant Dev as 智能设备
+    participant MQTT as MQTT Broker
+
+    Op->>API: 1. 创建处方
+    API->>DB: 插入 Prescription
+    API->>DB: 自动生成 Task (PENDING)
+    API-->>Op: 返回任务ID
+
+    Op->>API: 2. 开始泡药 (startSoak)
+    API->>DB: Task → SOAKING
+    API-->>Op: 成功
+
+    Op->>API: 3. 结束泡药 (endSoak)
+    API->>DB: Task → SOAKED
+    API-->>Op: 成功
+
+    Op->>API: 4. 开始煎药 (startDecoct)
+    API->>DB: 查找/创建设备
+    API->>DB: Device → BUSY
+    API->>DB: Task → PROCESSING
+    API-->>Op: 成功
+
+    Dev->>MQTT: 5. 上报温度 (85.5℃)
+    MQTT->>API: 温度消息
+    API->>DB: 更新 currentTemp
+    API->>DB: 记录温度曲线
+    API->>DB: 温度告警检测
+
+    Op->>API: 6. 结束煎药 (endDecoct)
+    API->>DB: Task → DECOCTED
+    API->>DB: Device → IDLE (释放)
+    API-->>Op: 成功
+
+    Op->>API: 7. 开始出液 (startPour)
+    API->>DB: Task → POURING
+    API-->>Op: 成功
+
+    Op->>API: 8. 结束出液 (endPour)
+    API->>DB: Task → WRAPPING
+    API-->>Op: 成功
+
+    Op->>API: 9. 开始包装 (startWrap)
+    API->>DB: 查找/创建包装机
+    API->>DB: 包装机 → BUSY
+    API->>DB: Task → WRAPPING
+    API-->>Op: 成功
+
+    Op->>API: 10. 结束包装 (endWrap)
+    API->>DB: Task → COMPLETED
+    API->>DB: 包装机 → IDLE
+    API->>DB: 查找默认打印机
+    API->>DB: 打印机 → BUSY
+    API->>DB: printStatus → PRINTING
+    API->>DB: printStatus → PRINTED
+    API->>DB: 打印机 → IDLE
+    API-->>Op: 成功 (含打印结果)
+</div>
+<div class="legend">
+<b>说明：</b>橙色步骤为操作员主动触发，紫色步骤为设备自动上报，绿色步骤为系统自动处理（打印）。
+</div>
+</div>
+
+<!-- 6. DeviceAlarm 状态图 -->
+<div class="chart-box">
+<h2>6. DeviceAlarm（设备告警）状态图</h2>
+<div class="mermaid">
+stateDiagram-v2
+    [*] --> UNHANDLED: 温度超限/故障触发
+    UNHANDLED --> HANDLED: 人工确认处理
+    HANDLED --> [*]: 告警关闭
+
+    note right of UNHANDLED
+        未处理 (status=0):
+        - TEMP_HIGH: 温度超过阈值
+        - TEMP_LOW: 温度低于阈值
+        - 同类型未处理告警不再重复创建
+    end note
+</div>
+<div class="legend">
+<b>Alarm 状态值：</b><code>0=未处理(UNHANDLED)</code> <code>1=已处理(HANDLED)</code> &nbsp;&nbsp;|&nbsp;&nbsp; <b>告警类型：</b><code>TEMP_HIGH</code> <code>TEMP_LOW</code> 等
+</div>
+</div>
+
+</div>
+
+<script>
+mermaid.initialize({ startOnLoad: true, theme: 'default', securityLevel: 'loose' });
+</script>
+</body>
+</html>
