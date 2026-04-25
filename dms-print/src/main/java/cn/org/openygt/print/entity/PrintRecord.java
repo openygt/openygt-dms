@@ -1,17 +1,14 @@
 package cn.org.openygt.print.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 @Data
 @TableName("prt_record")
 public class PrintRecord {
 
-    @TableId(type = IdType.AUTO)
     private Long id;
 
     private String tenantId;
@@ -22,7 +19,13 @@ public class PrintRecord {
 
     private String errorMessage;
 
-    private Date printedAt;
+    /** 实际执行打印的打印机编码 */
+    private String printerCode;
+
+    /** 触发本次打印/重试的操作人 ID */
+    private String operatorId;
+
+    private LocalDateTime printedAt;
 
     private Integer deleted;
 }
