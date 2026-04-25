@@ -5,7 +5,7 @@
 > 表前缀：`ops_`（预留）  
 > API 前缀：`/api/v1/ops`  
 > 职责：运营数据分析与报表，包括产能统计、设备利用率、人员绩效、损耗分析、监控大屏。  
-> 版本：V1.3（专家评审03后修订版）
+> 版本：V1.4（专家评审04后修订版）
 
 ---
 
@@ -49,50 +49,50 @@
 
 | 指标 | 数据来源 | 计算口径 |
 |------|---------|---------|
-| 日煎药剂数 | `prod_task` | `COUNT(*)` 按 `created_at` 日期分组 |
-| 日煎药袋数 | `prod_handover_detail` | `SUM(bag_count)` 按 `handover_time` 日期分组 |
-| 日完成剂数 | `prod_task` | `COUNT(*)` 按 `complete_time` 日期分组，status = 已完成 |
+| 日煎药剂数 | `ProductionQueryService.getDailyCapacity()` | SPI 返回后按日期聚合 |
+| 日煎药袋数 | `ProductionQueryService.getTasksByIds()` + 内存聚合 | 从任务关联的交接明细汇总 |
+| 日完成剂数 | `ProductionQueryService.getDailyCapacity()` | SPI 返回后筛选终态任务 |
 
 ### 3.2 设备利用率（OPS-002）
 
 | 指标 | 数据来源 | 计算口径 |
 |------|---------|---------|
-| 设备开机率 | `eq_device` + `prod_step_log` | 运行时长 / (运行时长 + 空闲时长) |
-| 平均运行时长 | `prod_step_log` | `AVG(ended_at - started_at)` 按 device_id 分组 |
-| 故障次数 | `eq_device_alarm` | `COUNT(*)` 按 device_id + alarm_type = FAULT 分组 |
+| 设备开机率 | `EquipmentService.getDeviceUtilization()` | SPI 返回的运行时长 / 总时长 |
+| 平均运行时长 | `EquipmentService.getDeviceUtilization()` | SPI 返回数据做 AVG 聚合 |
+| 故障次数 | `EquipmentService.getFaultStats()` | SPI 返回后按设备分组统计 |
 
 ### 3.3 人员绩效（OPS-003）
 
 | 指标 | 数据来源 | 计算口径 |
 |------|---------|---------|
-| 人均处理任务数 | `prod_task` | `COUNT(*)` 按 `operator_id` 分组 |
-| 人均工时 | `prod_work_record` | `SUM(work_time)` 按 `operator_id` 分组 |
-| 平均操作时长 | `prod_step_log` | `AVG(ended_at - started_at)` 按 operator_id + step_type 分组 |
+| 人均处理任务数 | `ProductionQueryService.getTasksByIds()` + 内存聚合 | 按 operator_id 分组统计 |
+| 人均工时 | `ProductionQueryService.getTaskStatusHistory()` + 内存聚合 | 从状态历史推导工时 |
+| 平均操作时长 | `ProductionQueryService.getTaskStatusHistory()` + 内存聚合 | 按 operator_id + step_type 分组 |
 
 ### 3.4 损耗分析（OPS-004）
 
 | 指标 | 数据来源 | 计算口径 |
 |------|---------|---------|
-| 损耗量 | `prod_step_log` / 预留损耗字段 | 各阶段损耗重量/体积求和 |
+| 损耗量 | `ProductionQueryService.getTasksByIds()` + 内存聚合 | 从任务关联的 step_log 汇总损耗 |
 | 损耗率 | 同上 | 损耗量 / 总投入量 |
 
 ### 3.5 质检合格率（OPS-005）
 
 | 指标 | 数据来源 | 计算口径 |
 |------|---------|---------|
-| 合格率 | `qt_inspection` | `通过次数 / 总次数` |
-| 返工率 | `qt_inspection` | `返工次数 / 总次数` |
-| 报废率 | `qt_inspection` | `报废次数 / 总次数` |
+| 合格率 | `QualityService.getInspectionSummary()` | SPI 返回的合格数 / 总数 |
+| 返工率 | `QualityService.getInspectionSummary()` | SPI 返回的返工数 / 总数 |
+| 报废率 | `QualityService.getInspectionSummary()` | SPI 返回的报废数 / 总数 |
 
 ### 3.6 监控大屏（OPS-006）
 
 | 指标 | 数据来源 |
 |------|---------|
-| 今日任务总数 | `prod_task` |
-| 各状态任务数 | `prod_task` GROUP BY status |
-| 在线设备数 | `eq_device` WHERE status ≠ OFFLINE |
-| 当前告警数 | `eq_device_alarm` WHERE is_resolved = 0 |
-| 今日完成数 | `prod_task` WHERE status = 已完成 AND complete_time = 今日 |
+| 今日任务总数 | `ProductionQueryService.getDailyCapacity(今日, 今日)` |
+| 各状态任务数 | `ProductionQueryService.getDailyCapacity(今日, 今日)` + 内存按 status 分组 |
+| 在线设备数 | `EquipmentService.getOnlineDeviceCount()` |
+| 当前告警数 | `EquipmentService.getFaultStats(今日, 今日)` + 内存筛选未解决 |
+| 今日完成数 | `ProductionQueryService.getDailyCapacity(今日, 今日)` + 内存筛选终态 |
 
 ---
 
@@ -169,7 +169,7 @@ cn.org.openygt.analytics
     └── DashboardRealtimeDTO.java
 ```
 
-> **注意**：`dms-analytics` 不写自己的 Entity，统计查询使用 MyBatis 的 `@Select` 注解直接写 SQL 返回 DTO。
+> **注意**：`dms-analytics` 不写自己的 Entity 和 Mapper，**统计数据通过 SPI 获取，Service 层做内存聚合后返回 DTO**。本模块不定义 Entity 和 Mapper。
 
 ---
 
