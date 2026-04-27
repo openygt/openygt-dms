@@ -3,6 +3,7 @@ package cn.org.openygt.equipment.scheduler;
 import cn.org.openygt.common.service.SysConfigService;
 import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
+import cn.org.openygt.equipment.service.EqDeviceAlarmService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,9 @@ class HeartbeatCheckSchedulerTest {
     @Mock
     private SysConfigService sysConfigService;
 
+    @Mock
+    private EqDeviceAlarmService alarmService;
+
     @Captor
     private ArgumentCaptor<EqDevice> deviceCaptor;
 
@@ -54,7 +58,7 @@ class HeartbeatCheckSchedulerTest {
 
     @BeforeEach
     void setUp() {
-        scheduler = new HeartbeatCheckScheduler(eqDeviceMapper, sysConfigService);
+        scheduler = new HeartbeatCheckScheduler(eqDeviceMapper, sysConfigService, alarmService);
     }
 
     @Test
