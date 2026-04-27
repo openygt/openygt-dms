@@ -1,0 +1,17 @@
+# DMS V2.0 每日回归定时任务示例
+# 工程师F / test/v2-enhancement-regression
+#
+# 使用方式（仅本地服务器）：
+#   crontab -e
+#   将以下内容追加到 crontab 中
+#
+# 前提条件：
+#   1. integration 分支已部署到 localhost:8080
+#   2. Python3 + requests 已安装
+#   3. Maven + Node 已安装
+
+# 每日 12:00 执行回归
+0 12 * * * cd /data2/docker/decoction/openygt-dms && git checkout integration && git pull origin integration 2>/dev/null || true && bash tests/regression/run_local_ci.sh http://localhost:8080 admin admin123 >> tests/reports/cron-noon.log 2>&1
+
+# 每日 18:00 执行回归
+0 18 * * * cd /data2/docker/decoction/openygt-dms && git checkout integration && git pull origin integration 2>/dev/null || true && bash tests/regression/run_local_ci.sh http://localhost:8080 admin admin123 >> tests/reports/cron-evening.log 2>&1
