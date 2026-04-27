@@ -159,6 +159,8 @@ CREATE TABLE IF NOT EXISTS device_alarm (
     message VARCHAR(500),
     status INTEGER DEFAULT 0,
     resolved_time DATETIME,
+    is_resolved INTEGER DEFAULT 0,
+    resolved_at DATETIME,
     deleted INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
