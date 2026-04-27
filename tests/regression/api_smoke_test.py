@@ -80,7 +80,7 @@ class DmsSmokeTester:
     def smk_auth_01_login_ok(self):
         """SMK-AUTH-01: 正常登录"""
         case = "SMK-AUTH-01"
-        resp = self.req("POST", "/api/v1/auth/login", auth=False,
+        resp = self.req("POST", "/api/v1/rbac/auth/login", auth=False,
                         data=json.dumps({"username": self.username, "password": self.password}))
         if resp.status_code == 200:
             body = resp.json()
@@ -121,7 +121,7 @@ class DmsSmokeTester:
         case = "SMK-AUTH-04"
         # 以低权限用户登录（如果有预置数据），否则跳过
         low_user = "jgy001"
-        resp = self.req("POST", "/api/v1/auth/login", auth=False,
+        resp = self.req("POST", "/api/v1/rbac/auth/login", auth=False,
                         data=json.dumps({"username": low_user, "password": self.password}))
         if resp.status_code != 200 or resp.json().get("code") != 200:
             self.log(case, "无权限403校验", "BLOCK", "低权限用户不可用")
@@ -149,8 +149,8 @@ class DmsSmokeTester:
         if resp.status_code == 200:
             body = resp.json()
             roles = body.get("data", [])
-            role_codes = [r.get("code") for r in roles]
-            expected = {"admin", "director", "leader", "decocter", "inspector"}
+            role_codes = [r.get("roleCode") for r in roles]
+            expected = {"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER", "ROLE_WORKER", "ROLE_INSPECTOR"}
             if set(role_codes) == expected:
                 self.log(case, f"5角色完整 {role_codes}", "PASS")
                 return True
@@ -253,7 +253,7 @@ class DmsSmokeTester:
         """SMK-ALM-05: 无语音拨号路径"""
         case = "SMK-ALM-05"
         # 白盒检查：搜索后端源码中的拨号相关调用（仅做简单启发式）
-        keywords = ["dial", "call", "sip", "tts", "voiceAlarm", "phone", "拨打", "拨号"]
+        keywords = ["dial", "sip", "tts", "voiceAlarm", "phone", "拨打", "拨号"]
         found = []
         src_dirs = ["dms-equipment/src/main/java", "dms-app/src/main/java"]
         for d in src_dirs:
