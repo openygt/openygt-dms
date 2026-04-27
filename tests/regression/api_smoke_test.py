@@ -175,7 +175,7 @@ class DmsSmokeTester:
         # 先取菜单列表
         menus_resp = self.req("GET", "/api/v1/rbac/menus")
         menu_ids = [m["id"] for m in menus_resp.json().get("data", [])[:3]] if menus_resp.status_code == 200 else []
-        payload = {"menuIds": menu_ids}
+        payload = menu_ids
         resp2 = self.req("POST", f"/api/v1/rbac/roles/{role_id}/menus", data=json.dumps(payload))
         if resp2.status_code == 200 and resp2.json().get("code") == 200:
             self.log(case, "分配菜单权限成功", "PASS")
