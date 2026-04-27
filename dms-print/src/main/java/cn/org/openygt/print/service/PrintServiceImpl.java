@@ -10,6 +10,8 @@ import cn.org.openygt.print.entity.PrintTask;
 import cn.org.openygt.print.mapper.PrintRecordMapper;
 import cn.org.openygt.print.mapper.PrintTaskMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -132,6 +134,14 @@ public class PrintServiceImpl implements PrintService {
         wrapper.orderByDesc(PrintTask::getCreatedAt);
         List<PrintTask> tasks = printTaskMapper.selectList(wrapper);
         return tasks.stream().map(this::toDTO).collect(Collectors.toList());
+    }
+
+    @Override
+    public IPage<PrintTaskDTO> getPrintTasks(int page, int size) {
+        LambdaQueryWrapper<PrintTask> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(PrintTask::getCreatedAt);
+        IPage<PrintTask> entityPage = printTaskMapper.selectPage(new Page<>(page, size), wrapper);
+        return entityPage.convert(this::toDTO);
     }
 
     /**
