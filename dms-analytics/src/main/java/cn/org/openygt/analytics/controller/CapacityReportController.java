@@ -1,6 +1,6 @@
 package cn.org.openygt.analytics.controller;
 
-import cn.org.openygt.analytics.dto.CapacityDailyDTO;
+import cn.org.openygt.common.dto.CapacityDailyDTO;
 import cn.org.openygt.analytics.service.CapacityReportService;
 import cn.org.openygt.common.dto.ApiResponse;
 import org.springframework.format.annotation.DateTimeFormat;

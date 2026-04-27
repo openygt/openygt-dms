@@ -16,4 +16,11 @@ public class CapacityDailyDTO implements Serializable {
     private Long totalTasks;
     private Long completedTasks;
     private Long scrappedTasks;
+
+    // 前端展示扩展字段
+    private Integer taskCount;
+    private Integer completedCount;
+    private Integer doseCount;
+    private Double avgDuration;
+    private Double deviceUtilization;
 }
