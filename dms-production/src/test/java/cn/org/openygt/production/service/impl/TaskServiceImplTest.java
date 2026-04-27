@@ -4,6 +4,8 @@ import cn.org.openygt.common.dto.EqDeviceDTO;
 import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.EquipmentService;
 import cn.org.openygt.common.service.PrintService;
+import cn.org.openygt.inventory.dto.ConsumeRecordRequest;
+import cn.org.openygt.inventory.service.ConsumeRecordService;
 import cn.org.openygt.production.entity.*;
 import cn.org.openygt.production.mapper.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -44,12 +46,24 @@ class TaskServiceImplTest {
     @Mock
     private HandoverDetailMapper handoverDetailMapper;
     @Mock
+    private PrescriptionMedicineMapper prescriptionMedicineMapper;
+    @Mock
     private EquipmentService equipmentService;
     @Mock
     private PrintService printService;
+    @Mock
+    private ConsumeRecordService consumeRecordService;
 
-    @InjectMocks
     private TaskServiceImpl taskService;
+
+    @BeforeEach
+    void setUp() {
+        taskService = new TaskServiceImpl(
+                taskMapper, historyMapper, workRecordMapper, stepLogMapper,
+                handoverDetailMapper, prescriptionMedicineMapper,
+                equipmentService, printService, consumeRecordService
+        );
+    }
 
     private Task mockTask(Long id, String status) {
         Task t = new Task();
@@ -844,5 +858,87 @@ class TaskServiceImplTest {
         when(taskMapper.selectByIdForUpdate(99L)).thenReturn(null);
         assertThrows(IllegalArgumentException.class, () ->
                 taskService.startWrap(99L, "W001", "OP01"));
+    }
+
+    // ==================== 消耗记录集成（V2.0） ====================
+
+    @Test
+    @DisplayName("startSoak: 有药材明细时调用消耗记录服务")
+    void testStartSoakWithMedicinesTriggersConsume() {
+        Task task = mockTask(1L, "待泡药");
+        task.setPrescriptionId(100L);
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        PrescriptionMedicine med1 = new PrescriptionMedicine();
+        med1.setMedicineId(10L);
+        med1.setMedicineName("黄芪");
+        med1.setDosage(BigDecimal.valueOf(15));
+        med1.setUnit("g");
+
+        PrescriptionMedicine med2 = new PrescriptionMedicine();
+        med2.setMedicineName("当归");
+        med2.setDosage(BigDecimal.valueOf(10));
+
+        when(prescriptionMedicineMapper.selectByPrescriptionId(100L)).thenReturn(java.util.Arrays.asList(med1, med2));
+        when(consumeRecordService.recordConsume(any(ConsumeRecordRequest.class))).thenReturn(java.util.Arrays.asList(1L, 2L));
+
+        Task result = taskService.startSoak(1L, "OP01");
+
+        assertEquals("泡药中", result.getStatus());
+        verify(prescriptionMedicineMapper).selectByPrescriptionId(100L);
+        verify(consumeRecordService).recordConsume(argThat(req ->
+                req.getTaskId().equals(1L)
+                        && req.getItems() != null
+                        && req.getItems().size() == 2
+                        && "黄芪".equals(req.getItems().get(0).getMedicineName())
+                        && 0 == BigDecimal.valueOf(15).compareTo(req.getItems().get(0).getQuantity())
+        ));
+    }
+
+    @Test
+    @DisplayName("startSoak: 无处方时跳过消耗记录，任务正常推进")
+    void testStartSoakWithoutPrescriptionSkipsConsume() {
+        Task task = mockTask(1L, "待泡药");
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        Task result = taskService.startSoak(1L, "OP01");
+
+        assertEquals("泡药中", result.getStatus());
+        verify(consumeRecordService, never()).recordConsume(any());
+    }
+
+    @Test
+    @DisplayName("startSoak: 处方无药材明细时跳过消耗记录，任务正常推进")
+    void testStartSoakWithEmptyMedicinesSkipsConsume() {
+        Task task = mockTask(1L, "待泡药");
+        task.setPrescriptionId(100L);
+        when(taskMapper.selectById(1L)).thenReturn(task);
+        when(prescriptionMedicineMapper.selectByPrescriptionId(100L)).thenReturn(java.util.Collections.emptyList());
+
+        Task result = taskService.startSoak(1L, "OP01");
+
+        assertEquals("泡药中", result.getStatus());
+        verify(consumeRecordService, never()).recordConsume(any());
+    }
+
+    @Test
+    @DisplayName("startSoak: 消耗记录服务异常时任务仍正常推进（不阻断主流程）")
+    void testStartSoakConsumeFailureDoesNotBlockTask() {
+        Task task = mockTask(1L, "待泡药");
+        task.setPrescriptionId(100L);
+        when(taskMapper.selectById(1L)).thenReturn(task);
+
+        PrescriptionMedicine med = new PrescriptionMedicine();
+        med.setMedicineName("黄芪");
+        med.setDosage(BigDecimal.valueOf(15));
+
+        when(prescriptionMedicineMapper.selectByPrescriptionId(100L)).thenReturn(java.util.Collections.singletonList(med));
+        when(consumeRecordService.recordConsume(any(ConsumeRecordRequest.class)))
+                .thenThrow(new RuntimeException("模拟消耗服务异常"));
+
+        Task result = taskService.startSoak(1L, "OP01");
+
+        assertEquals("泡药中", result.getStatus());
+        verify(taskMapper).updateById(task);
     }
 }

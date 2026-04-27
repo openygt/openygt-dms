@@ -6,6 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Date;
+import java.util.List;
 
 /**
  * JWT 工具类。
@@ -44,15 +45,21 @@ public final class JwtUtil {
      * @return JWT 字符串
      */
     public static String generateToken(Long userId, String username) {
+        return generateToken(userId, username, null);
+    }
+
+    public static String generateToken(Long userId, String username, List<String> roles) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + EXPIRATION);
-        return Jwts.builder()
+        io.jsonwebtoken.JwtBuilder builder = Jwts.builder()
                 .setSubject(String.valueOf(userId))
                 .claim("username", username)
                 .setIssuedAt(now)
-                .setExpiration(expiry)
-                .signWith(SignatureAlgorithm.HS256, SECRET)
-                .compact();
+                .setExpiration(expiry);
+        if (roles != null && !roles.isEmpty()) {
+            builder.claim("roles", roles);
+        }
+        return builder.signWith(SignatureAlgorithm.HS256, SECRET).compact();
     }
 
     /**
@@ -113,5 +120,14 @@ public final class JwtUtil {
             return null;
         }
         return claims.get("username", String.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<String> getRoles(String token) {
+        Claims claims = parseToken(token);
+        if (claims == null) {
+            return null;
+        }
+        return claims.get("roles", List.class);
     }
 }

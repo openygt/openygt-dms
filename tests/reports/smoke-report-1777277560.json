@@ -1,0 +1,93 @@
+{
+  "meta": {
+    "base_url": "http://localhost:8080",
+    "username": "admin",
+    "timestamp": "2026-04-27T16:12:40.134229",
+    "branch": "local"
+  },
+  "summary": {
+    "total": 11,
+    "passed": 7,
+    "failed": 3,
+    "blocked": 1
+  },
+  "details": [
+    {
+      "case_id": "SMK-AUTH-01",
+      "desc": "正常登录",
+      "status": "PASS",
+      "detail": "roles=['ROLE_ADMIN']",
+      "timestamp": "2026-04-27T16:12:39.816170"
+    },
+    {
+      "case_id": "SMK-AUTH-02",
+      "desc": "密码错误拦截",
+      "status": "PASS",
+      "detail": "",
+      "timestamp": "2026-04-27T16:12:39.910707"
+    },
+    {
+      "case_id": "SMK-AUTH-03",
+      "desc": "无Token返回401",
+      "status": "PASS",
+      "detail": "",
+      "timestamp": "2026-04-27T16:12:39.914261"
+    },
+    {
+      "case_id": "SMK-AUTH-04",
+      "desc": "无权限返回403",
+      "status": "PASS",
+      "detail": "",
+      "timestamp": "2026-04-27T16:12:40.021657"
+    },
+    {
+      "case_id": "SMK-RBAC-01",
+      "desc": "5角色完整 ['ROLE_ADMIN', 'ROLE_DIRECTOR', 'ROLE_LEADER', 'ROLE_WORKER', 'ROLE_INSPECTOR']",
+      "status": "PASS",
+      "detail": "",
+      "timestamp": "2026-04-27T16:12:40.035487"
+    },
+    {
+      "case_id": "SMK-RBAC-03",
+      "desc": "分配菜单权限成功",
+      "status": "PASS",
+      "detail": "",
+      "timestamp": "2026-04-27T16:12:40.074881"
+    },
+    {
+      "case_id": "SMK-PROD-01",
+      "desc": "创建处方",
+      "status": "FAIL",
+      "detail": "status=404, body={\"timestamp\":\"2026-04-27T08:12:40.079+00:00\",\"status\":404,\"error\":\"Not Found\",\"path\":\"/api/prescriptions\"}",
+      "timestamp": "2026-04-27T16:12:40.081488"
+    },
+    {
+      "case_id": "SMK-INV-01",
+      "desc": "空明细消耗记录",
+      "status": "BLOCK",
+      "detail": "无可用任务ID",
+      "timestamp": "2026-04-27T16:12:40.086897"
+    },
+    {
+      "case_id": "SMK-EQ-01",
+      "desc": "设备列表",
+      "status": "FAIL",
+      "detail": "status=404",
+      "timestamp": "2026-04-27T16:12:40.099770"
+    },
+    {
+      "case_id": "SMK-ALM-01",
+      "desc": "告警日志",
+      "status": "FAIL",
+      "detail": "status=404",
+      "timestamp": "2026-04-27T16:12:40.128018"
+    },
+    {
+      "case_id": "SMK-ALM-05",
+      "desc": "未检测到语音拨号路径",
+      "status": "PASS",
+      "detail": "",
+      "timestamp": "2026-04-27T16:12:40.134193"
+    }
+  ]
+}

@@ -4,6 +4,9 @@ import cn.org.openygt.common.dto.EqDeviceDTO;
 import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.EquipmentService;
 import cn.org.openygt.common.service.PrintService;
+import cn.org.openygt.inventory.dto.ConsumeItemRequest;
+import cn.org.openygt.inventory.dto.ConsumeRecordRequest;
+import cn.org.openygt.inventory.service.ConsumeRecordService;
 import cn.org.openygt.production.entity.*;
 import cn.org.openygt.production.mapper.*;
 import cn.org.openygt.production.service.TaskService;
@@ -18,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -30,9 +34,11 @@ public class TaskServiceImpl implements TaskService {
     private final WorkRecordMapper workRecordMapper;
     private final StepLogMapper stepLogMapper;
     private final HandoverDetailMapper handoverDetailMapper;
+    private final PrescriptionMedicineMapper prescriptionMedicineMapper;
 
     private final EquipmentService equipmentService;
     private final PrintService printService;
+    private final ConsumeRecordService consumeRecordService;
 
     // ==================== 状态机核心 ====================
 
@@ -46,6 +52,10 @@ public class TaskServiceImpl implements TaskService {
         taskMapper.updateById(task);
         recordWork(taskId, operatorId, null, "SOAK", 0);
         createStepLog(taskId, "SOAK", null, operatorId, null);
+
+        // V2.0：泡药开始时尝试记录消耗流水（可选，不阻断任务推进）
+        tryRecordConsume(task, operatorId);
+
         return task;
     }
 
@@ -524,6 +534,40 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
+
+    /**
+     * 尝试记录任务消耗流水。失败仅记录日志，不回滚任务推进主事务。
+     */
+    private void tryRecordConsume(Task task, String operatorId) {
+        try {
+            if (task.getPrescriptionId() == null) {
+                log.warn("任务[{}]无关联处方，跳过消耗记录", task.getId());
+                return;
+            }
+            List<PrescriptionMedicine> medicines = prescriptionMedicineMapper.selectByPrescriptionId(task.getPrescriptionId());
+            if (medicines == null || medicines.isEmpty()) {
+                log.info("任务[{}]处方无药材明细，跳过消耗记录", task.getId());
+                return;
+            }
+            ConsumeRecordRequest request = new ConsumeRecordRequest();
+            request.setTaskId(task.getId());
+            request.setOperatorId(operatorId);
+            request.setItems(new ArrayList<>());
+            for (PrescriptionMedicine med : medicines) {
+                ConsumeItemRequest item = new ConsumeItemRequest();
+                item.setMedicineId(med.getMedicineId());
+                item.setMedicineName(med.getMedicineName());
+                item.setQuantity(med.getDosage());
+                item.setUnit(med.getUnit());
+                item.setRemark(med.getMedUsage());
+                request.getItems().add(item);
+            }
+            List<Long> logIds = consumeRecordService.recordConsume(request);
+            log.info("任务[{}]消耗记录写入完成，流水数={}", task.getId(), logIds.size());
+        } catch (Exception e) {
+            log.error("任务[{}]消耗记录写入失败（已忽略，不阻断主流程）", task.getId(), e);
+        }
+    }
 
     private void createStepLog(Long taskId, String stepType, Long deviceId, String operatorId, Long parentId) {
         StepLog step = new StepLog();

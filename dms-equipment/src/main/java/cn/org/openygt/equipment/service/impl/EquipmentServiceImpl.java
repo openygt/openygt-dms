@@ -10,6 +10,7 @@ import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.entity.EqDeviceAlarm;
 import cn.org.openygt.equipment.mapper.EqDeviceAlarmMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
+import cn.org.openygt.equipment.service.EqDeviceAlarmService;
 import cn.org.openygt.masterdata.entity.DecoctScheme;
 import cn.org.openygt.masterdata.service.DecoctSchemeService;
 
@@ -38,15 +39,18 @@ public class EquipmentServiceImpl implements EquipmentService {
     private final SysConfigService sysConfigService;
     private final DecoctSchemeService decoctSchemeService;
     private final EqDeviceAlarmMapper alarmMapper;
+    private final EqDeviceAlarmService alarmService;
 
     public EquipmentServiceImpl(EqDeviceMapper deviceMapper,
                                 SysConfigService sysConfigService,
                                 DecoctSchemeService decoctSchemeService,
-                                EqDeviceAlarmMapper alarmMapper) {
+                                EqDeviceAlarmMapper alarmMapper,
+                                EqDeviceAlarmService alarmService) {
         this.deviceMapper = deviceMapper;
         this.sysConfigService = sysConfigService;
         this.decoctSchemeService = decoctSchemeService;
         this.alarmMapper = alarmMapper;
+        this.alarmService = alarmService;
     }
 
     // ========== 常量：系统默认阈值配置键 ==========
@@ -186,14 +190,9 @@ public class EquipmentServiceImpl implements EquipmentService {
         if (threshold.getHighTemp() != null && temperature.compareTo(threshold.getHighTemp()) > 0) {
             alarm = true;
             if (latest == null || latest.getCreatedAt().plusMinutes(5).isBefore(LocalDateTime.now())) {
-                EqDeviceAlarm alarmRecord = new EqDeviceAlarm();
-                alarmRecord.setDeviceId(deviceId);
-                alarmRecord.setAlarmType("HIGH_TEMP");
-                alarmRecord.setAlarmLevel("CRITICAL");
-                alarmRecord.setMessage(String.format("设备超温: 当前 %.1f℃ > 阈值 %.1f℃ [来源=%s]",
-                        temperature, threshold.getHighTemp(), threshold.getSource()));
-                alarmRecord.setIsResolved(0);
-                alarmMapper.insert(alarmRecord);
+                String msg = String.format("设备超温: 当前 %.1f℃ > 阈值 %.1f℃ [来源=%s]",
+                        temperature, threshold.getHighTemp(), threshold.getSource());
+                alarmService.createAlarm(device, "HIGH_TEMP", "CRITICAL", msg);
                 log.warn("温度告警: deviceId={}, temp={}, highThreshold={}", deviceId, temperature, threshold.getHighTemp());
             }
         }
@@ -201,14 +200,9 @@ public class EquipmentServiceImpl implements EquipmentService {
             alarm = true;
             EqDeviceAlarm latestLow = alarmMapper.findLatestActiveAlarm(deviceId, "LOW_TEMP");
             if (latestLow == null || latestLow.getCreatedAt().plusMinutes(5).isBefore(LocalDateTime.now())) {
-                EqDeviceAlarm alarmRecord = new EqDeviceAlarm();
-                alarmRecord.setDeviceId(deviceId);
-                alarmRecord.setAlarmType("LOW_TEMP");
-                alarmRecord.setAlarmLevel("WARNING");
-                alarmRecord.setMessage(String.format("设备低温: 当前 %.1f℃ < 阈值 %.1f℃ [来源=%s]",
-                        temperature, threshold.getLowTemp(), threshold.getSource()));
-                alarmRecord.setIsResolved(0);
-                alarmMapper.insert(alarmRecord);
+                String msg = String.format("设备低温: 当前 %.1f℃ < 阈值 %.1f℃ [来源=%s]",
+                        temperature, threshold.getLowTemp(), threshold.getSource());
+                alarmService.createAlarm(device, "LOW_TEMP", "WARNING", msg);
                 log.warn("低温告警: deviceId={}, temp={}, lowThreshold={}", deviceId, temperature, threshold.getLowTemp());
             }
         }

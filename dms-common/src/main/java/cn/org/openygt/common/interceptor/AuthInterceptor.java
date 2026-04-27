@@ -6,6 +6,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * JWT 认证拦截器。
@@ -49,8 +50,10 @@ public class AuthInterceptor implements HandlerInterceptor {
         // 将用户信息放入请求属性，供后续使用
         Long userId = JwtUtil.getUserId(token);
         String username = JwtUtil.getUsername(token);
+        List<String> roles = JwtUtil.getRoles(token);
         request.setAttribute("userId", userId);
         request.setAttribute("username", username);
+        request.setAttribute("roles", roles);
 
         return true;
     }
