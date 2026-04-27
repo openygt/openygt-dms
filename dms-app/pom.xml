@@ -30,6 +30,10 @@
         </dependency>
         <dependency>
             <groupId>cn.org.openygt</groupId>
+            <artifactId>dms-inventory</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.org.openygt</groupId>
             <artifactId>dms-production</artifactId>
         </dependency>
         <dependency>
@@ -43,6 +47,10 @@
         <dependency>
             <groupId>cn.org.openygt</groupId>
             <artifactId>dms-analytics</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.org.openygt</groupId>
+            <artifactId>dms-rbac</artifactId>
         </dependency>
         <dependency>
             <groupId>org.xerial</groupId>

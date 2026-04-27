@@ -7,6 +7,7 @@ import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.entity.EqDeviceAlarm;
 import cn.org.openygt.equipment.mapper.EqDeviceAlarmMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
+import cn.org.openygt.equipment.service.EqDeviceAlarmService;
 import cn.org.openygt.masterdata.entity.DecoctScheme;
 import cn.org.openygt.masterdata.service.DecoctSchemeService;
 import org.junit.jupiter.api.BeforeEach;
@@ -55,6 +56,9 @@ class EquipmentServiceImplTest {
     @Mock
     private EqDeviceAlarmMapper alarmMapper;
 
+    @Mock
+    private EqDeviceAlarmService alarmService;
+
     @Captor
     private ArgumentCaptor<EqDeviceAlarm> alarmCaptor;
 
@@ -62,7 +66,7 @@ class EquipmentServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new EquipmentServiceImpl(deviceMapper, sysConfigService, decoctSchemeService, alarmMapper);
+        service = new EquipmentServiceImpl(deviceMapper, sysConfigService, decoctSchemeService, alarmMapper, alarmService);
     }
 
     @Nested
@@ -378,7 +382,7 @@ class EquipmentServiceImplTest {
 
             service.checkTemperatureAlarm(1L, new BigDecimal("90.0"));
 
-            verify(alarmMapper, never()).insert(any(EqDeviceAlarm.class));
+            verify(alarmService, never()).createAlarm(any(EqDevice.class), anyString(), anyString(), anyString());
         }
 
         @Test
@@ -389,11 +393,7 @@ class EquipmentServiceImplTest {
 
             service.checkTemperatureAlarm(1L, new BigDecimal("105.0"));
 
-            verify(alarmMapper).insert(alarmCaptor.capture());
-            EqDeviceAlarm alarm = alarmCaptor.getValue();
-            assertThat(alarm.getAlarmType()).isEqualTo("HIGH_TEMP");
-            assertThat(alarm.getAlarmLevel()).isEqualTo("CRITICAL");
-            assertThat(alarm.getIsResolved()).isEqualTo(0);
+            verify(alarmService).createAlarm(eq(device), eq("HIGH_TEMP"), eq("CRITICAL"), anyString());
         }
 
         @Test
@@ -404,10 +404,7 @@ class EquipmentServiceImplTest {
 
             service.checkTemperatureAlarm(1L, new BigDecimal("75.0"));
 
-            verify(alarmMapper).insert(alarmCaptor.capture());
-            EqDeviceAlarm alarm = alarmCaptor.getValue();
-            assertThat(alarm.getAlarmType()).isEqualTo("LOW_TEMP");
-            assertThat(alarm.getAlarmLevel()).isEqualTo("WARNING");
+            verify(alarmService).createAlarm(eq(device), eq("LOW_TEMP"), eq("WARNING"), anyString());
         }
 
         @Test
@@ -421,7 +418,7 @@ class EquipmentServiceImplTest {
 
             service.checkTemperatureAlarm(1L, new BigDecimal("105.0"));
 
-            verify(alarmMapper, never()).insert(any(EqDeviceAlarm.class));
+            verify(alarmService, never()).createAlarm(any(EqDevice.class), anyString(), anyString(), anyString());
         }
 
         @Test
@@ -436,7 +433,7 @@ class EquipmentServiceImplTest {
 
             service.checkTemperatureAlarm(1L, new BigDecimal("75.0"));
 
-            verify(alarmMapper, never()).insert(any(EqDeviceAlarm.class));
+            verify(alarmService, never()).createAlarm(any(EqDevice.class), anyString(), anyString(), anyString());
         }
 
         @Test
@@ -462,7 +459,7 @@ class EquipmentServiceImplTest {
 
             service.checkTemperatureAlarm(99L, new BigDecimal("90.0"));
 
-            verify(alarmMapper, never()).insert(any(EqDeviceAlarm.class));
+            verify(alarmService, never()).createAlarm(any(EqDevice.class), anyString(), anyString(), anyString());
             verify(alarmMapper, never()).findLatestActiveAlarm(anyLong(), anyString());
         }
 
@@ -641,7 +638,7 @@ class EquipmentServiceImplTest {
             service.updateTemperature(1L, new BigDecimal("95.0"));
 
             verify(deviceMapper).update(isNull(), any(com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper.class));
-            verify(alarmMapper, never()).insert(any(EqDeviceAlarm.class));
+            verify(alarmService, never()).createAlarm(any(EqDevice.class), anyString(), anyString(), anyString());
         }
     }
 

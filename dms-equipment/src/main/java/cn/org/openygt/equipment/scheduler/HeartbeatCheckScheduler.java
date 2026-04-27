@@ -3,6 +3,7 @@ package cn.org.openygt.equipment.scheduler;
 import cn.org.openygt.common.service.SysConfigService;
 import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
+import cn.org.openygt.equipment.service.EqDeviceAlarmService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,7 @@ public class HeartbeatCheckScheduler {
 
     private final EqDeviceMapper eqDeviceMapper;
     private final SysConfigService sysConfigService;
+    private final EqDeviceAlarmService alarmService;
 
     // 默认超时秒数
     private static final long DEFAULT_IDLE_TIMEOUT_SECONDS = 120;
@@ -98,5 +100,9 @@ public class HeartbeatCheckScheduler {
         device.setCurrentTemp(null);
         device.setUpdatedAt(now);
         eqDeviceMapper.updateById(device);
+
+        // V2.0：创建离线告警（系统内通知，不触发语音拨号）
+        alarmService.createAlarm(device.getId(), "OFFLINE", "WARNING",
+                String.format("设备 %s 心跳超时离线", device.getDeviceCode()));
     }
 }
