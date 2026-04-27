@@ -8,6 +8,7 @@ import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.rbac.entity.SysMenu;
 import cn.org.openygt.rbac.entity.SysRole;
 import cn.org.openygt.rbac.service.SysMenuService;
+import cn.org.openygt.rbac.service.SysRoleMenuService;
 import cn.org.openygt.rbac.service.SysRoleService;
 import cn.org.openygt.rbac.service.SysUserRoleService;
 import cn.org.openygt.system.service.SysUserService;
@@ -32,6 +33,7 @@ public class RbacController {
     private final SysMenuService menuService;
     private final SysRoleService roleService;
     private final SysUserRoleService userRoleService;
+    private final SysRoleMenuService roleMenuService;
     private final SysUserService userService;
 
     // ==================== 菜单管理 ====================
@@ -66,6 +68,7 @@ public class RbacController {
     // ==================== 角色管理 ====================
 
     @GetMapping("/roles")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     public ApiResponse<List<SysRole>> roleList() {
         return ApiResponse.success(roleService.list());
     }
@@ -101,7 +104,7 @@ public class RbacController {
     @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<Void> assignMenus(@PathVariable Long roleId, @RequestBody List<Long> menuIds) {
         roleService.getById(roleId); // 校验存在性
-        // 这里简化处理：实际应调用 SysRoleMenuService 进行绑定
+        roleMenuService.assignMenus(roleId, menuIds);
         return ApiResponse.success();
     }
 
