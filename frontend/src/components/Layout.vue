@@ -16,17 +16,29 @@
           <el-icon><DataLine /></el-icon>
           <span>实时看板</span>
         </el-menu-item>
-        <el-menu-item index="/tasks">
-          <el-icon><List /></el-icon>
-          <span>任务管理</span>
-        </el-menu-item>
+        <el-sub-menu index="/prod">
+          <template #title>
+            <el-icon><List /></el-icon>
+            <span>生产管理</span>
+          </template>
+          <el-menu-item index="/tasks">任务管理</el-menu-item>
+          <el-menu-item index="/prescriptions">处方管理</el-menu-item>
+        </el-sub-menu>
         <el-menu-item index="/consume-log">
           <el-icon><Document /></el-icon>
           <span>消耗流水</span>
         </el-menu-item>
-        <el-menu-item index="/alarms">
-          <el-icon><Warning /></el-icon>
-          <span>告警日志</span>
+        <el-sub-menu index="/eq">
+          <template #title>
+            <el-icon><Cpu /></el-icon>
+            <span>设备监控</span>
+          </template>
+          <el-menu-item index="/devices">设备管理</el-menu-item>
+          <el-menu-item index="/alarms">告警日志</el-menu-item>
+        </el-sub-menu>
+        <el-menu-item index="/capacity">
+          <el-icon><TrendCharts /></el-icon>
+          <span>产能报表</span>
         </el-menu-item>
         <el-sub-menu index="/system">
           <template #title>
@@ -35,6 +47,7 @@
           </template>
           <el-menu-item index="/users">用户管理</el-menu-item>
           <el-menu-item index="/roles">角色管理</el-menu-item>
+          <el-menu-item index="/menus">菜单管理</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>

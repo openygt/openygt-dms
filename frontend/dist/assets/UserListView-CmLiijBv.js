@@ -1,1 +1,0 @@
-import{_ as r,c as s,a,w as n,e as t,r as l,o as c}from"./index-DJ-y0jG1.js";const d={};function _(p,e){const o=l("el-card");return c(),s("div",null,[a(o,null,{header:n(()=>[...e[0]||(e[0]=[t("span",null,"用户管理",-1)])]),default:n(()=>[e[1]||(e[1]=t("p",null,"用户列表（占位页面）",-1))]),_:1})])}const f=r(d,[["render",_]]);export{f as default};
