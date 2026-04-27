@@ -65,7 +65,7 @@ function statusType(status: string) {
 async function fetchTasks() {
   loading.value = true
   try {
-    const res: any = await request.get('/production/tasks?page=1&size=50')
+    const res: any = await request.get('/v1/prod/tasks?page=1&size=50')
     taskList.value = res.data?.records || []
   } finally {
     loading.value = false
@@ -74,7 +74,7 @@ async function fetchTasks() {
 
 async function startSoak(row: Task) {
   try {
-    await request.post(`/production/tasks/${row.id}/start-soak`)
+    await request.post(`/v1/prod/tasks/${row.id}/soak/start`)
     ElMessage.success('任务已开始泡药')
     // 可选：调用消耗记录（即使失败也不阻断）
     try {

@@ -19,7 +19,7 @@ export const useUserStore = defineStore('user', () => {
   const isLoggedIn = computed(() => !!token.value)
 
   async function login(username: string, password: string) {
-    const res: any = await request.post('/auth/login', { username, password })
+    const res: any = await request.post('/v1/auth/login', { username, password })
     token.value = res.data.token
     localStorage.setItem('token', token.value)
     await fetchUserInfo()
@@ -27,13 +27,24 @@ export const useUserStore = defineStore('user', () => {
   }
 
   async function fetchUserInfo() {
-    const res: any = await request.get('/system/user/info')
-    userInfo.value = res.data
-    permissions.value = res.data.permissions || []
+    // TokenResponse 已包含用户信息，无需额外接口
+    try {
+      const payload = token.value.split('.')[1]
+      const tokenData = payload ? JSON.parse(atob(payload)) : {}
+      userInfo.value = {
+        id: tokenData.userId,
+        username: tokenData.sub || tokenData.username,
+        roles: tokenData.roles || []
+      }
+      permissions.value = tokenData.permissions || []
+    } catch (e) {
+      userInfo.value = { username: '未知用户', roles: [] }
+      permissions.value = []
+    }
   }
 
   async function fetchMenus() {
-    const res: any = await request.get('/rbac/menus/tree')
+    const res: any = await request.get('/v1/rbac/menus/tree')
     menus.value = res.data || []
   }
 

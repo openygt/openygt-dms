@@ -36,10 +36,26 @@
           <el-menu-item index="/devices">设备管理</el-menu-item>
           <el-menu-item index="/alarms">告警日志</el-menu-item>
         </el-sub-menu>
+        <el-menu-item index="/print-center">
+          <el-icon><Printer /></el-icon>
+          <span>打印中心</span>
+        </el-menu-item>
+        <el-menu-item index="/quality">
+          <el-icon><CircleCheck /></el-icon>
+          <span>质检记录</span>
+        </el-menu-item>
         <el-menu-item index="/capacity">
           <el-icon><TrendCharts /></el-icon>
           <span>产能报表</span>
         </el-menu-item>
+        <el-sub-menu index="/md">
+          <template #title>
+            <el-icon><OfficeBuilding /></el-icon>
+            <span>基础数据</span>
+          </template>
+          <el-menu-item index="/hospitals">医院管理</el-menu-item>
+          <el-menu-item index="/schemes">煎煮方案</el-menu-item>
+        </el-sub-menu>
         <el-sub-menu index="/system">
           <template #title>
             <el-icon><Setting /></el-icon>
@@ -48,6 +64,8 @@
           <el-menu-item index="/users">用户管理</el-menu-item>
           <el-menu-item index="/roles">角色管理</el-menu-item>
           <el-menu-item index="/menus">菜单管理</el-menu-item>
+          <el-menu-item index="/configs">系统配置</el-menu-item>
+          <el-menu-item index="/logs">系统日志</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>

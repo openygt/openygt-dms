@@ -164,7 +164,7 @@ function statusText(status?: string) {
 async function fetchData() {
   loading.value = true
   try {
-    const res: any = await request.get('/production/prescriptions', {
+    const res: any = await request.get('/v1/prod/prescriptions', {
       params: { page: pagination.value.page, size: pagination.value.size, ...search.value }
     })
     list.value = res.data?.records || []
@@ -187,10 +187,10 @@ function openDialog(row?: Prescription) {
 async function handleSave() {
   try {
     if (form.value.id) {
-      await request.put(`/production/prescriptions/${form.value.id}`, form.value)
+      await request.put(`/v1/prod/prescriptions/${form.value.id}`, form.value)
       ElMessage.success('更新成功')
     } else {
-      await request.post('/production/prescriptions', form.value)
+      await request.post('/v1/prod/prescriptions', form.value)
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
@@ -200,7 +200,7 @@ async function handleSave() {
 
 async function viewDetail(row: Prescription) {
   try {
-    const res: any = await request.get(`/production/prescriptions/${row.id}`)
+    const res: any = await request.get(`/v1/prod/prescriptions/${row.id}`)
     detail.value = res.data
     detailVisible.value = true
   } catch (e) {}
@@ -208,7 +208,7 @@ async function viewDetail(row: Prescription) {
 
 async function fetchSchemes() {
   try {
-    const res: any = await request.get('/masterdata/schemes', { params: { page: 1, size: 999 } })
+    const res: any = await request.get('/v1/md/schemes', { params: { page: 1, size: 999 } })
     schemes.value = res.data?.records || []
   } catch (e) {}
 }

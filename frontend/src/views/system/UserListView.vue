@@ -127,7 +127,7 @@ const form = ref<Partial<User & { password?: string }>>({})
 async function fetchData() {
   loading.value = true
   try {
-    const res: any = await request.get('/system/users', {
+    const res: any = await request.get('/v1/sys/users', {
       params: { page: pagination.value.page, size: pagination.value.size, keyword: search.value.keyword }
     })
     list.value = res.data?.records || []
@@ -147,10 +147,10 @@ async function handleSave() {
     if (form.value.id) {
       const payload: any = { ...form.value }
       if (!payload.password) delete payload.password
-      await request.put(`/system/users/${form.value.id}`, payload)
+      await request.put(`/v1/sys/users/${form.value.id}`, payload)
       ElMessage.success('更新成功')
     } else {
-      await request.post('/system/users', form.value)
+      await request.post('/v1/sys/users', form.value)
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
@@ -163,7 +163,7 @@ async function handleSave() {
 async function handleDelete(row: User) {
   try {
     await ElMessageBox.confirm('确认删除该用户？', '提示', { type: 'warning' })
-    await request.delete(`/system/users/${row.id}`)
+    await request.delete(`/v1/sys/users/${row.id}`)
     ElMessage.success('删除成功')
     fetchData()
   } catch (e) {
@@ -176,7 +176,7 @@ async function openRoleDialog(row: User) {
   roleDialogVisible.value = true
   selectedRoleIds.value = []
   try {
-    const res: any = await request.get(`/rbac/users/${row.id}/roles`)
+    const res: any = await request.get(`/v1/rbac/users/${row.id}/roles`)
     selectedRoleIds.value = (res.data || []).map((r: Role) => r.id)
   } catch (e) {}
 }
@@ -184,7 +184,7 @@ async function openRoleDialog(row: User) {
 async function handleAssignRoles() {
   if (!currentUser.value) return
   try {
-    await request.post(`/rbac/users/${currentUser.value.id}/roles`, selectedRoleIds.value)
+    await request.post(`/v1/rbac/users/${currentUser.value.id}/roles`, selectedRoleIds.value)
     ElMessage.success('角色分配成功')
     roleDialogVisible.value = false
   } catch (e) {}
@@ -192,7 +192,7 @@ async function handleAssignRoles() {
 
 async function fetchRoles() {
   try {
-    const res: any = await request.get('/rbac/roles')
+    const res: any = await request.get('/v1/rbac/roles')
     allRoles.value = res.data || []
   } catch (e) {}
 }
