@@ -16,7 +16,7 @@ public interface DashboardStatMapper {
             "SUM(CASE WHEN status = '已完成' OR status = '已部分完成' THEN 1 ELSE 0 END) as completed, " +
             "SUM(CASE WHEN status IN ('泡药中','煎药中','出液中','包装中') THEN 1 ELSE 0 END) as inProgress, " +
             "SUM(CASE WHEN status = '待泡药' THEN 1 ELSE 0 END) as pending " +
-            "FROM prod_task WHERE deleted = 0 AND DATE(created_at) = DATE('now','localtime')")
+            "FROM prod_task WHERE deleted = 0 AND DATE(created_at) = CURDATE()")
     Map<String, Object> selectTodayTaskStats();
 
     @Select("SELECT COUNT(*) as online FROM eq_device WHERE deleted = 0 AND status = 'ONLINE'")
@@ -28,7 +28,7 @@ public interface DashboardStatMapper {
     @Select("SELECT COUNT(*) as alarms FROM eq_device_alarm WHERE is_resolved = 0 AND deleted = 0")
     Long selectActiveAlarmCount();
 
-    @Select("SELECT COUNT(*) as total FROM qt_inspection WHERE DATE(created_at) = DATE('now','localtime')")
+    @Select("SELECT COUNT(*) as total FROM qt_inspection WHERE DATE(created_at) = CURDATE()")
     Long selectTodayInspectionCount();
 
     @Select("SELECT status, COUNT(*) as count FROM prod_task WHERE deleted = 0 GROUP BY status")

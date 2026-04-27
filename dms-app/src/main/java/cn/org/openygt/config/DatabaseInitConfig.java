@@ -119,6 +119,7 @@ public class DatabaseInitConfig implements CommandLineRunner {
         transformed = transformed.replaceAll("(?i)\\bINTEGER\\b", "BIGINT");
         transformed = transformed.replaceAll("(?i)INSERT\\s+OR\\s+REPLACE\\s+INTO", "REPLACE INTO");
         transformed = transformed.replaceAll("(?i)INSERT\\s+OR\\s+IGNORE\\s+INTO", "INSERT IGNORE INTO");
+        transformed = transformed.replaceAll("(?i)CREATE\\s+INDEX\\s+IF\\s+NOT\\s+EXISTS", "CREATE INDEX");
         transformed = transformed.replace("datetime('now')", "CURRENT_TIMESTAMP");
         return transformed;
     }
