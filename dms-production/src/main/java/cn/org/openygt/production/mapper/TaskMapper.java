@@ -6,6 +6,9 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.util.List;
+import java.util.Map;
+
 @Mapper
 public interface TaskMapper extends BaseMapper<Task> {
 
@@ -14,4 +17,21 @@ public interface TaskMapper extends BaseMapper<Task> {
      */
     @Select("SELECT * FROM prod_task WHERE id = #{id} AND deleted = 0")
     Task selectByIdForUpdate(@Param("id") Long id);
+
+    /**
+     * 查询指定日期范围内的任务列表（用于产能统计）。
+     */
+    @Select("SELECT * FROM prod_task WHERE deleted = 0 AND DATE(created_at) BETWEEN #{startDate} AND #{endDate}")
+    List<Task> selectByDateRange(@Param("startDate") String startDate, @Param("endDate") String endDate);
+
+    /**
+     * 日产能聚合统计。
+     */
+    @Select("SELECT DATE(t.created_at) as statDate, COUNT(*) as totalTasks, " +
+            "SUM(CASE WHEN t.status = '已完成' OR t.status = '已部分完成' THEN 1 ELSE 0 END) as completedTasks, " +
+            "SUM(COALESCE(p.repetition * p.bags_per_repetition, 1)) as doseCount " +
+            "FROM prod_task t LEFT JOIN prod_prescription p ON t.prescription_id = p.id " +
+            "WHERE t.deleted = 0 AND DATE(t.created_at) BETWEEN #{startDate} AND #{endDate} " +
+            "GROUP BY DATE(t.created_at) ORDER BY statDate DESC")
+    List<Map<String, Object>> selectDailyCapacity(@Param("startDate") String startDate, @Param("endDate") String endDate);
 }

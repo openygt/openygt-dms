@@ -4,8 +4,10 @@ import cn.org.openygt.common.dto.CapacityDailyDTO;
 import cn.org.openygt.common.dto.ProdTaskDTO;
 import cn.org.openygt.common.dto.TaskStatusHistoryDTO;
 import cn.org.openygt.common.service.ProductionQueryService;
+import cn.org.openygt.production.entity.Prescription;
 import cn.org.openygt.production.entity.Task;
 import cn.org.openygt.production.entity.TaskStatusHistory;
+import cn.org.openygt.production.mapper.PrescriptionMapper;
 import cn.org.openygt.production.mapper.TaskMapper;
 import cn.org.openygt.production.mapper.TaskStatusHistoryMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -15,8 +17,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +31,7 @@ public class ProductionQueryServiceImpl implements ProductionQueryService {
 
     private final TaskMapper taskMapper;
     private final TaskStatusHistoryMapper historyMapper;
+    private final PrescriptionMapper prescriptionMapper;
 
     @Override
     public ProdTaskDTO getTaskById(Long taskId) {
@@ -47,9 +50,30 @@ public class ProductionQueryServiceImpl implements ProductionQueryService {
 
     @Override
     public List<CapacityDailyDTO> getDailyCapacity(LocalDate startDate, LocalDate endDate) {
-        // TODO: Wave 2 实现聚合 SQL
-        log.warn("getDailyCapacity 尚未实现，返回空列表");
-        return Collections.emptyList();
+        if (startDate == null || endDate == null) {
+            return Collections.emptyList();
+        }
+
+        List<Map<String, Object>> rows = taskMapper.selectDailyCapacity(startDate.toString(), endDate.toString());
+        if (rows == null || rows.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<CapacityDailyDTO> result = new ArrayList<>();
+        for (Map<String, Object> row : rows) {
+            CapacityDailyDTO dto = new CapacityDailyDTO();
+            String dateStr = (String) row.get("statDate");
+            dto.setStatDate(dateStr != null ? LocalDate.parse(dateStr) : null);
+            dto.setTotalTasks(((Number) row.get("totalTasks")).longValue());
+            dto.setCompletedTasks(((Number) row.get("completedTasks")).longValue());
+            dto.setTaskCount(((Number) row.get("totalTasks")).intValue());
+            dto.setCompletedCount(((Number) row.get("completedTasks")).intValue());
+            dto.setDoseCount(((Number) row.getOrDefault("doseCount", 0)).intValue());
+            dto.setAvgDuration(0.0);
+            dto.setDeviceUtilization(0.0);
+            result.add(dto);
+        }
+        return result;
     }
 
     @Override
@@ -94,5 +118,4 @@ public class ProductionQueryServiceImpl implements ProductionQueryService {
         dto.setRemark(history.getRemark());
         return dto;
     }
-
 }

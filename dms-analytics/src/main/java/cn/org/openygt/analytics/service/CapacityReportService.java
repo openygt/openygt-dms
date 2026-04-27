@@ -1,6 +1,6 @@
 package cn.org.openygt.analytics.service;
 
-import cn.org.openygt.analytics.dto.CapacityDailyDTO;
+import cn.org.openygt.common.dto.CapacityDailyDTO;
 
 import java.time.LocalDate;
 import java.util.List;
