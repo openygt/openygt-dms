@@ -36,6 +36,7 @@
         <module>dms-quality</module>
         <module>dms-print</module>
         <module>dms-analytics</module>
+        <module>dms-rbac</module>
         <module>dms-app</module>
     </modules>
 
@@ -79,6 +80,11 @@
             <dependency>
                 <groupId>cn.org.openygt</groupId>
                 <artifactId>dms-analytics</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.org.openygt</groupId>
+                <artifactId>dms-rbac</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

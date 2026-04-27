@@ -1,6 +1,7 @@
 package cn.org.openygt.config;
 
 import cn.org.openygt.common.interceptor.AuthInterceptor;
+import cn.org.openygt.rbac.interceptor.PermissionInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -20,6 +21,15 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/api/v1/auth/**",
                         "/api/v1/sys/auth/**",
+                        "/api/v1/rbac/auth/**",
+                        "/error"
+                );
+        registry.addInterceptor(new PermissionInterceptor())
+                .addPathPatterns("/api/v1/**")
+                .excludePathPatterns(
+                        "/api/v1/auth/**",
+                        "/api/v1/sys/auth/**",
+                        "/api/v1/rbac/auth/**",
                         "/error"
                 );
     }

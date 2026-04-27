@@ -25,7 +25,14 @@ public class DatabaseInitConfig implements CommandLineRunner {
         "V4__module_split.sql",
         "V5__v1_4_refactor.sql",
         "V6__equipment_heartbeat.sql",
-        "V7__add_current_scheme_id.sql"
+        "V7__add_current_scheme_id.sql",
+        "V8__add_trigger_source.sql",
+        "V9__exception_tables.sql",
+        "V10__add_user_role.sql",
+        "V11__device_group.sql",
+        "V12__add_scheme_code.sql",
+        "V13__pda_tables.sql",
+        "V14__rbac_tables.sql"
     };
 
     private final DataSource dataSource;

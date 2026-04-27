@@ -45,6 +45,10 @@
             <artifactId>dms-analytics</artifactId>
         </dependency>
         <dependency>
+            <groupId>cn.org.openygt</groupId>
+            <artifactId>dms-rbac</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
         </dependency>
