@@ -19,7 +19,7 @@ export const useUserStore = defineStore('user', () => {
   const isLoggedIn = computed(() => !!token.value)
 
   async function login(username: string, password: string) {
-    const res: any = await request.post('/v1/auth/login', { username, password })
+    const res: any = await request.post('/v1/rbac/auth/login', { username, password })
     token.value = res.data.token
     localStorage.setItem('token', token.value)
     await fetchUserInfo()

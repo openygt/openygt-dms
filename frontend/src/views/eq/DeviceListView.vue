@@ -196,9 +196,7 @@ async function viewDetail(row: Device) {
 
 async function fetchGroups() {
   try {
-    // 设备分组接口暂未暴露，使用空数组
-    const res: any = { data: { records: [] } }
-    // const res: any = await request.get('/v1/eq/groups', { params: { page: 1, size: 999 } })
+    const res: any = await request.get('/v1/eq/groups/all')
     groups.value = res.data?.records || []
   } catch (e) {}
 }
