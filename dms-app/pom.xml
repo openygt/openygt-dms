@@ -30,6 +30,10 @@
         </dependency>
         <dependency>
             <groupId>cn.org.openygt</groupId>
+            <artifactId>dms-inventory</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.org.openygt</groupId>
             <artifactId>dms-production</artifactId>
         </dependency>
         <dependency>

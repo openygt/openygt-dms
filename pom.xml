@@ -32,6 +32,7 @@
         <module>dms-masterdata</module>
         <module>dms-system</module>
         <module>dms-equipment</module>
+        <module>dms-inventory</module>
         <module>dms-production</module>
         <module>dms-quality</module>
         <module>dms-print</module>
@@ -60,6 +61,11 @@
             <dependency>
                 <groupId>cn.org.openygt</groupId>
                 <artifactId>dms-equipment</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>cn.org.openygt</groupId>
+                <artifactId>dms-inventory</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
