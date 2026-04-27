@@ -58,19 +58,8 @@ async function fetchData() {
     const params: any = { page: 1, size: 50 }
     if (query.value.deviceCode) params.deviceCode = query.value.deviceCode
     if (query.value.alarmType) params.alarmType = query.value.alarmType
-    // 后端告警查询接口暂未暴露，使用模拟数据做自测
-    // const res: any = await request.get('/v1/eq/alarms', { params })
-    // list.value = res.data?.records || []
-    await new Promise(r => setTimeout(r, 300))
-    list.value = [
-      { id: 1, deviceCode: 'DEC-001', alarmType: 'HIGH_TEMP', alarmLevel: 'WARNING', content: '煎药机温度过高: 105°C', status: 'PENDING', createdAt: '2026-04-27 14:30:00' },
-      { id: 2, deviceCode: 'DEC-002', alarmType: 'OFFLINE', alarmLevel: 'CRITICAL', content: '设备离线超过10分钟', status: 'RESOLVED', createdAt: '2026-04-27 10:15:00' },
-      { id: 3, deviceCode: 'PKG-001', alarmType: 'FAULT', alarmLevel: 'CRITICAL', content: '包装机卡纸故障', status: 'PENDING', createdAt: '2026-04-27 09:00:00' },
-    ].filter(item => {
-      if (params.deviceCode && !item.deviceCode.includes(params.deviceCode)) return false
-      if (params.alarmType && item.alarmType !== params.alarmType) return false
-      return true
-    })
+    const res: any = await request.get('/v1/eq/alarms', { params })
+    list.value = res.data?.records || []
   } finally {
     loading.value = false
   }
