@@ -148,7 +148,7 @@ function statusText(status?: string) {
 async function fetchData() {
   loading.value = true
   try {
-    const res: any = await request.get('/equipment/devices', {
+    const res: any = await request.get('/v1/eq/devices', {
       params: { page: pagination.value.page, size: pagination.value.size, keyword: search.value.keyword }
     })
     list.value = res.data?.records || []
@@ -166,10 +166,10 @@ function openDialog(row?: Device) {
 async function handleSave() {
   try {
     if (form.value.id) {
-      await request.put(`/equipment/devices/${form.value.id}`, form.value)
+      await request.put(`/v1/eq/devices/${form.value.id}`, form.value)
       ElMessage.success('更新成功')
     } else {
-      await request.post('/equipment/devices', form.value)
+      await request.post('/v1/eq/devices', form.value)
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
@@ -180,7 +180,7 @@ async function handleSave() {
 async function handleDelete(row: Device) {
   try {
     await ElMessageBox.confirm('确认删除该设备？', '提示', { type: 'warning' })
-    await request.delete(`/equipment/devices/${row.id}`)
+    await request.delete(`/v1/eq/devices/${row.id}`)
     ElMessage.success('删除成功')
     fetchData()
   } catch (e) {}
@@ -188,7 +188,7 @@ async function handleDelete(row: Device) {
 
 async function viewDetail(row: Device) {
   try {
-    const res: any = await request.get(`/equipment/devices/${row.id}`)
+    const res: any = await request.get(`/v1/eq/devices/${row.id}`)
     detail.value = res.data
     detailVisible.value = true
   } catch (e) {}
@@ -196,7 +196,9 @@ async function viewDetail(row: Device) {
 
 async function fetchGroups() {
   try {
-    const res: any = await request.get('/equipment/groups', { params: { page: 1, size: 999 } })
+    // 设备分组接口暂未暴露，使用空数组
+    const res: any = { data: { records: [] } }
+    // const res: any = await request.get('/v1/eq/groups', { params: { page: 1, size: 999 } })
     groups.value = res.data?.records || []
   } catch (e) {}
 }

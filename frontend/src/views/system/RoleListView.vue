@@ -104,7 +104,7 @@ const form = ref<Partial<Role>>({})
 async function fetchData() {
   loading.value = true
   try {
-    const res: any = await request.get('/rbac/roles', {
+    const res: any = await request.get('/v1/rbac/roles', {
       params: { page: pagination.value.page, size: pagination.value.size }
     })
     list.value = res.data?.records || res.data || []
@@ -122,10 +122,10 @@ function openDialog(row?: Role) {
 async function handleSave() {
   try {
     if (form.value.id) {
-      await request.put(`/rbac/roles/${form.value.id}`, form.value)
+      await request.put(`/v1/rbac/roles/${form.value.id}`, form.value)
       ElMessage.success('更新成功')
     } else {
-      await request.post('/rbac/roles', form.value)
+      await request.post('/v1/rbac/roles', form.value)
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
@@ -136,7 +136,7 @@ async function handleSave() {
 async function handleDelete(row: Role) {
   try {
     await ElMessageBox.confirm('确认删除该角色？', '提示', { type: 'warning' })
-    await request.delete(`/rbac/roles/${row.id}`)
+    await request.delete(`/v1/rbac/roles/${row.id}`)
     ElMessage.success('删除成功')
     fetchData()
   } catch (e) {}
@@ -148,7 +148,7 @@ async function openMenuDialog(row: Role) {
   selectedMenuIds.value = []
   await nextTick()
   try {
-    const res: any = await request.get(`/rbac/roles/${row.id}`)
+    const res: any = await request.get(`/v1/rbac/roles/${row.id}`)
     const menus = res.data?.menus || []
     selectedMenuIds.value = extractIds(menus)
     if (menuTreeRef.value) {
@@ -175,7 +175,7 @@ async function handleAssignMenus() {
   const halfKeys = menuTreeRef.value.getHalfCheckedKeys()
   const allKeys = [...checkedKeys, ...halfKeys]
   try {
-    await request.post(`/rbac/roles/${currentRole.value.id}/menus`, allKeys)
+    await request.post(`/v1/rbac/roles/${currentRole.value.id}/menus`, allKeys)
     ElMessage.success('菜单分配成功')
     menuDialogVisible.value = false
   } catch (e) {}
@@ -183,7 +183,7 @@ async function handleAssignMenus() {
 
 async function fetchMenus() {
   try {
-    const res: any = await request.get('/rbac/menus/tree')
+    const res: any = await request.get('/v1/rbac/menus/tree')
     menuTree.value = res.data || []
   } catch (e) {}
 }

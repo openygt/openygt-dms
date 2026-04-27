@@ -91,7 +91,7 @@ const flatList = computed(() => {
 async function fetchData() {
   loading.value = true
   try {
-    const res: any = await request.get('/rbac/menus/tree')
+    const res: any = await request.get('/v1/rbac/menus/tree')
     treeData.value = res.data || []
   } finally {
     loading.value = false
@@ -106,10 +106,10 @@ function openDialog(row?: MenuNode) {
 async function handleSave() {
   try {
     if (form.value.id) {
-      await request.put(`/rbac/menus/${form.value.id}`, form.value)
+      await request.put(`/v1/rbac/menus/${form.value.id}`, form.value)
       ElMessage.success('更新成功')
     } else {
-      await request.post('/rbac/menus', form.value)
+      await request.post('/v1/rbac/menus', form.value)
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
@@ -120,7 +120,7 @@ async function handleSave() {
 async function handleDelete(row: MenuNode) {
   try {
     await ElMessageBox.confirm('确认删除该菜单？', '提示', { type: 'warning' })
-    await request.delete(`/rbac/menus/${row.id}`)
+    await request.delete(`/v1/rbac/menus/${row.id}`)
     ElMessage.success('删除成功')
     fetchData()
   } catch (e) {}

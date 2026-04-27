@@ -100,7 +100,7 @@ async function fetchData() {
       params.startDate = dateRange.value[0]
       params.endDate = dateRange.value[1]
     }
-    const res: any = await request.get('/analytics/capacity/daily', { params })
+    const res: any = await request.get('/v1/ops/capacity/daily', { params })
     list.value = res.data?.records || res.data || []
     // compute summary
     summary.value.totalTasks = list.value.reduce((s, r) => s + r.taskCount, 0)
