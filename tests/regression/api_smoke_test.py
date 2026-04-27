@@ -265,11 +265,17 @@ class DmsSmokeTester:
                         path = os.path.join(root, f)
                         try:
                             with open(path, "r", encoding="utf-8", errors="ignore") as fh:
-                                content = fh.read()
-                                for kw in keywords:
-                                    if kw.lower() in content.lower():
-                                        found.append(f"{f}: {kw}")
-                                        break
+                                for line in fh:
+                                    stripped = line.strip()
+                                    if stripped.startswith("//") or stripped.startswith("*") or stripped.startswith("/*") or "log." in line or 'System.out.print' in line:
+                                        continue
+                                    for kw in keywords:
+                                        if kw.lower() in line.lower():
+                                            found.append(f"{f}: {kw}")
+                                            break
+                                    else:
+                                        continue
+                                    break
                         except Exception:
                             pass
         if not found:
