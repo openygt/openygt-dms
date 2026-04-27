@@ -3,12 +3,18 @@ server:
 
 spring:
   datasource:
-    url: jdbc:sqlite:dms.db?journal_mode=WAL&busy_timeout=5000
-    driver-class-name: org.sqlite.JDBC
+    url: jdbc:mysql://127.0.0.1:3306/openygt-dms?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: mysql_pwd01
+    driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
-      maximum-pool-size: 5
+      maximum-pool-size: 10
       minimum-idle: 2
       connection-timeout: 30000
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    password: Yaoliangxin1
 
 mybatis-plus:
   configuration:

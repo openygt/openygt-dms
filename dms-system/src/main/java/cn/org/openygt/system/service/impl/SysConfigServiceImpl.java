@@ -55,11 +55,16 @@ public class SysConfigServiceImpl implements SysConfigService, cn.org.openygt.co
 
     @Override
     public SysConfig getByKey(String configKey) {
-        return configCache.get(configKey, key -> {
-            LambdaQueryWrapper<SysConfig> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(SysConfig::getConfigKey, key);
-            return configMapper.selectOne(wrapper);
-        });
+        try {
+            return configCache.get(configKey, key -> {
+                LambdaQueryWrapper<SysConfig> wrapper = new LambdaQueryWrapper<>();
+                wrapper.eq(SysConfig::getConfigKey, key);
+                return configMapper.selectOne(wrapper);
+            });
+        } catch (Exception ex) {
+            log.warn("读取系统配置失败，返回空配置。key={}, cause={}", configKey, ex.getMessage());
+            return null;
+        }
     }
 
     @Override
