@@ -63,6 +63,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<?> handleGeneric(Exception e) {
-        return ApiResponse.error(500, "服务器内部错误");
+        e.printStackTrace();
+        return ApiResponse.error(500, "服务器内部错误: " + e.getClass().getSimpleName());
     }
 }

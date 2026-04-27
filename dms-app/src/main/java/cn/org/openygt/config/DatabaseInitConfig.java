@@ -32,7 +32,9 @@ public class DatabaseInitConfig implements CommandLineRunner {
         "V11__device_group.sql",
         "V12__add_scheme_code.sql",
         "V13__pda_tables.sql",
-        "V14__rbac_tables.sql"
+        "V14__rbac_tables.sql",
+        "V15__fix_missing_tables_and_columns.sql",
+        "V16__fix_qt_inspection_columns.sql"
     };
 
     private final DataSource dataSource;

@@ -1,6 +1,7 @@
 package cn.org.openygt.common.service;
 
 import cn.org.openygt.common.dto.PrintTaskDTO;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 
 import java.util.List;
 
@@ -24,4 +25,13 @@ public interface PrintService {
     String getPrintStatus(Long taskId);
 
     List<PrintTaskDTO> getPrintQueue();
+
+    /**
+     * 分页查询打印任务列表。
+     *
+     * @param page 页码
+     * @param size 每页大小
+     * @return 分页结果
+     */
+    IPage<PrintTaskDTO> getPrintTasks(int page, int size);
 }
