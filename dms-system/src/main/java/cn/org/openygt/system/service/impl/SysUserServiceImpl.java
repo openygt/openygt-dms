@@ -13,6 +13,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class SysUserServiceImpl implements SysUserService {
 
@@ -98,7 +100,8 @@ public class SysUserServiceImpl implements SysUserService {
         if (!"ACTIVE".equals(user.getStatus())) {
             throw new IllegalStateException("用户已被禁用");
         }
-        String token = JwtUtil.generateToken(user.getId(), user.getUsername());
+        List<String> roles = userMapper.selectRoleCodesByUserId(user.getId());
+        String token = JwtUtil.generateToken(user.getId(), user.getUsername(), roles);
         TokenResponse response = new TokenResponse();
         response.setToken(token);
         response.setTokenType("Bearer");
