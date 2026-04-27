@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS sys_menu (
     component VARCHAR(200),
     icon VARCHAR(100),
     sort_order INTEGER DEFAULT 0,
-    menu_type INTEGER DEFAULT 1 COMMENT '0=目录 1=菜单 2=按钮',
+    menu_type INTEGER DEFAULT 1,
     parent_id INTEGER DEFAULT 0,
     status VARCHAR(20) DEFAULT 'ACTIVE',
     permission VARCHAR(100),
@@ -99,3 +99,8 @@ WHERE r.role_code = 'ROLE_WORKER' AND m.code IN ('pda', 'production', 'prod_task
 INSERT OR IGNORE INTO sys_role_menu (role_id, menu_id)
 SELECT r.id, m.id FROM sys_role r, sys_menu m
 WHERE r.role_code = 'ROLE_INSPECTOR' AND m.code IN ('quality', 'qa_inspect', 'pda');
+
+-- 预置 admin → ROLE_ADMIN 绑定（确保管理员登录后有角色权限）
+INSERT OR IGNORE INTO sys_user_role (user_id, role_id)
+SELECT u.id, r.id FROM sys_user u, sys_role r
+WHERE u.username = 'admin' AND r.role_code = 'ROLE_ADMIN';
