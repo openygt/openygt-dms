@@ -38,6 +38,7 @@
         <module>dms-print</module>
         <module>dms-analytics</module>
         <module>dms-rbac</module>
+        <module>dms-pda</module>
         <module>dms-app</module>
     </modules>
 
@@ -94,6 +95,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>cn.org.openygt</groupId>
+                <artifactId>dms-pda</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.baomidou</groupId>
                 <artifactId>mybatis-plus-boot-starter</artifactId>
                 <version>${mybatis.plus.version}</version>
@@ -117,6 +123,16 @@
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-crypto</artifactId>
                 <version>5.7.11</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-websocket</artifactId>
+                <version>2.7.18</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-redis</artifactId>
+                <version>2.7.18</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

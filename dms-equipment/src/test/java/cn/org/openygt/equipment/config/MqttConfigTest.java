@@ -2,6 +2,8 @@ package cn.org.openygt.equipment.config;
 
 import cn.org.openygt.common.service.EquipmentService;
 import cn.org.openygt.equipment.dto.DeviceStatusPayload;
+import cn.org.openygt.equipment.iot.DeviceConnManager;
+import cn.org.openygt.equipment.iot.MessageRouter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +36,12 @@ class MqttConfigTest {
     @Mock
     private EquipmentService equipmentService;
 
+    @Mock
+    private DeviceConnManager deviceConnManager;
+
+    @Mock
+    private MessageRouter messageRouter;
+
     private MqttConfig mqttConfig;
     private ObjectMapper objectMapper;
     private Method handleStatusMessageMethod;
@@ -41,7 +49,7 @@ class MqttConfigTest {
     @BeforeEach
     void setUp() throws Exception {
         objectMapper = new ObjectMapper();
-        mqttConfig = new MqttConfig(equipmentService, objectMapper);
+        mqttConfig = new MqttConfig(equipmentService, objectMapper, deviceConnManager, messageRouter);
 
         // 反射获取私有方法 handleStatusMessage(Long deviceId, String payload)
         handleStatusMessageMethod = MqttConfig.class.getDeclaredMethod("handleStatusMessage", Long.class, String.class);
