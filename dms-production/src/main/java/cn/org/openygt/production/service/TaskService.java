@@ -33,6 +33,7 @@ public interface TaskService {
     List<HandoverDetail> queryHandoverDetails(Long taskId);
 
     Task getById(Long taskId);
+    Task getByBarcode(String barcode);
     int clearAll();
 
     List<Task> queryPrintTasks(String printStatus);

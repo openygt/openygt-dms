@@ -18,6 +18,9 @@ public interface TaskMapper extends BaseMapper<Task> {
     @Select("SELECT * FROM prod_task WHERE id = #{id} AND deleted = 0")
     Task selectByIdForUpdate(@Param("id") Long id);
 
+    @Select("SELECT * FROM prod_task WHERE barcode = #{barcode} AND deleted = 0 LIMIT 1")
+    Task selectByBarcode(@Param("barcode") String barcode);
+
     /**
      * 查询指定日期范围内的任务列表（用于产能统计）。
      */

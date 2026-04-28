@@ -36,6 +36,19 @@ mqtt:
 jwt:
   secret: Test-Only-JWT-Secret-Key-For-Regression-32Bytes!
 
+# PDA 文件上传配置
+pda:
+  upload:
+    path: uploads/pda
+
+# 文件上传限制
+spring:
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 20MB
+
 logging:
   level:
     cn.org.openygt: DEBUG

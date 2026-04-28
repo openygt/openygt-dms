@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class Task {
     @TableId(type = IdType.AUTO)
     private Long id;
+    private String barcode;
     private String tenantId;
     private Long prescriptionId;
     private Long decoctDeviceId;

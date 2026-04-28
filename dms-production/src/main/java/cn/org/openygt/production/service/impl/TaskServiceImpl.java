@@ -370,6 +370,14 @@ public class TaskServiceImpl implements TaskService {
     public Task getById(Long taskId) { return taskMapper.selectById(taskId); }
 
     @Override
+    public Task getByBarcode(String barcode) {
+        if (barcode == null || barcode.trim().isEmpty()) {
+            return null;
+        }
+        return taskMapper.selectByBarcode(barcode.trim());
+    }
+
+    @Override
     public int clearAll() { return taskMapper.delete(null); }
 
     // ==================== 打印（已抽取到 dms-print，此处仅委托） ====================
