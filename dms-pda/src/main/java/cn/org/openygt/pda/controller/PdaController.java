@@ -11,6 +11,8 @@ import cn.org.openygt.pda.entity.PdaReviewPhoto;
 import cn.org.openygt.pda.service.PdaLoginRecordService;
 import cn.org.openygt.pda.service.PdaOperationLogService;
 import cn.org.openygt.pda.service.PdaReviewPhotoService;
+import cn.org.openygt.production.entity.Task;
+import cn.org.openygt.production.service.TaskService;
 import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +34,7 @@ public class PdaController {
     private final PdaLoginRecordService loginRecordService;
     private final PdaReviewPhotoService reviewPhotoService;
     private final PdaOperationLogService operationLogService;
+    private final TaskService taskService;
 
     @PostMapping("/auth/login")
     public ApiResponse<Map<String, Object>> login(@RequestBody @Validated PdaLoginRequest request,
@@ -68,12 +71,22 @@ public class PdaController {
     @GetMapping("/task/{barcode}")
     @RequiresPermissions("pda:task:query")
     public ApiResponse<Map<String, Object>> queryTaskByBarcode(@PathVariable String barcode) {
-        // TODO: 集成生产模块查询任务
-        Map<String, Object> task = new HashMap<>();
-        task.put("barcode", barcode);
-        task.put("taskId", 1001L);
-        task.put("status", "待煎药");
-        return ApiResponse.success(task);
+        Task task = taskService.getByBarcode(barcode);
+        if (task == null) {
+            return ApiResponse.error(404, "任务不存在: " + barcode);
+        }
+        Map<String, Object> result = new HashMap<>();
+        result.put("taskId", task.getId());
+        result.put("barcode", barcode);
+        result.put("status", task.getStatus());
+        result.put("currentStep", task.getCurrentStep());
+        result.put("prescriptionId", task.getPrescriptionId());
+        result.put("schemeId", task.getSchemeId());
+        result.put("operatorId", task.getOperatorId());
+        result.put("currentTemp", task.getCurrentTemp());
+        result.put("targetTemp", task.getTargetTemp());
+        result.put("currentStageDuration", task.getCurrentStageDuration());
+        return ApiResponse.success(result);
     }
 
     @PostMapping("/task/confirm")
@@ -82,15 +95,56 @@ public class PdaController {
                                                  @RequestAttribute("userId") Long userId,
                                                  @RequestAttribute("username") String username,
                                                  HttpServletRequest httpRequest) {
-        // TODO: 集成生产模块工序确认
-        log.info("PDA工序确认: userId={}, taskId={}, stepType={}", userId, request.getTaskId(), request.getStepType());
-
-        operationLogService.logOperation(userId, username, request.getDeviceId(), null,
-                request.getTaskId(), "TASK_CONFIRM", "工序确认:" + request.getStepType(),
-                "SUCCESS", "/api/v1/pda/task/confirm", "POST",
-                httpRequest.getRemoteAddr(), null);
-
-        return ApiResponse.success(true);
+        String operatorId = String.valueOf(userId);
+        String stepType = request.getStepType();
+        Long taskId = request.getTaskId();
+        
+        try {
+            switch (stepType) {
+                case "START_SOAK":
+                    taskService.startSoak(taskId, operatorId);
+                    break;
+                case "END_SOAK":
+                    taskService.endSoak(taskId, operatorId);
+                    break;
+                case "START_DECOCT":
+                    taskService.startDecoct(taskId, null, operatorId);
+                    break;
+                case "END_DECOCT":
+                    taskService.endDecoct(taskId, operatorId);
+                    break;
+                case "START_POUR":
+                    taskService.startPour(taskId, operatorId);
+                    break;
+                case "END_POUR":
+                    taskService.endPour(taskId, operatorId);
+                    break;
+                case "START_PACKAGE":
+                    taskService.startWrap(taskId, null, operatorId);
+                    break;
+                case "END_PACKAGE":
+                    taskService.endWrap(taskId, operatorId);
+                    break;
+                case "LABEL_CONFIRM":
+                    taskService.confirmLabel(taskId, operatorId);
+                    break;
+                default:
+                    return ApiResponse.error(400, "不支持的工序类型: " + stepType);
+            }
+            
+            operationLogService.logOperation(userId, username, request.getDeviceId(), null,
+                    taskId, "TASK_CONFIRM", "工序确认:" + stepType,
+                    "SUCCESS", "/api/v1/pda/task/confirm", "POST",
+                    httpRequest.getRemoteAddr(), null);
+            
+            return ApiResponse.success(true);
+        } catch (IllegalStateException e) {
+            log.warn("工序确认状态非法: taskId={}, stepType={}, error={}", taskId, stepType, e.getMessage());
+            return ApiResponse.error(400, e.getMessage());
+        } catch (Exception e) {
+            log.error("工序确认失败: taskId={}, stepType={}", taskId, stepType, e);
+            return ApiResponse.error(500, "工序确认失败: " + e.getMessage());
+        }
     }
 
     @PostMapping("/photo/upload")
