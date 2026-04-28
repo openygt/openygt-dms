@@ -35,46 +35,46 @@ ALTER TABLE prod_handover_detail ADD COLUMN tenant_id VARCHAR(32) DEFAULT 'defau
 
 -- ========== 质量追溯 (qt_) ==========
 CREATE TABLE IF NOT EXISTS qt_inspection (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant_id VARCHAR(32) DEFAULT 'default',
-    task_id INTEGER NOT NULL,
+    task_id BIGINT NOT NULL,
     result VARCHAR(20) NOT NULL,
     operator_id VARCHAR(50),
     remark TEXT,
     inspected_at DATETIME,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    deleted INTEGER DEFAULT 0
+    deleted BIGINT DEFAULT 0
 );
 
 -- ========== 打印中心 (prt_) ==========
 CREATE TABLE IF NOT EXISTS prt_task (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant_id VARCHAR(32) DEFAULT 'default',
-    task_id INTEGER NOT NULL,
+    task_id BIGINT NOT NULL,
     device_code VARCHAR(50),
     operator_id VARCHAR(50),
     status VARCHAR(20) DEFAULT 'PENDING',
-    copies INTEGER DEFAULT 1,
-    retry_count INTEGER DEFAULT 0,
+    copies BIGINT DEFAULT 1,
+    retry_count BIGINT DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    deleted INTEGER DEFAULT 0
+    deleted BIGINT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS prt_record (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant_id VARCHAR(32) DEFAULT 'default',
-    print_task_id INTEGER NOT NULL,
+    print_task_id BIGINT NOT NULL,
     result VARCHAR(20),
     error_message TEXT,
     printed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    deleted INTEGER DEFAULT 0
+    deleted BIGINT DEFAULT 0
 );
 
 -- ========== 系统管理 (sys_) ==========
 CREATE TABLE IF NOT EXISTS sys_user (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant_id VARCHAR(32) DEFAULT 'default',
     username VARCHAR(50) NOT NULL UNIQUE,
     password VARCHAR(128),
@@ -83,22 +83,22 @@ CREATE TABLE IF NOT EXISTS sys_user (
     status VARCHAR(20) DEFAULT 'ACTIVE',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    deleted INTEGER DEFAULT 0
+    deleted BIGINT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS sys_config (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant_id VARCHAR(32) DEFAULT 'default',
     config_key VARCHAR(100) NOT NULL UNIQUE,
     config_value TEXT,
     description VARCHAR(200),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    deleted INTEGER DEFAULT 0
+    deleted BIGINT DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS sys_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     tenant_id VARCHAR(32) DEFAULT 'default',
     user_id VARCHAR(50),
     action VARCHAR(100),

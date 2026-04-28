@@ -1,4 +1,5 @@
 package cn.org.openygt.equipment.controller;
+import cn.org.openygt.equipment.EquipmentModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.dto.AlarmLogDTO;
@@ -23,7 +24,7 @@ import java.util.stream.Collectors;
  * 设备告警查询接口。
  */
 @RestController
-@RequestMapping("/api/v1/eq/alarms")
+@RequestMapping(EquipmentModule.API_PREFIX + "/alarms")
 @RequiredArgsConstructor
 public class EqAlarmController {
 

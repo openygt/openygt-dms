@@ -1,4 +1,5 @@
 package cn.org.openygt.production.controller;
+import cn.org.openygt.production.ProductionModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.production.dto.PrescriptionCreateRequest;
@@ -10,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/prod/prescriptions")
+@RequestMapping(ProductionModule.API_PREFIX + "/prescriptions")
 @RequiredArgsConstructor
 public class PrescriptionController {
 

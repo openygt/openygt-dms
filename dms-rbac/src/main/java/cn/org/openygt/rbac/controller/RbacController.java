@@ -1,4 +1,5 @@
 package cn.org.openygt.rbac.controller;
+import cn.org.openygt.rbac.RbacModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.common.dto.LoginRequest;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
  * <p>提供菜单、角色、用户角色绑定等管理功能，以及增强版登录（返回角色信息）。</p>
  */
 @RestController
-@RequestMapping("/api/v1/rbac")
+@RequestMapping(RbacModule.API_PREFIX)
 @RequiredArgsConstructor
 @Validated
 public class RbacController {
@@ -128,26 +129,4 @@ public class RbacController {
         return ApiResponse.success(menuService.getMenusByRoleIds(roleIds));
     }
 
-    // ==================== 增强登录 ====================
-
-    /**
-     * 增强版登录接口（返回带角色信息的 Token）。
-     *
-     * <p>前端推荐使用此接口替代 /api/v1/auth/login。</p>
-     */
-    @PostMapping("/auth/login")
-    public ApiResponse<TokenResponse> loginWithRoles(@Validated @RequestBody LoginRequest request) {
-        TokenResponse base = userService.login(request);
-        Long userId = base.getUserId();
-
-        List<SysRole> roles = roleService.getRolesByUserId(userId);
-        List<String> roleCodes = roles.stream()
-                .map(SysRole::getRoleCode)
-                .collect(Collectors.toList());
-
-        String token = JwtUtil.generateToken(userId, base.getUsername(), roleCodes);
-        base.setToken(token);
-        base.setRoles(roleCodes);
-        return ApiResponse.success(base);
-    }
 }

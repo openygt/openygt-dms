@@ -1,4 +1,5 @@
 package cn.org.openygt.analytics.controller;
+import cn.org.openygt.analytics.AnalyticsModule;
 
 import cn.org.openygt.common.dto.CapacityDailyDTO;
 import cn.org.openygt.analytics.service.CapacityReportService;
@@ -16,7 +17,7 @@ import java.util.List;
  * 产能统计报表控制器。
  */
 @RestController
-@RequestMapping("/api/v1/ops/capacity")
+@RequestMapping(AnalyticsModule.API_PREFIX + "/capacity")
 public class CapacityReportController {
 
     private final CapacityReportService capacityReportService;

@@ -37,6 +37,12 @@ public class MqttConfig {
     @Value("${mqtt.topic-subscription:+/+/+}")
     private String topicSubscription;
 
+    @Value("${mqtt.username:}")
+    private String mqttUsername;
+
+    @Value("${mqtt.password:}")
+    private String mqttPassword;
+
     private final EquipmentService equipmentService;
     private final ObjectMapper objectMapper;
     private MqttClient mqttClient;
@@ -55,6 +61,10 @@ public class MqttConfig {
             options.setCleanSession(true);
             options.setConnectionTimeout(10);
             options.setKeepAliveInterval(20);
+            if (mqttUsername != null && !mqttUsername.isEmpty()) {
+                options.setUserName(mqttUsername);
+                options.setPassword(mqttPassword.toCharArray());
+            }
             mqttClient.connect(options);
 
             // 订阅 /openygt/tenantId/deviceCode/messageType 格式

@@ -38,9 +38,9 @@ UPDATE task SET status = '已报废' WHERE status = 'CANCELLED' AND is_exception
 
 -- ========== 工序记录表 ==========
 CREATE TABLE IF NOT EXISTS step_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_id INTEGER NOT NULL,
-    parent_id INTEGER DEFAULT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    task_id BIGINT NOT NULL,
+    parent_id BIGINT DEFAULT NULL,
     step_type VARCHAR(32) NOT NULL,
     device_id VARCHAR(32) DEFAULT NULL,
     operator_id VARCHAR(64) DEFAULT NULL,
@@ -63,8 +63,8 @@ CREATE TABLE IF NOT EXISTS step_log (
 
 -- ========== 交接明细表 ==========
 CREATE TABLE IF NOT EXISTS handover_detail (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_id INTEGER NOT NULL,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    task_id BIGINT NOT NULL,
     bag_count INT DEFAULT 0,
     handover_type VARCHAR(32) DEFAULT NULL,
     handover_user VARCHAR(64) DEFAULT NULL,

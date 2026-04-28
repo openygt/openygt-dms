@@ -14,10 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 认证接口。
  *
- * <p>API 前缀: /api/v1/auth</p>
+ * <p>API 前缀: /api/v1/rbac/auth（与前端路由契约对齐）</p>
  */
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1/rbac/auth")
 @RequiredArgsConstructor
 @Validated
 public class AuthController {

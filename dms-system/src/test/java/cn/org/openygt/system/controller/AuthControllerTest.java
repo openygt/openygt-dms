@@ -53,7 +53,7 @@ class AuthControllerTest {
 
         when(userService.login(any(LoginRequest.class))).thenReturn(tokenResponse);
 
-        mockMvc.perform(post("/api/v1/auth/login")
+        mockMvc.perform(post("/api/v1/rbac/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"admin\",\"password\":\"123456\"}"))
                 .andExpect(status().isOk())
@@ -67,7 +67,7 @@ class AuthControllerTest {
         when(userService.login(any(LoginRequest.class)))
                 .thenThrow(new IllegalArgumentException("用户名或密码错误"));
 
-        mockMvc.perform(post("/api/v1/auth/login")
+        mockMvc.perform(post("/api/v1/rbac/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"admin\",\"password\":\"wrong\"}"))
                 .andExpect(status().isBadRequest())
@@ -80,7 +80,7 @@ class AuthControllerTest {
         when(userService.login(any(LoginRequest.class)))
                 .thenThrow(new IllegalStateException("用户已被禁用"));
 
-        mockMvc.perform(post("/api/v1/auth/login")
+        mockMvc.perform(post("/api/v1/rbac/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"locked\",\"password\":\"123456\"}"))
                 .andExpect(status().isConflict())

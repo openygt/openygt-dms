@@ -6,7 +6,7 @@
 ALTER TABLE qt_inspection ADD COLUMN inspected_at DATETIME;
 
 -- 2. prt_task 新增 max_retry 字段（打印重试上限）
-ALTER TABLE prt_task ADD COLUMN max_retry INTEGER DEFAULT 3;
+ALTER TABLE prt_task ADD COLUMN max_retry BIGINT DEFAULT 3;
 
 -- 3. prt_record 新增 operator_id（审计追溯）
 -- ALTER TABLE prt_record ADD COLUMN operator_id VARCHAR(50);

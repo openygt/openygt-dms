@@ -5,7 +5,7 @@
 
 -- 1. 异常模板表
 CREATE TABLE IF NOT EXISTS exc_template (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     exc_type VARCHAR(50) NOT NULL,
     exc_level VARCHAR(20),
     root_cause_level1 VARCHAR(50),
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS exc_template (
     corrective_template TEXT,
     preventive_template TEXT,
     suggested_action VARCHAR(20),
-    is_active INTEGER DEFAULT 1,
+    is_active BIGINT DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -32,13 +32,13 @@ INSERT INTO exc_template (exc_type, exc_level, root_cause_level1, root_cause_lev
 
 -- 2. 预警阈值配置表
 CREATE TABLE IF NOT EXISTS sys_exc_threshold (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     exc_type VARCHAR(50) NOT NULL,
     param_name VARCHAR(50) NOT NULL,
-    param_value INTEGER NOT NULL,
+    param_value BIGINT NOT NULL,
     unit VARCHAR(20),
     description TEXT,
-    is_active INTEGER DEFAULT 1,
+    is_active BIGINT DEFAULT 1,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -55,25 +55,25 @@ INSERT INTO sys_exc_threshold (exc_type, param_name, param_value, unit, descript
 
 -- 3. 异常升级记录表
 CREATE TABLE IF NOT EXISTS exc_escalation_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    exception_id INTEGER NOT NULL,
-    from_level INTEGER,
-    to_level INTEGER,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    exception_id BIGINT NOT NULL,
+    from_level BIGINT,
+    to_level BIGINT,
     from_handler VARCHAR(64),
     to_handler VARCHAR(64),
     escalation_reason VARCHAR(128),
     escalated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_esc_exc_id ON exc_escalation_log(exception_id);
+CREATE INDEX idx_esc_exc_id ON exc_escalation_log(exception_id);
 
 -- 4. 生产异常统一记录表（主表）
 CREATE TABLE IF NOT EXISTS prod_exception_log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     exception_no VARCHAR(32) NOT NULL,
-    task_id INTEGER NOT NULL,
-    original_task_id INTEGER,
-    new_task_id INTEGER,
+    task_id BIGINT NOT NULL,
+    original_task_id BIGINT,
+    new_task_id BIGINT,
     prescription_no VARCHAR(64),
     patient_name VARCHAR(32),
     exception_type VARCHAR(50) NOT NULL,
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS prod_exception_log (
     description TEXT,
     discover_channel VARCHAR(20),
     discoverer_id VARCHAR(64),
-    is_auto_handled INTEGER DEFAULT 0,
+    is_auto_handled BIGINT DEFAULT 0,
     handle_status VARCHAR(20) DEFAULT 'PENDING',
     handler_id VARCHAR(64),
     handler_role VARCHAR(32),
@@ -93,9 +93,9 @@ CREATE TABLE IF NOT EXISTS prod_exception_log (
     resolved_at DATETIME,
     rework_target_step VARCHAR(32),
     rework_validate_result TEXT,
-    loss_weight_gram INTEGER DEFAULT 0,
+    loss_weight_gram BIGINT DEFAULT 0,
     loss_amount_yuan REAL DEFAULT 0.00,
-    waste_liquid_ml INTEGER DEFAULT 0,
+    waste_liquid_ml BIGINT DEFAULT 0,
     device_no VARCHAR(32),
     operator_id VARCHAR(64),
     shift_type VARCHAR(16),
@@ -112,27 +112,27 @@ CREATE TABLE IF NOT EXISTS prod_exception_log (
     paper_record_no VARCHAR(64),
     evidence_hash VARCHAR(64),
     sla_deadline DATETIME,
-    is_timeout INTEGER DEFAULT 0,
-    escalation_level INTEGER DEFAULT 0,
+    is_timeout BIGINT DEFAULT 0,
+    escalation_level BIGINT DEFAULT 0,
     escalated_at DATETIME,
-    is_concession INTEGER DEFAULT 0,
+    is_concession BIGINT DEFAULT 0,
     doctor_sign VARCHAR(128),
     doctor_sign2 VARCHAR(128),
     patient_consent TEXT,
-    derived_workorder_id INTEGER,
+    derived_workorder_id BIGINT,
     derived_workorder_type VARCHAR(20),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_by VARCHAR(64),
     last_modified_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     last_modified_by VARCHAR(64),
-    is_deleted INTEGER DEFAULT 0
+    is_deleted BIGINT DEFAULT 0
 );
 
-CREATE INDEX IF NOT EXISTS idx_exc_task_id ON prod_exception_log(task_id);
-CREATE INDEX IF NOT EXISTS idx_exc_prescription ON prod_exception_log(prescription_no);
-CREATE INDEX IF NOT EXISTS idx_exc_level_status ON prod_exception_log(exception_level, handle_status);
-CREATE INDEX IF NOT EXISTS idx_exc_created ON prod_exception_log(created_at);
-CREATE INDEX IF NOT EXISTS idx_exc_handler ON prod_exception_log(handler_id, handle_status);
-CREATE INDEX IF NOT EXISTS idx_exc_device ON prod_exception_log(device_no, created_at);
-CREATE INDEX IF NOT EXISTS idx_exc_operator ON prod_exception_log(operator_id, created_at);
-CREATE INDEX IF NOT EXISTS idx_exc_sla ON prod_exception_log(sla_deadline, is_timeout);
+CREATE INDEX idx_exc_task_id ON prod_exception_log(task_id);
+CREATE INDEX idx_exc_prescription ON prod_exception_log(prescription_no);
+CREATE INDEX idx_exc_level_status ON prod_exception_log(exception_level, handle_status);
+CREATE INDEX idx_exc_created ON prod_exception_log(created_at);
+CREATE INDEX idx_exc_handler ON prod_exception_log(handler_id, handle_status);
+CREATE INDEX idx_exc_device ON prod_exception_log(device_no, created_at);
+CREATE INDEX idx_exc_operator ON prod_exception_log(operator_id, created_at);
+CREATE INDEX idx_exc_sla ON prod_exception_log(sla_deadline, is_timeout);

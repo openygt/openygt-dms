@@ -10,12 +10,12 @@ ALTER TABLE sys_log ADD COLUMN updated_at DATETIME;
 -- 2. 创建 inv_stock_log 表（消耗流水依赖）
 --    从 V20 提取并适配 SQLite 语法
 CREATE TABLE IF NOT EXISTS inv_stock_log (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    task_id         INTEGER,
-    medicine_id     INTEGER,
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    task_id         BIGINT,
+    medicine_id     BIGINT,
     medicine_code   VARCHAR(50),
     medicine_name   VARCHAR(100),
-    batch_id        INTEGER,
+    batch_id        BIGINT,
     change_type     VARCHAR(20) NOT NULL DEFAULT 'CONSUME',
     change_quantity DECIMAL(12,3) NOT NULL,
     before_quantity DECIMAL(12,3) DEFAULT NULL,
@@ -27,8 +27,8 @@ CREATE TABLE IF NOT EXISTS inv_stock_log (
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_slog_task ON inv_stock_log(task_id);
-CREATE INDEX IF NOT EXISTS idx_slog_medicine ON inv_stock_log(medicine_id);
-CREATE INDEX IF NOT EXISTS idx_slog_batch ON inv_stock_log(batch_id);
-CREATE INDEX IF NOT EXISTS idx_slog_created ON inv_stock_log(created_at);
-CREATE INDEX IF NOT EXISTS idx_slog_ref ON inv_stock_log(ref_no);
+CREATE INDEX idx_slog_task ON inv_stock_log(task_id);
+CREATE INDEX idx_slog_medicine ON inv_stock_log(medicine_id);
+CREATE INDEX idx_slog_batch ON inv_stock_log(batch_id);
+CREATE INDEX idx_slog_created ON inv_stock_log(created_at);
+CREATE INDEX idx_slog_ref ON inv_stock_log(ref_no);

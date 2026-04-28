@@ -1,4 +1,5 @@
 package cn.org.openygt.equipment.controller;
+import cn.org.openygt.equipment.EquipmentModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.entity.EqDeviceGroup;
@@ -14,7 +15,7 @@ import java.util.List;
  * 设备分组管理接口。
  */
 @RestController
-@RequestMapping("/api/v1/eq/groups")
+@RequestMapping(EquipmentModule.API_PREFIX + "/groups")
 @RequiredArgsConstructor
 public class EqDeviceGroupController {
 

@@ -1,4 +1,5 @@
 package cn.org.openygt.analytics.controller;
+import cn.org.openygt.analytics.AnalyticsModule;
 
 import cn.org.openygt.analytics.dto.DashboardRealtimeDTO;
 import cn.org.openygt.analytics.service.DashboardService;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
  * 监控大屏控制器。
  */
 @RestController
-@RequestMapping("/api/v1/ops/dashboard")
+@RequestMapping(AnalyticsModule.API_PREFIX + "/dashboard")
 public class DashboardController {
 
     private final DashboardService dashboardService;
