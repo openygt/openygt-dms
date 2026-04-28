@@ -95,6 +95,7 @@ public class EquipmentServiceImpl implements EquipmentService {
         UpdateWrapper<EqDevice> wrapper = new UpdateWrapper<>();
         wrapper.eq("id", deviceId)
                 .set("status", status)
+                .set("last_heartbeat", LocalDateTime.now())
                 .set("updated_at", LocalDateTime.now());
         deviceMapper.update(null, wrapper);
         log.info("设备状态更新: deviceId={}, status={}", deviceId, status);
