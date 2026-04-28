@@ -2,6 +2,10 @@ package cn.org.openygt.equipment.config;
 
 import cn.org.openygt.common.service.EquipmentService;
 import cn.org.openygt.equipment.dto.DeviceStatusPayload;
+import cn.org.openygt.equipment.iot.DeviceConnInfo;
+import cn.org.openygt.equipment.iot.DeviceConnManager;
+import cn.org.openygt.equipment.iot.DeviceMessage;
+import cn.org.openygt.equipment.iot.MessageRouter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -13,6 +17,7 @@ import org.springframework.context.annotation.Configuration;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * MQTT 配置与消息处理器。
@@ -45,11 +50,16 @@ public class MqttConfig {
 
     private final EquipmentService equipmentService;
     private final ObjectMapper objectMapper;
+    private final DeviceConnManager deviceConnManager;
+    private final MessageRouter messageRouter;
     private MqttClient mqttClient;
 
-    public MqttConfig(EquipmentService equipmentService, ObjectMapper objectMapper) {
+    public MqttConfig(EquipmentService equipmentService, ObjectMapper objectMapper,
+                      DeviceConnManager deviceConnManager, MessageRouter messageRouter) {
         this.equipmentService = equipmentService;
         this.objectMapper = objectMapper;
+        this.deviceConnManager = deviceConnManager;
+        this.messageRouter = messageRouter;
     }
 
     @PostConstruct
@@ -99,10 +109,35 @@ public class MqttConfig {
             Long deviceId = equipmentService.getDeviceId(deviceCode);
             if (deviceId == null) {
                 log.warn("未知设备: {}, tenantId={}", deviceCode, tenantId);
-                // 自动注册设备
                 equipmentService.getOrCreateDevice(deviceCode, 1);
                 deviceId = equipmentService.getDeviceId(deviceCode);
             }
+
+            // 统一连接状态管理
+            DeviceConnInfo connInfo = deviceConnManager.get(deviceCode);
+            if (connInfo == null) {
+                deviceConnManager.register(DeviceConnInfo.builder()
+                        .deviceCode(deviceCode)
+                        .protocol("mqtt")
+                        .status("online")
+                        .tenantId(parseTenantId(tenantId))
+                        .connectedAt(LocalDateTime.now())
+                        .build());
+            } else {
+                deviceConnManager.updateStatus(deviceCode, "online");
+                deviceConnManager.updateLastHeartbeat(deviceCode);
+            }
+
+            // 消息路由
+            DeviceMessage deviceMessage = DeviceMessage.builder()
+                    .deviceCode(deviceCode)
+                    .messageType(messageType)
+                    .protocol("mqtt")
+                    .payload(payload)
+                    .timestamp(LocalDateTime.now())
+                    .tenantId(parseTenantId(tenantId))
+                    .build();
+            messageRouter.route(deviceMessage);
 
             switch (messageType) {
                 case "status":
@@ -119,6 +154,7 @@ public class MqttConfig {
                     break;
                 case "offline":
                     equipmentService.updateDeviceStatus(deviceId, "OFFLINE");
+                    deviceConnManager.updateStatus(deviceCode, "offline");
                     break;
                 default:
                     log.debug("未处理的消息类型: {}", messageType);
@@ -154,6 +190,14 @@ public class MqttConfig {
             } catch (Exception ignored) {
                 // 兼容失败，已记录错误
             }
+        }
+    }
+
+    private Long parseTenantId(String tenantIdStr) {
+        try {
+            return Long.parseLong(tenantIdStr);
+        } catch (NumberFormatException e) {
+            return 1L;
         }
     }
 
