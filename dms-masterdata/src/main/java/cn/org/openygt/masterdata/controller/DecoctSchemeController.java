@@ -1,4 +1,5 @@
 package cn.org.openygt.masterdata.controller;
+import cn.org.openygt.masterdata.MasterdataModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.masterdata.dto.SchemeCreateRequest;
@@ -13,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 
 @RestController
-@RequestMapping("/api/v1/md/schemes")
+@RequestMapping(MasterdataModule.API_PREFIX + "/schemes")
 public class DecoctSchemeController {
 
     private final DecoctSchemeService schemeService;

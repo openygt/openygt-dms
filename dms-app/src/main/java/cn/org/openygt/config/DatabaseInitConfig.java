@@ -3,46 +3,34 @@ package cn.org.openygt.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.support.EncodedResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.jdbc.datasource.init.ScriptUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StreamUtils;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
-import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Comparator;
 
+/**
+ * 数据库初始化与迁移配置（MySQL 专用）。
+ *
+ * <p>自动扫描 classpath:db/migration 下所有 V*.sql 脚本，按文件名排序后执行。</p>
+ * <p>重复版本号会被去重（取排序后的第一个）。</p>
+ */
 @Component
 public class DatabaseInitConfig implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitConfig.class);
-
-    private static final String[] SCRIPTS = {
-        "V1__init.sql",
-        "V2__refactor.sql",
-        "V3__new_flow.sql",
-        "V4__module_split.sql",
-        "V5__v1_4_refactor.sql",
-        "V6__equipment_heartbeat.sql",
-        "V7__add_current_scheme_id.sql",
-        "V8__add_trigger_source.sql",
-        "V9__exception_tables.sql",
-        "V10__add_user_role.sql",
-        "V11__device_group.sql",
-        "V12__add_scheme_code.sql",
-        "V13__pda_tables.sql",
-        "V14__rbac_tables.sql",
-        "V15__fix_missing_tables_and_columns.sql",
-        "V16__fix_qt_inspection_columns.sql"
-    };
+    private static final String MIGRATION_PATTERN = "classpath:db/migration/V*.sql";
 
     private final DataSource dataSource;
+    private final PathMatchingResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
     public DatabaseInitConfig(DataSource dataSource) {
         this.dataSource = dataSource;
@@ -51,77 +39,50 @@ public class DatabaseInitConfig implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         try (Connection conn = dataSource.getConnection()) {
-            boolean mysql = isMysql(conn);
-            ensureMigrationTable(conn, mysql);
-            for (String script : SCRIPTS) {
-                if (!hasRun(conn, script)) {
-                    log.info("执行迁移脚本: {}", script);
-                    executeSqlScript(conn, script, mysql);
-                    markRun(conn, script);
+            ensureMigrationTable(conn);
+
+            Resource[] resources = resolver.getResources(MIGRATION_PATTERN);
+            Arrays.sort(resources, Comparator.comparing(Resource::getFilename));
+
+            String lastExecutedVersion = null;
+            for (Resource resource : resources) {
+                String filename = resource.getFilename();
+                if (filename == null) {
+                    continue;
+                }
+                String version = extractVersion(filename);
+                if (version != null && version.equals(lastExecutedVersion)) {
+                    log.warn("检测到重复版本号 {}，跳过脚本: {}", version, filename);
+                    continue;
+                }
+                lastExecutedVersion = version;
+
+                if (!hasRun(conn, filename)) {
+                    log.info("执行迁移脚本: {}", filename);
+                    ScriptUtils.executeSqlScript(conn, new ClassPathResource("db/migration/" + filename));
+                    markRun(conn, filename);
                 } else {
-                    log.info("跳过已执行脚本: {}", script);
+                    log.info("跳过已执行脚本: {}", filename);
                 }
             }
         }
     }
 
-    private boolean isMysql(Connection conn) throws Exception {
-        DatabaseMetaData metaData = conn.getMetaData();
-        String productName = metaData.getDatabaseProductName();
-        return productName != null && productName.toLowerCase().contains("mysql");
+    private String extractVersion(String filename) {
+        if (filename.startsWith("V") && filename.contains("__")) {
+            return filename.substring(0, filename.indexOf("__"));
+        }
+        return null;
     }
 
-    private void ensureMigrationTable(Connection conn, boolean mysql) throws Exception {
+    private void ensureMigrationTable(Connection conn) throws Exception {
         try (Statement stmt = conn.createStatement()) {
-            if (mysql) {
-                stmt.execute("CREATE TABLE IF NOT EXISTS sys_migration ("
-                    + "id BIGINT AUTO_INCREMENT PRIMARY KEY,"
-                    + "script VARCHAR(100) NOT NULL UNIQUE,"
-                    + "executed_at DATETIME DEFAULT CURRENT_TIMESTAMP"
-                    + ")");
-            } else {
-                stmt.execute("CREATE TABLE IF NOT EXISTS sys_migration ("
-                    + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
-                    + "script VARCHAR(100) NOT NULL UNIQUE,"
-                    + "executed_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-            }
+            stmt.execute("CREATE TABLE IF NOT EXISTS sys_migration ("
+                + "id BIGINT AUTO_INCREMENT PRIMARY KEY,"
+                + "script VARCHAR(100) NOT NULL UNIQUE,"
+                + "executed_at DATETIME DEFAULT CURRENT_TIMESTAMP"
+                + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         }
-    }
-
-    private void executeSqlScript(Connection conn, String script, boolean mysql) throws Exception {
-        ClassPathResource resource = new ClassPathResource("db/migration/" + script);
-        if (!mysql) {
-            ScriptUtils.executeSqlScript(conn, resource);
-            return;
-        }
-
-        byte[] sqlBytes = StreamUtils.copyToByteArray(resource.getInputStream());
-        String sql = new String(sqlBytes, StandardCharsets.UTF_8);
-        String mysqlSql = adaptSqliteSqlToMysql(sql);
-        EncodedResource encodedResource = new EncodedResource(
-            new ByteArrayResource(mysqlSql.getBytes(StandardCharsets.UTF_8)));
-        ScriptUtils.executeSqlScript(
-            conn,
-            encodedResource,
-            true,
-            true,
-            ScriptUtils.DEFAULT_COMMENT_PREFIX,
-            ScriptUtils.DEFAULT_STATEMENT_SEPARATOR,
-            ScriptUtils.DEFAULT_BLOCK_COMMENT_START_DELIMITER,
-            ScriptUtils.DEFAULT_BLOCK_COMMENT_END_DELIMITER
-        );
-    }
-
-    private String adaptSqliteSqlToMysql(String sql) {
-        String transformed = sql;
-        transformed = transformed.replaceAll("(?i)INTEGER\\s+PRIMARY\\s+KEY\\s+AUTOINCREMENT", "BIGINT AUTO_INCREMENT PRIMARY KEY");
-        transformed = transformed.replaceAll("(?i)AUTOINCREMENT", "AUTO_INCREMENT");
-        transformed = transformed.replaceAll("(?i)\\bINTEGER\\b", "BIGINT");
-        transformed = transformed.replaceAll("(?i)INSERT\\s+OR\\s+REPLACE\\s+INTO", "REPLACE INTO");
-        transformed = transformed.replaceAll("(?i)INSERT\\s+OR\\s+IGNORE\\s+INTO", "INSERT IGNORE INTO");
-        transformed = transformed.replaceAll("(?i)CREATE\\s+INDEX\\s+IF\\s+NOT\\s+EXISTS", "CREATE INDEX");
-        transformed = transformed.replace("datetime('now')", "CURRENT_TIMESTAMP");
-        return transformed;
     }
 
     private boolean hasRun(Connection conn, String script) throws Exception {

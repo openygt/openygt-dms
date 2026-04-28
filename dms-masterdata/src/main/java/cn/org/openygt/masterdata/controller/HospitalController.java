@@ -1,4 +1,5 @@
 package cn.org.openygt.masterdata.controller;
+import cn.org.openygt.masterdata.MasterdataModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.masterdata.dto.HospitalResponse;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/md/hospitals")
+@RequestMapping(MasterdataModule.API_PREFIX + "/hospitals")
 public class HospitalController {
 
     private final HospitalService hospitalService;

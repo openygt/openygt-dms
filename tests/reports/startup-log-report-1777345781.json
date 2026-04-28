@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "log_paths": [
+      "package.log",
+      "test.log",
+      "compile.log",
+      "app.log"
+    ],
+    "timestamp": "2026-04-28T11:09:41.000958",
+    "suite": "startup_log"
+  },
+  "summary": {
+    "total": 3,
+    "passed": 1,
+    "failed": 2
+  },
+  "details": [
+    {
+      "case_id": "LOG-01",
+      "desc": "JWT 弱密钥启动告警",
+      "status": "PASS",
+      "detail": "日志中包含弱密钥提示",
+      "timestamp": "2026-04-28T11:09:40.997745"
+    },
+    {
+      "case_id": "LOG-02",
+      "desc": "SecurityFilterChain 加载",
+      "status": "FAIL",
+      "detail": "未检测到 SecurityFilterChain 加载日志",
+      "timestamp": "2026-04-28T11:09:40.998936"
+    },
+    {
+      "case_id": "LOG-03",
+      "desc": "应用启动成功",
+      "status": "FAIL",
+      "detail": "未检测到启动完成标志",
+      "timestamp": "2026-04-28T11:09:41.000100"
+    }
+  ]
+}

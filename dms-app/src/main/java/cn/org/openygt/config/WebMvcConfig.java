@@ -10,6 +10,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * Web MVC 配置。
  *
  * <p>注册 JWT 认证拦截器，并配置白名单路径。</p>
+ * <p>拦截范围覆盖全部 /api/**，确保无接口绕过鉴权。</p>
  */
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
@@ -17,7 +18,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(new AuthInterceptor())
-                .addPathPatterns("/api/v1/**")
+                .addPathPatterns("/api/**")
                 .excludePathPatterns(
                         "/api/v1/auth/**",
                         "/api/v1/sys/auth/**",
@@ -25,7 +26,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/error"
                 );
         registry.addInterceptor(new PermissionInterceptor())
-                .addPathPatterns("/api/v1/**")
+                .addPathPatterns("/api/**")
                 .excludePathPatterns(
                         "/api/v1/auth/**",
                         "/api/v1/sys/auth/**",

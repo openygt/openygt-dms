@@ -12,6 +12,7 @@ import java.util.List;
  * JWT 工具类。
  *
  * <p>基于 jjwt 0.9.1（Java 8 兼容）。</p>
+ * <p>支持动态密钥注入，生产环境必须通过 {@link #initSecret} 覆盖。</p>
  */
 @Slf4j
 public final class JwtUtil {
@@ -20,10 +21,9 @@ public final class JwtUtil {
     }
 
     /**
-     * 默认密钥（MVP 阶段硬编码，生产环境应通过环境变量注入）。
-     * 长度 46 字节，满足 HS256 最低 32 字节要求。
+     * 默认密钥（仅用于开发测试，生产环境必须覆盖）。
      */
-    private static final String SECRET = "OpenYGT-DMS-JWT-Secret-Key-2024";
+    private static String SECRET = "OpenYGT-DMS-JWT-Secret-Key-2024";
 
     /**
      * Token 有效期：24 小时（毫秒）。
@@ -38,17 +38,50 @@ public final class JwtUtil {
     }
 
     /**
-     * 生成 JWT Token。
+     * 初始化/覆盖 JWT 密钥。应在应用启动时由配置类调用一次。
+     *
+     * @param secret 密钥（≥32 字节）
+     */
+    public static synchronized void initSecret(String secret) {
+        if (secret != null && !secret.trim().isEmpty()) {
+            SECRET = secret;
+            log.info("JWT 密钥已通过配置注入覆盖");
+        }
+    }
+
+    /**
+     * 生成 JWT Token（仅含角色）。
      *
      * @param userId   用户 ID
      * @param username 用户名
      * @return JWT 字符串
      */
     public static String generateToken(Long userId, String username) {
-        return generateToken(userId, username, null);
+        return generateToken(userId, username, null, null);
     }
 
+    /**
+     * 生成 JWT Token（含角色）。
+     *
+     * @param userId   用户 ID
+     * @param username 用户名
+     * @param roles    角色列表
+     * @return JWT 字符串
+     */
     public static String generateToken(Long userId, String username, List<String> roles) {
+        return generateToken(userId, username, roles, null);
+    }
+
+    /**
+     * 生成 JWT Token（含角色与权限码）。
+     *
+     * @param userId      用户 ID
+     * @param username    用户名
+     * @param roles       角色列表
+     * @param permissions 权限码列表
+     * @return JWT 字符串
+     */
+    public static String generateToken(Long userId, String username, List<String> roles, List<String> permissions) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + EXPIRATION);
         io.jsonwebtoken.JwtBuilder builder = Jwts.builder()
@@ -58,6 +91,9 @@ public final class JwtUtil {
                 .setExpiration(expiry);
         if (roles != null && !roles.isEmpty()) {
             builder.claim("roles", roles);
+        }
+        if (permissions != null && !permissions.isEmpty()) {
+            builder.claim("permissions", permissions);
         }
         return builder.signWith(SignatureAlgorithm.HS256, SECRET).compact();
     }
@@ -129,5 +165,14 @@ public final class JwtUtil {
             return null;
         }
         return claims.get("roles", List.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<String> getPermissions(String token) {
+        Claims claims = parseToken(token);
+        if (claims == null) {
+            return null;
+        }
+        return claims.get("permissions", List.class);
     }
 }

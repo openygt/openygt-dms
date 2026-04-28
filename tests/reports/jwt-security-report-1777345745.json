@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "base_url": "http://localhost:8080",
+    "timestamp": "2026-04-28T11:09:05.772145",
+    "suite": "jwt_security"
+  },
+  "summary": {
+    "total": 7,
+    "passed": 7,
+    "failed": 0
+  },
+  "details": [
+    {
+      "case_id": "JWT-01",
+      "desc": "Token 为三段式 JWT",
+      "status": "PASS",
+      "detail": "header_len=20",
+      "timestamp": "2026-04-28T11:09:05.701598"
+    },
+    {
+      "case_id": "JWT-02",
+      "desc": "JWT Header alg=HS256",
+      "status": "PASS",
+      "detail": "{'alg': 'HS256'}",
+      "timestamp": "2026-04-28T11:09:05.701664"
+    },
+    {
+      "case_id": "JWT-03",
+      "desc": "有效 Token 可访问受保护接口",
+      "status": "PASS",
+      "detail": "",
+      "timestamp": "2026-04-28T11:09:05.760718"
+    },
+    {
+      "case_id": "JWT-04",
+      "desc": "非法 Token 返回401",
+      "status": "PASS",
+      "detail": "",
+      "timestamp": "2026-04-28T11:09:05.766732"
+    },
+    {
+      "case_id": "JWT-05",
+      "desc": "篡改 Token 返回401",
+      "status": "PASS",
+      "detail": "",
+      "timestamp": "2026-04-28T11:09:05.771845"
+    },
+    {
+      "case_id": "JWT-06",
+      "desc": "过期 Token 拦截（黑盒难自动触发）",
+      "status": "PASS",
+      "detail": "建议通过单元测试 JwtUtilTest 验证",
+      "timestamp": "2026-04-28T11:09:05.771876"
+    },
+    {
+      "case_id": "JWT-07",
+      "desc": "弱密钥启动告警",
+      "status": "PASS",
+      "detail": "请人工检查启动日志是否包含 'JWT 使用默认/弱密钥' WARN",
+      "timestamp": "2026-04-28T11:09:05.771882"
+    }
+  ]
+}

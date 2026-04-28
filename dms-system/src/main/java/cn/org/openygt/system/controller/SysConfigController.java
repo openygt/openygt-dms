@@ -1,4 +1,5 @@
 package cn.org.openygt.system.controller;
+import cn.org.openygt.system.SystemModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.system.entity.SysConfig;
@@ -8,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/sys/configs")
+@RequestMapping(SystemModule.API_PREFIX + "/configs")
 @RequiredArgsConstructor
 public class SysConfigController {
 

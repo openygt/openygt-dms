@@ -1,4 +1,5 @@
 package cn.org.openygt.system.controller;
+import cn.org.openygt.system.SystemModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.system.entity.SysLog;
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/sys/logs")
+@RequestMapping(SystemModule.API_PREFIX + "/logs")
 @RequiredArgsConstructor
 public class SysLogController {
 

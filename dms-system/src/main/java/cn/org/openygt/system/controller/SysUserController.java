@@ -1,4 +1,5 @@
 package cn.org.openygt.system.controller;
+import cn.org.openygt.system.SystemModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.system.entity.SysUser;
@@ -7,7 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/sys/users")
+@RequestMapping(SystemModule.API_PREFIX + "/users")
 public class SysUserController {
 
     private final SysUserService userService;

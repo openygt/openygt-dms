@@ -1,4 +1,5 @@
 package cn.org.openygt.equipment.controller;
+import cn.org.openygt.equipment.EquipmentModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.common.dto.EqDeviceDTO;
@@ -15,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
-@RequestMapping("/api/v1/eq/devices")
+@RequestMapping(EquipmentModule.API_PREFIX + "/devices")
 public class EqDeviceController {
 
     private final EqDeviceService deviceService;

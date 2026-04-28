@@ -1,6 +1,7 @@
 package cn.org.openygt.controller.inventory;
 
 import cn.org.openygt.common.dto.ApiResponse;
+import cn.org.openygt.inventory.InventoryModule;
 import cn.org.openygt.inventory.dto.ConsumeRecordDTO;
 import cn.org.openygt.inventory.dto.ConsumeRecordRequest;
 import cn.org.openygt.inventory.service.ConsumeRecordService;
@@ -13,7 +14,7 @@ import javax.validation.constraints.Min;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/inventory/consume")
+@RequestMapping(InventoryModule.API_PREFIX + "/consume")
 @RequiredArgsConstructor
 @Validated
 public class ConsumeRecordController {
