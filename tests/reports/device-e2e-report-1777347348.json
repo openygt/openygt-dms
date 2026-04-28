@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "base_url": "http://localhost:8080",
+    "mqtt": "127.0.0.1:1883",
+    "mysql": "127.0.0.1",
+    "timestamp": "2026-04-28T11:35:48.104918"
+  },
+  "summary": {
+    "total": 2,
+    "passed": 1,
+    "failed": 1
+  },
+  "details": [
+    {
+      "case_id": "SC-DECOCT-01",
+      "desc": "煎药机上线后状态=IDLE",
+      "status": "PASS",
+      "detail": "",
+      "timestamp": "2026-04-28T11:35:44.058387"
+    },
+    {
+      "case_id": "SC-DECOCT-02",
+      "desc": "无可用任务",
+      "status": "BLOCK",
+      "detail": "",
+      "timestamp": "2026-04-28T11:35:44.058419"
+    }
+  ]
+}
