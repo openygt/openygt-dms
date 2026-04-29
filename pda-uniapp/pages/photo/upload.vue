@@ -222,7 +222,7 @@ function uploadFile(filePath) {
 }
 
 .type-item.active {
-  border-color: #667eea;
+  border-color: #0066CC;
   background: #e8eaf6;
 }
 
@@ -316,7 +316,7 @@ function uploadFile(filePath) {
 .upload-btn {
   height: 100rpx;
   line-height: 100rpx;
-  background: #667eea;
+  background: #0066CC;
   color: #fff;
   font-size: 32rpx;
   border-radius: 12rpx;

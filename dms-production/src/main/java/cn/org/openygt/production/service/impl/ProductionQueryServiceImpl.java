@@ -62,18 +62,46 @@ public class ProductionQueryServiceImpl implements ProductionQueryService {
         List<CapacityDailyDTO> result = new ArrayList<>();
         for (Map<String, Object> row : rows) {
             CapacityDailyDTO dto = new CapacityDailyDTO();
-            String dateStr = (String) row.get("statDate");
-            dto.setStatDate(dateStr != null ? LocalDate.parse(dateStr) : null);
-            dto.setTotalTasks(((Number) row.get("totalTasks")).longValue());
-            dto.setCompletedTasks(((Number) row.get("completedTasks")).longValue());
-            dto.setTaskCount(((Number) row.get("totalTasks")).intValue());
-            dto.setCompletedCount(((Number) row.get("completedTasks")).intValue());
-            dto.setDoseCount(((Number) row.getOrDefault("doseCount", 0)).intValue());
+            Object dateObj = row.get("statDate");
+            LocalDate statDate = null;
+            if (dateObj instanceof java.sql.Date) {
+                statDate = ((java.sql.Date) dateObj).toLocalDate();
+            } else if (dateObj instanceof java.time.LocalDate) {
+                statDate = (LocalDate) dateObj;
+            } else if (dateObj instanceof String) {
+                statDate = LocalDate.parse((String) dateObj);
+            }
+            dto.setStatDate(statDate);
+            dto.setTotalTasks(toLong(row.get("totalTasks")));
+            dto.setCompletedTasks(toLong(row.get("completedTasks")));
+            dto.setTaskCount(toInt(row.get("totalTasks")));
+            dto.setCompletedCount(toInt(row.get("completedTasks")));
+            dto.setDoseCount(toInt(row.getOrDefault("doseCount", 0)));
             dto.setAvgDuration(0.0);
             dto.setDeviceUtilization(0.0);
             result.add(dto);
         }
         return result;
+    }
+
+    private Long toLong(Object obj) {
+        if (obj == null) return 0L;
+        if (obj instanceof Number) return ((Number) obj).longValue();
+        try {
+            return Long.valueOf(obj.toString());
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
+    }
+
+    private Integer toInt(Object obj) {
+        if (obj == null) return 0;
+        if (obj instanceof Number) return ((Number) obj).intValue();
+        try {
+            return Integer.valueOf(obj.toString());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     @Override

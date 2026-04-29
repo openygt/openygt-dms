@@ -116,7 +116,7 @@ async function doSync() {
 }
 
 .header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0066CC 0%, #003D7A 100%);
   padding: 60rpx 40rpx 80rpx;
   color: #fff;
 }
@@ -192,7 +192,7 @@ async function doSync() {
 
 .more {
   font-size: 26rpx;
-  color: #667eea;
+  color: #0066CC;
 }
 
 .task-item {

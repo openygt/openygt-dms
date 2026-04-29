@@ -31,13 +31,21 @@ public class PermissionInterceptor implements HandlerInterceptor {
 
         @SuppressWarnings("unchecked")
         List<String> roles = (List<String>) request.getAttribute("roles");
-        if (roles == null || roles.isEmpty()) {
+        @SuppressWarnings("unchecked")
+        List<String> permissions = (List<String>) request.getAttribute("permissions");
+
+        boolean hasAny = (roles != null && !roles.isEmpty()) ||
+                         (permissions != null && !permissions.isEmpty());
+        if (!hasAny) {
             writeForbidden(response);
             return false;
         }
 
         for (String required : ann.value()) {
-            if (roles.contains(required)) {
+            if (roles != null && roles.contains(required)) {
+                return true;
+            }
+            if (permissions != null && permissions.contains(required)) {
                 return true;
             }
         }

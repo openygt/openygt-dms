@@ -37,9 +37,12 @@ public class ConsumeRecordController {
     public ApiResponse<IPage<ConsumeRecordDTO>> pageQuery(
             @RequestParam(required = false) Long taskId,
             @RequestParam(required = false) Long medicineId,
+            @RequestParam(required = false) String operatorId,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "10") @Min(1) int size) {
-        IPage<ConsumeRecordDTO> result = consumeRecordService.pageQuery(taskId, medicineId, page, size);
+        IPage<ConsumeRecordDTO> result = consumeRecordService.pageQuery(taskId, medicineId, operatorId, startTime, endTime, page, size);
         return ApiResponse.success(result);
     }
 }

@@ -101,7 +101,7 @@ async function loadLogs() {
 }
 
 .filter-item.active {
-  background: #667eea;
+  background: #0066CC;
   color: #fff;
 }
 

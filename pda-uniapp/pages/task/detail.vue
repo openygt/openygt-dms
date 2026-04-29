@@ -148,7 +148,7 @@ function goPhoto() {
 }
 
 .info-value.highlight {
-  color: #667eea;
+  color: #0066CC;
   font-weight: bold;
 }
 
@@ -163,14 +163,14 @@ function goPhoto() {
   height: 90rpx;
   line-height: 90rpx;
   background: #fff;
-  color: #667eea;
+  color: #0066CC;
   font-size: 30rpx;
   border-radius: 12rpx;
-  border: 2rpx solid #667eea;
+  border: 2rpx solid #0066CC;
 }
 
 .action-btn.primary {
-  background: #667eea;
+  background: #0066CC;
   color: #fff;
 }
 
@@ -204,7 +204,7 @@ function goPhoto() {
 }
 
 .timeline-item.active:not(:last-child)::before {
-  background: #667eea;
+  background: #0066CC;
 }
 
 .timeline-dot {
@@ -217,7 +217,7 @@ function goPhoto() {
 }
 
 .timeline-item.active .timeline-dot {
-  background: #667eea;
+  background: #0066CC;
 }
 
 .timeline-item.current .timeline-dot {
