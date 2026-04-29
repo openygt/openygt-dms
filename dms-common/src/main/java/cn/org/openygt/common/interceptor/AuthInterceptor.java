@@ -51,9 +51,11 @@ public class AuthInterceptor implements HandlerInterceptor {
         Long userId = JwtUtil.getUserId(token);
         String username = JwtUtil.getUsername(token);
         List<String> roles = JwtUtil.getRoles(token);
+        List<String> permissions = JwtUtil.getPermissions(token);
         request.setAttribute("userId", userId);
         request.setAttribute("username", username);
         request.setAttribute("roles", roles);
+        request.setAttribute("permissions", permissions);
 
         return true;
     }

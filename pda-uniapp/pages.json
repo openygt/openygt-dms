@@ -1,4 +1,10 @@
 {
+  "easycom": {
+    "autoscan": true,
+    "custom": {
+      "^ygt-(.*)": "@/components/ygt-$1/ygt-$1.vue"
+    }
+  },
   "pages": [
     {
       "path": "pages/login/index",
@@ -53,16 +59,17 @@
     }
   ],
   "globalStyle": {
-    "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "OpenYGT PDA",
-    "navigationBarBackgroundColor": "#F8F8F8",
-    "backgroundColor": "#F8F8F8"
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "煎药管理 PDA",
+    "navigationBarBackgroundColor": "#0066CC",
+    "backgroundColor": "#FAFAFA",
+    "navigationStyle": "default"
   },
   "tabBar": {
-    "color": "#7A7E83",
-    "selectedColor": "#3cc51f",
-    "borderStyle": "black",
-    "backgroundColor": "#ffffff",
+    "color": "#71717A",
+    "selectedColor": "#0066CC",
+    "backgroundColor": "#FFFFFF",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/index/index",

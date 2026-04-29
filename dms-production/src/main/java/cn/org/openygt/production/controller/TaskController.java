@@ -34,9 +34,14 @@ public class TaskController {
     public ApiResponse<IPage<Task>> queryTasks(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long deviceId,
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) Long prescriptionId,
+            @RequestParam(required = false) String operatorId,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.success(taskService.queryTasks(status, deviceId, page, size));
+        return ApiResponse.success(taskService.queryTasks(status, deviceId, id, prescriptionId, operatorId, startTime, endTime, page, size));
     }
 
     @GetMapping("/{taskId}")

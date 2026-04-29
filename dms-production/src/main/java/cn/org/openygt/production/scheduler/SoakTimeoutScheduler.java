@@ -7,6 +7,7 @@ import cn.org.openygt.production.service.TaskService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -29,6 +30,7 @@ public class SoakTimeoutScheduler {
     private static final int DEFAULT_SOAK_TIMEOUT_MINUTES = 30;
 
     @Scheduled(fixedRate = 60000)
+    @SchedulerLock(name = "soakTimeoutCheck", lockAtMostFor = "5m", lockAtLeastFor = "30s")
     public void checkSoakTimeout() {
         try {
             int timeoutMinutes = sysConfigService.getIntValue(CFG_SOAK_TIMEOUT, DEFAULT_SOAK_TIMEOUT_MINUTES);

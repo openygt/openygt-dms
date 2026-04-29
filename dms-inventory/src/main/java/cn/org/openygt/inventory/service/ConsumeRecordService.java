@@ -9,5 +9,5 @@ import java.util.List;
 public interface ConsumeRecordService {
     List<Long> recordConsume(ConsumeRecordRequest request);
     List<ConsumeRecordDTO> listByTaskId(Long taskId);
-    IPage<ConsumeRecordDTO> pageQuery(Long taskId, Long medicineId, int page, int size);
+    IPage<ConsumeRecordDTO> pageQuery(Long taskId, Long medicineId, String operatorId, String startTime, String endTime, int page, int size);
 }

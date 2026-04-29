@@ -11,7 +11,7 @@ public interface HospitalService {
 
     Hospital getById(Long id);
 
-    IPage<Hospital> list(int page, int size);
+    IPage<Hospital> list(String keyword, int page, int size);
 
     void delete(Long id);
 }

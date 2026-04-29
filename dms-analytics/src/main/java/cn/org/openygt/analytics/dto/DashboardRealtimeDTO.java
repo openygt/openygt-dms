@@ -10,15 +10,28 @@ import java.util.List;
  */
 @Data
 public class DashboardRealtimeDTO {
+    // 任务核心KPI
     private Long todayTotalTasks;
-    private Long todayCompletedTasks;
+    private Long todayEndedTasks;
     private Long todayInProgressTasks;
-    private Long todayPendingTasks;
+    private Long todayAlertingTasks;
+    private Long todayAlertedTasks;
+
+    // 设备统计
     private Long onlineDeviceCount;
     private Long offlineDeviceCount;
-    private Long activeAlarmCount;
+
+    // 质检统计
     private Long todayInspectionCount;
     private BigDecimal todayPassRate;
+
+    // 趋势（环比百分比）
+    private Integer taskTrend;
+    private Integer endedTrend;
+    private Integer inProgressTrend;
+    private Integer alertingTrend;
+
+    // 分布
     private List<TaskStatusDistributionDTO> taskStatusDistribution;
     private List<DeviceTypeDistributionDTO> deviceTypeDistribution;
 }

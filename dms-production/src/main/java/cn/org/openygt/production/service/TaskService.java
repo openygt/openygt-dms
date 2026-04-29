@@ -11,7 +11,8 @@ import java.util.List;
 
 public interface TaskService {
     Task bindDevice(Long taskId, String deviceCode);
-    IPage<Task> queryTasks(String status, Long deviceId, int page, int size);
+    IPage<Task> queryTasks(String status, Long deviceId, Long id, Long prescriptionId, String operatorId,
+                           String startTime, String endTime, int page, int size);
     Task updateTemperature(String deviceCode, BigDecimal temperature);
 
     Task startSoak(Long taskId, String operatorId);
