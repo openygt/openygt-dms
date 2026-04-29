@@ -6,6 +6,8 @@ import cn.org.openygt.common.service.ProductionQueryService;
 import cn.org.openygt.common.service.QualityService;
 import cn.org.openygt.quality.entity.Inspection;
 import cn.org.openygt.quality.mapper.InspectionMapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,7 +26,7 @@ public class QualityServiceImpl implements QualityService {
 
     @Override
     @Transactional
-    public InspectionResult inspect(Long taskId, InspectionResultType result, String operatorId, String remark) {
+    public InspectionResult inspect(Long taskId, InspectionResultType result, String operatorId, String remark, String reworkNode) {
         // 通过 SPI 验证任务存在性（不直接操作 prod_task 表）
         if (productionQueryService.getTaskById(taskId) == null) {
             throw new IllegalArgumentException("任务不存在: " + taskId);
@@ -46,7 +48,7 @@ public class QualityServiceImpl implements QualityService {
         ir.setInspectionId(inspection.getId());
         ir.setTaskId(taskId);
         ir.setResult(result);
-        ir.setNextStatus(deduceNextStatus(result));
+        ir.setNextStatus(deduceNextStatus(result, reworkNode));
         ir.setOperatorId(operatorId);
         ir.setRemark(remark);
         ir.setInspectedAt(LocalDateTime.now());
@@ -80,6 +82,24 @@ public class QualityServiceImpl implements QualityService {
         return ir;
     }
 
+    /**
+     * 质检记录分页列表。
+     */
+    public Page<Inspection> listInspections(String result, String startTime, String endTime, int page, int size) {
+        LambdaQueryWrapper<Inspection> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByDesc(Inspection::getCreatedAt);
+        if (result != null && !result.isEmpty()) {
+            wrapper.eq(Inspection::getResult, result);
+        }
+        if (startTime != null && !startTime.isEmpty()) {
+            wrapper.ge(Inspection::getCreatedAt, startTime);
+        }
+        if (endTime != null && !endTime.isEmpty()) {
+            wrapper.le(Inspection::getCreatedAt, endTime);
+        }
+        return inspectionMapper.selectPage(new Page<>(page, size), wrapper);
+    }
+
     @Override
     public cn.org.openygt.common.dto.InspectionSummaryDTO getInspectionSummary(LocalDateTime from, LocalDateTime to) {
         // TODO: 实现统计聚合（Wave 2）
@@ -94,13 +114,13 @@ public class QualityServiceImpl implements QualityService {
         return java.util.Collections.emptyList();
     }
 
-    private String deduceNextStatus(InspectionResultType result) {
+    private String deduceNextStatus(InspectionResultType result, String reworkNode) {
         switch (result) {
             case PASS:
             case CONCESSION:
                 return "待交接";
             case REWORK:
-                return "待煎药";
+                return reworkNode != null && !reworkNode.isEmpty() ? reworkNode : "待煎药";
             case SCRAP:
                 return "已报废";
             default:

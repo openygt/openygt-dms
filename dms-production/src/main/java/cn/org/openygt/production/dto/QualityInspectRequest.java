@@ -10,4 +10,5 @@ public class QualityInspectRequest {
     private InspectionResultType result;
     private String operatorId;
     private String remark;
+    private String reworkNode;
 }

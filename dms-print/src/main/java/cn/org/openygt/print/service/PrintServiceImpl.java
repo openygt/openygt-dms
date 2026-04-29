@@ -223,6 +223,22 @@ public class PrintServiceImpl implements PrintService {
         dto.setRetryCount(task.getRetryCount());
         dto.setMaxRetry(task.getMaxRetry());
         dto.setCreatedAt(task.getCreatedAt());
+        // 查询打印机设备类型
+        if (task.getDeviceCode() != null) {
+            try {
+                cn.org.openygt.common.dto.EqDeviceDTO device = equipmentService.getDeviceByCode(task.getDeviceCode());
+                if (device != null && device.getDeviceType() != null) {
+                    String type = device.getDeviceType();
+                    if ("3".equals(type)) {
+                        dto.setPrintType("标签打印");
+                    } else if ("4".equals(type)) {
+                        dto.setPrintType("激光打印");
+                    } else {
+                        dto.setPrintType("未知");
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
         return dto;
     }
 }

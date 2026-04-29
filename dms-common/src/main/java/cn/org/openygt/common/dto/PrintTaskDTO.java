@@ -20,5 +20,6 @@ public class PrintTaskDTO implements Serializable {
     private Integer copies;
     private Integer retryCount;
     private Integer maxRetry;
+    private String printType;
     private LocalDateTime createdAt;
 }
