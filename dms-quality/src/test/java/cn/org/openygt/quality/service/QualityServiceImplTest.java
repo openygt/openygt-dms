@@ -54,7 +54,7 @@ class QualityServiceImplTest {
         task.setStatus("待质检");
         when(productionQueryService.getTaskById(1L)).thenReturn(task);
 
-        InspectionResult result = qualityService.inspect(1L, InspectionResultType.PASS, "QC001", null);
+        InspectionResult result = qualityService.inspect(1L, InspectionResultType.PASS, "QC001", null, null);
 
         assertThat(result.getNextStatus()).isEqualTo("待交接");
         assertThat(result.getIsException()).isEqualTo(0);
@@ -69,7 +69,7 @@ class QualityServiceImplTest {
         task.setStatus("待质检");
         when(productionQueryService.getTaskById(1L)).thenReturn(task);
 
-        InspectionResult result = qualityService.inspect(1L, InspectionResultType.CONCESSION, "QC001", "颜色偏差");
+        InspectionResult result = qualityService.inspect(1L, InspectionResultType.CONCESSION, "QC001", "颜色偏差", null);
 
         assertThat(result.getNextStatus()).isEqualTo("待交接");
         assertThat(result.getIsException()).isEqualTo(1);
@@ -84,7 +84,7 @@ class QualityServiceImplTest {
         task.setStatus("待质检");
         when(productionQueryService.getTaskById(1L)).thenReturn(task);
 
-        InspectionResult result = qualityService.inspect(1L, InspectionResultType.REWORK, "QC001", "浓度不足");
+        InspectionResult result = qualityService.inspect(1L, InspectionResultType.REWORK, "QC001", "浓度不足", null);
 
         assertThat(result.getNextStatus()).isEqualTo("待煎药");
         assertThat(result.getIsException()).isEqualTo(1);
@@ -99,7 +99,7 @@ class QualityServiceImplTest {
         task.setStatus("待质检");
         when(productionQueryService.getTaskById(1L)).thenReturn(task);
 
-        InspectionResult result = qualityService.inspect(1L, InspectionResultType.SCRAP, "QC001", "污染");
+        InspectionResult result = qualityService.inspect(1L, InspectionResultType.SCRAP, "QC001", "污染", null);
 
         assertThat(result.getNextStatus()).isEqualTo("已报废");
         assertThat(result.getIsException()).isEqualTo(1);
@@ -111,7 +111,7 @@ class QualityServiceImplTest {
     void inspect_taskNotFound() {
         when(productionQueryService.getTaskById(999L)).thenReturn(null);
 
-        assertThatThrownBy(() -> qualityService.inspect(999L, InspectionResultType.PASS, "QC001", null))
+        assertThatThrownBy(() -> qualityService.inspect(999L, InspectionResultType.PASS, "QC001", null, null))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("任务不存在");
     }
@@ -123,10 +123,10 @@ class QualityServiceImplTest {
         task.setStatus("待质检");
         when(productionQueryService.getTaskById(anyLong())).thenReturn(task);
 
-        qualityService.inspect(1L, InspectionResultType.PASS, "QC001", null);
-        qualityService.inspect(1L, InspectionResultType.CONCESSION, "QC001", "偏差");
-        qualityService.inspect(1L, InspectionResultType.REWORK, "QC001", "不足");
-        qualityService.inspect(1L, InspectionResultType.SCRAP, "QC001", "污染");
+        qualityService.inspect(1L, InspectionResultType.PASS, "QC001", null, null);
+        qualityService.inspect(1L, InspectionResultType.CONCESSION, "QC001", "偏差", null);
+        qualityService.inspect(1L, InspectionResultType.REWORK, "QC001", "不足", null);
+        qualityService.inspect(1L, InspectionResultType.SCRAP, "QC001", "污染", null);
 
         verify(inspectionMapper, times(4)).insert(inspectionCaptor.capture());
         List<Inspection> allInspections = inspectionCaptor.getAllValues();
@@ -191,7 +191,7 @@ class QualityServiceImplTest {
         task.setStatus("待质检");
         when(productionQueryService.getTaskById(1L)).thenReturn(task);
 
-        qualityService.inspect(1L, InspectionResultType.PASS, "QC001", null);
+        qualityService.inspect(1L, InspectionResultType.PASS, "QC001", null, null);
 
         verify(inspectionMapper).insert(inspectionCaptor.capture());
         Inspection entity = inspectionCaptor.getValue();
@@ -209,7 +209,7 @@ class QualityServiceImplTest {
         task.setStatus("待质检");
         when(productionQueryService.getTaskById(1L)).thenReturn(task);
 
-        qualityService.inspect(1L, InspectionResultType.SCRAP, "QC001", "严重污染");
+        qualityService.inspect(1L, InspectionResultType.SCRAP, "QC001", "严重污染", null);
 
         verify(inspectionMapper).insert(inspectionCaptor.capture());
         Inspection entity = inspectionCaptor.getValue();

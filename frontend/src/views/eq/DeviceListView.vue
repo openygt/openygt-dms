@@ -513,6 +513,8 @@ async function buildPairingMap() {
       if (p.labelerId) map[p.labelerId] = p.pairingName
     })
     pairingMap.value = map
+    // 强制刷新列表触发 el-table 重新渲染
+    list.value = [...list.value]
   } catch (e) {
     pairingMap.value = {}
   }

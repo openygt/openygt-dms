@@ -3,21 +3,27 @@
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>打印中心</span>
+          <span>打印管理</span>
           <el-button type="primary" @click="fetchData">刷新队列</el-button>
         </div>
       </template>
       <el-table :data="list" v-loading="loading" border>
         <el-table-column prop="id" label="打印ID" width="100" />
         <el-table-column prop="taskId" label="任务号" width="100" />
-        <el-table-column prop="labelType" label="标签类型" />
+        <el-table-column prop="printType" label="打印类型" width="120">
+          <template #default="{ row }">
+            <el-tag :type="row.printType === '标签打印' ? 'warning' : 'info'">
+              {{ row.printType || '-' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="120">
           <template #default="{ row }">
             <el-tag :type="statusType(row.status)">{{ statusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="retryCount" label="重试次数" width="100" />
-        <el-table-column prop="printerName" label="打印机" />
+        <el-table-column prop="deviceCode" label="打印机" />
         <el-table-column prop="createdAt" label="创建时间" />
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
@@ -39,10 +45,10 @@ import request from '@/api/request'
 interface PrintTask {
   id: number
   taskId: number
-  labelType: string
+  printType?: string
   status: string
   retryCount: number
-  printerName: string
+  deviceCode: string
   createdAt: string
 }
 
@@ -51,13 +57,13 @@ const loading = ref(false)
 
 function statusType(status: string) {
   const map: Record<string, string> = {
-    'PENDING': 'info', 'PRINTING': 'warning', 'SUCCESS': 'success', 'FAILED': 'danger'
+    'PENDING': 'info', 'PRINTING': 'warning', 'COMPLETED': 'success', 'FAILED': 'danger'
   }
   return map[status] || ''
 }
 function statusText(status: string) {
   const map: Record<string, string> = {
-    'PENDING': '待打印', 'PRINTING': '打印中', 'SUCCESS': '成功', 'FAILED': '失败'
+    'PENDING': '待打印', 'PRINTING': '打印中', 'COMPLETED': '已完成', 'FAILED': '失败'
   }
   return map[status] || status
 }

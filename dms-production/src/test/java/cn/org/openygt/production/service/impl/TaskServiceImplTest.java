@@ -163,7 +163,7 @@ class TaskServiceImplTest {
         task.setPackageDeviceId(20L);
         when(taskMapper.selectById(1L)).thenReturn(task);
 
-        taskService.qualityInspect(1L, InspectionResultType.REWORK, "OP01", "温度不足");
+        taskService.qualityInspect(1L, InspectionResultType.REWORK, "OP01", "温度不足", null);
 
         verify(equipmentService).reserveDevice(1L, 10L);
         verify(equipmentService).reserveDevice(1L, 20L);
@@ -177,7 +177,7 @@ class TaskServiceImplTest {
         Task task = mockTask(1L, "待质检");
         when(taskMapper.selectById(1L)).thenReturn(task);
 
-        taskService.qualityInspect(1L, InspectionResultType.PASS, "OP01", null);
+        taskService.qualityInspect(1L, InspectionResultType.PASS, "OP01", null, null);
 
         assertEquals("待交接", task.getStatus());
         verify(equipmentService, never()).reserveDevice(any(), any());
@@ -189,7 +189,7 @@ class TaskServiceImplTest {
         Task task = mockTask(1L, "待质检");
         when(taskMapper.selectById(1L)).thenReturn(task);
 
-        taskService.qualityInspect(1L, InspectionResultType.SCRAP, "OP01", "污染");
+        taskService.qualityInspect(1L, InspectionResultType.SCRAP, "OP01", "污染", null);
 
         assertEquals("已报废", task.getStatus());
         assertEquals(Integer.valueOf(1), task.getIsException());
@@ -495,7 +495,7 @@ class TaskServiceImplTest {
         Task task = mockTask(1L, "待质检");
         when(taskMapper.selectById(1L)).thenReturn(task);
 
-        taskService.qualityInspect(1L, InspectionResultType.CONCESSION, "OP01", "轻微糊味，允许放行");
+        taskService.qualityInspect(1L, InspectionResultType.CONCESSION, "OP01", "轻微糊味，允许放行", null);
 
         assertEquals("待交接", task.getStatus());
         assertEquals(Integer.valueOf(1), task.getIsException());
@@ -811,7 +811,7 @@ class TaskServiceImplTest {
     void testQualityInspectTaskNotFound() {
         when(taskMapper.selectById(99L)).thenReturn(null);
         assertThrows(IllegalArgumentException.class, () ->
-                taskService.qualityInspect(99L, InspectionResultType.PASS, "OP01", null));
+                taskService.qualityInspect(99L, InspectionResultType.PASS, "OP01", null, null));
     }
 
     @Test

@@ -4,6 +4,9 @@ import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.common.dto.InspectionResult;
 import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.QualityService;
+import cn.org.openygt.quality.entity.Inspection;
+import cn.org.openygt.quality.service.QualityServiceImpl;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +27,7 @@ public class QualityController {
     public static final String API_PREFIX = "/api/v1/qt";
 
     private final QualityService qualityService;
+    private final QualityServiceImpl qualityServiceImpl;
 
     /**
      * 执行质检。
@@ -32,6 +36,7 @@ public class QualityController {
      * @param result     质检结果枚举
      * @param operatorId 操作人
      * @param remark     备注
+     * @param reworkNode 返工节点（REWORK时必填）
      * @return 质检结果
      */
     @PostMapping("/inspect")
@@ -39,8 +44,9 @@ public class QualityController {
             @RequestParam @NotNull Long taskId,
             @RequestParam @NotNull InspectionResultType result,
             @RequestParam(required = false) String operatorId,
-            @RequestParam(required = false) String remark) {
-        return ApiResponse.success(qualityService.inspect(taskId, result, operatorId, remark));
+            @RequestParam(required = false) String remark,
+            @RequestParam(required = false) String reworkNode) {
+        return ApiResponse.success(qualityService.inspect(taskId, result, operatorId, remark, reworkNode));
     }
 
     /**
@@ -52,5 +58,18 @@ public class QualityController {
     @GetMapping("/inspection/{taskId}")
     public ApiResponse<InspectionResult> getInspection(@PathVariable Long taskId) {
         return ApiResponse.success(qualityService.getInspectionByTaskId(taskId));
+    }
+
+    /**
+     * 质检记录分页列表。
+     */
+    @GetMapping("/inspections")
+    public ApiResponse<Page<Inspection>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String result,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime) {
+        return ApiResponse.success(qualityServiceImpl.listInspections(result, startTime, endTime, page, size));
     }
 }

@@ -97,7 +97,7 @@ public class TaskController {
 
     @PostMapping("/{taskId}/quality")
     public ApiResponse<Task> qualityInspect(@PathVariable Long taskId, @Validated @RequestBody QualityInspectRequest req) {
-        return ApiResponse.success(taskService.qualityInspect(taskId, req.getResult(), req.getOperatorId(), req.getRemark()));
+        return ApiResponse.success(taskService.qualityInspect(taskId, req.getResult(), req.getOperatorId(), req.getRemark(), req.getReworkNode()));
     }
 
     @PostMapping("/{taskId}/handover")

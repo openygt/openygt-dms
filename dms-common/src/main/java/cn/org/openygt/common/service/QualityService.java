@@ -15,7 +15,7 @@ import java.util.List;
  */
 public interface QualityService {
 
-    InspectionResult inspect(Long taskId, InspectionResultType result, String operatorId, String remark);
+    InspectionResult inspect(Long taskId, InspectionResultType result, String operatorId, String remark, String reworkNode);
 
     InspectionResult getInspectionByTaskId(Long taskId);
 

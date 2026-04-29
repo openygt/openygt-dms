@@ -42,7 +42,7 @@ class QualityControllerTest {
         InspectionResult result = new InspectionResult();
         result.setTaskId(1L);
         result.setResult(InspectionResultType.PASS);
-        when(qualityService.inspect(anyLong(), any(InspectionResultType.class), any(), any()))
+        when(qualityService.inspect(anyLong(), any(InspectionResultType.class), any(), any(), any()))
                 .thenReturn(result);
 
         mockMvc.perform(post("/api/v1/qt/inspect")

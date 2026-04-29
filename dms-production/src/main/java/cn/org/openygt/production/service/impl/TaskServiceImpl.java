@@ -221,10 +221,10 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     @Transactional
-    public Task qualityInspect(Long taskId, InspectionResultType result, String operatorId, String remark) {
+    public Task qualityInspect(Long taskId, InspectionResultType result, String operatorId, String remark, String reworkNode) {
         Task task = getTaskOrThrow(taskId);
         assertStatus(task, "待质检");
-        doQualityInspect(task, result, operatorId, remark);
+        doQualityInspect(task, result, operatorId, remark, reworkNode);
         taskMapper.updateById(task);
         createStepLog(taskId, "INSPECT", null, operatorId, null);
         closeLastStepLog(taskId, "INSPECT", result != null ? result.getLabel() : null, remark);
@@ -520,7 +520,7 @@ public class TaskServiceImpl implements TaskService {
         return (int) ChronoUnit.MINUTES.between(start, end);
     }
 
-    private void doQualityInspect(Task task, InspectionResultType result, String operatorId, String remark) {
+    private void doQualityInspect(Task task, InspectionResultType result, String operatorId, String remark, String reworkNode) {
         switch (result) {
             case PASS:
                 transition(task, "待交接", operatorId, "质检通过" + (remark != null ? ": " + remark : ""));
@@ -531,7 +531,8 @@ public class TaskServiceImpl implements TaskService {
                 task.setExceptionReason(remark);
                 break;
             case REWORK:
-                transition(task, "待煎药", operatorId, "质检返工" + (remark != null ? ": " + remark : ""));
+                String targetStatus = reworkNode != null && !reworkNode.isEmpty() ? reworkNode : "待煎药";
+                transition(task, targetStatus, operatorId, "质检返工→" + targetStatus + (remark != null ? ": " + remark : ""));
                 // 返工预留设备：防止返工任务无设备可用（设备若已 IDLE 则预留，若仍 RUNNING 则保持）
                 if (task.getDecoctDeviceId() != null) {
                     equipmentService.reserveDevice(task.getId(), task.getDecoctDeviceId());

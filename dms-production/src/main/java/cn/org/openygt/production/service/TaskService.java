@@ -25,7 +25,7 @@ public interface TaskService {
     Task endWrap(Long taskId, String operatorId);
 
     Task confirmLabel(Long taskId, String operatorId);
-    Task qualityInspect(Long taskId, InspectionResultType result, String operatorId, String remark);
+    Task qualityInspect(Long taskId, InspectionResultType result, String operatorId, String remark, String reworkNode);
     Task handover(Long taskId, Integer bagCount, String handoverType, String handoverUser, String remark, Boolean isFinal);
 
     StepLog pauseStep(Long stepLogId, String reason);
