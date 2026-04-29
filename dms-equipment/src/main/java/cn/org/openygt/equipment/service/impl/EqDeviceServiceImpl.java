@@ -61,12 +61,16 @@ public class EqDeviceServiceImpl implements EqDeviceService {
     }
 
     @Override
-    public IPage<EqDevice> list(String keyword, int page, int size) {
+    public IPage<EqDevice> list(String keyword, Integer deviceType, String status, int page, int size) {
         LambdaQueryWrapper<EqDevice> wrapper = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
-            wrapper.like(EqDevice::getDeviceCode, keyword)
-                    .or()
-                    .like(EqDevice::getName, keyword);
+            wrapper.and(w -> w.like(EqDevice::getDeviceCode, keyword).or().like(EqDevice::getName, keyword));
+        }
+        if (deviceType != null) {
+            wrapper.eq(EqDevice::getDeviceType, deviceType);
+        }
+        if (status != null && !status.isEmpty()) {
+            wrapper.eq(EqDevice::getStatus, status);
         }
         wrapper.orderByDesc(EqDevice::getCreatedAt);
         return deviceMapper.selectPage(new Page<>(page, size), wrapper);

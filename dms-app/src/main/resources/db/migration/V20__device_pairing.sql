@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS eq_device_pairing (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    pairing_name VARCHAR(100) NOT NULL COMMENT '配对名称，如：生产线A',
+    decocter_ids VARCHAR(255) NOT NULL COMMENT '煎药机ID列表，逗号分隔，最多4个',
+    packer_id BIGINT NOT NULL COMMENT '包装机ID',
+    labeler_id BIGINT NOT NULL COMMENT '标签打印机ID',
+    status VARCHAR(20) DEFAULT 'ACTIVE' COMMENT '状态：ACTIVE-启用，DISABLED-禁用',
+    tenant_id VARCHAR(50) DEFAULT 'default',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted INT DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='设备生产线配对表';

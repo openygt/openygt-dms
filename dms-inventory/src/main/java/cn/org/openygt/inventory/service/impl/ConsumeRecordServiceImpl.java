@@ -74,10 +74,11 @@ public class ConsumeRecordServiceImpl implements ConsumeRecordService {
     }
 
     @Override
-    public IPage<ConsumeRecordDTO> pageQuery(Long taskId, Long medicineId, String operatorId, String startTime, String endTime, int page, int size) {
+    public IPage<ConsumeRecordDTO> pageQuery(Long taskId, Long medicineId, String medicineName, String operatorId, String startTime, String endTime, int page, int size) {
         LambdaQueryWrapper<InvStockLog> wrapper = new LambdaQueryWrapper<>();
         if (taskId != null) wrapper.eq(InvStockLog::getTaskId, taskId);
         if (medicineId != null) wrapper.eq(InvStockLog::getMedicineId, medicineId);
+        if (medicineName != null && !medicineName.isEmpty()) wrapper.like(InvStockLog::getMedicineName, medicineName);
         if (operatorId != null && !operatorId.isEmpty()) wrapper.eq(InvStockLog::getOperatorId, operatorId);
         if (startTime != null && !startTime.isEmpty()) wrapper.ge(InvStockLog::getCreatedAt, startTime);
         if (endTime != null && !endTime.isEmpty()) wrapper.le(InvStockLog::getCreatedAt, endTime);

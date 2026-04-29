@@ -52,9 +52,11 @@ public class EqDeviceController {
     @GetMapping
     public ApiResponse<IPage<EqDevice>> list(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer deviceType,
+            @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(deviceService.list(keyword, page, size));
+        return ApiResponse.success(deviceService.list(keyword, deviceType, status, page, size));
     }
 
     @DeleteMapping("/{id}")

@@ -67,7 +67,7 @@ class ConsumeRecordControllerTest {
 
     @Test
     void shouldPass_whenValidToken() throws Exception {
-        when(consumeRecordService.pageQuery(any(), any(), any(), any(), any(), any(Integer.class), any(Integer.class)))
+        when(consumeRecordService.pageQuery(any(), any(), any(), any(), any(), any(), any(Integer.class), any(Integer.class)))
                 .thenReturn(new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>());
 
         mockMvc.perform(get("/api/v1/inv/consume/list")

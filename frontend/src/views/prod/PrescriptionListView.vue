@@ -38,7 +38,7 @@
           />
         </el-form-item>
         <el-form-item label="搜索">
-          <el-input v-model="search.keyword" placeholder="姓名/电话" clearable style="width: 160px" />
+          <el-input v-model="search.keyword" placeholder="姓名" clearable style="width: 160px" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery">查询</el-button>
@@ -53,7 +53,6 @@
           </template>
         </el-table-column>
         <el-table-column prop="patientName" label="患者姓名" />
-        <el-table-column prop="patientPhone" label="患者电话" />
         <el-table-column prop="patientType" label="患者类型" width="100">
           <template #default="{ row }">
             <el-tag>{{ row.patientType === 1 ? '住院' : '门诊' }}</el-tag>
@@ -105,9 +104,6 @@
         <el-form-item label="患者姓名" required>
           <el-input v-model="form.patientName" />
         </el-form-item>
-        <el-form-item label="患者电话">
-          <el-input v-model="form.patientPhone" />
-        </el-form-item>
         <el-form-item label="患者类型" required>
           <el-radio-group v-model="form.patientType">
             <el-radio :label="0">门诊</el-radio>
@@ -138,7 +134,6 @@
         <el-descriptions-item label="处方号">{{ detail?.id }}</el-descriptions-item>
         <el-descriptions-item label="医院">{{ detail?.hospitalName || hospitalMap[detail?.hospitalId!] || '-' }}</el-descriptions-item>
         <el-descriptions-item label="患者">{{ detail?.patientName }}</el-descriptions-item>
-        <el-descriptions-item label="电话">{{ detail?.patientPhone || '-' }}</el-descriptions-item>
         <el-descriptions-item label="类型">{{ detail?.patientType === 1 ? '住院' : '门诊' }}</el-descriptions-item>
         <el-descriptions-item label="方案">{{ detail?.decoctSchemeName || schemeMap[detail?.schemeId!] || '-' }}</el-descriptions-item>
         <el-descriptions-item label="付数">{{ detail?.repetition }}</el-descriptions-item>
@@ -172,7 +167,6 @@ interface Prescription {
   hospitalId?: number
   hospitalName?: string
   patientName: string
-  patientPhone?: string
   patientType: number
   schemeId?: number
   decoctSchemeName?: string

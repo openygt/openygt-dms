@@ -14,7 +14,7 @@ public interface EqDeviceService {
 
     EqDevice getOrCreate(String deviceCode, int defaultType);
 
-    IPage<EqDevice> list(String keyword, int page, int size);
+    IPage<EqDevice> list(String keyword, Integer deviceType, String status, int page, int size);
 
     EqDevice create(EqDevice device);
 

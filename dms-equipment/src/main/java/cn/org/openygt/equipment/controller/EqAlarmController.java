@@ -10,10 +10,7 @@ import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Collections;
@@ -34,15 +31,31 @@ public class EqAlarmController {
     @GetMapping
     public ApiResponse<Page<AlarmLogDTO>> list(
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "50") int size,
+            @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) String deviceCode,
-            @RequestParam(required = false) String alarmType) {
+            @RequestParam(required = false) String alarmType,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime) {
 
         // 1. 构建告警查询条件
         QueryWrapper<EqDeviceAlarm> alarmWrapper = new QueryWrapper<>();
         alarmWrapper.orderByDesc("created_at");
         if (alarmType != null && !alarmType.isEmpty()) {
             alarmWrapper.eq("alarm_type", alarmType);
+        }
+        if (startTime != null && !startTime.isEmpty()) {
+            alarmWrapper.ge("created_at", startTime);
+        }
+        if (endTime != null && !endTime.isEmpty()) {
+            alarmWrapper.le("created_at", endTime);
+        }
+        if ("PENDING".equals(status)) {
+            alarmWrapper.eq("is_resolved", 0);
+        } else if ("RESOLVED".equals(status)) {
+            alarmWrapper.eq("is_resolved", 1);
+        } else if ("CANCELLED".equals(status)) {
+            alarmWrapper.eq("is_resolved", 2);
         }
 
         // 2. 如需按 deviceCode 筛选，先查设备ID
@@ -78,7 +91,16 @@ public class EqAlarmController {
             dto.setAlarmType(alarm.getAlarmType());
             dto.setAlarmLevel(alarm.getAlarmLevel());
             dto.setContent(alarm.getMessage());
-            dto.setStatus(alarm.getIsResolved() != null && alarm.getIsResolved() == 1 ? "RESOLVED" : "PENDING");
+            Integer isResolved = alarm.getIsResolved();
+            String statusStr;
+            if (isResolved != null && isResolved == 1) {
+                statusStr = "RESOLVED";
+            } else if (isResolved != null && isResolved == 2) {
+                statusStr = "CANCELLED";
+            } else {
+                statusStr = "PENDING";
+            }
+            dto.setStatus(statusStr);
             dto.setCreatedAt(alarm.getCreatedAt());
             return dto;
         }).collect(Collectors.toList());
@@ -86,5 +108,29 @@ public class EqAlarmController {
         Page<AlarmLogDTO> resultPage = new Page<>(alarmPage.getCurrent(), alarmPage.getSize(), alarmPage.getTotal());
         resultPage.setRecords(dtoList);
         return ApiResponse.success(resultPage);
+    }
+
+    @PutMapping("/{id}/resolve")
+    public ApiResponse<Void> resolveAlarm(@PathVariable Long id) {
+        EqDeviceAlarm alarm = alarmMapper.selectById(id);
+        if (alarm == null) {
+            return ApiResponse.error(404, "告警记录不存在");
+        }
+        alarm.setIsResolved(1);
+        alarm.setResolvedAt(java.time.LocalDateTime.now());
+        alarmMapper.updateById(alarm);
+        return ApiResponse.success();
+    }
+
+    @PutMapping("/{id}/cancel")
+    public ApiResponse<Void> cancelAlarm(@PathVariable Long id) {
+        EqDeviceAlarm alarm = alarmMapper.selectById(id);
+        if (alarm == null) {
+            return ApiResponse.error(404, "告警记录不存在");
+        }
+        alarm.setIsResolved(2);
+        alarm.setResolvedAt(java.time.LocalDateTime.now());
+        alarmMapper.updateById(alarm);
+        return ApiResponse.success();
     }
 }

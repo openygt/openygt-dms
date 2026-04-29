@@ -3,7 +3,7 @@
     <el-aside class="sidebar" width="var(--ygt-sidebar-width)">
       <div class="sidebar-logo">
         <el-icon :size="24" color="#fff"><FirstAidKit /></el-icon>
-        <span>OpenYGT DMS</span>
+        <span>智能煎药管理系统</span>
       </div>
       <el-menu
         :default-active="$route.path"
