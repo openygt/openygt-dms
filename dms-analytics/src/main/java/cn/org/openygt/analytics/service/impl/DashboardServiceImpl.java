@@ -27,19 +27,36 @@ public class DashboardServiceImpl implements DashboardService {
     public DashboardRealtimeDTO getRealtime() {
         DashboardRealtimeDTO dto = new DashboardRealtimeDTO();
 
-        // 今日任务统计
+        // 今日任务核心KPI统计
         Map<String, Object> taskStats = statMapper.selectTodayTaskStats();
-        dto.setTodayTotalTasks(toLong(taskStats.get("total")));
-        dto.setTodayCompletedTasks(toLong(taskStats.get("completed")));
-        dto.setTodayInProgressTasks(toLong(taskStats.get("inProgress")));
-        dto.setTodayPendingTasks(toLong(taskStats.get("pending")));
+        long todayTotal = toLong(taskStats.get("total"));
+        long todayEnded = toLong(taskStats.get("ended"));
+        long todayInProgress = toLong(taskStats.get("inProgress"));
+        long todayAlerting = toLong(taskStats.get("alertingNow"));
+        long todayAlerted = toLong(taskStats.get("everAlerted"));
+
+        dto.setTodayTotalTasks(todayTotal);
+        dto.setTodayEndedTasks(todayEnded);
+        dto.setTodayInProgressTasks(todayInProgress);
+        dto.setTodayAlertingTasks(todayAlerting);
+        dto.setTodayAlertedTasks(todayAlerted);
+
+        // 昨日任务统计（用于趋势）
+        Map<String, Object> yestStats = statMapper.selectYesterdayTaskStats();
+        long yestTotal = yestStats != null ? toLong(yestStats.get("total")) : 0L;
+        long yestEnded = yestStats != null ? toLong(yestStats.get("ended")) : 0L;
+        long yestInProgress = yestStats != null ? toLong(yestStats.get("inProgress")) : 0L;
+        long yestAlerting = yestStats != null ? toLong(yestStats.get("alertingNow")) : 0L;
+
+        // 计算趋势（环比百分比，保留整数）
+        dto.setTaskTrend(calcTrend(yestTotal, todayTotal));
+        dto.setEndedTrend(calcTrend(yestEnded, todayEnded));
+        dto.setInProgressTrend(calcTrend(yestInProgress, todayInProgress));
+        dto.setAlertingTrend(calcTrend(yestAlerting, todayAlerting));
 
         // 设备统计
         dto.setOnlineDeviceCount(statMapper.selectOnlineDeviceCount());
         dto.setOfflineDeviceCount(statMapper.selectOfflineDeviceCount());
-
-        // 告警统计
-        dto.setActiveAlarmCount(statMapper.selectActiveAlarmCount());
 
         // 质检统计
         Long inspectionCount = statMapper.selectTodayInspectionCount();
@@ -62,6 +79,10 @@ public class DashboardServiceImpl implements DashboardService {
             Object type = m.get("device_type");
             d.setDeviceType(type != null ? type.toString() : "未知");
             d.setCount(toLong(m.get("count")));
+            d.setOnlineCount(toLong(m.get("onlineCount")));
+            d.setOnlineWithAlarmCount(toLong(m.get("onlineWithAlarmCount")));
+            d.setOfflineCount(toLong(m.get("offlineCount")));
+            d.setTotalCount(toLong(m.get("count")));
             return d;
         }).collect(Collectors.toList()));
 
@@ -76,5 +97,19 @@ public class DashboardServiceImpl implements DashboardService {
         } catch (NumberFormatException e) {
             return 0L;
         }
+    }
+
+    /**
+     * 计算环比趋势（百分比整数）。<br>
+     * 昨日为0时返回0（避免"从无到有"显示夸张的100%）。
+     */
+    private Integer calcTrend(long yesterday, long today) {
+        if (yesterday == 0) {
+            return 0;
+        }
+        return BigDecimal.valueOf(today - yesterday)
+                .multiply(BigDecimal.valueOf(100))
+                .divide(BigDecimal.valueOf(yesterday), 0, RoundingMode.HALF_UP)
+                .intValue();
     }
 }

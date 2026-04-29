@@ -15,6 +15,10 @@ public class Hospital {
     private Long id;
     private String name;
     private String code;
+    private String contactPerson;
+    private String phone;
+    private String address;
+    private Integer status;
     private String tenantId;
     @TableLogic
     private Integer deleted;

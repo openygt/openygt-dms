@@ -16,6 +16,11 @@ spring:
     host: 127.0.0.1
     port: 6379
     password: Yaoliangxin1
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 20MB
 
 mybatis-plus:
   configuration:
@@ -40,14 +45,6 @@ jwt:
 pda:
   upload:
     path: uploads/pda
-
-# 文件上传限制
-spring:
-  servlet:
-    multipart:
-      enabled: true
-      max-file-size: 5MB
-      max-request-size: 20MB
 
 logging:
   level:

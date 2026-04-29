@@ -8,5 +8,7 @@ public class DeviceTypeDistributionDTO {
     private String typeName;
     private Long count;
     private Long onlineCount;
+    private Long onlineWithAlarmCount;
+    private Long offlineCount;
     private Long totalCount;
 }

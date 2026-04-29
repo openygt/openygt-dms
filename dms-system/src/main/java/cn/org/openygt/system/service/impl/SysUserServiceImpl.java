@@ -101,7 +101,8 @@ public class SysUserServiceImpl implements SysUserService {
             throw new IllegalStateException("用户已被禁用");
         }
         List<String> roles = userMapper.selectRoleCodesByUserId(user.getId());
-        String token = JwtUtil.generateToken(user.getId(), user.getUsername(), roles);
+        List<String> permissions = userMapper.selectPermissionCodesByUserId(user.getId());
+        String token = JwtUtil.generateToken(user.getId(), user.getUsername(), roles, permissions);
         TokenResponse response = new TokenResponse();
         response.setToken(token);
         response.setTokenType("Bearer");

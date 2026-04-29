@@ -203,8 +203,10 @@ class TaskServiceImplTest {
     void testBindDeviceSuccess() {
         Task task = mockTask(1L, "待泡药");
         when(taskMapper.selectByIdForUpdate(1L)).thenReturn(task);
-        when(equipmentService.getDeviceId("D001")).thenReturn(10L);
-        when(equipmentService.getDeviceStatus(10L)).thenReturn("idle");
+        EqDeviceDTO lockedDevice = new EqDeviceDTO();
+        lockedDevice.setId(10L);
+        lockedDevice.setStatus("idle");
+        when(equipmentService.lockDeviceByCode("D001")).thenReturn(lockedDevice);
 
         Task result = taskService.bindDevice(1L, "D001");
 
@@ -218,8 +220,10 @@ class TaskServiceImplTest {
     void testBindDeviceAlreadyRunning() {
         Task task = mockTask(1L, "待泡药");
         when(taskMapper.selectByIdForUpdate(1L)).thenReturn(task);
-        when(equipmentService.getDeviceId("D001")).thenReturn(10L);
-        when(equipmentService.getDeviceStatus(10L)).thenReturn("running");
+        EqDeviceDTO lockedDevice = new EqDeviceDTO();
+        lockedDevice.setId(10L);
+        lockedDevice.setStatus("running");
+        when(equipmentService.lockDeviceByCode("D001")).thenReturn(lockedDevice);
 
         assertThrows(IllegalStateException.class, () ->
                 taskService.bindDevice(1L, "D001"));
@@ -368,8 +372,10 @@ class TaskServiceImplTest {
         // startWrap 需要 selectByIdForUpdate + 设备绑定
         Task wrapReady = mockTask(1L, "待包装");
         when(taskMapper.selectByIdForUpdate(1L)).thenReturn(wrapReady);
-        when(equipmentService.getDeviceId("D001")).thenReturn(20L);
-        when(equipmentService.getDeviceStatus(20L)).thenReturn("idle");
+        EqDeviceDTO lockedDevice = new EqDeviceDTO();
+        lockedDevice.setId(20L);
+        lockedDevice.setStatus("idle");
+        when(equipmentService.lockDeviceByCode("D001")).thenReturn(lockedDevice);
 
         Task result = taskService.endPour(1L, "OP01");
 
@@ -394,8 +400,10 @@ class TaskServiceImplTest {
     void testStartWrapSuccess() {
         Task task = mockTask(1L, "待包装");
         when(taskMapper.selectByIdForUpdate(1L)).thenReturn(task);
-        when(equipmentService.getDeviceId("W001")).thenReturn(20L);
-        when(equipmentService.getDeviceStatus(20L)).thenReturn("idle");
+        EqDeviceDTO lockedDevice = new EqDeviceDTO();
+        lockedDevice.setId(20L);
+        lockedDevice.setStatus("idle");
+        when(equipmentService.lockDeviceByCode("W001")).thenReturn(lockedDevice);
 
         Task result = taskService.startWrap(1L, "W001", "OP01");
 
@@ -412,8 +420,10 @@ class TaskServiceImplTest {
     void testStartWrapDeviceNotIdle() {
         Task task = mockTask(1L, "待包装");
         when(taskMapper.selectByIdForUpdate(1L)).thenReturn(task);
-        when(equipmentService.getDeviceId("W001")).thenReturn(20L);
-        when(equipmentService.getDeviceStatus(20L)).thenReturn("running");
+        EqDeviceDTO lockedDevice = new EqDeviceDTO();
+        lockedDevice.setId(20L);
+        lockedDevice.setStatus("running");
+        when(equipmentService.lockDeviceByCode("W001")).thenReturn(lockedDevice);
 
         assertThrows(IllegalStateException.class, () -> taskService.startWrap(1L, "W001", "OP01"));
     }
@@ -659,7 +669,7 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("queryTasks: 按状态和设备 ID 分页查询")
     void testQueryTasksWithFilters() {
-        taskService.queryTasks("煎药中", 10L, 1, 20);
+        taskService.queryTasks("煎药中", 10L, null, null, null, null, null, 1, 20);
 
         verify(taskMapper).selectPage(any(), any());
     }

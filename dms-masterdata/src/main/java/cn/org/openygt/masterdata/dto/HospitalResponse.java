@@ -14,8 +14,12 @@ import java.time.LocalDateTime;
 public class HospitalResponse implements Serializable {
 
     private Long id;
-    private String name;
-    private String code;
+    private String hospitalName;
+    private String hospitalCode;
+    private String contactName;
+    private String contactPhone;
+    private String address;
+    private Integer status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

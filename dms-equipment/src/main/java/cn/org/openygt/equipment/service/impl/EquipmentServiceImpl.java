@@ -249,6 +249,13 @@ public class EquipmentServiceImpl implements EquipmentService {
     }
 
     @Override
+    @Transactional
+    public EqDeviceDTO lockDeviceByCode(String deviceCode) {
+        EqDevice device = deviceMapper.findByDeviceCodeForUpdate(deviceCode);
+        return toDTO(device);
+    }
+
+    @Override
     public TemperatureThresholdDTO getEffectiveThreshold(Long deviceId) {
         EqDevice device = deviceMapper.selectById(deviceId);
         if (device == null) {

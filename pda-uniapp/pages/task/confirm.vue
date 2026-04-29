@@ -1,87 +1,167 @@
 <template>
-  <view class="container">
-    <view class="task-info">
-      <text class="task-code">任务：{{ taskId }}</text>
-      <text class="current-step">当前工序：{{ currentStep }}</text>
+  <view class="confirm-page">
+    <!-- 任务信息卡 -->
+    <view class="task-info-card">
+      <view class="task-row">
+        <text class="task-label">任务编号</text>
+        <text class="task-value ygt-num">{{ taskId || '-' }}</text>
+      </view>
+      <view class="task-row">
+        <text class="task-label">当前状态</text>
+        <text class="task-status" :class="currentStatusClass">{{ currentStep }}</text>
+      </view>
     </view>
-    
-    <view class="step-selector">
-      <text class="section-title">选择要确认的工序</text>
-      <view class="step-grid">
-        <view 
-          class="step-item" 
-          v-for="step in steps" 
-          :key="step.value"
-          :class="{ active: selectedStep === step.value, disabled: step.disabled }"
-          @click="selectStep(step)"
-        >
-          <text class="step-icon">{{ step.icon }}</text>
-          <text class="step-name">{{ step.label }}</text>
+
+    <!-- 工序时间线 -->
+    <view class="step-timeline">
+      <view
+        v-for="(step, idx) in steps"
+        :key="step.value"
+        class="step-node"
+        :class="{
+          'step-done': step.completed,
+          'step-current': step.current,
+          'step-pending': !step.completed && !step.current
+        }"
+        @click="selectStep(step)"
+      >
+        <!-- 连接线 -->
+        <view class="step-line" v-if="idx > 0"></view>
+
+        <view class="step-left">
+          <view class="step-circle">
+            <text class="step-check" v-if="step.completed">✓</text>
+            <text class="step-num" v-else>{{ idx + 1 }}</text>
+          </view>
+        </view>
+
+        <view class="step-content">
+          <text class="step-label">{{ step.label }}</text>
+          <text class="step-time ygt-num" v-if="step.completedAt">
+            {{ step.completedAt }}
+          </text>
+          <text class="step-hint" v-else-if="step.current">点击确认</text>
+        </view>
+
+        <view class="step-arrow" v-if="step.current">
+          <text class="arrow-icon">›</text>
         </view>
       </view>
     </view>
-    
-    <view class="remark-area">
-      <text class="label">备注（可选）</text>
-      <textarea 
-        class="remark-input" 
+
+    <!-- 备注 -->
+    <view class="remark-card" v-if="selectedStep">
+      <text class="remark-label">备注（{{ selectedLabel }}）</text>
+      <textarea
+        class="remark-input"
         v-model="remark"
-        placeholder="请输入备注信息"
+        placeholder="请输入备注信息，如异常说明、操作人等"
         maxlength="200"
       />
+      <text class="remark-count">{{ remark.length }}/200</text>
     </view>
-    
+
+    <!-- 提交 -->
     <view class="submit-area">
-      <button 
-        class="submit-btn" 
-        :loading="loading"
+      <button
+        class="ygt-btn-primary submit-btn"
         :disabled="loading || !selectedStep"
+        :loading="loading"
         @click="handleConfirm"
       >
-        确认工序
+        <text v-if="!loading">确认工序</text>
+        <text v-else>提交中...</text>
       </button>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { post } from '../../utils/request.js'
 
 const taskId = ref('')
-const currentStep = ref('煎药')
+const currentStep = ref('待泡药')
 const selectedStep = ref('')
 const remark = ref('')
 const loading = ref(false)
 
 const steps = ref([
-  { value: 'START_SOAK', label: '开始泡药', icon: '💧', disabled: false },
-  { value: 'END_SOAK', label: '结束泡药', icon: '✓', disabled: false },
-  { value: 'START_DECOCT', label: '开始煎药', icon: '🔥', disabled: false },
-  { value: 'END_DECOCT', label: '结束煎药', icon: '✓', disabled: false },
-  { value: 'START_POUR', label: '开始出液', icon: '🍵', disabled: false },
-  { value: 'END_POUR', label: '结束出液', icon: '✓', disabled: false },
-  { value: 'START_PACKAGE', label: '开始包装', icon: '📦', disabled: false },
-  { value: 'END_PACKAGE', label: '结束包装', icon: '✓', disabled: false },
-  { value: 'LABEL_CONFIRM', label: '贴标确认', icon: '🏷', disabled: false }
+  { value: 'START_SOAK', label: '开始泡药', completed: false, current: true, completedAt: '' },
+  { value: 'END_SOAK', label: '结束泡药', completed: false, current: false, completedAt: '' },
+  { value: 'START_DECOCT', label: '开始煎药', completed: false, current: false, completedAt: '' },
+  { value: 'END_DECOCT', label: '结束煎药', completed: false, current: false, completedAt: '' },
+  { value: 'START_POUR', label: '开始出液', completed: false, current: false, completedAt: '' },
+  { value: 'END_POUR', label: '结束出液', completed: false, current: false, completedAt: '' },
+  { value: 'START_PACKAGE', label: '开始包装', completed: false, current: false, completedAt: '' },
+  { value: 'END_PACKAGE', label: '结束包装', completed: false, current: false, completedAt: '' },
+  { value: 'LABEL_CONFIRM', label: '贴标确认', completed: false, current: false, completedAt: '' }
 ])
+
+const selectedLabel = computed(() => {
+  const s = steps.value.find(s => s.value === selectedStep.value)
+  return s ? s.label : ''
+})
+
+const currentStatusClass = computed(() => {
+  const current = steps.value.find(s => s.current)
+  if (!current) return 'status-done'
+  if (current.value.includes('START')) return 'status-running'
+  return 'status-pending'
+})
 
 onLoad((options) => {
   taskId.value = options.taskId || ''
+  // 模拟加载任务进度
+  loadTaskProgress()
 })
 
+function loadTaskProgress() {
+  // 实际应从后端加载当前进度，这里模拟部分已完成
+  const mockCompleted = 2
+  steps.value.forEach((step, idx) => {
+    if (idx < mockCompleted) {
+      step.completed = true
+      step.current = false
+      step.completedAt = '08:' + String(30 + idx * 15).padStart(2, '0')
+    } else if (idx === mockCompleted) {
+      step.completed = false
+      step.current = true
+    } else {
+      step.completed = false
+      step.current = false
+    }
+  })
+  // 更新当前状态文本
+  const current = steps.value.find(s => s.current)
+  if (current) currentStep.value = current.label
+}
+
 function selectStep(step) {
-  if (step.disabled) return
+  if (step.completed) {
+    uni.showToast({ title: '该工序已完成', icon: 'none' })
+    return
+  }
+  // 只能确认当前工序
+  if (!step.current) {
+    const currentIdx = steps.value.findIndex(s => s.current)
+    const targetIdx = steps.value.indexOf(step)
+    if (targetIdx > currentIdx) {
+      uni.showToast({ title: '请先完成前置工序', icon: 'none' })
+      return
+    }
+  }
   selectedStep.value = step.value
 }
 
 async function handleConfirm() {
   if (!selectedStep.value) {
-    uni.showToast({ title: '请选择工序', icon: 'none' })
+    if (uni.$ygtFeedback) uni.$ygtFeedback.warning()
+    uni.showToast({ title: '请选择要确认的工序', icon: 'none' })
     return
   }
-  
+
   loading.value = true
   try {
     await post('/task/confirm', {
@@ -89,130 +169,281 @@ async function handleConfirm() {
       stepType: selectedStep.value,
       remark: remark.value
     })
+
+    if (uni.$ygtFeedback) uni.$ygtFeedback.success()
     uni.showToast({ title: '确认成功', icon: 'success' })
+
+    // 更新本地状态
+    const step = steps.value.find(s => s.value === selectedStep.value)
+    if (step) {
+      step.completed = true
+      step.current = false
+      const now = new Date()
+      step.completedAt = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
+
+      // 激活下一个
+      const nextIdx = steps.value.indexOf(step) + 1
+      if (nextIdx < steps.value.length) {
+        steps.value[nextIdx].current = true
+        currentStep.value = steps.value[nextIdx].label
+      } else {
+        currentStep.value = '已完成'
+      }
+    }
+    selectedStep.value = ''
+    remark.value = ''
+
     setTimeout(() => {
       uni.navigateBack()
-    }, 1000)
+    }, 1200)
   } catch (e) {
     console.error('Confirm failed:', e)
+    if (uni.$ygtFeedback) uni.$ygtFeedback.error()
+    uni.showToast({ title: '确认失败：' + (e.message || '请重试'), icon: 'none' })
   } finally {
     loading.value = false
   }
 }
 </script>
 
-<style scoped>
-.container {
+<style lang="scss" scoped>
+@import "../../uni.scss";
+
+.confirm-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding: 30rpx;
+  padding: 24rpx;
 }
 
-.task-info {
+/* 任务信息卡 */
+.task-info-card {
   background: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 30rpx;
+  border-radius: $ygt-radius-lg;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: $ygt-shadow-card;
 }
 
-.task-code {
-  font-size: 30rpx;
-  font-weight: bold;
-  color: #333;
+.task-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16rpx 0;
 }
 
-.current-step {
-  font-size: 26rpx;
-  color: #667eea;
-  margin-top: 10rpx;
+.task-row:first-child {
+  border-bottom: 1rpx solid $ygt-gray-100;
 }
 
-.step-selector {
+.task-label {
+  font-size: 28rpx;
+  color: $ygt-gray-500;
+}
+
+.task-value {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: $ygt-gray-900;
+}
+
+.task-status {
+  font-size: 28rpx;
+  font-weight: 500;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+}
+
+.status-pending {
+  background: rgba(0, 102, 204, 0.1);
+  color: $ygt-primary;
+}
+
+.status-running {
+  background: rgba(217, 119, 6, 0.1);
+  color: $ygt-warning;
+}
+
+.status-done {
+  background: rgba(22, 163, 74, 0.1);
+  color: $ygt-success;
+}
+
+/* 工序时间线 */
+.step-timeline {
   background: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 30rpx;
+  border-radius: $ygt-radius-lg;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: $ygt-shadow-card;
 }
 
-.section-title {
+.step-node {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  padding: 24rpx;
+  border-radius: $ygt-radius-md;
+  margin-bottom: 8rpx;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.step-node:last-child {
+  margin-bottom: 0;
+}
+
+.step-node.step-done {
+  background: rgba(22, 163, 74, 0.04);
+}
+
+.step-node.step-current {
+  background: rgba(0, 102, 204, 0.06);
+  border: 2rpx solid rgba(0, 102, 204, 0.3);
+  animation: pulse-current 2s ease-in-out infinite;
+}
+
+.step-node.step-pending {
+  opacity: 0.6;
+}
+
+@keyframes pulse-current {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 102, 204, 0.15); }
+  50% { box-shadow: 0 0 0 8rpx rgba(0, 102, 204, 0); }
+}
+
+/* 连接线 */
+.step-line {
+  position: absolute;
+  left: 56rpx;
+  top: -16rpx;
+  width: 2rpx;
+  height: 32rpx;
+  background: $ygt-gray-200;
+}
+
+.step-done .step-line {
+  background: $ygt-success;
+}
+
+.step-circle {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: $ygt-gray-200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.step-done .step-circle {
+  background: $ygt-success;
+}
+
+.step-current .step-circle {
+  background: $ygt-primary;
+}
+
+.step-check {
+  font-weight: 500;
+  font-size: 36rpx;
+  color: #fff;
+}
+
+.step-num {
   font-size: 30rpx;
-  font-weight: bold;
-  margin-bottom: 20rpx;
+  font-weight: 600;
+  color: $ygt-gray-500;
 }
 
-.step-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20rpx;
+.step-done .step-num,
+.step-current .step-num {
+  color: #fff;
 }
 
-.step-item {
+.step-content {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  padding: 30rpx 0;
-  background: #f8f8f8;
-  border-radius: 12rpx;
-  border: 2rpx solid transparent;
+  gap: 4rpx;
 }
 
-.step-item.active {
-  border-color: #667eea;
-  background: #e8eaf6;
+.step-label {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: $ygt-gray-900;
 }
 
-.step-item.disabled {
-  opacity: 0.4;
-}
-
-.step-icon {
-  font-size: 48rpx;
-  margin-bottom: 10rpx;
-}
-
-.step-name {
+.step-time {
   font-size: 24rpx;
-  color: #666;
+  color: $ygt-success;
 }
 
-.remark-area {
+.step-hint {
+  font-size: 24rpx;
+  color: $ygt-primary;
+}
+
+.step-arrow {
+  flex-shrink: 0;
+}
+
+.arrow-icon {
+  font-weight: 500;
+  font-size: 32rpx;
+  color: $ygt-primary;
+}
+
+/* 备注 */
+.remark-card {
   background: #fff;
-  border-radius: 16rpx;
-  padding: 30rpx;
-  margin-bottom: 30rpx;
+  border-radius: $ygt-radius-lg;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: $ygt-shadow-card;
 }
 
-.label {
+.remark-label {
   font-size: 28rpx;
-  color: #666;
-  margin-bottom: 10rpx;
+  font-weight: 500;
+  color: $ygt-gray-900;
+  margin-bottom: 16rpx;
   display: block;
 }
 
 .remark-input {
   width: 100%;
-  height: 160rpx;
-  background: #f5f5f5;
-  border-radius: 10rpx;
+  height: 180rpx;
+  background: $ygt-gray-50;
+  border-radius: $ygt-radius-md;
   padding: 20rpx;
   font-size: 28rpx;
   box-sizing: border-box;
+  border: 2rpx solid $ygt-gray-200;
 }
 
+.remark-count {
+  font-size: 22rpx;
+  color: $ygt-gray-500;
+  text-align: right;
+  margin-top: 8rpx;
+  display: block;
+}
+
+/* 提交 */
 .submit-area {
-  padding: 0 0 40rpx;
+  padding: 24rpx 0 40rpx;
 }
 
 .submit-btn {
-  height: 100rpx;
-  line-height: 100rpx;
-  background: #667eea;
-  color: #fff;
+  width: 100%;
+  height: 96rpx;
+  line-height: 96rpx;
   font-size: 32rpx;
-  border-radius: 12rpx;
 }
 
 .submit-btn[disabled] {
-  background: #a0a0a0;
+  background: $ygt-gray-300;
+  color: $ygt-gray-500;
 }
 </style>

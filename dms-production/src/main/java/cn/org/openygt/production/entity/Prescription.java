@@ -1,6 +1,7 @@
 package cn.org.openygt.production.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -15,8 +16,13 @@ public class Prescription {
     private Long id;
     private String tenantId;
     private Long hospitalId;
+    @TableField(exist = false)
+    private String hospitalName;
+    @TableField(exist = false)
+    private String status;
     private String prescriptionNumber;
     private String patientName;
+    private String patientPhone;
     private Integer patientType;
     private String outpatientNo;
     private String inpatientNo;

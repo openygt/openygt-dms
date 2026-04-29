@@ -35,6 +35,16 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.size"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="pagination.total"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+        style="margin-top: 16px; justify-content: flex-end;"
+      />
       <el-empty v-if="!loading && list.length === 0" description="暂无方案" />
     </el-card>
 
@@ -94,17 +104,33 @@ const loading = ref(false)
 const dialogVisible = ref(false)
 const search = ref({ name: '' })
 const form = ref<Partial<Scheme>>({ status: 1 })
+const pagination = ref({ page: 1, size: 10, total: 0 })
 
 async function fetchData() {
   loading.value = true
   try {
-    const params: any = {}
+    const params: any = {
+      page: pagination.value.page,
+      size: pagination.value.size
+    }
     if (search.value.name) params.keyword = search.value.name
     const res: any = await request.get('/v1/md/schemes', { params })
     list.value = res.data?.records || []
+    pagination.value.total = res.data?.total || 0
   } finally {
     loading.value = false
   }
+}
+
+function handleSizeChange(val: number) {
+  pagination.value.size = val
+  pagination.value.page = 1
+  fetchData()
+}
+
+function handlePageChange(val: number) {
+  pagination.value.page = val
+  fetchData()
 }
 
 function openDialog(row?: Scheme) {

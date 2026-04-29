@@ -27,7 +27,7 @@
         <el-col :span="6">
           <el-card shadow="hover">
             <div style="text-align: center">
-              <div style="font-size: 24px; font-weight: bold; color: #409EFF">{{ summary.totalTasks }}</div>
+              <div style="font-size: 24px; font-weight: bold; color: var(--ygt-primary-500)">{{ summary.totalTasks }}</div>
               <div style="color: #999; margin-top: 8px">总任务数</div>
             </div>
           </el-card>

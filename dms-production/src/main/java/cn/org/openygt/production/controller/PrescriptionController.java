@@ -32,8 +32,12 @@ public class PrescriptionController {
     public ApiResponse<IPage<Prescription>> list(
             @RequestParam(required = false) Long hospitalId,
             @RequestParam(required = false) Integer patientType,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.success(prescriptionService.list(hospitalId, patientType, page, size));
+        return ApiResponse.success(prescriptionService.list(hospitalId, patientType, status, keyword, startTime, endTime, page, size));
     }
 }

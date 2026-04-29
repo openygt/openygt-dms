@@ -18,6 +18,12 @@ public interface EqDeviceMapper extends BaseMapper<EqDevice> {
     EqDevice findByDeviceCode(@Param("deviceCode") String deviceCode);
 
     /**
+     * 悲观锁查询设备（必须在 @Transactional 内调用）。
+     */
+    @Select("SELECT * FROM eq_device WHERE device_code = #{deviceCode} AND deleted = 0 FOR UPDATE")
+    EqDevice findByDeviceCodeForUpdate(@Param("deviceCode") String deviceCode);
+
+    /**
      * 悲观锁查询设备。
      * 必须在 @Transactional 内调用。
      * SQLite 忽略 FOR UPDATE（不报错），仅 MySQL 生产环境生效。

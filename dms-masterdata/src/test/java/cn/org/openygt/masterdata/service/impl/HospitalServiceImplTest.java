@@ -110,7 +110,7 @@ class HospitalServiceImplTest {
         Page<Hospital> pageResult = new Page<>(1, 10);
         when(hospitalMapper.selectPage(any(Page.class), any())).thenReturn(pageResult);
 
-        IPage<Hospital> result = hospitalService.list(1, 10);
+        IPage<Hospital> result = hospitalService.list(null, 1, 10);
 
         assertNotNull(result);
         assertEquals(1, result.getCurrent());

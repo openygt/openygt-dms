@@ -13,11 +13,19 @@ import java.util.Map;
 public interface DashboardStatMapper {
 
     @Select("SELECT COUNT(*) as total, " +
+            "SUM(CASE WHEN status = '已完成' OR status = '已部分完成' THEN 1 ELSE 0 END) as ended, " +
+            "SUM(CASE WHEN status != '已完成' AND status != '已部分完成' THEN 1 ELSE 0 END) as inProgress, " +
+            "SUM(CASE WHEN is_exception = 1 AND status != '已完成' AND status != '已部分完成' THEN 1 ELSE 0 END) as alertingNow, " +
+            "SUM(CASE WHEN is_exception = 1 THEN 1 ELSE 0 END) as everAlerted " +
+            "FROM prod_task WHERE deleted = 0 AND DATE(created_at) = CURDATE()")
+    Map<String, Object> selectTodayTaskStats();
+
+    @Select("SELECT COUNT(*) as total, " +
             "SUM(CASE WHEN status = '已完成' OR status = '已部分完成' THEN 1 ELSE 0 END) as completed, " +
             "SUM(CASE WHEN status IN ('泡药中','煎药中','出液中','包装中') THEN 1 ELSE 0 END) as inProgress, " +
             "SUM(CASE WHEN status = '待泡药' THEN 1 ELSE 0 END) as pending " +
-            "FROM prod_task WHERE deleted = 0 AND DATE(created_at) = CURDATE()")
-    Map<String, Object> selectTodayTaskStats();
+            "FROM prod_task WHERE deleted = 0 AND DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)")
+    Map<String, Object> selectYesterdayTaskStats();
 
     @Select("SELECT COUNT(*) as online FROM eq_device WHERE deleted = 0 AND status = 'ONLINE'")
     Long selectOnlineDeviceCount();
@@ -34,6 +42,13 @@ public interface DashboardStatMapper {
     @Select("SELECT status, COUNT(*) as count FROM prod_task WHERE deleted = 0 GROUP BY status")
     java.util.List<Map<String, Object>> selectTaskStatusDistribution();
 
-    @Select("SELECT device_type, COUNT(*) as count FROM eq_device WHERE deleted = 0 GROUP BY device_type")
+    @Select("SELECT device_type, " +
+            "COUNT(*) as count, " +
+            "SUM(CASE WHEN status = 'ONLINE' THEN 1 ELSE 0 END) as onlineCount, " +
+            "SUM(CASE WHEN status = 'ONLINE' AND id IN (" +
+            "  SELECT device_id FROM eq_device_alarm WHERE is_resolved = 0 AND deleted = 0" +
+            ") THEN 1 ELSE 0 END) as onlineWithAlarmCount, " +
+            "SUM(CASE WHEN status = 'OFFLINE' OR status = 'FAULT' THEN 1 ELSE 0 END) as offlineCount " +
+            "FROM eq_device WHERE deleted = 0 GROUP BY device_type")
     java.util.List<Map<String, Object>> selectDeviceTypeDistribution();
 }
