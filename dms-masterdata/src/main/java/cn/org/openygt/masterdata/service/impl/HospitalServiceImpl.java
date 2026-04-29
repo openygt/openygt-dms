@@ -3,6 +3,7 @@ package cn.org.openygt.masterdata.service.impl;
 import cn.org.openygt.masterdata.entity.Hospital;
 import cn.org.openygt.masterdata.mapper.HospitalMapper;
 import cn.org.openygt.masterdata.service.HospitalService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Service;
@@ -46,8 +47,13 @@ public class HospitalServiceImpl implements HospitalService {
     }
 
     @Override
-    public IPage<Hospital> list(int page, int size) {
-        return hospitalMapper.selectPage(new Page<>(page, size), null);
+    public IPage<Hospital> list(String keyword, int page, int size) {
+        LambdaQueryWrapper<Hospital> wrapper = new LambdaQueryWrapper<>();
+        if (keyword != null && !keyword.isEmpty()) {
+            wrapper.like(Hospital::getName, keyword);
+        }
+        wrapper.orderByDesc(Hospital::getCreatedAt);
+        return hospitalMapper.selectPage(new Page<>(page, size), wrapper);
     }
 
     @Override

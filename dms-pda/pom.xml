@@ -25,6 +25,10 @@
         </dependency>
         <dependency>
             <groupId>cn.org.openygt</groupId>
+            <artifactId>dms-system</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cn.org.openygt</groupId>
             <artifactId>dms-production</artifactId>
         </dependency>
         <dependency>

@@ -1,19 +1,43 @@
 <template>
   <div class="login-container">
-    <el-card style="width: 400px">
-      <h2 style="text-align: center; margin-bottom: 24px">OpenYGT DMS V2 登录</h2>
-      <el-form :model="form" @keyup.enter="handleLogin">
+    <div class="login-card">
+      <h1 class="login-title">煎药管理系统</h1>
+      <p class="login-subtitle">OpenYGT · 开源中药煎药一体化平台</p>
+      <el-form :model="form" @keyup.enter="handleLogin" ref="formRef">
         <el-form-item>
-          <el-input v-model="form.username" placeholder="用户名" prefix-icon="User" />
+          <el-input 
+            v-model="form.username" 
+            placeholder="用户名"
+            size="large"
+            :prefix-icon="User" 
+          />
         </el-form-item>
         <el-form-item>
-          <el-input v-model="form.password" type="password" placeholder="密码" prefix-icon="Lock" />
+          <el-input 
+            v-model="form.password" 
+            type="password"
+            placeholder="密码"
+            size="large"
+            show-password
+            :prefix-icon="Lock" 
+          />
         </el-form-item>
-        <el-form-item>
-          <el-button type="primary" style="width: 100%" :loading="loading" @click="handleLogin">登录</el-button>
-        </el-form-item>
+        <el-button 
+          :loading="loading" 
+          type="primary"
+          size="large"
+          style="width: 100%; margin-top: 8px"
+          @click="handleLogin"
+        >
+          登录
+        </el-button>
       </el-form>
-    </el-card>
+      <div class="login-footer">
+        <span>v2.0.0</span>
+        <span>·</span>
+        <a href="https://gitee.com/openygt" target="_blank">开源代码</a>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -22,6 +46,7 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
+import { User, Lock } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -48,10 +73,60 @@ async function handleLogin() {
 
 <style scoped>
 .login-container {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+  
+  /* 新背景:深蓝单色 + 草本绿点缀 */
+  background: 
+    radial-gradient(ellipse at top right, var(--ygt-herb-700) 0%, transparent 50%),
+    radial-gradient(ellipse at bottom left, var(--ygt-primary-700) 0%, transparent 50%),
+    var(--ygt-primary-900);
+}
+
+.login-card {
+  width: 420px;
+  padding: var(--ygt-space-8);
+  background: var(--ygt-bg-surface);
+  border-radius: var(--ygt-radius-lg);
+  box-shadow: var(--ygt-shadow-lg);
+}
+
+.login-title {
+  font-size: var(--ygt-text-2xl);
+  font-weight: var(--ygt-fw-semibold);
+  color: var(--ygt-text-primary);
+  text-align: center;
+  margin-bottom: var(--ygt-space-2);
+}
+
+.login-subtitle {
+  font-size: var(--ygt-text-sm);
+  color: var(--ygt-text-tertiary);
+  text-align: center;
+  margin-bottom: var(--ygt-space-8);
+}
+
+.login-footer {
+  margin-top: var(--ygt-space-8);
+  text-align: center;
+  font-size: var(--ygt-text-xs);
+  color: var(--ygt-text-tertiary);
+}
+
+.login-footer a {
+  color: var(--ygt-primary-500);
+}
+
+.login-footer a:hover {
+  color: var(--ygt-primary-600);
+}
+
+@media (max-width: 768px) {
+  .login-card {
+    width: 90%;
+    padding: var(--ygt-space-6);
+  }
 }
 </style>

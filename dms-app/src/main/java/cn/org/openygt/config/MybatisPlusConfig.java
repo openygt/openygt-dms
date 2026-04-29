@@ -12,13 +12,24 @@ import org.springframework.context.annotation.Configuration;
 import java.time.LocalDateTime;
 
 @Configuration
-@MapperScan("cn.org.openygt.**.mapper")
+@MapperScan({
+        "cn.org.openygt.system.mapper",
+        "cn.org.openygt.masterdata.mapper",
+        "cn.org.openygt.equipment.mapper",
+        "cn.org.openygt.inventory.mapper",
+        "cn.org.openygt.production.mapper",
+        "cn.org.openygt.quality.mapper",
+        "cn.org.openygt.print.mapper",
+        "cn.org.openygt.analytics.mapper",
+        "cn.org.openygt.rbac.mapper",
+        "cn.org.openygt.pda.mapper"
+})
 public class MybatisPlusConfig implements MetaObjectHandler {
 
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.SQLITE));
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
         return interceptor;
     }
 

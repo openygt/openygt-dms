@@ -49,6 +49,12 @@ public interface EquipmentService {
 
     Long getDeviceId(String deviceCode);
 
+    /**
+     * 悲观锁查询设备（必须在 @Transactional 内调用）。
+     * MySQL 下通过 FOR UPDATE 实现分布式锁，替代单机 synchronized。
+     */
+    EqDeviceDTO lockDeviceByCode(String deviceCode);
+
     // ---- 统计扩展（评审03新增，供 analytics 使用） ----
 
     Integer getOnlineDeviceCount();

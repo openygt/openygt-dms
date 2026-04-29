@@ -7,6 +7,7 @@ import cn.org.openygt.equipment.service.EqDeviceAlarmService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +45,7 @@ public class HeartbeatCheckScheduler {
     private static final String CFG_RUNNING_TIMEOUT = "device.heartbeat.running.timeout";
 
     @Scheduled(fixedRate = 30000)
+    @SchedulerLock(name = "heartbeatCheck", lockAtMostFor = "2m", lockAtLeastFor = "10s")
     @Transactional
     public void checkHeartbeatTimeout() {
         LocalDateTime now = LocalDateTime.now();

@@ -62,6 +62,17 @@ public class DecoctSchemeController {
         if (entity == null) return null;
         SchemeResponse resp = new SchemeResponse();
         BeanUtils.copyProperties(entity, resp);
+        resp.setSchemeName(entity.getName());
+        resp.setSchemeCode(entity.getCode());
+        resp.setDecoctTime(entity.getHeatingTime());
+        resp.setSoakTime(entity.getPreHeatingTime());
+        if (entity.getAlarmLowTemp() != null && entity.getAlarmHighTemp() != null) {
+            resp.setTempRange(entity.getAlarmLowTemp() + "~" + entity.getAlarmHighTemp() + "°C");
+        } else {
+            resp.setTempRange("-");
+        }
+        resp.setRemark(entity.getDescription());
+        resp.setStatus(1);
         return resp;
     }
 }

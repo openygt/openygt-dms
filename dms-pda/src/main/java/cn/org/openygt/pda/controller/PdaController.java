@@ -1,6 +1,8 @@
 package cn.org.openygt.pda.controller;
 
 import cn.org.openygt.common.dto.ApiResponse;
+import cn.org.openygt.common.dto.LoginRequest;
+import cn.org.openygt.common.dto.TokenResponse;
 import cn.org.openygt.common.util.JwtUtil;
 import cn.org.openygt.pda.dto.PdaLoginRequest;
 import cn.org.openygt.pda.dto.PdaPhotoUploadRequest;
@@ -14,6 +16,7 @@ import cn.org.openygt.pda.service.PdaReviewPhotoService;
 import cn.org.openygt.production.entity.Task;
 import cn.org.openygt.production.service.TaskService;
 import cn.org.openygt.rbac.annotation.RequiresPermissions;
+import cn.org.openygt.system.service.SysUserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -35,13 +38,25 @@ public class PdaController {
     private final PdaReviewPhotoService reviewPhotoService;
     private final PdaOperationLogService operationLogService;
     private final TaskService taskService;
+    private final SysUserService sysUserService;
 
     @PostMapping("/auth/login")
     public ApiResponse<Map<String, Object>> login(@RequestBody @Validated PdaLoginRequest request,
                                                    HttpServletRequest httpRequest) {
-        // TODO: 集成用户认证服务校验密码
-        Long userId = 1L;
-        String token = JwtUtil.generateToken(userId, request.getUserCode(), null, null);
+        // 调用系统用户服务进行认证（userCode 映射为 username）
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setUsername(request.getUserCode());
+        loginRequest.setPassword(request.getPassword());
+        TokenResponse tokenResponse;
+        try {
+            tokenResponse = sysUserService.login(loginRequest);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            log.warn("PDA登录失败: userCode={}, error={}", request.getUserCode(), e.getMessage());
+            return ApiResponse.error(401, e.getMessage());
+        }
+
+        Long userId = tokenResponse.getUserId();
+        String token = tokenResponse.getToken();
 
         PdaLoginRecord record = loginRecordService.login(
                 userId, request.getUserCode(), request.getDeviceId(),
@@ -62,14 +77,14 @@ public class PdaController {
     }
 
     @PostMapping("/auth/logout")
-    @RequiresPermissions("pda:logout")
+    @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
     public ApiResponse<Boolean> logout(@RequestAttribute("userId") Long userId) {
         boolean success = loginRecordService.logoutByUserId(userId);
         return ApiResponse.success(success);
     }
 
     @GetMapping("/task/{barcode}")
-    @RequiresPermissions("pda:task:query")
+    @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
     public ApiResponse<Map<String, Object>> queryTaskByBarcode(@PathVariable String barcode) {
         Task task = taskService.getByBarcode(barcode);
         if (task == null) {
@@ -90,7 +105,7 @@ public class PdaController {
     }
 
     @PostMapping("/task/confirm")
-    @RequiresPermissions("pda:task:confirm")
+    @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
     public ApiResponse<Boolean> confirmTaskStep(@RequestBody @Validated PdaTaskConfirmRequest request,
                                                  @RequestAttribute("userId") Long userId,
                                                  @RequestAttribute("username") String username,
@@ -148,7 +163,7 @@ public class PdaController {
     }
 
     @PostMapping("/photo/upload")
-    @RequiresPermissions("pda:photo:upload")
+    @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
     public ApiResponse<PdaReviewPhoto> uploadPhoto(@RequestBody @Validated PdaPhotoUploadRequest request,
                                                     @RequestAttribute("userId") Long userId,
                                                     @RequestAttribute("username") String username) {
@@ -160,13 +175,13 @@ public class PdaController {
     }
 
     @GetMapping("/photo/task/{taskId}")
-    @RequiresPermissions("pda:photo:query")
+    @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
     public ApiResponse<List<PdaReviewPhoto>> listPhotosByTask(@PathVariable Long taskId) {
         return ApiResponse.success(reviewPhotoService.listByTaskId(taskId));
     }
 
     @PostMapping("/log/operate")
-    @RequiresPermissions("pda:log:operate")
+    @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
     public ApiResponse<PdaOperationLog> logOperation(@RequestBody PdaOperationLog log,
                                                       @RequestAttribute("userId") Long userId,
                                                       @RequestAttribute("username") String username,
@@ -179,14 +194,14 @@ public class PdaController {
     }
 
     @GetMapping("/log/recent")
-    @RequiresPermissions("pda:log:query")
+    @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
     public ApiResponse<List<PdaOperationLog>> listRecentLogs(@RequestAttribute("userId") Long userId,
                                                               @RequestParam(defaultValue = "20") Integer limit) {
         return ApiResponse.success(operationLogService.listRecentByUserId(userId, limit));
     }
 
     @GetMapping("/online/list")
-    @RequiresPermissions("pda:login:query")
+    @RequiresPermissions({"ROLE_LEADER", "ROLE_DIRECTOR", "ROLE_ADMIN"})
     public ApiResponse<List<PdaLoginRecord>> listOnlineUsers() {
         return ApiResponse.success(loginRecordService.listAllOnline());
     }

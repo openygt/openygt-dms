@@ -38,8 +38,5 @@ public class EqDevice extends BaseEntity {
     private String labelMode;
     private Long currentSchemeId;
     private Long groupId;
-    private Date alertTime;
-    private String resolvedBy;
-    private Date resolvedAt;
     private LocalDateTime lastHeartbeat;
 }

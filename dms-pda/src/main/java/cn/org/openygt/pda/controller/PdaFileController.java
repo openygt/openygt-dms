@@ -33,7 +33,7 @@ public class PdaFileController {
     private String uploadPath;
 
     @PostMapping("/file/upload")
-    @RequiresPermissions("pda:file:upload")
+    @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
     public ApiResponse<Map<String, Object>> uploadFile(
             @RequestParam("file") MultipartFile file,
             @RequestParam("taskId") Long taskId,

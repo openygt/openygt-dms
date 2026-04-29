@@ -165,19 +165,20 @@ public class TaskServiceImpl implements TaskService {
         if (task == null) throw new IllegalArgumentException("任务不存在");
         assertStatus(task, "待包装");
         Long deviceId;
-        // 设备绑定使用设备级同步（SQLite 下无真正行锁，MySQL 迁移后配合 FOR UPDATE 使用）
-        synchronized (deviceCode.intern()) {
-            deviceId = equipmentService.getDeviceId(deviceCode);
-            if (deviceId == null) {
-                EqDeviceDTO created = equipmentService.getOrCreateDevice(deviceCode, 2);
-                deviceId = created != null ? created.getId() : equipmentService.getDeviceId(deviceCode);
+        // 使用数据库悲观锁（FOR UPDATE）替代单机 synchronized，支持分布式部署
+        EqDeviceDTO lockedDevice = equipmentService.lockDeviceByCode(deviceCode);
+        if (lockedDevice == null) {
+            EqDeviceDTO created = equipmentService.getOrCreateDevice(deviceCode, 2);
+            lockedDevice = equipmentService.lockDeviceByCode(deviceCode);
+            if (lockedDevice == null) {
+                throw new IllegalStateException("设备创建后锁定失败: " + deviceCode);
             }
-            String deviceStatus = equipmentService.getDeviceStatus(deviceId);
-            if (!"idle".equalsIgnoreCase(deviceStatus)) {
-                throw new IllegalStateException("包装机不是空闲状态，无法绑定");
-            }
-            equipmentService.updateDeviceStatus(deviceId, "running");
         }
+        deviceId = lockedDevice.getId();
+        if (!"idle".equalsIgnoreCase(lockedDevice.getStatus()) && !"IDLE".equals(lockedDevice.getStatus())) {
+            throw new IllegalStateException("包装机不是空闲状态，无法绑定");
+        }
+        equipmentService.updateDeviceStatus(deviceId, "running");
         transition(task, "包装中", operatorId, "开始包装，绑定包装机: " + deviceCode);
         task.setPackageDeviceId(deviceId);
         task.setWrapStartTime(LocalDateTime.now());
@@ -312,19 +313,20 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalStateException("任务状态不允许绑定设备");
         }
         Long deviceId;
-        // 设备绑定使用设备级同步（SQLite 下无真正行锁，MySQL 迁移后配合 FOR UPDATE 使用）
-        synchronized (deviceCode.intern()) {
-            deviceId = equipmentService.getDeviceId(deviceCode);
-            if (deviceId == null) {
-                equipmentService.getOrCreateDevice(deviceCode, 1);
-                deviceId = equipmentService.getDeviceId(deviceCode);
+        // 使用数据库悲观锁（FOR UPDATE）替代单机 synchronized，支持分布式部署
+        EqDeviceDTO lockedDevice = equipmentService.lockDeviceByCode(deviceCode);
+        if (lockedDevice == null) {
+            equipmentService.getOrCreateDevice(deviceCode, 1);
+            lockedDevice = equipmentService.lockDeviceByCode(deviceCode);
+            if (lockedDevice == null) {
+                throw new IllegalStateException("设备创建后锁定失败: " + deviceCode);
             }
-            String deviceStatus = equipmentService.getDeviceStatus(deviceId);
-            if ("running".equals(deviceStatus)) {
-                throw new IllegalStateException("设备已被占用");
-            }
-            equipmentService.updateDeviceStatus(deviceId, "running");
         }
+        deviceId = lockedDevice.getId();
+        if ("running".equalsIgnoreCase(lockedDevice.getStatus()) || "RUNNING".equals(lockedDevice.getStatus())) {
+            throw new IllegalStateException("设备已被占用");
+        }
+        equipmentService.updateDeviceStatus(deviceId, "running");
         String fromStatus = task.getStatus();
         task.setDecoctDeviceId(deviceId);
         task.setStatus("待煎药".equals(fromStatus) ? "煎药中" : "待煎药");
@@ -334,12 +336,18 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public IPage<Task> queryTasks(String status, Long deviceId, int page, int size) {
+    public IPage<Task> queryTasks(String status, Long deviceId, Long id, Long prescriptionId,
+                                  String operatorId, String startTime, String endTime, int page, int size) {
         LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
         if (status != null && !status.isEmpty()) wrapper.eq(Task::getStatus, status);
         if (deviceId != null) {
             wrapper.and(w -> w.eq(Task::getDecoctDeviceId, deviceId).or().eq(Task::getPackageDeviceId, deviceId));
         }
+        if (id != null) wrapper.eq(Task::getId, id);
+        if (prescriptionId != null) wrapper.eq(Task::getPrescriptionId, prescriptionId);
+        if (operatorId != null && !operatorId.isEmpty()) wrapper.eq(Task::getOperatorId, operatorId);
+        if (startTime != null && !startTime.isEmpty()) wrapper.ge(Task::getCreatedAt, startTime);
+        if (endTime != null && !endTime.isEmpty()) wrapper.le(Task::getCreatedAt, endTime);
         wrapper.orderByDesc(Task::getCreatedAt);
         return taskMapper.selectPage(new Page<>(page, size), wrapper);
     }

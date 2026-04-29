@@ -1,0 +1,61 @@
+/* ============================================
+ * OpenYGT Global Styles
+ * ============================================ */
+
+/* 移除默认 margin/padding */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ygt-gray-300);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ygt-gray-400);
+}
+
+/* 选中色 */
+::selection {
+  background: var(--ygt-primary-200);
+  color: var(--ygt-primary-900);
+}
+
+/* 链接 */
+a {
+  color: var(--ygt-primary-500);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--ygt-primary-600);
+}
+
+/* 按钮触摸优化 */
+button, .el-button {
+  min-height: 32px;
+  min-width: 32px;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .el-dialog {
+    width: 90% !important;
+    margin-top: 10vh !important;
+  }
+  .el-message-box {
+    width: 90% !important;
+  }
+  .el-table {
+    font-size: 13px;
+  }
+}

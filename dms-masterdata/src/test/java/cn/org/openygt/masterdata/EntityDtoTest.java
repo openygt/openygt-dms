@@ -147,15 +147,19 @@ class EntityDtoTest {
     void hospitalResponse_shouldSupportAllFields() {
         HospitalResponse r = new HospitalResponse();
         r.setId(1L);
-        r.setName("医院响应");
-        r.setCode("H999");
+        r.setHospitalName("医院响应");
+        r.setHospitalCode("H999");
+        r.setContactName("联系人");
+        r.setContactPhone("13800138000");
+        r.setAddress("测试地址");
+        r.setStatus(1);
         LocalDateTime now = LocalDateTime.now();
         r.setCreatedAt(now);
         r.setUpdatedAt(now);
 
         assertEquals(1L, r.getId().longValue());
-        assertEquals("医院响应", r.getName());
-        assertEquals("H999", r.getCode());
+        assertEquals("医院响应", r.getHospitalName());
+        assertEquals("H999", r.getHospitalCode());
         assertNotNull(r.toString());
     }
 }
