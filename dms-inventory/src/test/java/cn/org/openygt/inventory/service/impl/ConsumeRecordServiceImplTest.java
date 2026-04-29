@@ -162,7 +162,7 @@ class ConsumeRecordServiceImplTest {
         Page<InvStockLog> pageResult = new Page<>();
         pageResult.setRecords(Collections.emptyList());
         when(invStockLogMapper.selectPage(any(Page.class), any())).thenReturn(pageResult);
-        IPage<ConsumeRecordDTO> result = consumeRecordService.pageQuery(null, null, null, null, null, 1, 10);
+        IPage<ConsumeRecordDTO> result = consumeRecordService.pageQuery(null, null, null, null, null, null, 1, 10);
         assertNotNull(result);
         verify(invStockLogMapper).selectPage(any(Page.class), any());
     }

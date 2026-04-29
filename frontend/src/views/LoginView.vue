@@ -1,8 +1,8 @@
 <template>
   <div class="login-container">
     <div class="login-card">
-      <h1 class="login-title">煎药管理系统</h1>
-      <p class="login-subtitle">OpenYGT · 开源中药煎药一体化平台</p>
+      <h1 class="login-title">智能煎药管理系统</h1>
+      <p class="login-subtitle">OpenYGT · 开源医共体</p>
       <el-form :model="form" @keyup.enter="handleLogin" ref="formRef">
         <el-form-item>
           <el-input 
@@ -33,9 +33,7 @@
         </el-button>
       </el-form>
       <div class="login-footer">
-        <span>v2.0.0</span>
-        <span>·</span>
-        <a href="https://gitee.com/openygt" target="_blank">开源代码</a>
+        <a href="http://dms.openygt.net.cn" target="_blank">v1.0.0 开源代码</a>
       </div>
     </div>
   </div>
