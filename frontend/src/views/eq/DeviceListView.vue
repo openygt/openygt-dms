@@ -26,11 +26,10 @@
         <el-form-item label="状态">
           <el-select v-model="search.status" placeholder="全部" clearable style="width: 120px">
             <el-option label="空闲" value="IDLE" />
-            <el-option label="在线" value="ONLINE" />
-            <el-option label="离线" value="OFFLINE" />
+            <el-option label="运行中" value="BUSY" />
             <el-option label="故障" value="FAULT" />
             <el-option label="维护中" value="MAINTENANCE" />
-            <el-option label="运行中" value="BUSY" />
+            <el-option label="离线" value="OFFLINE" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -93,13 +92,14 @@
     </el-card>
 
     <!-- 新增/编辑 -->
-    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑设备' : '新增设备'" width="500px">
-      <el-form :model="form" label-width="100px">
+    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑设备' : '新增设备'" width="560px">
+      <el-form :model="form" label-width="110px">
+        <!-- 通用基础信息 -->
         <el-form-item label="设备编码" required>
-          <el-input v-model="form.deviceCode" :disabled="!!form.id" />
+          <el-input v-model="form.deviceCode" :disabled="!!form.id" placeholder="如 DECOCT_001" />
         </el-form-item>
         <el-form-item label="设备名称" required>
-          <el-input v-model="form.name" />
+          <el-input v-model="form.name" placeholder="如 煎药机001" />
         </el-form-item>
         <el-form-item label="设备类型" required>
           <el-select v-model="form.deviceType" placeholder="请选择" style="width: 100%">
@@ -115,9 +115,103 @@
             <el-option v-for="g in groups" :key="g.id" :label="g.groupName" :value="g.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="温度阈值">
-          <el-input-number v-model="form.alarmMaxTemp" :min="0" :max="200" :precision="1" />
-          <span style="margin-left: 8px; color: var(--ygt-text-tertiary)">°C</span>
+
+        <!-- 通信配置（通用） -->
+        <el-divider content-position="left">通信配置</el-divider>
+        <el-form-item label="IP地址">
+          <el-input v-model="form.ipAddress" placeholder="192.168.1.100" />
+        </el-form-item>
+        <el-form-item label="端口">
+          <el-input-number v-model="form.port" :min="1" :max="65535" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="协议类型">
+          <el-select v-model="form.protocolType" placeholder="请选择" clearable style="width: 100%">
+            <el-option label="TCP" value="TCP" />
+            <el-option label="MQTT" value="MQTT" />
+            <el-option label="HTTP" value="HTTP" />
+            <el-option label="Serial" value="SERIAL" />
+          </el-select>
+        </el-form-item>
+
+        <!-- 煎药机专属 -->
+        <template v-if="form.deviceType === 1">
+          <el-divider content-position="left">煎药机参数</el-divider>
+          <el-form-item label="煎煮模式">
+            <el-select v-model="form.decoctMode" placeholder="请选择" clearable style="width: 100%">
+              <el-option label="常压煎药" :value="1" />
+              <el-option label="高压煎药" :value="2" />
+              <el-option label="减压煎药" :value="3" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="压力模式">
+            <el-select v-model="form.pressureMode" placeholder="请选择" clearable style="width: 100%">
+              <el-option label="无压力" :value="0" />
+              <el-option label="低压" :value="1" />
+              <el-option label="中压" :value="2" />
+              <el-option label="高压" :value="3" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="文火时间">
+            <el-input-number v-model="form.slowFireTime" :min="0" :max="120" style="width: 100%" />
+            <span style="margin-left: 8px; color: var(--ygt-text-tertiary)">分钟</span>
+          </el-form-item>
+          <el-form-item label="温度阈值">
+            <el-input-number v-model="form.alarmMinTemp" :min="0" :max="200" :precision="1" placeholder="下限" />
+            <span style="margin: 0 8px">~</span>
+            <el-input-number v-model="form.alarmMaxTemp" :min="0" :max="200" :precision="1" placeholder="上限" />
+            <span style="margin-left: 8px; color: var(--ygt-text-tertiary)">°C</span>
+          </el-form-item>
+        </template>
+
+        <!-- 包装机专属 -->
+        <template v-if="form.deviceType === 2">
+          <el-divider content-position="left">包装机参数</el-divider>
+          <el-form-item label="包装容量">
+            <el-input-number v-model="form.packageCapacity" :min="50" :max="500" :step="10" style="width: 100%" />
+            <span style="margin-left: 8px; color: var(--ygt-text-tertiary)">ml/袋</span>
+          </el-form-item>
+          <el-form-item label="温度阈值">
+            <el-input-number v-model="form.alarmMaxTemp" :min="0" :max="200" :precision="1" />
+            <span style="margin-left: 8px; color: var(--ygt-text-tertiary)">°C</span>
+          </el-form-item>
+        </template>
+
+        <!-- 标签打印机专属 -->
+        <template v-if="form.deviceType === 3">
+          <el-divider content-position="left">标签打印参数</el-divider>
+          <el-form-item label="标签模式">
+            <el-select v-model="form.labelMode" placeholder="请选择" clearable style="width: 100%">
+              <el-option label="处方标签" value="PRESCRIPTION" />
+              <el-option label="药品标签" value="MEDICINE" />
+              <el-option label="物流标签" value="LOGISTICS" />
+            </el-select>
+          </el-form-item>
+        </template>
+
+        <!-- PDA专属 -->
+        <template v-if="form.deviceType === 5">
+          <el-divider content-position="left">PDA参数</el-divider>
+          <el-form-item label="通信ID">
+            <el-input v-model="form.communicationId" placeholder="PDA设备通信识别码" />
+          </el-form-item>
+        </template>
+
+        <!-- 资产信息（通用） -->
+        <el-divider content-position="left">资产信息</el-divider>
+        <el-form-item label="厂商">
+          <el-input v-model="form.manufacturer" placeholder="如 东华原" />
+        </el-form-item>
+        <el-form-item label="型号">
+          <el-input v-model="form.modelNum" placeholder="如 YJD20" />
+        </el-form-item>
+        <el-form-item label="序列号">
+          <el-input v-model="form.serialNumber" />
+        </el-form-item>
+        <el-form-item label="安装日期">
+          <el-date-picker v-model="form.installDate" type="date" placeholder="选择日期" style="width: 100%" value-format="YYYY-MM-DD" />
+        </el-form-item>
+        <el-form-item label="保修到期">
+          <el-date-picker v-model="form.warrantyExpire" type="date" placeholder="选择日期" style="width: 100%" value-format="YYYY-MM-DD" />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" rows="2" />
@@ -235,6 +329,23 @@ interface Device {
   status: string
   currentTemp?: number
   alarmMaxTemp?: number
+  alarmMinTemp?: number
+  ipAddress?: string
+  port?: number
+  protocolType?: string
+  decoctMode?: number
+  pressureMode?: number
+  slowFireTime?: number
+  packageCapacity?: number
+  packageNum?: number
+  labelMode?: string
+  communicationId?: string
+  manufacturer?: string
+  modelNum?: string
+  serialNumber?: string
+  installDate?: string
+  warrantyExpire?: string
+  detailStatus?: string
   lastHeartbeat?: string
   remark?: string
   createdAt?: string
@@ -329,16 +440,17 @@ function deviceTypeTag(type?: number) {
 
 function statusText(status?: string) {
   const map: Record<string, string> = {
-    'IDLE': '空闲', 'ONLINE': '在线', 'OFFLINE': '离线',
+    'IDLE': '空闲', 'ONLINE': '空闲', 'OFFLINE': '离线',
     'FAULT': '故障', 'MAINTENANCE': '维护中', 'BUSY': '运行中'
   }
   return map[status || ''] || status || '未知'
 }
 
 function statusTag(status?: string) {
-  if (status === 'ONLINE' || status === 'IDLE') return 'success'
+  if (status === 'IDLE' || status === 'ONLINE') return 'success'
   if (status === 'OFFLINE') return 'info'
   if (status === 'BUSY') return 'warning'
+  if (status === 'MAINTENANCE') return 'warning'
   return 'danger'
 }
 
