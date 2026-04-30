@@ -5,9 +5,9 @@
       :key="step.value || idx"
       class="timeline-node"
       :class="{
-        'node-done': step.status === 'done',
-        'node-current': step.status === 'current',
-        'node-pending': step.status === 'pending'
+        'node-done': step.status === 'done' || step.completed === true,
+        'node-current': step.status === 'current' || step.current === true,
+        'node-pending': step.status === 'pending' || (!step.completed && !step.current)
       }"
       @click="$emit('click', step, idx)"
     >
@@ -16,7 +16,7 @@
 
       <view class="node-marker">
         <view class="node-circle">
-          <text class="node-check" v-if="step.status === 'done'">✓</text>
+          <text class="node-check" v-if="step.status === 'done' || step.completed === true">✓</text>
           <text class="node-num" v-else>{{ idx + 1 }}</text>
         </view>
       </view>
@@ -24,7 +24,7 @@
       <view class="node-body">
         <text class="node-label">{{ step.label }}</text>
         <text class="node-time ygt-num" v-if="step.time">{{ step.time }}</text>
-        <text class="node-hint" v-else-if="step.status === 'current'">{{ step.hint || '待确认' }}</text>
+        <text class="node-hint" v-else-if="step.status === 'current' || step.current === true">{{ step.hint || '待确认' }}</text>
       </view>
 
       <view class="node-extra" v-if="$slots.extra">

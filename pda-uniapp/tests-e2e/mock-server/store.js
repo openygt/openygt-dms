@@ -194,7 +194,13 @@ function buildStepTimeline(task) {
 
 function buildNextAction(task) {
   const currentStepType = STATUS_CURRENT_STEP[task.status]
-  if (!currentStepType) return null
+  if (!currentStepType) {
+    // 特殊状态处理
+    if (task.status === 'INSPECTING') {
+      return { text: '交接签字', stepType: 'HANDOVER_SIGN', needDevice: false, needPhoto: false }
+    }
+    return null
+  }
   const stepDef = TASK_STEPS.find(s => s.value === currentStepType)
   return {
     text: stepDef.label,

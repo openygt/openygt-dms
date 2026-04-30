@@ -56,6 +56,24 @@
         "navigationBarTitleText": "我的",
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/device/bind",
+      "style": {
+        "navigationBarTitleText": "设备绑定"
+      }
+    },
+    {
+      "path": "pages/handover/sign",
+      "style": {
+        "navigationBarTitleText": "交接签字"
+      }
+    },
+    {
+      "path": "pages/reprint/index",
+      "style": {
+        "navigationBarTitleText": "重打印"
+      }
     }
   ],
   "globalStyle": {
