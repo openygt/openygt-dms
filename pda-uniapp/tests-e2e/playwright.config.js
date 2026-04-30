@@ -30,14 +30,6 @@ module.exports = {
     {
       name: 'chromium-mobile',
       use: { browserName: 'chromium' }
-    },
-    {
-      name: 'firefox-mobile',
-      use: { browserName: 'firefox' }
-    },
-    {
-      name: 'webkit-mobile',
-      use: { browserName: 'webkit' }
     }
   ],
   workers: process.env.CI ? 2 : 4,

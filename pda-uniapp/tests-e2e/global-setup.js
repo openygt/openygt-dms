@@ -6,6 +6,17 @@ const { spawn } = require('child_process')
 const path = require('path')
 
 module.exports = async function globalSetup() {
+  // 如果 Mock Server 已经在运行，跳过启动
+  try {
+    const health = await fetch('http://localhost:3456/health')
+    if (health.ok) {
+      console.log('[E2E] Mock Server 已在运行，跳过启动')
+      return
+    }
+  } catch (e) {
+    // 未运行，继续启动
+  }
+
   console.log('[E2E] 启动 PDA Mock Server...')
 
   const mockServerPath = path.join(__dirname, 'mock-server', 'server.js')
