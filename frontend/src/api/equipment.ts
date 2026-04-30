@@ -82,23 +82,23 @@ export function getTemperatureAggregation(deviceId: string | number, interval: s
 
 // ========== 煎药方案 ==========
 export function getSchemeList(params?: any) {
-  return request.get('/v1/md/decoct-schemes', { params })
+  return request.get('/v1/md/schemes', { params })
 }
 
 export function getSchemeById(id: number | string) {
-  return request.get(`/v1/md/decoct-schemes/${id}`)
+  return request.get(`/v1/md/schemes/${id}`)
 }
 
 export function createScheme(data: any) {
-  return request.post('/v1/md/decoct-schemes', data)
+  return request.post('/v1/md/schemes', data)
 }
 
 export function updateScheme(id: number | string, data: any) {
-  return request.put(`/v1/md/decoct-schemes/${id}`, data)
+  return request.put(`/v1/md/schemes/${id}`, data)
 }
 
 export function deleteScheme(id: number | string) {
-  return request.delete(`/v1/md/decoct-schemes/${id}`)
+  return request.delete(`/v1/md/schemes/${id}`)
 }
 
 // ========== 煎药过程追溯 ==========

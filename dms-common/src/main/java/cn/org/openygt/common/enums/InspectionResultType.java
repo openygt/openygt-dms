@@ -9,7 +9,8 @@ public enum InspectionResultType {
     PASS("通过"),
     CONCESSION("让步放行"),
     REWORK("返工"),
-    SCRAP("报废");
+    SCRAP("报废"),
+    FAIL("不合格");
 
     private final String label;
 
