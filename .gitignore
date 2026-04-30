@@ -33,3 +33,11 @@ tasks/.watchdog.state
 *.tmp
 *.swp
 *~
+
+# === AI 工具残留（永不提交）===
+.codex
+.cursorrules
+.claude
+.kimi
+.ai-context
+*.ai.md
