@@ -29,6 +29,14 @@ const router = createRouter({
         { path: 'logs', name: 'Logs', component: () => import('@/views/system/SysLogView.vue'), meta: { title: '系统日志', perm: 'sys:log:list' } },
         { path: 'hospitals', name: 'Hospitals', component: () => import('@/views/md/HospitalListView.vue'), meta: { title: '医院管理', perm: 'md:hospital:list' } },
         { path: 'schemes', name: 'Schemes', component: () => import('@/views/md/SchemeListView.vue'), meta: { title: '煎煮方案', perm: 'md:scheme:list' } },
+        { path: 'traces', name: 'Traces', component: () => import('@/views/eq/DeviceTraceView.vue'), meta: { title: '煎药追溯' } },
+        { path: 'traces/:prescriptionNo', name: 'TraceDetail', component: () => import('@/views/eq/DeviceTraceDetailView.vue'), meta: { title: '追溯详情' } },
+        { path: 'eq-dashboard', name: 'EqDashboard', component: () => import('@/views/eq/DashboardView.vue'), meta: { title: '数据看板' } },
+        { path: 'workload', name: 'Workload', component: () => import('@/views/eq/WorkloadStatView.vue'), meta: { title: '工作量统计' } },
+        { path: 'water-formulas', name: 'WaterFormulas', component: () => import('@/views/eq/WaterFormulaView.vue'), meta: { title: '加水量公式' } },
+        { path: 'prescription-defaults', name: 'PrescriptionDefaults', component: () => import('@/views/eq/PrescriptionDefaultView.vue'), meta: { title: '处方默认设置' } },
+        { path: 'device-utilization', name: 'DeviceUtilization', component: () => import('@/views/eq/DeviceUtilizationView.vue'), meta: { title: '设备利用率' } },
+        { path: 'alarm-configs', name: 'AlarmConfigs', component: () => import('@/views/monitor/AlarmConfigView.vue'), meta: { title: '告警配置' } },
       ]
     },
     { path: '/:pathMatch(.*)*', redirect: '/' }

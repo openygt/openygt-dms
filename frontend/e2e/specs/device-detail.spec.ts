@@ -35,7 +35,7 @@ test.describe('设备详情页', () => {
     }
     expect(count).toBeGreaterThan(0)
     const pauseBtn = buttons.filter({ hasText: '暂停' })
-    if (await pauseBtn.count() > 0) {
+    if (await pauseBtn.count() > 0 && await pauseBtn.isEnabled()) {
       await pauseBtn.click()
     }
   })
