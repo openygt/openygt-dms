@@ -1,14 +1,11 @@
 package cn.org.openygt.masterdata.dto;
 
-import lombok.Data;
-
 import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 
 /**
  * 煎药方案更新请求。
  */
-@Data
 public class SchemeUpdateRequest {
 
     @NotBlank(message = "方案名称不能为空")
@@ -22,4 +19,150 @@ public class SchemeUpdateRequest {
     private Integer preHeatingTime;
     private Integer postHeatingTime;
     private String description;
+
+    // Phase 1 扩展字段
+    private Integer firstDecoctTime;
+    private Integer secondDecoctTime;
+    private Integer soakTime;
+    private Integer drainTime;
+    private Integer packageTime;
+    private Integer lateAddRemindTime;
+    private BigDecimal tempRiseRate;
+    private Integer isDefault;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Integer getSchemeType() {
+        return schemeType;
+    }
+
+    public void setSchemeType(Integer schemeType) {
+        this.schemeType = schemeType;
+    }
+
+    public Integer getDecoctTimes() {
+        return decoctTimes;
+    }
+
+    public void setDecoctTimes(Integer decoctTimes) {
+        this.decoctTimes = decoctTimes;
+    }
+
+    public Integer getPressure() {
+        return pressure;
+    }
+
+    public void setPressure(Integer pressure) {
+        this.pressure = pressure;
+    }
+
+    public BigDecimal getUpperWater() {
+        return upperWater;
+    }
+
+    public void setUpperWater(BigDecimal upperWater) {
+        this.upperWater = upperWater;
+    }
+
+    public Integer getHeatingTime() {
+        return heatingTime;
+    }
+
+    public void setHeatingTime(Integer heatingTime) {
+        this.heatingTime = heatingTime;
+    }
+
+    public Integer getPreHeatingTime() {
+        return preHeatingTime;
+    }
+
+    public void setPreHeatingTime(Integer preHeatingTime) {
+        this.preHeatingTime = preHeatingTime;
+    }
+
+    public Integer getPostHeatingTime() {
+        return postHeatingTime;
+    }
+
+    public void setPostHeatingTime(Integer postHeatingTime) {
+        this.postHeatingTime = postHeatingTime;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Integer getFirstDecoctTime() {
+        return firstDecoctTime;
+    }
+
+    public void setFirstDecoctTime(Integer firstDecoctTime) {
+        this.firstDecoctTime = firstDecoctTime;
+    }
+
+    public Integer getSecondDecoctTime() {
+        return secondDecoctTime;
+    }
+
+    public void setSecondDecoctTime(Integer secondDecoctTime) {
+        this.secondDecoctTime = secondDecoctTime;
+    }
+
+    public Integer getSoakTime() {
+        return soakTime;
+    }
+
+    public void setSoakTime(Integer soakTime) {
+        this.soakTime = soakTime;
+    }
+
+    public Integer getDrainTime() {
+        return drainTime;
+    }
+
+    public void setDrainTime(Integer drainTime) {
+        this.drainTime = drainTime;
+    }
+
+    public Integer getPackageTime() {
+        return packageTime;
+    }
+
+    public void setPackageTime(Integer packageTime) {
+        this.packageTime = packageTime;
+    }
+
+    public Integer getLateAddRemindTime() {
+        return lateAddRemindTime;
+    }
+
+    public void setLateAddRemindTime(Integer lateAddRemindTime) {
+        this.lateAddRemindTime = lateAddRemindTime;
+    }
+
+    public BigDecimal getTempRiseRate() {
+        return tempRiseRate;
+    }
+
+    public void setTempRiseRate(BigDecimal tempRiseRate) {
+        this.tempRiseRate = tempRiseRate;
+    }
+
+    public Integer getIsDefault() {
+        return isDefault;
+    }
+
+    public void setIsDefault(Integer isDefault) {
+        this.isDefault = isDefault;
+    }
 }

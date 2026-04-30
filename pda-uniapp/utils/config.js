@@ -1,8 +1,15 @@
 // API 配置
-const API_BASE_URL = 'http://localhost:8080/api/v1/pda'
+// 开发环境用真实后端
+const API_BASE_URL_DEV = 'http://localhost:8080/api/v1/pda'
+// E2E 测试环境用 Mock Server（自动识别，也可手动切换）
+const API_BASE_URL_MOCK = 'http://localhost:3456/api/v1/pda'
+
+const isMockEnv = typeof uni !== 'undefined' && uni.getStorageSync && uni.getStorageSync('pda_mock_env') === '1'
+const API_BASE_URL = isMockEnv ? API_BASE_URL_MOCK : API_BASE_URL_DEV
 
 export const config = {
   baseUrl: API_BASE_URL,
+  mockBaseUrl: API_BASE_URL_MOCK,
   heartbeatInterval: 30000,      // 心跳间隔 30s
   heartbeatTimeoutIdle: 120000,  // 空闲超时 120s
   heartbeatTimeoutTransport: 600000, // 搬运超时 600s

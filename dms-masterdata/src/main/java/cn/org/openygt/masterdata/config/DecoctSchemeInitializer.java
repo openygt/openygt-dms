@@ -3,8 +3,8 @@ package cn.org.openygt.masterdata.config;
 import cn.org.openygt.masterdata.entity.DecoctScheme;
 import cn.org.openygt.masterdata.mapper.DecoctSchemeMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -14,12 +14,16 @@ import java.math.BigDecimal;
  * 煎药方案内置数据初始化。
  * MVP 阶段预置常用煎药方案，避免首次使用时空表。
  */
-@Slf4j
 @Component
-@RequiredArgsConstructor
 public class DecoctSchemeInitializer implements CommandLineRunner {
 
+    private static final Logger log = LoggerFactory.getLogger(DecoctSchemeInitializer.class);
+
     private final DecoctSchemeMapper schemeMapper;
+
+    public DecoctSchemeInitializer(DecoctSchemeMapper schemeMapper) {
+        this.schemeMapper = schemeMapper;
+    }
 
     @Override
     public void run(String... args) {
