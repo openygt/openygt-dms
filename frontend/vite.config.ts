@@ -9,6 +9,9 @@ export default defineConfig({
       '@': resolve(__dirname, 'src')
     }
   },
+  define: {
+    global: 'globalThis'
+  },
   build: {
     chunkSizeWarningLimit: 1500,
     rollupOptions: {
