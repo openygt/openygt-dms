@@ -15,6 +15,8 @@ public interface SysUserService {
 
     SysUser getByUsername(String username);
 
+    SysUser getByBarcode(String barcode);
+
     IPage<SysUser> list(String keyword, int page, int size);
 
     void delete(Long id);
