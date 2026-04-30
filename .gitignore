@@ -41,3 +41,6 @@ tasks/.watchdog.state
 .kimi
 .ai-context
 *.ai.md
+
+# === 本地文档目录（永不提交）===
+docs/
