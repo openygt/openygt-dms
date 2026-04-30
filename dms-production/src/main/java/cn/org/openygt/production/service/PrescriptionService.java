@@ -8,4 +8,7 @@ public interface PrescriptionService {
     Prescription create(PrescriptionCreateRequest request);
     Prescription getById(Long id);
     IPage<Prescription> list(Long hospitalId, Integer patientType, String status, String keyword, String startTime, String endTime, int page, int size);
+    Prescription receive(Long id, Long operatorId, String operatorName);
+    Prescription reject(Long id, String rejectType, String reason, Long operatorId, String operatorName);
+    Prescription getDetail(Long id);
 }

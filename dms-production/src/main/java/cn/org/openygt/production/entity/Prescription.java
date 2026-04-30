@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 import java.util.Date;
+import java.util.List;
 
 @Data
 @TableName("prod_prescription")
@@ -44,4 +45,19 @@ public class Prescription {
     private Integer deleted;
     private Date createdAt;
     private Date updatedAt;
+
+    private String receiveStatus;
+    private String rejectType;
+    private String rejectReason;
+    private Date receivedAt;
+    private Date rejectedAt;
+    private String taskNo;
+    private Long operatorId;
+    private String operatorName;
+    @TableField(exist = false)
+    private Integer doseCount;
+    @TableField(exist = false)
+    private String deptName;
+    @TableField(exist = false)
+    private List<PrescriptionMedicine> medicineItems;
 }

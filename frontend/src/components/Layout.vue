@@ -20,62 +20,84 @@
         </el-menu-item>
         <el-sub-menu index="/prod">
           <template #title>
-            <el-icon><List /></el-icon>
-            <span>生产管理</span>
+            <el-icon><FirstAidKit /></el-icon>
+            <span>生产执行</span>
           </template>
-          <el-menu-item index="/tasks">任务管理</el-menu-item>
-          <el-menu-item index="/prescriptions">处方管理</el-menu-item>
-          <el-menu-item index="/consume-log">药材消耗</el-menu-item>
+          <el-menu-item index="/prod/receive">处方接收</el-menu-item>
+          <el-menu-item index="/tasks">煎煮任务</el-menu-item>
+          <el-menu-item index="/quality">质检管理</el-menu-item>
+          <el-menu-item index="/prod/delivery">交付管理</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="/eq">
           <template #title>
             <el-icon><Cpu /></el-icon>
             <span>设备管理</span>
           </template>
-          <el-menu-item index="/device-monitor">监控面板</el-menu-item>
-          <el-menu-item index="/devices">设备管理</el-menu-item>
-          <el-menu-item index="/traces">煎药追溯</el-menu-item>
-          <el-menu-item index="/workload">工作量统计</el-menu-item>
-          <el-menu-item index="/device-utilization">设备利用率</el-menu-item>
+          <el-menu-item index="/device-monitor">设备监控</el-menu-item>
+          <el-menu-item index="/devices">设备台账</el-menu-item>
           <el-menu-item index="/alarms">告警日志</el-menu-item>
           <el-menu-item index="/alarm-configs">告警配置</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="/formula">
+          <template #title>
+            <el-icon><Setting /></el-icon>
+            <span>工艺配置</span>
+          </template>
+          <el-menu-item index="/schemes">煎煮方案</el-menu-item>
           <el-menu-item index="/water-formulas">加水量公式</el-menu-item>
           <el-menu-item index="/prescription-defaults">处方默认设置</el-menu-item>
+          <el-menu-item index="/formula/package-spec">包装规格</el-menu-item>
         </el-sub-menu>
-        <el-menu-item index="/eq-dashboard">
-          <el-icon><DataLine /></el-icon>
-          <span>数据看板</span>
-        </el-menu-item>
-        <el-menu-item index="/print-center">
-          <el-icon><Printer /></el-icon>
-          <span>打印管理</span>
-        </el-menu-item>
-        <el-menu-item index="/quality">
-          <el-icon><CircleCheck /></el-icon>
-          <span>质检记录</span>
-        </el-menu-item>
-        <el-menu-item index="/capacity">
-          <el-icon><TrendCharts /></el-icon>
-          <span>产能报表</span>
-        </el-menu-item>
-        <el-sub-menu index="/md">
+        <el-sub-menu index="/trace">
+          <template #title>
+            <el-icon><Search /></el-icon>
+            <span>质量追溯</span>
+          </template>
+          <el-menu-item index="/traces">处方追溯</el-menu-item>
+          <el-menu-item index="/trace/batch">批次追溯</el-menu-item>
+          <el-menu-item index="/trace/exception">异常追溯</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="/report">
+          <template #title>
+            <el-icon><TrendCharts /></el-icon>
+            <span>数据分析</span>
+          </template>
+          <el-menu-item index="/eq-dashboard">数据看板</el-menu-item>
+          <el-menu-item index="/capacity">产能报表</el-menu-item>
+          <el-menu-item index="/workload">工作量统计</el-menu-item>
+          <el-menu-item index="/device-utilization">设备利用率</el-menu-item>
+          <el-menu-item index="/consume-log">药材消耗</el-menu-item>
+          <el-menu-item index="/report/qc-rate">质检合格率</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="/print">
+          <template #title>
+            <el-icon><Printer /></el-icon>
+            <span>打印配置</span>
+          </template>
+          <el-menu-item index="/print/template">标签模板</el-menu-item>
+          <el-menu-item index="/print/printer">打印机管理</el-menu-item>
+          <el-menu-item index="/print/log">打印记录</el-menu-item>
+        </el-sub-menu>
+        <el-sub-menu index="/base">
           <template #title>
             <el-icon><OfficeBuilding /></el-icon>
             <span>基础数据</span>
           </template>
           <el-menu-item index="/hospitals">医院管理</el-menu-item>
-          <el-menu-item index="/schemes">煎煮方案</el-menu-item>
+          <el-menu-item index="/base/department">科室管理</el-menu-item>
+          <el-menu-item index="/base/doctor">医师管理</el-menu-item>
+          <el-menu-item index="/base/medicine">药材目录</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="/system">
           <template #title>
-            <el-icon><Setting /></el-icon>
+            <el-icon><Lock /></el-icon>
             <span>系统管理</span>
           </template>
           <el-menu-item index="/users">用户管理</el-menu-item>
-          <el-menu-item index="/roles">角色管理</el-menu-item>
+          <el-menu-item index="/roles">角色权限</el-menu-item>
           <el-menu-item index="/menus">菜单管理</el-menu-item>
-          <el-menu-item index="/configs">系统配置</el-menu-item>
-          <el-menu-item index="/logs">系统日志</el-menu-item>
+          <el-menu-item index="/logs">操作审计</el-menu-item>
+          <el-menu-item index="/configs">系统参数</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
