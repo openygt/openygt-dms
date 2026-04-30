@@ -107,22 +107,4 @@ public class DeviceWebSocketController {
         messagingTemplate.convertAndSend("/topic/tenant/" + tenantId + "/alarms", payload);
     }
 
-    /**
-     * WebSocket 能力探测
-     */
-    @GetMapping("/api/v1/eq/ws/capability")
-    @ResponseBody
-    public ApiResponse<Map<String, Object>> getWsCapability() {
-        Map<String, Object> capability = new HashMap<>();
-        capability.put("supported", true);
-        capability.put("wildcardSubscription", true);
-        capability.put("endpoint", "/ws/iot");
-        capability.put("protocol", "STOMP over SockJS");
-        capability.put("topics", new String[]{
-            "/topic/device/{code}/status",
-            "/topic/tenant/{tenantId}/devices/snapshot",
-            "/topic/tenant/{tenantId}/alarms"
-        });
-        return ApiResponse.success(capability);
-    }
 }
