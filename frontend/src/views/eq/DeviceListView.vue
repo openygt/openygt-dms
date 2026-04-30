@@ -72,8 +72,9 @@
             {{ formatDateTime(row.lastHeartbeat) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="340" fixed="right">
           <template #default="{ row }">
+            <el-button size="small" type="primary" @click="goToMonitor(row)">监控</el-button>
             <el-button size="small" @click="openDialog(row)">编辑</el-button>
             <el-button size="small" @click="viewDetail(row)">详情</el-button>
             <el-button size="small" type="info" @click="openPrintLabel(row)">标签</el-button>
@@ -217,9 +218,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
 import DeviceLabelPrint from '@/components/DeviceLabelPrint.vue'
+
+const router = useRouter()
 
 interface Device {
   id: number
@@ -424,6 +428,10 @@ async function viewDetail(row: Device) {
     detail.value = res.data
     detailVisible.value = true
   } catch (e) {}
+}
+
+function goToMonitor(row: Device) {
+  router.push(`/device/${row.deviceCode}/detail`)
 }
 
 function openPrintLabel(row: Device) {

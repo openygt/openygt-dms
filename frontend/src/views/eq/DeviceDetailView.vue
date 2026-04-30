@@ -6,32 +6,106 @@
       <h1 class="detail-title">{{ device?.name }} - 详情</h1>
       <div class="header-actions">
         <el-button
-          :type="isAlarm ? 'danger' : 'primary'"
+          :type="headerStatusType"
           size="large"
           :class="{ 'alarm-blink': isAlarm }"
         >
-          {{ formatStatusName(device?.detailStatus || device?.status) }}
+          {{ headerStatusText }}
         </el-button>
       </div>
     </div>
 
     <el-row :gutter="20">
-      <!-- 左侧：温度仪表盘 + 基本信息 -->
+      <!-- ========== 左侧：按设备类型显示主信息 + 基本信息 ========== -->
       <el-col :xs="24" :md="8">
-        <el-card class="detail-card">
-          <template #header>
-            <span class="card-title">实时温度</span>
-          </template>
-          <div ref="gaugeChartRef" class="gauge-chart" data-testid="temp-gauge" />
-          <div class="gauge-value" data-testid="gauge-value">
-            {{ device?.currentTemp?.toFixed(1) || '--' }}°C
-          </div>
-        </el-card>
+        <!-- 煎药机：温度仪表盘 -->
+        <template v-if="device?.deviceType === 1">
+          <el-card class="detail-card">
+            <template #header><span class="card-title">实时温度</span></template>
+            <div ref="gaugeChartRef" class="gauge-chart" data-testid="temp-gauge" />
+            <div class="gauge-value" data-testid="gauge-value">{{ device?.currentTemp?.toFixed(1) || '--' }}°C</div>
+          </el-card>
+        </template>
 
+        <!-- 包装机：包装统计 -->
+        <template v-else-if="device?.deviceType === 2">
+          <el-card class="detail-card">
+            <template #header><span class="card-title">包装统计</span></template>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <div class="stat-value">{{ device?.packageNum || 0 }}</div>
+                <div class="stat-label">已包装(袋)</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">{{ device?.packageCapacity || '--' }}</div>
+                <div class="stat-label">容量(ml/袋)</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">{{ device?.progressPercent || 0 }}%</div>
+                <div class="stat-label">当前进度</div>
+              </div>
+            </div>
+          </el-card>
+        </template>
+
+        <!-- 标签打印机：打印统计 -->
+        <template v-else-if="device?.deviceType === 3">
+          <el-card class="detail-card">
+            <template #header><span class="card-title">打印统计</span></template>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <div class="stat-value">{{ device?.printCopies || 0 }}</div>
+                <div class="stat-label">待打印(张)</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">{{ device?.labelMode || '--' }}</div>
+                <div class="stat-label">标签模式</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" :class="printStatusTag(device?.printStatus)">{{ printStatusText(device?.printStatus) }}</div>
+                <div class="stat-label">打印状态</div>
+              </div>
+            </div>
+          </el-card>
+        </template>
+
+        <!-- 激光打印机：打印状态 + 耗材 -->
+        <template v-else-if="device?.deviceType === 4">
+          <el-card class="detail-card">
+            <template #header><span class="card-title">打印状态</span></template>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <div class="stat-value">{{ device?.printCopies || 0 }}</div>
+                <div class="stat-label">已打印(份)</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" :class="printStatusTag(device?.printStatus)">{{ printStatusText(device?.printStatus) }}</div>
+                <div class="stat-label">状态</div>
+              </div>
+            </div>
+          </el-card>
+        </template>
+
+        <!-- PDA：电量 + 信号 -->
+        <template v-else>
+          <el-card class="detail-card">
+            <template #header><span class="card-title">设备状态</span></template>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <div class="stat-value">{{ device?.currentTemp || 0 }}%</div>
+                <div class="stat-label">电量</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">{{ device?.status === 'ONLINE' ? '在线' : '离线' }}</div>
+                <div class="stat-label">网络</div>
+              </div>
+            </div>
+          </el-card>
+        </template>
+
+        <!-- 基本信息：所有设备通用 -->
         <el-card class="detail-card">
-          <template #header>
-            <span class="card-title">基本信息</span>
-          </template>
+          <template #header><span class="card-title">基本信息</span></template>
           <el-descriptions :column="1" border>
             <el-descriptions-item label="设备编码">{{ device?.deviceCode }}</el-descriptions-item>
             <el-descriptions-item label="设备类型">{{ formatDeviceType(device?.deviceType) }}</el-descriptions-item>
@@ -44,33 +118,75 @@
         </el-card>
       </el-col>
 
-      <!-- 中间：温度曲线 + 指令 -->
+      <!-- ========== 中间：按设备类型显示图表/列表 + 指令 ========== -->
       <el-col :xs="24" :md="10">
-        <el-card class="detail-card">
-          <template #header>
-            <div class="chart-header">
-              <span class="card-title">温度曲线</span>
-              <el-radio-group v-model="timeRange" size="small">
-                <el-radio-button label="1h">1小时</el-radio-button>
-                <el-radio-button label="24h">24小时</el-radio-button>
-                <el-radio-button label="7d">7天</el-radio-button>
-              </el-radio-group>
-            </div>
-          </template>
-          <div ref="tempChartRef" class="temp-chart" data-testid="temp-chart" />
-        </el-card>
+        <!-- 煎药机：温度曲线 -->
+        <template v-if="device?.deviceType === 1">
+          <el-card class="detail-card">
+            <template #header>
+              <div class="chart-header">
+                <span class="card-title">温度曲线</span>
+                <el-radio-group v-model="timeRange" size="small">
+                  <el-radio-button label="1h">1小时</el-radio-button>
+                  <el-radio-button label="24h">24小时</el-radio-button>
+                  <el-radio-button label="7d">7天</el-radio-button>
+                </el-radio-group>
+              </div>
+            </template>
+            <div ref="tempChartRef" class="temp-chart" data-testid="temp-chart" />
+          </el-card>
+        </template>
 
+        <!-- 包装机：包装任务 -->
+        <template v-else-if="device?.deviceType === 2">
+          <el-card class="detail-card">
+            <template #header><span class="card-title">当前任务</span></template>
+            <div v-if="device?.currentPrescriptionCode" class="task-info">
+              <p><strong>处方编号:</strong> {{ device.currentPrescriptionCode }}</p>
+              <p><strong>任务状态:</strong> <el-tag :type="device.status === 'BUSY' ? 'primary' : 'info'">{{ formatStatusName(device) }}</el-tag></p>
+              <p v-if="device.progressPercent > 0"><strong>完成进度:</strong> <el-progress :percentage="device.progressPercent" /></p>
+              <p v-if="device.estimatedFinishTime"><strong>预计完成:</strong> {{ formatDateTime(device.estimatedFinishTime) }}</p>
+            </div>
+            <EmptyState v-else description="暂无包装任务" />
+          </el-card>
+        </template>
+
+        <!-- 打印机：打印队列 -->
+        <template v-else-if="device?.deviceType === 3 || device?.deviceType === 4">
+          <el-card class="detail-card">
+            <template #header><span class="card-title">打印队列</span></template>
+            <div v-if="device?.currentPrescriptionCode" class="task-info">
+              <p><strong>当前文档:</strong> {{ device.currentPrescriptionCode }}</p>
+              <p><strong>打印状态:</strong> <el-tag :type="printStatusTag(device.printStatus)">{{ printStatusText(device.printStatus) }}</el-tag></p>
+              <p v-if="device.printCopies"><strong>打印份数:</strong> {{ device.printCopies }}</p>
+            </div>
+            <EmptyState v-else description="打印队列为空" />
+          </el-card>
+        </template>
+
+        <!-- PDA：操作记录 -->
+        <template v-else>
+          <el-card class="detail-card">
+            <template #header><span class="card-title">最近操作</span></template>
+            <div class="task-info">
+              <p><strong>设备状态:</strong> <el-tag :type="device?.status === 'ONLINE' ? 'success' : 'info'">{{ device?.status === 'ONLINE' ? '在线' : '离线' }}</el-tag></p>
+              <p v-if="device?.lastHeartbeat"><strong>最后心跳:</strong> {{ formatDateTime(device.lastHeartbeat) }}</p>
+              <p v-if="device?.currentOperatorName"><strong>当前绑定:</strong> {{ device.currentOperatorName }}</p>
+            </div>
+          </el-card>
+        </template>
+
+        <!-- 指令控制：按设备类型 -->
         <el-card class="detail-card">
-          <template #header>
-            <span class="card-title">指令控制</span>
-          </template>
+          <template #header><span class="card-title">指令控制</span></template>
           <div class="command-grid">
             <el-button
-              v-for="cmd in availableCommands"
+              v-for="cmd in deviceCommands"
               :key="cmd.type"
               :type="cmd.type === 'EMERGENCY_STOP' ? 'danger' : 'primary'"
               size="large"
               :data-testid="`command-btn-${cmd.type}`"
+              :disabled="device?.status === 'OFFLINE' && cmd.type !== 'EMERGENCY_STOP'"
               @click="sendCommand(cmd.type)"
             >
               {{ cmd.label }}
@@ -79,12 +195,10 @@
         </el-card>
       </el-col>
 
-      <!-- 右侧：操作记录 + 状态日志 -->
+      <!-- ========== 右侧：操作人 + 最近指令（通用） ========== -->
       <el-col :xs="24" :md="6">
         <el-card class="detail-card">
-          <template #header>
-            <span class="card-title">当前操作人</span>
-          </template>
+          <template #header><span class="card-title">当前操作人</span></template>
           <div v-if="currentOperator" class="operator-info">
             <div class="operator-avatar">👤</div>
             <div class="operator-name">{{ currentOperator.operatorName }}</div>
@@ -94,9 +208,7 @@
         </el-card>
 
         <el-card class="detail-card">
-          <template #header>
-            <span class="card-title">最近指令</span>
-          </template>
+          <template #header><span class="card-title">最近指令</span></template>
           <el-timeline>
             <el-timeline-item
               v-for="cmd in recentCommands"
@@ -106,9 +218,7 @@
             >
               <div class="command-item">
                 <span class="cmd-type">{{ cmd.commandType }}</span>
-                <el-tag :type="getCommandTagType(cmd.status)" size="small">
-                  {{ cmd.status }}
-                </el-tag>
+                <el-tag :type="getCommandTagType(cmd.status)" size="small">{{ cmd.status }}</el-tag>
               </div>
             </el-timeline-item>
           </el-timeline>
@@ -119,17 +229,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch, nextTick, onUnmounted } from 'vue'
+import { ref, computed, onMounted, watch, nextTick, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { getDeviceDetail, getLatestStatus, getRecentCommands, createCommand, getTemperatureAggregation } from '@/api/equipment'
+import { useDeviceStore } from '@/stores/device'
 import EmptyState from '@/components/states/EmptyState.vue'
 
 const router = useRouter()
 const route = useRoute()
 const deviceCode = route.params.code as string
+const deviceStore = useDeviceStore()
 
 const device = ref<any>(null)
 const currentOperator = ref<any>(null)
@@ -142,15 +254,52 @@ const tempChartRef = ref<HTMLElement>()
 let gaugeChart: echarts.ECharts | null = null
 let tempChart: echarts.ECharts | null = null
 
-const availableCommands = [
-  { type: 'START_SOAK', label: '开始浸泡' },
-  { type: 'START_DECOCT', label: '开始煎煮' },
-  { type: 'PAUSE', label: '暂停' },
-  { type: 'RESUME', label: '继续' },
-  { type: 'EMERGENCY_STOP', label: '急停' },
-]
+const deviceCommands = computed(() => {
+  const type = device.value?.deviceType
+  if (type === 1) {
+    return [
+      { type: 'START_SOAK', label: '开始浸泡' },
+      { type: 'START_DECOCT', label: '开始煎煮' },
+      { type: 'PAUSE', label: '暂停' },
+      { type: 'RESUME', label: '继续' },
+      { type: 'EMERGENCY_STOP', label: '急停' },
+    ]
+  }
+  if (type === 2) {
+    return [
+      { type: 'START_PACKAGE', label: '开始包装' },
+      { type: 'PAUSE', label: '暂停' },
+      { type: 'RESUME', label: '继续' },
+      { type: 'EMERGENCY_STOP', label: '急停' },
+    ]
+  }
+  if (type === 3 || type === 4) {
+    return [
+      { type: 'START_PRINT', label: '开始打印' },
+      { type: 'PAUSE_PRINT', label: '暂停打印' },
+      { type: 'REPRINT_LABEL', label: '补打标签' },
+      { type: 'EMERGENCY_STOP', label: '急停' },
+    ]
+  }
+  return [
+    { type: 'EMERGENCY_STOP', label: '急停' },
+  ]
+})
 
-function formatStatusName(status: string) {
+// 实时设备状态：优先使用 WebSocket store 数据
+const liveDevice = computed(() => {
+  const storeDevice = deviceStore.devices.get(deviceCode)
+  if (storeDevice && device.value) {
+    return { ...device.value, ...storeDevice }
+  }
+  return device.value
+})
+
+const headerStatusText = computed(() => {
+  const d = liveDevice.value
+  if (!d) return '--'
+  if (d.status === 'OFFLINE') return '离线'
+  const status = d.detailStatus || d.status
   const map: Record<string, string> = {
     IDLE: '空闲', STANDBY: '待机', READY: '就绪',
     SOAKING: '浸泡中', PRE_DECOCTING: '预热中',
@@ -158,13 +307,58 @@ function formatStatusName(status: string) {
     ADD_LATE: '后下提醒', DRAINING: '出液中',
     PACKAGING: '包装中', PAUSED: '暂停',
     FAULT: '故障', OFFLINE: '离线',
+    BUSY: '运行中', MAINTENANCE: '维护中',
+    PACKER_IDLE: '空闲', PRINTING: '打印中', PENDING: '待打印',
   }
-  return map[status] || status
+  return map[status || ''] || status || '空闲'
+})
+
+const headerStatusType = computed(() => {
+  const d = liveDevice.value
+  if (!d) return 'info'
+  if (d.status === 'OFFLINE') return 'info'
+  const status = d.detailStatus || d.status
+  if (status === 'FAULT') return 'danger'
+  if (isAlarm.value) return 'danger'
+  // 与监控列表 status-block 颜色保持一致：运行/空闲均为绿色
+  return 'success'
+})
+
+function formatStatusName(deviceObj: any) {
+  if (!deviceObj) return '--'
+  if (deviceObj.status === 'OFFLINE') return '离线'
+  const status = deviceObj.detailStatus || deviceObj.status
+  const map: Record<string, string> = {
+    IDLE: '空闲', STANDBY: '待机', READY: '就绪',
+    SOAKING: '浸泡中', PRE_DECOCTING: '预热中',
+    FIRST_DECOCTING: '一煎中', SECOND_DECOCTING: '二煎中',
+    ADD_LATE: '后下提醒', DRAINING: '出液中',
+    PACKAGING: '包装中', PAUSED: '暂停',
+    FAULT: '故障', OFFLINE: '离线',
+    BUSY: '运行中', MAINTENANCE: '维护中',
+    PACKER_IDLE: '空闲', PRINTING: '打印中', PENDING: '待打印',
+  }
+  return map[status || ''] || status || '空闲'
 }
 
 function formatDeviceType(type: number) {
   const map: Record<number, string> = { 1: '煎药机', 2: '包装机', 3: '标签打印机', 4: '激光打印机', 5: 'PDA' }
   return map[type] || '未知'
+}
+
+function printStatusText(status?: string) {
+  const map: Record<string, string> = {
+    PENDING: '待打印', PRINTING: '打印中', PAUSED: '暂停', COMPLETED: '完成', ERROR: '故障', READY: '就绪'
+  }
+  return map[status || ''] || status || '就绪'
+}
+
+function printStatusTag(status?: string) {
+  if (status === 'PRINTING') return 'primary'
+  if (status === 'COMPLETED') return 'success'
+  if (status === 'ERROR') return 'danger'
+  if (status === 'PAUSED') return 'warning'
+  return 'info'
 }
 
 function formatDateTime(dt: string) {
@@ -310,10 +504,12 @@ async function loadDeviceDetail() {
     currentOperator.value = res.data?.currentOperator
     isAlarm.value = (device.value?.detailStatus === 'FAULT' || (device.value?.currentTemp || 0) > 120)
     nextTick(() => {
-      initGaugeChart()
-      initTempChart()
-      updateGauge(device.value?.currentTemp || 0)
-      updateTempChart()
+      if (device.value?.deviceType === 1) {
+        initGaugeChart()
+        initTempChart()
+        updateGauge(device.value?.currentTemp || 0)
+        updateTempChart()
+      }
     })
   } catch (err) {
     ElMessage.error('加载设备详情失败')
@@ -346,6 +542,21 @@ async function sendCommand(commandType: string) {
 watch(timeRange, () => {
   updateTempChart()
 })
+
+// 监听 store 实时更新，同步到 device（温度、进度等）
+watch(
+  () => deviceStore.devices.get(deviceCode),
+  (storeDevice) => {
+    if (storeDevice && device.value) {
+      device.value = { ...device.value, ...storeDevice }
+      isAlarm.value = (device.value.detailStatus === 'FAULT' || (device.value.currentTemp || 0) > 120)
+      if (device.value.deviceType === 1) {
+        nextTick(() => updateGauge(device.value.currentTemp || 0))
+      }
+    }
+  },
+  { deep: true }
+)
 
 onMounted(() => {
   loadDeviceDetail()
@@ -460,6 +671,46 @@ onUnmounted(() => {
   .cmd-type {
     font-size: 14px;
     font-weight: 500;
+  }
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 8px 0;
+
+  .stat-item {
+    text-align: center;
+    padding: 12px;
+    background: var(--el-fill-color-light);
+    border-radius: 8px;
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: bold;
+      color: var(--el-color-primary);
+      margin-bottom: 4px;
+
+      &.primary { color: var(--el-color-primary); }
+      &.success { color: var(--el-color-success); }
+      &.warning { color: var(--el-color-warning); }
+      &.danger { color: var(--el-color-danger); }
+      &.info { color: var(--el-text-color-secondary); }
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--el-text-color-secondary);
+    }
+  }
+}
+
+.task-info {
+  p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: var(--el-text-color-primary);
   }
 }
 

@@ -202,6 +202,23 @@ public class MqttConfig {
         }
     }
 
+    /**
+     * 向指定设备发布 MQTT 消息。
+     */
+    public void publish(String tenantId, String deviceCode, String messageType, String payload) {
+        if (mqttClient == null || !mqttClient.isConnected()) {
+            log.warn("MQTT未连接，无法发布消息: {}/{}/{}", tenantId, deviceCode, messageType);
+            return;
+        }
+        try {
+            String topic = "/openygt/" + tenantId + "/" + deviceCode + "/" + messageType;
+            mqttClient.publish(topic, payload.getBytes(), 1, false);
+            log.debug("MQTT published: topic={}, payload={}", topic, payload);
+        } catch (Exception e) {
+            log.error("MQTT发布失败: {}/{}/{}", tenantId, deviceCode, messageType, e);
+        }
+    }
+
     @PreDestroy
     public void destroy() {
         try {

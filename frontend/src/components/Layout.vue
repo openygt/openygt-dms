@@ -32,6 +32,7 @@
             <el-icon><Cpu /></el-icon>
             <span>设备监控</span>
           </template>
+          <el-menu-item index="/device-monitor">监控面板</el-menu-item>
           <el-menu-item index="/devices">设备管理</el-menu-item>
           <el-menu-item index="/alarms">告警日志</el-menu-item>
         </el-sub-menu>

@@ -26,6 +26,9 @@
         <el-radio-group v-model="activeType" size="large">
           <el-radio-button :label="1">煎药机</el-radio-button>
           <el-radio-button :label="2">包装机</el-radio-button>
+          <el-radio-button :label="3">标签打印机</el-radio-button>
+          <el-radio-button :label="4">激光打印机</el-radio-button>
+          <el-radio-button :label="5">PDA</el-radio-button>
           <el-radio-button :label="0">全部</el-radio-button>
         </el-radio-group>
         <el-button
@@ -62,11 +65,11 @@
           <h2 class="device-name" data-testid="device-name">{{ device.name }}</h2>
           <div
             class="status-block"
-            :class="getStatusAnimation(device)"
+            :class="[getStatusAnimation(device), device.status === 'OFFLINE' ? 'offline-status' : '']"
             data-testid="status-block"
           >
             <span class="status-name" data-testid="status-text">
-              {{ formatStatusName(device.detailStatus || device.status) }}
+              {{ formatStatusName(device) }}
               <template v-if="device._networkOffline">(?)</template>
             </span>
             <span v-if="device.remainingTime > 0 && isRunning(device)" class="remaining-time">
@@ -75,67 +78,184 @@
           </div>
         </div>
 
-        <!-- 温度仪表盘区域 -->
-        <div class="temp-section">
-          <div class="temp-value" data-testid="temperature-value">
-            <template v-if="device.status === 'OFFLINE' || device.status === 'FAULT' && !device.currentTemp">--</template>
-            <template v-else>{{ device.currentTemp?.toFixed(1) }}°C</template>
+        <!-- ====== 煎药机卡片内容 ====== -->
+        <template v-if="device.deviceType === 1">
+          <div class="temp-section">
+            <div class="temp-value" data-testid="temperature-value">
+              <template v-if="device.status === 'OFFLINE' || device.status === 'FAULT' && !device.currentTemp">--</template>
+              <template v-else>{{ device.currentTemp?.toFixed(1) }}°C</template>
+            </div>
+            <div class="temp-gauge-mini" :style="getGaugeStyle(device)" />
           </div>
-          <div
-            class="temp-gauge-mini"
-            :style="getGaugeStyle(device)"
-          />
-        </div>
+          <div class="info-section">
+            <div class="info-row" v-if="device.currentPrescriptionCode">
+              <span class="info-label">处方:</span>
+              <span class="info-value">{{ device.currentPrescriptionCode }}</span>
+            </div>
+            <div class="info-row" v-if="device.currentOperatorName">
+              <span class="info-label">负责人:</span>
+              <span class="info-value">👤 {{ device.currentOperatorName }}</span>
+            </div>
+            <div class="info-row" v-if="device.estimatedFinishTime">
+              <span class="info-label">预计完成:</span>
+              <span class="info-value">⏰ {{ formatDateTime(device.estimatedFinishTime) }}</span>
+            </div>
+            <div class="info-row" v-if="isRunning(device) && device.progressPercent > 0">
+              <el-progress :percentage="device.progressPercent" :stroke-width="12" :status="device.progressPercent >= 100 ? 'success' : ''" />
+            </div>
+          </div>
+          <!-- 煎药机操作按钮 -->
+          <div class="action-section">
+            <template v-if="!isOffline(device)">
+              <el-button v-if="isIdle(device)" type="warning" size="large" @click.stop="handleShiftHandover(device)" data-testid="shift-handover-btn">换班</el-button>
+              <el-button v-if="isIdle(device)" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'START_SOAK')">开始浸泡</el-button>
+              <el-button v-if="isRunning(device)" type="warning" size="large" @click.stop="sendDeviceCommand(device, 'PAUSE')">暂停</el-button>
+              <el-button v-if="isPaused(device)" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'RESUME')">继续</el-button>
+              <el-button v-if="!isFault(device)" type="danger" size="large" class="emergency-btn" @click.stop="handleEmergencyStop(device)" data-testid="emergency-stop-btn">急停</el-button>
+            </template>
+            <el-button size="large" @click.stop="goToDetail(device)">查看详情</el-button>
+          </div>
+        </template>
 
-        <!-- 信息区域 -->
-        <div class="info-section">
-          <div class="info-row" v-if="device.currentPrescriptionCode">
-            <span class="info-label">处方:</span>
-            <span class="info-value">{{ device.currentPrescriptionCode }}</span>
+        <!-- ====== 包装机卡片内容 ====== -->
+        <template v-else-if="device.deviceType === 2">
+          <div class="temp-section">
+            <div class="metric-value" :class="{ 'metric-offline': isOffline(device) }">
+              <template v-if="isOffline(device)">--</template>
+              <template v-else>{{ device.packageNum || 0 }}<span class="metric-unit">袋</span></template>
+            </div>
+            <div class="metric-label">已包装</div>
           </div>
-          <div class="info-row" v-if="device.currentOperatorName">
-            <span class="info-label">负责人:</span>
-            <span class="info-value">👤 {{ device.currentOperatorName }}</span>
+          <div class="info-section">
+            <div class="info-row" v-if="device.currentPrescriptionCode">
+              <span class="info-label">当前任务:</span>
+              <span class="info-value">{{ device.currentPrescriptionCode }}</span>
+            </div>
+            <div class="info-row" v-if="device.currentOperatorName">
+              <span class="info-label">负责人:</span>
+              <span class="info-value">👤 {{ device.currentOperatorName }}</span>
+            </div>
+            <div class="info-row" v-if="device.packageCapacity">
+              <span class="info-label">容量:</span>
+              <span class="info-value">{{ device.packageCapacity }} ml/袋</span>
+            </div>
+            <div class="info-row" v-if="isRunning(device) && device.progressPercent > 0">
+              <el-progress :percentage="device.progressPercent" :stroke-width="12" :status="device.progressPercent >= 100 ? 'success' : ''" />
+            </div>
           </div>
-          <div class="info-row" v-if="device.estimatedFinishTime">
-            <span class="info-label">预计完成:</span>
-            <span class="info-value">⏰ {{ formatDateTime(device.estimatedFinishTime) }}</span>
+          <!-- 包装机操作按钮 -->
+          <div class="action-section">
+            <template v-if="!isOffline(device)">
+              <el-button v-if="isIdle(device)" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'START_PACKAGE')">开始包装</el-button>
+              <el-button v-if="isRunning(device)" type="warning" size="large" @click.stop="sendDeviceCommand(device, 'PAUSE')">暂停</el-button>
+              <el-button v-if="isPaused(device)" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'RESUME')">继续</el-button>
+              <el-button v-if="!isFault(device)" type="danger" size="large" class="emergency-btn" @click.stop="handleEmergencyStop(device)">急停</el-button>
+            </template>
+            <el-button size="large" @click.stop="goToDetail(device)">查看详情</el-button>
           </div>
-          <div class="info-row" v-if="isRunning(device) && device.progressPercent > 0">
-            <el-progress
-              :percentage="device.progressPercent"
-              :stroke-width="12"
-              :status="device.progressPercent >= 100 ? 'success' : ''"
-            />
-          </div>
-        </div>
+        </template>
 
-        <!-- 操作按钮 -->
-        <div class="action-section">
-          <el-button
-            type="warning"
-            size="large"
-            @click.stop="handleShiftHandover(device)"
-            data-testid="shift-handover-btn"
-          >
-            换班
-          </el-button>
-          <el-button
-            type="danger"
-            size="large"
-            class="emergency-btn"
-            @click.stop="handleEmergencyStop(device)"
-            data-testid="emergency-stop-btn"
-          >
-            急停
-          </el-button>
-          <el-button
-            size="large"
-            @click.stop="goToDetail(device)"
-          >
-            查看详情
-          </el-button>
-        </div>
+        <!-- ====== 标签打印机卡片内容 ====== -->
+        <template v-else-if="device.deviceType === 3">
+          <div class="temp-section">
+            <div class="metric-value" :class="{ 'metric-offline': isOffline(device) }">
+              <template v-if="isOffline(device)">--</template>
+              <template v-else>{{ device.printCopies || 0 }}<span class="metric-unit">张</span></template>
+            </div>
+            <div class="metric-label">待打印</div>
+          </div>
+          <div class="info-section">
+            <div class="info-row">
+              <span class="info-label">打印状态:</span>
+              <span class="info-value">
+                <el-tag :type="printStatusTag(device.printStatus)" size="small">{{ printStatusText(device.printStatus) }}</el-tag>
+              </span>
+            </div>
+            <div class="info-row" v-if="device.currentPrescriptionCode">
+              <span class="info-label">当前标签:</span>
+              <span class="info-value">{{ device.currentPrescriptionCode }}</span>
+            </div>
+            <div class="info-row" v-if="device.labelMode">
+              <span class="info-label">模式:</span>
+              <span class="info-value">{{ device.labelMode }}</span>
+            </div>
+          </div>
+          <!-- 标签打印机操作按钮 -->
+          <div class="action-section">
+            <template v-if="!isOffline(device)">
+              <el-button v-if="isIdle(device) || device.printStatus === 'PENDING'" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'REPRINT_LABEL')">补打</el-button>
+              <el-button v-if="isRunning(device)" type="warning" size="large" @click.stop="sendDeviceCommand(device, 'PAUSE_PRINT')">暂停</el-button>
+              <el-button v-if="isPaused(device)" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'RESUME')">继续</el-button>
+            </template>
+            <el-button size="large" @click.stop="goToDetail(device)">查看详情</el-button>
+          </div>
+        </template>
+
+        <!-- ====== 激光打印机卡片内容 ====== -->
+        <template v-else-if="device.deviceType === 4">
+          <div class="temp-section">
+            <div class="metric-value" :class="{ 'metric-offline': isOffline(device) }">
+              <template v-if="isOffline(device)">--</template>
+              <template v-else><el-icon :size="32"><Printer /></el-icon></template>
+            </div>
+            <div class="metric-label">{{ printStatusText(device.printStatus) || '就绪' }}</div>
+          </div>
+          <div class="info-section">
+            <div class="info-row">
+              <span class="info-label">打印状态:</span>
+              <span class="info-value">
+                <el-tag :type="printStatusTag(device.printStatus)" size="small">{{ printStatusText(device.printStatus) }}</el-tag>
+              </span>
+            </div>
+            <div class="info-row" v-if="device.printCopies !== undefined">
+              <span class="info-label">已打印:</span>
+              <span class="info-value">{{ device.printCopies || 0 }} 份</span>
+            </div>
+            <div class="info-row" v-if="device.currentPrescriptionCode">
+              <span class="info-label">当前文档:</span>
+              <span class="info-value">{{ device.currentPrescriptionCode }}</span>
+            </div>
+          </div>
+          <!-- 激光打印机操作按钮 -->
+          <div class="action-section">
+            <template v-if="!isOffline(device)">
+              <el-button v-if="isIdle(device) || device.printStatus === 'PENDING'" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'START_PRINT')">开始打印</el-button>
+              <el-button v-if="isRunning(device)" type="warning" size="large" @click.stop="sendDeviceCommand(device, 'PAUSE_PRINT')">暂停</el-button>
+              <el-button v-if="isPaused(device)" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'RESUME')">继续</el-button>
+            </template>
+            <el-button size="large" @click.stop="goToDetail(device)">查看详情</el-button>
+          </div>
+        </template>
+
+        <!-- ====== PDA 卡片内容 ====== -->
+        <template v-else>
+          <div class="temp-section">
+            <div class="metric-value" :class="{ 'metric-offline': isOffline(device) }">
+              <template v-if="isOffline(device)">--</template>
+              <template v-else>{{ device.currentTemp || 0 }}<span class="metric-unit">%</span></template>
+            </div>
+            <div class="metric-label">电量</div>
+          </div>
+          <div class="info-section">
+            <div class="info-row">
+              <span class="info-label">状态:</span>
+              <span class="info-value">
+                <el-tag :type="isOffline(device) ? 'info' : 'success'" size="small">{{ isOffline(device) ? '离线' : '在线' }}</el-tag>
+              </span>
+            </div>
+            <div class="info-row" v-if="device.currentOperatorName">
+              <span class="info-label">操作人:</span>
+              <span class="info-value">👤 {{ device.currentOperatorName }}</span>
+            </div>
+            <div class="info-row" v-if="device.lastHeartbeat">
+              <span class="info-label">最后心跳:</span>
+              <span class="info-value">{{ formatDateTime(device.lastHeartbeat) }}</span>
+            </div>
+          </div>
+          <div class="action-section">
+            <el-button size="large" @click.stop="goToDetail(device)">查看详情</el-button>
+          </div>
+        </template>
       </div>
     </div>
 
@@ -187,10 +307,15 @@
     >
       <div v-if="currentDevice">
         <p><strong>设备:</strong> {{ currentDevice.name }}</p>
-        <p><strong>当前状态:</strong> {{ formatStatusName(currentDevice.detailStatus || currentDevice.status) }}</p>
-        <p><strong>处方:</strong> {{ currentDevice.currentPrescriptionCode || '无' }}</p>
+        <p><strong>当前状态:</strong> {{ formatStatusName(currentDevice) }}</p>
+        <p v-if="currentDevice.deviceType === 1"><strong>处方:</strong> {{ currentDevice.currentPrescriptionCode || '无' }}</p>
+        <p v-else-if="currentDevice.deviceType === 2"><strong>当前任务:</strong> {{ currentDevice.currentPrescriptionCode || '无' }}</p>
+        <p v-else-if="currentDevice.deviceType === 3 || currentDevice.deviceType === 4"><strong>当前文档:</strong> {{ currentDevice.currentPrescriptionCode || '无' }}</p>
         <el-alert type="error" :closable="false">
-          急停将中断当前煎药进程
+          <template v-if="currentDevice.deviceType === 1">急停将中断当前煎药进程</template>
+          <template v-else-if="currentDevice.deviceType === 2">急停将中断当前包装任务</template>
+          <template v-else-if="currentDevice.deviceType === 3 || currentDevice.deviceType === 4">急停将中断当前打印任务</template>
+          <template v-else>确认执行急停操作</template>
         </el-alert>
       </div>
       <template #footer>
@@ -209,7 +334,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Refresh, FullScreen } from '@element-plus/icons-vue'
+import { Refresh, FullScreen, Printer } from '@element-plus/icons-vue'
 import { getDeviceList, shiftHandover, createCommand } from '@/api/equipment'
 import { useDeviceStore } from '@/stores/device'
 import { useDeviceWebSocket } from '@/composables/useDeviceWebSocket'
@@ -250,36 +375,33 @@ const filteredDevices = computed(() => {
   if (activeType.value > 0) {
     list = list.filter((d: any) => d.deviceType === activeType.value)
   }
-  // 排序：故障 > 离线 > 运行中 > 空闲
+  // 按设备编码稳定排序，避免状态变化时卡片跳动
   return [...list].sort((a: any, b: any) => {
-    const pa = statusPriority[a.detailStatus || a.status] ?? 99
-    const pb = statusPriority[b.detailStatus || b.status] ?? 99
-    return pa - pb
+    const ca = a.deviceCode || ''
+    const cb = b.deviceCode || ''
+    return ca.localeCompare(cb)
   })
 })
 
 const offlineCount = computed(() => deviceStore.offlineCount)
 const faultCount = computed(() => deviceStore.faultCount)
 
-function formatStatusName(status: string) {
+function formatStatusName(device: any) {
+  // 离线优先判断
+  if (device.status === 'OFFLINE') return '离线'
+  const status = device.detailStatus || device.status
   const map: Record<string, string> = {
-    IDLE: '空闲',
-    STANDBY: '待机',
-    READY: '就绪',
-    SOAKING: '浸泡中',
-    PRE_DECOCTING: '预热中',
-    FIRST_DECOCTING: '一煎中',
-    SECOND_DECOCTING: '二煎中',
-    ADD_LATE: '后下提醒',
-    DRAINING: '出液中',
-    PACKAGING: '包装中',
-    PAUSED: '暂停',
-    FAULT: '故障',
-    OFFLINE: '离线',
-    BUSY: '运行中',
-    MAINTENANCE: '维护中',
+    IDLE: '空闲', STANDBY: '待机', READY: '就绪',
+    SOAKING: '浸泡中', PRE_DECOCTING: '预热中',
+    FIRST_DECOCTING: '一煎中', SECOND_DECOCTING: '二煎中',
+    ADD_LATE: '后下提醒', DRAINING: '出液中',
+    PACKAGING: '包装中', PAUSED: '暂停',
+    FAULT: '故障', OFFLINE: '离线',
+    BUSY: '运行中', MAINTENANCE: '维护中',
+    PACKER_IDLE: '空闲', PACKER_READY: '就绪',
+    PRINTING: '打印中', PENDING: '待打印',
   }
-  return map[status] || status
+  return map[status || ''] || status || '空闲'
 }
 
 function formatTime(seconds: number) {
@@ -297,20 +419,62 @@ function formatDateTime(dt: string) {
 }
 
 function isRunning(device: any) {
-  const runningStatuses = ['FIRST_DECOCTING', 'SECOND_DECOCTING', 'SOAKING', 'PRE_DECOCTING', 'PACKAGING', 'DRAINING']
+  const runningStatuses = ['FIRST_DECOCTING', 'SECOND_DECOCTING', 'SOAKING', 'PRE_DECOCTING', 'PACKAGING', 'DRAINING', 'BUSY', 'PRINTING']
   return runningStatuses.includes(device.detailStatus || device.status)
 }
 
+function isOffline(device: any) {
+  return device.status === 'OFFLINE'
+}
+
+function isFault(device: any) {
+  return (device.detailStatus || device.status) === 'FAULT'
+}
+
+function isIdle(device: any) {
+  const s = device.detailStatus || device.status
+  return ['IDLE', 'READY', 'PACKER_IDLE', 'PENDING'].includes(s)
+}
+
+function isPaused(device: any) {
+  return (device.detailStatus || device.status) === 'PAUSED'
+}
+
+function printStatusText(status?: string) {
+  const map: Record<string, string> = {
+    PENDING: '待打印', PRINTING: '打印中', PAUSED: '暂停', COMPLETED: '完成', ERROR: '故障', READY: '就绪'
+  }
+  return map[status || ''] || status || '就绪'
+}
+
+function printStatusTag(status?: string) {
+  if (status === 'PRINTING') return 'primary'
+  if (status === 'COMPLETED') return 'success'
+  if (status === 'ERROR') return 'danger'
+  if (status === 'PAUSED') return 'warning'
+  return 'info'
+}
+
+async function sendDeviceCommand(device: any, commandType: string) {
+  try {
+    await createCommand({ deviceCode: device.deviceCode, commandType, payload: null })
+    ElMessage.success('指令已发送')
+    // 立即刷新设备列表，确保状态即时更新（WebSocket可能有延迟）
+    await loadDevices()
+  } catch (err) {
+    ElMessage.error('指令发送失败')
+  }
+}
+
 function getStatusAnimation(device: any) {
+  // 离线设备无动画
+  if (device.status === 'OFFLINE') return ''
   const status = device.detailStatus || device.status
-  if (status === 'FIRST_DECOCTING' || status === 'SECOND_DECOCTING' || status === 'PACKAGING' || status === 'SOAKING') {
+  if (status === 'FIRST_DECOCTING' || status === 'SECOND_DECOCTING' || status === 'PACKAGING' || status === 'SOAKING' || status === 'BUSY' || status === 'PRINTING') {
     return 'pulse'
   }
   if (status === 'FAULT') {
     return 'blink'
-  }
-  if (status === 'OFFLINE') {
-    return ''
   }
   return 'breath'
 }
@@ -541,6 +705,10 @@ onUnmounted(() => {
   background: #52C41A;
   color: #fff;
 
+  &.offline-status {
+    background: #BFBFBF;
+  }
+
   &.pulse {
     animation: status-pulse 1.5s infinite;
   }
@@ -588,6 +756,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   gap: 16px;
+  flex-direction: column;
 
   .temp-value {
     font-size: 28px;
@@ -601,6 +770,31 @@ onUnmounted(() => {
     border-radius: 50%;
     mask: radial-gradient(transparent 55%, black 56%);
     -webkit-mask: radial-gradient(transparent 55%, black 56%);
+  }
+
+  .metric-value {
+    font-size: 36px;
+    font-weight: bold;
+    color: var(--el-color-primary);
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+
+    .metric-unit {
+      font-size: 16px;
+      font-weight: normal;
+      color: var(--el-text-color-secondary);
+    }
+
+    &.metric-offline {
+      color: var(--el-text-color-disabled);
+    }
+  }
+
+  .metric-label {
+    font-size: 14px;
+    color: var(--el-text-color-secondary);
+    margin-top: 4px;
   }
 }
 

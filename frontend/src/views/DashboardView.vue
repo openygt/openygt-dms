@@ -68,7 +68,10 @@
         <template #header>
           <div class="card-header">
             <span>设备类型分布</span>
-            <el-tag size="small" type="info">总数/在线/在线有异常</el-tag>
+            <div>
+              <el-tag size="small" type="info">总数/在线/在线有异常</el-tag>
+              <el-button size="small" type="primary" style="margin-left: 8px" @click="$router.push('/device-monitor')">进入监控</el-button>
+            </div>
           </div>
         </template>
         <LoadingState v-if="loading" description="加载设备数据..." />

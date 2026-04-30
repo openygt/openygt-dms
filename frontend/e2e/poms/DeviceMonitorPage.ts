@@ -24,11 +24,15 @@ export class DeviceMonitorPage {
     await this.page.waitForTimeout(1000)
   }
 
-  async filterByType(type: 'decoct' | 'pack' | 'all') {
-    const label = { decoct: '煎药机', pack: '包装机', all: '全部' }[type]
-    // 使用更精确的选择器：在 .el-radio-group 内部找包含文本的 label
+  async filterByType(type: 'decoct' | 'pack' | 'label' | 'laser' | 'pda' | 'all') {
+    const label = { decoct: '煎药机', pack: '包装机', label: '标签打印机', laser: '激光打印机', pda: 'PDA', all: '全部' }[type]
     await this.page.locator('.el-radio-group .el-radio-button__inner').filter({ hasText: label }).click()
     await this.page.waitForTimeout(300)
+  }
+
+  async expectFilterVisible(typeLabel: string) {
+    const btn = this.page.locator('.el-radio-group .el-radio-button__inner').filter({ hasText: typeLabel })
+    await expect(btn).toBeVisible()
   }
 
   async getDeviceCard(code: string) {

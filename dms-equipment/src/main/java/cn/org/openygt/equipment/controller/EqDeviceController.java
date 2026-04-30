@@ -93,9 +93,15 @@ public class EqDeviceController {
 
     // ========== 设备详情（含关联信息）==========
 
-    @GetMapping("/{id}/detail")
-    public ApiResponse<EqDevice> getDeviceDetail(@PathVariable Long id) {
-        EqDevice device = deviceService.getById(id);
+    @GetMapping("/{code}/detail")
+    public ApiResponse<EqDevice> getDeviceDetail(@PathVariable String code) {
+        EqDevice device;
+        try {
+            Long id = Long.valueOf(code);
+            device = deviceService.getById(id);
+        } catch (NumberFormatException e) {
+            device = deviceService.getByCode(code);
+        }
         if (device != null) {
             // 加载MQTT配置
             device.setMqttConfig(mqttConfigService.getByDeviceCode(device.getDeviceCode()));
