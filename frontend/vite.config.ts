@@ -9,6 +9,18 @@ export default defineConfig({
       '@': resolve(__dirname, 'src')
     }
   },
+  build: {
+    chunkSizeWarningLimit: 1500,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          echarts: ['echarts'],
+          vendor: ['vue', 'vue-router', 'pinia', 'element-plus', '@element-plus/icons-vue'],
+          websocket: ['@stomp/stompjs', 'sockjs-client']
+        }
+      }
+    }
+  },
   server: {
     port: 5176,
     proxy: {

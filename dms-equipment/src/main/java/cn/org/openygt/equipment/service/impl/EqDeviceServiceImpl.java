@@ -1,5 +1,6 @@
 package cn.org.openygt.equipment.service.impl;
 
+import cn.org.openygt.equipment.dto.TemperatureAggregationDTO;
 import cn.org.openygt.equipment.dto.TemperatureLogDTO;
 import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.entity.EqTemperatureLog;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class EqDeviceServiceImpl implements EqDeviceService {
@@ -61,7 +63,7 @@ public class EqDeviceServiceImpl implements EqDeviceService {
     }
 
     @Override
-    public IPage<EqDevice> list(String keyword, Integer deviceType, String status, int page, int size) {
+    public IPage<EqDevice> list(String keyword, Integer deviceType, String status, Long currentOperatorId, int page, int size) {
         LambdaQueryWrapper<EqDevice> wrapper = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.and(w -> w.like(EqDevice::getDeviceCode, keyword).or().like(EqDevice::getName, keyword));
@@ -71,6 +73,10 @@ public class EqDeviceServiceImpl implements EqDeviceService {
         }
         if (status != null && !status.isEmpty()) {
             wrapper.eq(EqDevice::getStatus, status);
+        }
+        // 数据权限：只查看当前操作人负责的设备
+        if (currentOperatorId != null) {
+            wrapper.eq(EqDevice::getCurrentOperatorId, currentOperatorId);
         }
         wrapper.orderByDesc(EqDevice::getCreatedAt);
         return deviceMapper.selectPage(new Page<>(page, size), wrapper);
@@ -115,6 +121,20 @@ public class EqDeviceServiceImpl implements EqDeviceService {
                 .orderByDesc(EqTemperatureLog::getRecordedAt);
         return temperatureLogMapper.selectPage(new Page<>(page, size), wrapper)
                 .convert(this::toTemperatureLogDTO);
+    }
+
+    @Override
+    public List<TemperatureAggregationDTO> getTemperatureAggregation(Long deviceId, String interval, LocalDateTime start, LocalDateTime end) {
+        switch (interval) {
+            case "1min":
+                return temperatureLogMapper.aggregateByMinute(deviceId, start, end);
+            case "5min":
+                return temperatureLogMapper.aggregateBy5Minute(deviceId, start, end);
+            case "1hour":
+                return temperatureLogMapper.aggregateByHour(deviceId, start, end);
+            default:
+                return temperatureLogMapper.aggregateByMinute(deviceId, start, end);
+        }
     }
 
     private TemperatureLogDTO toTemperatureLogDTO(EqTemperatureLog log) {

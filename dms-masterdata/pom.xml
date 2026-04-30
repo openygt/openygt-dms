@@ -16,5 +16,10 @@
             <groupId>cn.org.openygt</groupId>
             <artifactId>dms-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

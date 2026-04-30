@@ -20,10 +20,13 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="schemeName" label="方案名称" />
         <el-table-column prop="schemeCode" label="方案编码" />
-        <el-table-column prop="soakTime" label="浸泡时间(分)" width="120" />
-        <el-table-column prop="decoctTime" label="煎煮时间(分)" width="120" />
-        <el-table-column prop="tempRange" label="温度范围" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="soakTime" label="浸泡(分)" width="90" />
+        <el-table-column prop="firstDecoctTime" label="一煎(分)" width="90" />
+        <el-table-column prop="secondDecoctTime" label="二煎(分)" width="90" />
+        <el-table-column prop="drainTime" label="出液(分)" width="90" />
+        <el-table-column prop="packageTime" label="包装(分)" width="90" />
+        <el-table-column prop="tempRange" label="温度范围" width="120" />
+        <el-table-column prop="status" label="状态" width="90">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
           </template>
@@ -48,20 +51,62 @@
       <el-empty v-if="!loading && list.length === 0" description="暂无方案" />
     </el-card>
 
-    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑方案' : '新增方案'" width="500px">
-      <el-form :model="form" label-width="120px">
+    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑方案' : '新增方案'" width="600px">
+      <el-form :model="form" label-width="140px">
         <el-form-item label="方案名称" required>
           <el-input v-model="form.schemeName" />
         </el-form-item>
         <el-form-item label="方案编码" required>
           <el-input v-model="form.schemeCode" :disabled="!!form.id" />
         </el-form-item>
-        <el-form-item label="浸泡时间(分)">
-          <el-input-number v-model="form.soakTime" :min="0" />
-        </el-form-item>
-        <el-form-item label="煎煮时间(分)">
-          <el-input-number v-model="form.decoctTime" :min="0" />
-        </el-form-item>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="浸泡时间(分)">
+              <el-input-number v-model="form.soakTime" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="一煎时间(分)">
+              <el-input-number v-model="form.firstDecoctTime" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="二煎时间(分)">
+              <el-input-number v-model="form.secondDecoctTime" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="出液时间(分)">
+              <el-input-number v-model="form.drainTime" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="包装时间(分)">
+              <el-input-number v-model="form.packageTime" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="后下提醒(分)">
+              <el-input-number v-model="form.lateAddRemindTime" :min="0" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="升温速率(°C/min)">
+              <el-input-number v-model="form.tempRiseRate" :min="0" :precision="1" :step="0.5" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="是否默认方案">
+              <el-switch v-model="form.isDefault" :active-value="1" :inactive-value="0" />
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="温度范围">
           <el-input v-model="form.tempRange" placeholder="如 100-105°C" />
         </el-form-item>
@@ -86,14 +131,20 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import request from '@/api/request'
+import { getSchemeList, createScheme, updateScheme, deleteScheme } from '@/api/equipment'
 
 interface Scheme {
   id: number
   schemeName: string
   schemeCode: string
   soakTime: number
-  decoctTime: number
+  firstDecoctTime: number
+  secondDecoctTime: number
+  drainTime: number
+  packageTime: number
+  lateAddRemindTime: number
+  tempRiseRate: number
+  isDefault: number
   tempRange: string
   status: number
   remark: string
@@ -103,7 +154,7 @@ const list = ref<Scheme[]>([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const search = ref({ name: '' })
-const form = ref<Partial<Scheme>>({ status: 1 })
+const form = ref<Partial<Scheme>>({ status: 1, isDefault: 0 })
 const pagination = ref({ page: 1, size: 10, total: 0 })
 
 async function fetchData() {
@@ -114,7 +165,7 @@ async function fetchData() {
       size: pagination.value.size
     }
     if (search.value.name) params.keyword = search.value.name
-    const res: any = await request.get('/v1/md/schemes', { params })
+    const res: any = await getSchemeList(params)
     list.value = res.data?.records || []
     pagination.value.total = res.data?.total || 0
   } finally {
@@ -134,17 +185,32 @@ function handlePageChange(val: number) {
 }
 
 function openDialog(row?: Scheme) {
-  form.value = row ? { ...row } : { status: 1 }
+  form.value = row ? { ...row } : { status: 1, isDefault: 0 }
   dialogVisible.value = true
 }
 
 async function handleSave() {
   try {
+    const payload = {
+      name: form.value.schemeName,
+      code: form.value.schemeCode,
+      description: form.value.remark,
+      preHeatingTime: form.value.soakTime,
+      heatingTime: form.value.firstDecoctTime,
+      firstDecoctTime: form.value.firstDecoctTime,
+      secondDecoctTime: form.value.secondDecoctTime,
+      soakTime: form.value.soakTime,
+      drainTime: form.value.drainTime,
+      packageTime: form.value.packageTime,
+      lateAddRemindTime: form.value.lateAddRemindTime,
+      tempRiseRate: form.value.tempRiseRate,
+      isDefault: form.value.isDefault,
+    }
     if (form.value.id) {
-      await request.put(`/v1/md/schemes/${form.value.id}`, form.value)
+      await updateScheme(form.value.id, payload)
       ElMessage.success('更新成功')
     } else {
-      await request.post('/v1/md/schemes', form.value)
+      await createScheme(payload)
       ElMessage.success('创建成功')
     }
     dialogVisible.value = false
@@ -155,7 +221,7 @@ async function handleSave() {
 async function handleDelete(row: Scheme) {
   try {
     await ElMessageBox.confirm('确认删除该方案？', '提示', { type: 'warning' })
-    await request.delete(`/v1/md/schemes/${row.id}`)
+    await deleteScheme(row.id)
     ElMessage.success('删除成功')
     fetchData()
   } catch (e) {}

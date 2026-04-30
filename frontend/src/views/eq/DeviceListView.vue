@@ -72,10 +72,11 @@
             {{ formatDateTime(row.lastHeartbeat) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="openDialog(row)">编辑</el-button>
             <el-button size="small" @click="viewDetail(row)">详情</el-button>
+            <el-button size="small" type="info" @click="openPrintLabel(row)">标签</el-button>
             <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -218,6 +219,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
+import DeviceLabelPrint from '@/components/DeviceLabelPrint.vue'
 
 interface Device {
   id: number
@@ -256,6 +258,10 @@ const loading = ref(false)
 const dialogVisible = ref(false)
 const detailVisible = ref(false)
 const detail = ref<Device | null>(null)
+
+// 标签打印
+const printVisible = ref(false)
+const currentDevice = ref<Device | null>(null)
 const groups = ref<Group[]>([])
 const groupMap = ref<Record<number, string>>({})
 
@@ -418,6 +424,11 @@ async function viewDetail(row: Device) {
     detail.value = res.data
     detailVisible.value = true
   } catch (e) {}
+}
+
+function openPrintLabel(row: Device) {
+  currentDevice.value = row
+  printVisible.value = true
 }
 
 async function fetchGroups() {

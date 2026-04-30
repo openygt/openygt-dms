@@ -1,5 +1,6 @@
 package cn.org.openygt.equipment.websocket;
 
+import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.iot.DeviceConnInfo;
 import cn.org.openygt.equipment.iot.DeviceConnManager;
 import lombok.RequiredArgsConstructor;
@@ -8,6 +9,8 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.HashMap;
 import java.util.List;
@@ -76,5 +79,50 @@ public class DeviceWebSocketController {
     @SubscribeMapping("/tenant/devices")
     public List<DeviceConnInfo> subscribeTenantDevices() {
         return deviceConnManager.listOnline();
+    }
+
+    // ===== Phase 1 新增 =====
+
+    /**
+     * 推送租户下所有设备状态快照（60秒低频聚合）
+     */
+    public void pushTenantDevicesSnapshot(String tenantId) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("tenantId", tenantId);
+        payload.put("devices", deviceConnManager.listOnline());
+        payload.put("timestamp", System.currentTimeMillis());
+        messagingTemplate.convertAndSend("/topic/tenant/" + tenantId + "/devices/snapshot", payload);
+    }
+
+    /**
+     * 推送告警广播
+     */
+    public void pushAlarm(String tenantId, String deviceCode, String alarmType, String message) {
+        Map<String, Object> payload = new HashMap<>();
+        payload.put("tenantId", tenantId);
+        payload.put("deviceCode", deviceCode);
+        payload.put("alarmType", alarmType);
+        payload.put("message", message);
+        payload.put("timestamp", System.currentTimeMillis());
+        messagingTemplate.convertAndSend("/topic/tenant/" + tenantId + "/alarms", payload);
+    }
+
+    /**
+     * WebSocket 能力探测
+     */
+    @GetMapping("/api/v1/eq/ws/capability")
+    @ResponseBody
+    public ApiResponse<Map<String, Object>> getWsCapability() {
+        Map<String, Object> capability = new HashMap<>();
+        capability.put("supported", true);
+        capability.put("wildcardSubscription", true);
+        capability.put("endpoint", "/ws/iot");
+        capability.put("protocol", "STOMP over SockJS");
+        capability.put("topics", new String[]{
+            "/topic/device/{code}/status",
+            "/topic/tenant/{tenantId}/devices/snapshot",
+            "/topic/tenant/{tenantId}/alarms"
+        });
+        return ApiResponse.success(capability);
     }
 }
