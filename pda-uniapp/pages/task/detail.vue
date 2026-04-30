@@ -1,243 +1,190 @@
 <template>
   <view class="container">
+    <!-- 任务信息卡 -->
     <view class="task-card">
       <view class="task-header">
-        <text class="task-code">{{ task.barcode || taskCode }}</text>
-        <text class="task-status" :class="task.status">{{ task.statusText || task.status }}</text>
+        <view class="task-status-row">
+          <text class="task-status-dot" :style="{ background: statusColor }"></text>
+          <text class="task-status-name">{{ task.statusName || task.status }}</text>
+        </view>
+        <text class="task-barcode">{{ task.barcode }}</text>
       </view>
-      
       <view class="task-info">
         <view class="info-row">
+          <text class="info-label">患者</text>
+          <text class="info-value">{{ task.patientName || '-' }}</text>
+        </view>
+        <view class="info-row">
           <text class="info-label">处方</text>
-          <text class="info-value">{{ task.prescriptionName || '-' }}</text>
+          <text class="info-value">{{ task.prescriptionNumber || '-' }}</text>
         </view>
         <view class="info-row">
           <text class="info-label">医院</text>
           <text class="info-value">{{ task.hospitalName || '-' }}</text>
         </view>
         <view class="info-row">
-          <text class="info-label">患者</text>
-          <text class="info-value">{{ task.patientName || '-' }}</text>
+          <text class="info-label">剂数</text>
+          <text class="info-value">{{ task.repetition || '-' }} 剂</text>
         </view>
-        <view class="info-row">
-          <text class="info-label">当前工序</text>
-          <text class="info-value highlight">{{ task.currentStep || '-' }}</text>
-        </view>
-        <view class="info-row">
-          <text class="info-label">关联设备</text>
-          <text class="info-value">{{ task.deviceName || '-' }}</text>
+        <view class="info-row" v-if="task.deviceName">
+          <text class="info-label">设备</text>
+          <text class="info-value">{{ task.deviceName }}</text>
         </view>
       </view>
     </view>
-    
-    <view class="action-area">
-      <button class="action-btn primary" @click="goConfirm">工序确认</button>
-      <button class="action-btn" @click="goPhoto">拍照留档</button>
-    </view>
-    
-    <view class="step-timeline">
-      <text class="section-title">工序进度</text>
-      <view class="timeline">
-        <view class="timeline-item" v-for="(step, idx) in steps" :key="idx" :class="{ active: step.completed, current: step.isCurrent }">
-          <view class="timeline-dot"></view>
-          <view class="timeline-content">
-            <text class="step-name">{{ step.name }}</text>
-            <text class="step-time" v-if="step.time">{{ step.time }}</text>
-          </view>
+
+    <!-- 药材清单 -->
+    <view class="medicine-section" v-if="task.medicines && task.medicines.length > 0">
+      <text class="section-title">药材清单 ({{ task.medicines.length }}味)</text>
+      <view class="medicine-list">
+        <view class="medicine-item" v-for="(med, idx) in task.medicines" :key="idx">
+          <text class="med-name">{{ med.name }}</text>
+          <text class="med-dosage">{{ med.dosage }}{{ med.unit }}</text>
         </view>
+      </view>
+    </view>
+
+    <!-- 工序时间线 -->
+    <view class="timeline-section">
+      <text class="section-title">工序进度</text>
+      <ygt-step-timeline :steps="task.steps || []" @click-step="onClickStep" />
+    </view>
+
+    <!-- 底部操作区 -->
+    <view class="action-footer">
+      <button class="main-btn" :class="{ disabled: !canAction }" :disabled="!canAction" @click="handleMainAction">
+        {{ mainActionText }}
+      </button>
+      <view class="sub-actions">
+        <button class="sub-btn" @click="goPhoto">拍照留档</button>
+        <button class="sub-btn" @click="goLog">操作日志</button>
       </view>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, onLoad } from 'vue'
+import { ref, computed, onLoad } from 'vue'
+import { get } from '../../utils/request.js'
 
-const taskCode = ref('')
 const task = ref({})
+const barcode = ref('')
 
-const steps = ref([
-  { name: '处方录入', completed: true, time: '08:30' },
-  { name: '泡药', completed: true, time: '09:00' },
-  { name: '煎药', completed: false, isCurrent: true },
-  { name: '出液', completed: false },
-  { name: '包装', completed: false },
-  { name: '贴标', completed: false },
-  { name: '质检', completed: false },
-  { name: '交接', completed: false }
-])
+const statusColor = computed(() => {
+  const colors = {
+    PENDING: '#999', SOAKING: '#2196f3', SOAKED: '#64b5f6',
+    DECOCTING: '#ff9800', DECOCTED: '#ffb74d', POURING: '#9c27b0',
+    POURED: '#ba68c8', PACKAGING: '#795548', PACKAGED: '#a1887f',
+    LABELING: '#607d8b', LABELED: '#78909c', INSPECTING: '#e91e63',
+    COMPLETED: '#4caf50', CANCELLED: '#9e9e9e'
+  }
+  return colors[task.value.status] || '#999'
+})
+
+const mainActionText = computed(() => {
+  const action = task.value.nextAction
+  if (!action) {
+    if (task.value.status === 'COMPLETED') return '已完成'
+    if (task.value.status === 'CANCELLED') return '已取消'
+    return '无操作'
+  }
+  return action.text
+})
+
+const canAction = computed(() => {
+  return task.value.nextAction != null && task.value.status !== 'COMPLETED' && task.value.status !== 'CANCELLED'
+})
 
 onLoad((options) => {
-  taskCode.value = options.barcode || options.taskId || ''
-  // 模拟数据，实际应调用 API
-  task.value = {
-    barcode: taskCode.value,
-    status: 'processing',
-    statusText: '煎药中',
-    prescriptionName: '感冒清热方',
-    hospitalName: '中医院',
-    patientName: '张三',
-    currentStep: '煎药',
-    deviceName: '煎药机-01'
+  barcode.value = options.barcode || ''
+  if (barcode.value) {
+    loadTask()
   }
 })
 
-function goConfirm() {
-  uni.navigateTo({ url: `/pages/task/confirm?taskId=${task.value.taskId || taskCode.value}` })
+async function loadTask() {
+  try {
+    uni.showLoading({ title: '加载中' })
+    const res = await get(`/task/${barcode.value}`)
+    task.value = res
+  } catch (e) {
+    uni.showToast({ title: e.message || '加载失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+  }
+}
+
+function handleMainAction() {
+  const action = task.value.nextAction
+  if (!action) return
+
+  // 交接签字
+  if (action.stepType === 'HANDOVER_SIGN') {
+    uni.navigateTo({
+      url: `/pages/handover/sign?taskId=${task.value.taskId}&barcode=${barcode.value}`
+    })
+    return
+  }
+
+  // 需要设备绑定 → 跳转设备绑定页
+  if (action.needDevice && !task.value.deviceCode) {
+    uni.navigateTo({
+      url: `/pages/device/bind?taskId=${task.value.taskId}&stepType=${action.stepType}&barcode=${barcode.value}`
+    })
+    return
+  }
+
+  // 需要拍照 → 跳转拍照页（强制模式）
+  if (action.needPhoto) {
+    uni.navigateTo({
+      url: `/pages/photo/upload?taskId=${task.value.taskId}&stepType=${action.stepType}&mode=force`
+    })
+    return
+  }
+
+  // 普通工序确认
+  uni.navigateTo({
+    url: `/pages/task/confirm?taskId=${task.value.taskId}&stepType=${action.stepType}&barcode=${barcode.value}`
+  })
+}
+
+function onClickStep(step) {
+  if (!step.completed && !step.current) {
+    uni.showToast({ title: '请先完成前置工序', icon: 'none' })
+    uni.vibrateShort()
+  }
 }
 
 function goPhoto() {
-  uni.navigateTo({ url: `/pages/photo/upload?taskId=${task.value.taskId || taskCode.value}` })
+  uni.navigateTo({ url: `/pages/photo/upload?taskId=${task.value.taskId}` })
+}
+function goLog() {
+  uni.switchTab({ url: '/pages/log/list' })
 }
 </script>
 
 <style scoped>
-.container {
-  min-height: 100vh;
-  background: #f5f5f5;
-  padding: 30rpx;
-}
-
-.task-card {
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 40rpx;
-  margin-bottom: 30rpx;
-}
-
-.task-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30rpx;
-  padding-bottom: 20rpx;
-  border-bottom: 1rpx solid #f0f0f0;
-}
-
-.task-code {
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-}
-
-.task-status {
-  font-size: 24rpx;
-  padding: 6rpx 16rpx;
-  border-radius: 8rpx;
-}
-
-.task-status.processing {
-  color: #ff9800;
-  background: #fff3e0;
-}
-
-.info-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 16rpx 0;
-}
-
-.info-label {
-  font-size: 28rpx;
-  color: #666;
-}
-
-.info-value {
-  font-size: 28rpx;
-  color: #333;
-}
-
-.info-value.highlight {
-  color: #0066CC;
-  font-weight: bold;
-}
-
-.action-area {
-  display: flex;
-  gap: 20rpx;
-  margin-bottom: 30rpx;
-}
-
-.action-btn {
-  flex: 1;
-  height: 90rpx;
-  line-height: 90rpx;
-  background: #fff;
-  color: #0066CC;
-  font-size: 30rpx;
-  border-radius: 12rpx;
-  border: 2rpx solid #0066CC;
-}
-
-.action-btn.primary {
-  background: #0066CC;
-  color: #fff;
-}
-
-.step-timeline {
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 30rpx;
-}
-
-.section-title {
-  font-size: 30rpx;
-  font-weight: bold;
-  margin-bottom: 20rpx;
-}
-
-.timeline-item {
-  display: flex;
-  align-items: flex-start;
-  padding: 20rpx 0;
-  position: relative;
-}
-
-.timeline-item:not(:last-child)::before {
-  content: '';
-  position: absolute;
-  left: 20rpx;
-  top: 50rpx;
-  width: 2rpx;
-  height: 60rpx;
-  background: #e0e0e0;
-}
-
-.timeline-item.active:not(:last-child)::before {
-  background: #0066CC;
-}
-
-.timeline-dot {
-  width: 40rpx;
-  height: 40rpx;
-  border-radius: 50%;
-  background: #e0e0e0;
-  margin-right: 20rpx;
-  flex-shrink: 0;
-}
-
-.timeline-item.active .timeline-dot {
-  background: #0066CC;
-}
-
-.timeline-item.current .timeline-dot {
-  background: #ff9800;
-  box-shadow: 0 0 10rpx rgba(255,152,0,0.4);
-}
-
-.timeline-content {
-  display: flex;
-  flex-direction: column;
-}
-
-.step-name {
-  font-size: 28rpx;
-  color: #333;
-}
-
-.step-time {
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 6rpx;
-}
+.container { padding-bottom: 200rpx; }
+.task-card { background: #fff; margin: 20rpx; border-radius: 16rpx; padding: 30rpx; }
+.task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
+.task-status-row { display: flex; align-items: center; }
+.task-status-dot { width: 16rpx; height: 16rpx; border-radius: 50%; margin-right: 12rpx; }
+.task-status-name { font-size: 32rpx; font-weight: 600; color: #333; }
+.task-barcode { font-size: 26rpx; color: #999; }
+.task-info { border-top: 1rpx solid #f0f0f0; padding-top: 20rpx; }
+.info-row { display: flex; justify-content: space-between; padding: 12rpx 0; }
+.info-label { font-size: 28rpx; color: #666; }
+.info-value { font-size: 28rpx; color: #333; font-weight: 500; }
+.medicine-section { background: #fff; margin: 20rpx; border-radius: 16rpx; padding: 30rpx; }
+.section-title { font-size: 30rpx; font-weight: 600; color: #333; margin-bottom: 20rpx; display: block; }
+.medicine-list { display: flex; flex-wrap: wrap; gap: 16rpx; }
+.medicine-item { background: #f5f5f5; padding: 12rpx 20rpx; border-radius: 8rpx; display: flex; align-items: center; gap: 12rpx; }
+.med-name { font-size: 28rpx; color: #333; }
+.med-dosage { font-size: 26rpx; color: #666; }
+.timeline-section { background: #fff; margin: 20rpx; border-radius: 16rpx; padding: 30rpx; }
+.action-footer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 20rpx 30rpx; box-shadow: 0 -2rpx 12rpx rgba(0,0,0,0.06); }
+.main-btn { height: 96rpx; background: #0066CC; color: #fff; font-size: 34rpx; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; margin-bottom: 16rpx; }
+.main-btn.disabled { background: #ccc; }
+.sub-actions { display: flex; gap: 20rpx; }
+.sub-btn { flex: 1; height: 80rpx; background: #f5f5f5; color: #555; font-size: 28rpx; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; }
 </style>

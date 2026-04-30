@@ -79,16 +79,17 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { post } from '../../utils/request.js'
+import { get, post } from '../../utils/request.js'
 
 const taskId = ref('')
+const barcode = ref('')
 const currentStep = ref('待泡药')
 const selectedStep = ref('')
 const remark = ref('')
 const loading = ref(false)
 
 const steps = ref([
-  { value: 'START_SOAK', label: '开始泡药', completed: false, current: true, completedAt: '' },
+  { value: 'START_SOAK', label: '开始泡药', completed: false, current: false, completedAt: '' },
   { value: 'END_SOAK', label: '结束泡药', completed: false, current: false, completedAt: '' },
   { value: 'START_DECOCT', label: '开始煎药', completed: false, current: false, completedAt: '' },
   { value: 'END_DECOCT', label: '结束煎药', completed: false, current: false, completedAt: '' },
@@ -96,7 +97,8 @@ const steps = ref([
   { value: 'END_POUR', label: '结束出液', completed: false, current: false, completedAt: '' },
   { value: 'START_PACKAGE', label: '开始包装', completed: false, current: false, completedAt: '' },
   { value: 'END_PACKAGE', label: '结束包装', completed: false, current: false, completedAt: '' },
-  { value: 'LABEL_CONFIRM', label: '贴标确认', completed: false, current: false, completedAt: '' }
+  { value: 'LABEL_CONFIRM', label: '贴标确认', completed: false, current: false, completedAt: '' },
+  { value: 'INSPECT_PASS', label: '质检通过', completed: false, current: false, completedAt: '' }
 ])
 
 const selectedLabel = computed(() => {
@@ -113,29 +115,36 @@ const currentStatusClass = computed(() => {
 
 onLoad((options) => {
   taskId.value = options.taskId || ''
-  // 模拟加载任务进度
-  loadTaskProgress()
+  barcode.value = options.barcode || ''
+  const preselectStep = options.stepType || ''
+  loadTaskProgress(preselectStep)
 })
 
-function loadTaskProgress() {
-  // 实际应从后端加载当前进度，这里模拟部分已完成
-  const mockCompleted = 2
-  steps.value.forEach((step, idx) => {
-    if (idx < mockCompleted) {
-      step.completed = true
-      step.current = false
-      step.completedAt = '08:' + String(30 + idx * 15).padStart(2, '0')
-    } else if (idx === mockCompleted) {
-      step.completed = false
-      step.current = true
-    } else {
-      step.completed = false
-      step.current = false
+async function loadTaskProgress(preselectStep) {
+  if (!barcode.value) return
+  try {
+    uni.showLoading({ title: '加载中' })
+    const res = await get(`/task/${barcode.value}`)
+    currentStep.value = res.statusName || res.status || '待泡药'
+    // 同步后端步骤状态
+    if (res.steps && res.steps.length > 0) {
+      steps.value = res.steps.map(s => ({
+        value: s.value,
+        label: s.label,
+        completed: s.completed,
+        current: s.current,
+        completedAt: s.completedAt
+      }))
     }
-  })
-  // 更新当前状态文本
-  const current = steps.value.find(s => s.current)
-  if (current) currentStep.value = current.label
+    // 如果有预选中步骤，自动选中
+    if (preselectStep) {
+      selectedStep.value = preselectStep
+    }
+  } catch (e) {
+    console.error('加载任务进度失败', e)
+  } finally {
+    uni.hideLoading()
+  }
 }
 
 function selectStep(step) {
@@ -162,6 +171,17 @@ async function handleConfirm() {
     return
   }
 
+  // 二次确认
+  const stepLabel = steps.value.find(s => s.value === selectedStep.value)?.label || ''
+  const needConfirm = ['END_DECOCT', 'END_PACKAGE', 'INSPECT_PASS'].includes(selectedStep.value)
+  if (needConfirm) {
+    const [confirmErr, confirmRes] = await uni.showModal({
+      title: '⚠ 确认操作',
+      content: `您即将确认: ${stepLabel}，确认后不可撤销，是否继续？`
+    })
+    if (!confirmRes || !confirmRes.confirm) return
+  }
+
   loading.value = true
   try {
     await post('/task/confirm', {
@@ -171,7 +191,8 @@ async function handleConfirm() {
     })
 
     if (uni.$ygtFeedback) uni.$ygtFeedback.success()
-    uni.showToast({ title: '确认成功', icon: 'success' })
+    uni.vibrateShort()
+    uni.showToast({ title: `已确认：${stepLabel}`, icon: 'success' })
 
     // 更新本地状态
     const step = steps.value.find(s => s.value === selectedStep.value)
@@ -199,6 +220,7 @@ async function handleConfirm() {
   } catch (e) {
     console.error('Confirm failed:', e)
     if (uni.$ygtFeedback) uni.$ygtFeedback.error()
+    uni.vibrateLong()
     uni.showToast({ title: '确认失败：' + (e.message || '请重试'), icon: 'none' })
   } finally {
     loading.value = false

@@ -21,6 +21,7 @@ public class Task {
     private Long packageDeviceId;
     private Long schemeId;
     private String operatorId;
+    private String operatorName;
     private String status;
     private BigDecimal currentTemp;
     private BigDecimal targetTemp;
