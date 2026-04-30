@@ -71,6 +71,13 @@ public class SysUserServiceImpl implements SysUserService {
     }
 
     @Override
+    public SysUser getByBarcode(String barcode) {
+        LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysUser::getBarcode, barcode);
+        return userMapper.selectOne(wrapper);
+    }
+
+    @Override
     public IPage<SysUser> list(String keyword, int page, int size) {
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
