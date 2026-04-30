@@ -4,6 +4,7 @@ import { ref, computed } from 'vue'
 export interface DeviceState {
   deviceCode: string
   name: string
+  deviceType?: number
   status: string
   detailStatus: string
   currentTemp: number
@@ -17,6 +18,11 @@ export interface DeviceState {
   pressure?: number
   faultCode?: string
   lastHeartbeat?: string
+  packageNum?: number
+  packageCapacity?: number
+  printCopies?: number
+  printStatus?: string
+  labelMode?: string
   _networkOffline?: boolean
 }
 
@@ -57,6 +63,8 @@ export const useDeviceStore = defineStore('device', () => {
         ...data
       })
     }
+    // ★ 创建新的 Map 实例以触发 Vue 响应式更新
+    devices.value = new Map(devices.value)
   }
 
   function updateDevices(snapshot: DeviceState[]) {

@@ -94,9 +94,18 @@ public class EquipmentServiceImpl implements EquipmentService {
     public void updateDeviceStatus(Long deviceId, String status) {
         UpdateWrapper<EqDevice> wrapper = new UpdateWrapper<>();
         wrapper.eq("id", deviceId)
-                .set("status", status)
                 .set("last_heartbeat", LocalDateTime.now())
                 .set("updated_at", LocalDateTime.now());
+
+        // 粗粒度状态 vs 精细状态区分
+        if ("OFFLINE".equals(status) || "FAULT".equals(status) || "IDLE".equals(status)) {
+            wrapper.set("status", status);
+            wrapper.set("detail_status", status);
+        } else {
+            // 精细状态（SOAKING/FIRST_DECOCTING 等）只更新 detail_status
+            wrapper.set("detail_status", status);
+            wrapper.set("status", "BUSY");
+        }
         deviceMapper.update(null, wrapper);
         log.info("设备状态更新: deviceId={}, status={}", deviceId, status);
     }
