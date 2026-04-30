@@ -99,7 +99,7 @@ export async function loginAs(userKey) {
   const res = await fetch('http://localhost:3456/api/v1/pda/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ loginType: 'account', username: user.userCode, password: user.password })
+    body: JSON.stringify({ userCode: user.userCode, password: user.password, deviceId: 1, deviceCode: 'JYJ-001' })
   })
   const data = await res.json()
   return data.data?.token || null

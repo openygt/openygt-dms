@@ -68,6 +68,16 @@ app.use('/api/v1/pda/photos', photoRoutes)
 app.use('/api/v1/pda/logs', logRoutes)
 app.use('/__control', controlRoutes)
 
+// 版本检查
+app.post('/api/v1/pda/config/version', (req, res) => {
+  res.jsonOk({ version: '1.0.0', forceUpdate: false })
+})
+
+// 心跳
+app.post('/api/v1/pda/heartbeat', (req, res) => {
+  res.jsonOk({ status: 'ok', timestamp: new Date().toISOString() })
+})
+
 // 健康检查
 app.get('/health', (req, res) => {
   res.jsonOk({

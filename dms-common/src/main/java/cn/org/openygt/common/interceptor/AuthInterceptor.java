@@ -25,7 +25,7 @@ public class AuthInterceptor implements HandlerInterceptor {
         String uri = request.getRequestURI();
 
         // 公开接口放行（兜底，实际白名单在 WebMvcConfig 中配置）
-        if (uri.startsWith("/api/v1/auth/") || uri.startsWith("/api/v1/sys/auth/") || uri.startsWith("/api/v1/pda/auth/") || uri.startsWith("/api/v1/pda/config/version") || uri.startsWith("/error")) {
+        if (uri.startsWith("/api/v1/auth/") || uri.startsWith("/api/v1/sys/auth/") || uri.startsWith("/api/v1/rbac/auth/") || uri.startsWith("/api/v1/pda/auth/") || uri.startsWith("/api/v1/pda/config/version") || uri.startsWith("/error")) {
             return true;
         }
 

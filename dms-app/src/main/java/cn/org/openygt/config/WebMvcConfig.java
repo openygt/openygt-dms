@@ -33,8 +33,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
                         "/api/v1/auth/**",
                         "/api/v1/sys/auth/**",
                         "/api/v1/rbac/auth/**",
-                        "/api/v1/pda/auth/**",
-                        "/api/v1/pda/config/version",
+                        "/api/v1/pda/**",
                         "/error"
                 );
     }

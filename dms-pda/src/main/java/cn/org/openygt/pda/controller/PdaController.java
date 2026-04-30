@@ -20,6 +20,7 @@ import cn.org.openygt.production.service.TaskService;
 import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.system.entity.SysUser;
 import cn.org.openygt.system.service.SysUserService;
+import cn.org.openygt.common.service.EquipmentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +45,7 @@ public class PdaController {
     private final SysUserService sysUserService;
     private final PrescriptionMapper prescriptionMapper;
     private final PrescriptionMedicineMapper prescriptionMedicineMapper;
+    private final EquipmentService equipmentService;
 
     @Value("${app.version:1.0.0}")
     private String appVersion;
@@ -205,7 +207,9 @@ public class PdaController {
                     task = taskService.endSoak(taskId, operatorId);
                     break;
                 case "START_DECOCT":
-                    task = taskService.startDecoct(taskId, null, operatorId);
+                    Long decoctDeviceId = request.getDeviceId();
+                    String decoctDeviceCode = decoctDeviceId != null ? equipmentService.getDeviceCode(decoctDeviceId) : null;
+                    task = taskService.startDecoct(taskId, decoctDeviceCode, operatorId);
                     break;
                 case "END_DECOCT":
                     task = taskService.endDecoct(taskId, operatorId);
@@ -217,7 +221,9 @@ public class PdaController {
                     task = taskService.endPour(taskId, operatorId);
                     break;
                 case "START_PACKAGE":
-                    task = taskService.startWrap(taskId, null, operatorId);
+                    Long packageDeviceId = request.getDeviceId();
+                    String packageDeviceCode = packageDeviceId != null ? equipmentService.getDeviceCode(packageDeviceId) : null;
+                    task = taskService.startWrap(taskId, packageDeviceCode, operatorId);
                     break;
                 case "END_PACKAGE":
                     task = taskService.endWrap(taskId, operatorId);
@@ -385,6 +391,19 @@ public class PdaController {
         result.put("currentTemp", task.getCurrentTemp());
         result.put("targetTemp", task.getTargetTemp());
         result.put("currentStageDuration", task.getCurrentStageDuration());
+
+        // 设备信息
+        if (task.getDecoctDeviceId() != null) {
+            result.put("decoctDeviceId", task.getDecoctDeviceId());
+            cn.org.openygt.common.dto.EqDeviceDTO device = equipmentService.getDeviceById(task.getDecoctDeviceId());
+            if (device != null) {
+                result.put("deviceCode", device.getDeviceCode());
+                result.put("deviceName", device.getName());
+            }
+        }
+        if (task.getPackageDeviceId() != null) {
+            result.put("packageDeviceId", task.getPackageDeviceId());
+        }
 
         // 关联处方信息
         if (task.getPrescriptionId() != null) {

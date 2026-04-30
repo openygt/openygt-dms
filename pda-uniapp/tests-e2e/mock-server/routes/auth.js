@@ -8,12 +8,13 @@ const store = require('../store')
 
 // POST /api/v1/pda/auth/login - 账号密码登录
 router.post('/login', (req, res) => {
-  const { loginType, username, password, deviceCode } = req.body
+  const { loginType, username, userCode, password, deviceCode } = req.body
+  const loginUserCode = userCode || username
 
   if (loginType === 'account' || !loginType) {
-    const user = store.db.users.find(u => u.userCode === username && u.password === password)
+    const user = store.db.users.find(u => u.userCode === loginUserCode && u.password === password)
     if (!user) {
-      return res.jsonErr(401, '用户名或密码错误')
+      return res.status(200).json({ code: 401, msg: '用户名或密码错误', data: null })
     }
 
     // 记录登录
@@ -53,7 +54,7 @@ router.post('/scan-login', (req, res) => {
 
   const user = store.db.users.find(u => u.barcode === scanCode)
   if (!user) {
-    return res.jsonErr(401, '员工码不存在')
+    return res.status(200).json({ code: 401, msg: '员工码不存在', data: null })
   }
 
   const recordId = store.db.loginRecords.length + 1
