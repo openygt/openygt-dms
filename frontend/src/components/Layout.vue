@@ -30,12 +30,22 @@
         <el-sub-menu index="/eq">
           <template #title>
             <el-icon><Cpu /></el-icon>
-            <span>设备监控</span>
+            <span>设备管理</span>
           </template>
           <el-menu-item index="/device-monitor">监控面板</el-menu-item>
           <el-menu-item index="/devices">设备管理</el-menu-item>
+          <el-menu-item index="/traces">煎药追溯</el-menu-item>
+          <el-menu-item index="/workload">工作量统计</el-menu-item>
+          <el-menu-item index="/device-utilization">设备利用率</el-menu-item>
           <el-menu-item index="/alarms">告警日志</el-menu-item>
+          <el-menu-item index="/alarm-configs">告警配置</el-menu-item>
+          <el-menu-item index="/water-formulas">加水量公式</el-menu-item>
+          <el-menu-item index="/prescription-defaults">处方默认设置</el-menu-item>
         </el-sub-menu>
+        <el-menu-item index="/eq-dashboard">
+          <el-icon><DataLine /></el-icon>
+          <span>数据看板</span>
+        </el-menu-item>
         <el-menu-item index="/print-center">
           <el-icon><Printer /></el-icon>
           <span>打印管理</span>
