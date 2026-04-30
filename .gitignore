@@ -57,3 +57,9 @@ yarn-error.log*
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# === 测试产物（永不提交）===
+test-results/
+playwright-report/
+tests-e2e/
+e2e/
