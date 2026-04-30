@@ -23,6 +23,12 @@
         </el-tag>
       </div>
       <div class="toolbar-right">
+        <el-button-group class="quick-links">
+          <el-button size="large" @click="$router.push('/traces')">煎药追溯</el-button>
+          <el-button size="large" @click="$router.push('/eq-dashboard')">数据看板</el-button>
+          <el-button size="large" @click="$router.push('/workload')">工作量</el-button>
+          <el-button size="large" @click="$router.push('/device-utilization')">利用率</el-button>
+        </el-button-group>
         <el-radio-group v-model="activeType" size="large">
           <el-radio-button :label="1">煎药机</el-radio-button>
           <el-radio-button :label="2">包装机</el-radio-button>

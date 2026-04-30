@@ -100,3 +100,119 @@ export function updateScheme(id: number | string, data: any) {
 export function deleteScheme(id: number | string) {
   return request.delete(`/v1/md/decoct-schemes/${id}`)
 }
+
+// ========== 煎药过程追溯 ==========
+export function getTraces(params: any) {
+  return request.get('/v1/eq/traces', { params })
+}
+
+export function getTraceByPrescriptionNo(prescriptionNo: string) {
+  return request.get(`/v1/eq/traces/${prescriptionNo}`)
+}
+
+export function getTraceEvents(prescriptionNo: string) {
+  return request.get(`/v1/eq/traces/${prescriptionNo}/events`)
+}
+
+export function getTraceTemperatureCurve(prescriptionNo: string, granularity = '1min') {
+  return request.get(`/v1/eq/traces/${prescriptionNo}/temperature-curve`, { params: { granularity } })
+}
+
+export function updateTraceStep(prescriptionNo: string, stepCode: string, data: any) {
+  return request.put(`/v1/eq/traces/${prescriptionNo}/step/${stepCode}`, data)
+}
+
+// ========== 时间校验 ==========
+export function getTimeCheckRules() {
+  return request.get('/v1/eq/time-check/rules')
+}
+
+export function validateTimeCheck(prescriptionNo: string, toStep: string) {
+  return request.post('/v1/eq/time-check/validate', null, { params: { prescriptionNo, toStep } })
+}
+
+// ========== Dashboard ==========
+export function getDashboardMetrics() {
+  return request.get('/v1/eq/dashboard/metrics')
+}
+
+export function getStageDistribution() {
+  return request.get('/v1/eq/dashboard/stage-distribution')
+}
+
+export function getWorkerEfficiency(date?: string) {
+  return request.get('/v1/eq/dashboard/worker-efficiency', { params: { date } })
+}
+
+export function getHourlyTrend(date?: string) {
+  return request.get('/v1/eq/dashboard/hourly-trend', { params: { date } })
+}
+
+export function getDashboardDeviceUtilization(date?: string) {
+  return request.get('/v1/eq/dashboard/device-utilization', { params: { date } })
+}
+
+// ========== 工作量统计 ==========
+export function getWorkloadStats(params: any) {
+  return request.get('/v1/eq/workload/stats', { params })
+}
+
+export function getWorkloadSummary(params: any) {
+  return request.get('/v1/eq/workload/stats/summary', { params })
+}
+
+// ========== 加水量公式 ==========
+export function getWaterFormulas() {
+  return request.get('/v1/eq/water-formulas')
+}
+
+export function createWaterFormula(data: any) {
+  return request.post('/v1/eq/water-formulas', data)
+}
+
+export function updateWaterFormula(id: number, data: any) {
+  return request.put(`/v1/eq/water-formulas/${id}`, data)
+}
+
+export function deleteWaterFormula(id: number) {
+  return request.delete(`/v1/eq/water-formulas/${id}`)
+}
+
+export function calculateWaterFormula(id: number, variables: any) {
+  return request.post(`/v1/eq/water-formulas/${id}/calculate`, variables)
+}
+
+// ========== 处方默认设置 ==========
+export function getPrescriptionDefaults() {
+  return request.get('/v1/eq/prescription-defaults')
+}
+
+export function updatePrescriptionDefault(settingKey: string, data: any) {
+  return request.put(`/v1/eq/prescription-defaults/${settingKey}`, data)
+}
+
+// ========== 设备利用率 ==========
+export function getDeviceUtilizationStats(params: any) {
+  return request.get('/v1/eq/device-utilization', { params })
+}
+
+export function getDeviceUtilizationTrend(deviceCode: string, days = 7) {
+  return request.get('/v1/eq/device-utilization/trend', { params: { deviceCode, days } })
+}
+
+// ========== 告警配置 ==========
+export function getAlarmConfigs() {
+  return request.get('/v1/eq/alarm-configs')
+}
+
+export function createAlarmConfig(data: any) {
+  return request.post('/v1/eq/alarm-configs', data)
+}
+
+export function updateAlarmConfig(id: number, data: any) {
+  return request.put(`/v1/eq/alarm-configs/${id}`, data)
+}
+
+export function deleteAlarmConfig(id: number) {
+  return request.delete(`/v1/eq/alarm-configs/${id}`)
+}
