@@ -44,3 +44,4 @@ tasks/.watchdog.state
 
 # === 本地文档目录（永不提交）===
 docs/
+tests/
