@@ -50,6 +50,7 @@ const router = createRouter({
         { path: 'prescription-defaults', name: 'PrescriptionDefaults', component: () => import('@/views/eq/PrescriptionDefaultView.vue'), meta: { title: '处方默认设置' } },
         { path: 'device-utilization', name: 'DeviceUtilization', component: () => import('@/views/eq/DeviceUtilizationView.vue'), meta: { title: '设备利用率' } },
         { path: 'alarm-configs', name: 'AlarmConfigs', component: () => import('@/views/monitor/AlarmConfigView.vue'), meta: { title: '告警配置' } },
+        { path: 'temperature-curve', name: 'TemperatureCurve', component: () => import('@/views/eq/TemperatureCurveView.vue'), meta: { title: '温度曲线', perm: 'eq:device:monitor' } },
       ]
     },
     { path: '/:pathMatch(.*)*', redirect: '/' }

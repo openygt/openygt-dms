@@ -37,6 +37,7 @@
           <el-menu-item index="/devices">设备台账</el-menu-item>
           <el-menu-item index="/alarms">告警日志</el-menu-item>
           <el-menu-item index="/alarm-configs">告警配置</el-menu-item>
+          <el-menu-item index="/temperature-curve">温度曲线</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="/formula">
           <template #title>
@@ -108,12 +109,14 @@
           <ThemeToggle />
           <el-divider direction="vertical" />
           <span class="header-user">当前用户：{{ userStore.userInfo?.username || '未登录' }}</span>
+          <el-button size="small" @click="openChangePassword">修改密码</el-button>
           <el-button size="small" @click="userStore.logout">退出</el-button>
         </div>
       </el-header>
       <el-main class="layout-main">
         <router-view />
       </el-main>
+      <ChangePasswordDialog ref="changePasswordRef" />
     </el-container>
   </el-container>
 </template>
@@ -121,7 +124,15 @@
 <script setup lang="ts">
 import { useUserStore } from '@/stores/user'
 import ThemeToggle from './ThemeToggle.vue'
+import ChangePasswordDialog from './ChangePasswordDialog.vue'
+import { ref } from 'vue'
+
 const userStore = useUserStore()
+const changePasswordRef = ref<InstanceType<typeof ChangePasswordDialog>>()
+
+function openChangePassword() {
+  changePasswordRef.value?.open()
+}
 </script>
 
 <style scoped>

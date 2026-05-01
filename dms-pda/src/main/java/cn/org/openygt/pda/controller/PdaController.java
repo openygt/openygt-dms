@@ -1,6 +1,7 @@
 package cn.org.openygt.pda.controller;
 
 import cn.org.openygt.common.dto.ApiResponse;
+import cn.org.openygt.common.dto.ChangePasswordRequest;
 import cn.org.openygt.common.dto.LoginRequest;
 import cn.org.openygt.common.dto.TokenResponse;
 import cn.org.openygt.pda.dto.*;
@@ -21,6 +22,7 @@ import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.system.entity.SysUser;
 import cn.org.openygt.system.service.SysUserService;
 import cn.org.openygt.common.service.EquipmentService;
+import cn.org.openygt.equipment.service.DecoctionTraceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -46,6 +48,7 @@ public class PdaController {
     private final PrescriptionMapper prescriptionMapper;
     private final PrescriptionMedicineMapper prescriptionMedicineMapper;
     private final EquipmentService equipmentService;
+    private final DecoctionTraceService decoctionTraceService;
 
     @Value("${app.version:1.0.0}")
     private String appVersion;
@@ -142,6 +145,17 @@ public class PdaController {
         return ApiResponse.success(success);
     }
 
+    @PostMapping("/auth/change-password")
+    @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
+    public ApiResponse<Void> changePassword(@RequestAttribute("userId") Long userId,
+                                             @RequestBody @Validated ChangePasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            return ApiResponse.error(400, "两次输入的新密码不一致");
+        }
+        sysUserService.changePassword(userId, request.getOldPassword(), request.getNewPassword());
+        return ApiResponse.success();
+    }
+
     // ==================== 版本检查 ====================
 
     @GetMapping("/config/version")
@@ -163,6 +177,22 @@ public class PdaController {
             return ApiResponse.error(404, "任务不存在: " + barcode);
         }
         return ApiResponse.success(buildTaskDetail(task));
+    }
+
+    @GetMapping("/task/{barcode}/temperature-curve")
+    @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
+    public ApiResponse<Map<String, Object>> getTaskTemperatureCurve(@PathVariable String barcode) {
+        Task task = taskService.getByBarcode(barcode);
+        if (task == null) {
+            return ApiResponse.error(404, "任务不存在: " + barcode);
+        }
+        Prescription prescription = prescriptionMapper.selectById(task.getPrescriptionId());
+        String prescriptionNo = prescription != null ? prescription.getPrescriptionNumber() : null;
+        Map<String, Object> curveData = new HashMap<>();
+        if (prescriptionNo != null) {
+            curveData = decoctionTraceService.getTemperatureCurve(prescriptionNo, "1min");
+        }
+        return ApiResponse.success(curveData);
     }
 
     @GetMapping("/tasks/recent")

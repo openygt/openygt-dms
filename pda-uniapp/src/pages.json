@@ -58,6 +58,18 @@
       }
     },
     {
+      "path": "pages/mine/password",
+      "style": {
+        "navigationBarTitleText": "修改密码"
+      }
+    },
+    {
+      "path": "pages/task/temperature",
+      "style": {
+        "navigationBarTitleText": "温度曲线"
+      }
+    },
+    {
       "path": "pages/device/bind",
       "style": {
         "navigationBarTitleText": "设备绑定"
