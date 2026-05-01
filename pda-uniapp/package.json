@@ -4,7 +4,7 @@
   "scripts": {
     "dev:h5": "uni",
     "build:h5": "uni build",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --config tests-e2e/playwright.config.js"
   },
   "dependencies": {
     "@dcloudio/uni-app": "3.0.0-alpha-5000820260430001",

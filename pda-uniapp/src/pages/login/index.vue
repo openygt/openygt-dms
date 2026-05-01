@@ -68,7 +68,7 @@ onMounted(() => {
 
 async function checkVersion() {
   try {
-    const res = await post('/config/version')
+    const res = await get('/config/version')
     version.value = res.version || '1.0.0'
   } catch (e) {
     console.log('版本检查失败', e)
