@@ -208,7 +208,11 @@
         </el-card>
 
         <el-card class="detail-card">
-          <template #header><span class="card-title">最近指令</span></template>
+          <template #header>
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <span class="card-title">最近指令</span>
+            </div>
+          </template>
           <el-timeline>
             <el-timeline-item
               v-for="cmd in recentCommands"
@@ -223,8 +227,70 @@
             </el-timeline-item>
           </el-timeline>
         </el-card>
+
+        <el-card class="detail-card">
+          <template #header>
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <span class="card-title">维护记录</span>
+              <el-button size="small" @click="openMaintenanceDialog()">新增</el-button>
+            </div>
+          </template>
+          <el-timeline v-if="maintenanceList.length">
+            <el-timeline-item
+              v-for="item in maintenanceList"
+              :key="item.id"
+              :type="item.status === 1 ? 'success' : 'warning'"
+              :timestamp="item.finishDate || item.planDate"
+            >
+              <div class="command-item">
+                <span>{{ formatMaintenanceType(item.maintenanceType) }}</span>
+                <el-tag :type="item.status === 1 ? 'success' : 'warning'" size="small">{{ item.status === 1 ? '已完成' : '待执行' }}</el-tag>
+              </div>
+              <div style="font-size: 12px; color: #666; margin-top: 4px">{{ item.content }}</div>
+            </el-timeline-item>
+          </el-timeline>
+          <EmptyState v-else description="暂无维护记录" />
+        </el-card>
       </el-col>
     </el-row>
+
+    <!-- 维护记录弹窗 -->
+    <el-dialog v-model="maintenanceDialogVisible" title="新增维护记录" width="500px">
+      <el-form :model="maintenanceForm" label-width="100px">
+        <el-form-item label="维护类型">
+          <el-select v-model="maintenanceForm.maintenanceType" placeholder="请选择" style="width: 100%">
+            <el-option label="保养" value="MAINTENANCE" />
+            <el-option label="维修" value="REPAIR" />
+            <el-option label="巡检" value="INSPECTION" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="维护内容">
+          <el-input v-model="maintenanceForm.content" type="textarea" rows="3" placeholder="请输入维护内容" />
+        </el-form-item>
+        <el-form-item label="更换配件">
+          <el-input v-model="maintenanceForm.parts" placeholder="请输入更换配件" />
+        </el-form-item>
+        <el-form-item label="费用">
+          <el-input-number v-model="maintenanceForm.cost" :min="0" :precision="2" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="计划日期">
+          <el-date-picker v-model="maintenanceForm.planDate" type="date" placeholder="选择日期" style="width: 100%" value-format="YYYY-MM-DD" />
+        </el-form-item>
+        <el-form-item label="完成日期">
+          <el-date-picker v-model="maintenanceForm.finishDate" type="date" placeholder="选择日期" style="width: 100%" value-format="YYYY-MM-DD" />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-radio-group v-model="maintenanceForm.status">
+            <el-radio :label="0">待执行</el-radio>
+            <el-radio :label="1">已完成</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="maintenanceDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSaveMaintenance">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -235,6 +301,7 @@ import { ElMessage } from 'element-plus'
 import { ArrowLeft } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { getDeviceDetail, getLatestStatus, getRecentCommands, createCommand, getTemperatureAggregation } from '@/api/equipment'
+import { getDeviceMaintenanceList, createDeviceMaintenance } from '@/api/deviceMaintenance'
 import { useDeviceStore } from '@/stores/device'
 import EmptyState from '@/components/states/EmptyState.vue'
 
@@ -246,6 +313,9 @@ const deviceStore = useDeviceStore()
 const device = ref<any>(null)
 const currentOperator = ref<any>(null)
 const recentCommands = ref<any[]>([])
+const maintenanceList = ref<any[]>([])
+const maintenanceDialogVisible = ref(false)
+const maintenanceForm = ref<any>({ status: 0 })
 const timeRange = ref('1h')
 const isAlarm = ref(false)
 
@@ -525,6 +595,39 @@ async function loadCommands() {
   }
 }
 
+async function loadMaintenances() {
+  try {
+    if (!device.value?.id) return
+    const res: any = await getDeviceMaintenanceList({ deviceId: device.value.id, size: 20 })
+    maintenanceList.value = (res.data?.records || []).sort((a: any, b: any) => {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
+  } catch (err) {
+    maintenanceList.value = []
+  }
+}
+
+function formatMaintenanceType(type?: string) {
+  const map: Record<string, string> = { MAINTENANCE: '保养', REPAIR: '维修', INSPECTION: '巡检' }
+  return map[type || ''] || type || '其他'
+}
+
+function openMaintenanceDialog() {
+  maintenanceForm.value = { deviceId: device.value?.id, status: 0 }
+  maintenanceDialogVisible.value = true
+}
+
+async function handleSaveMaintenance() {
+  try {
+    await createDeviceMaintenance(maintenanceForm.value)
+    ElMessage.success('维护记录已添加')
+    maintenanceDialogVisible.value = false
+    loadMaintenances()
+  } catch (err) {
+    ElMessage.error('添加失败')
+  }
+}
+
 async function sendCommand(commandType: string) {
   try {
     await createCommand({
@@ -561,6 +664,7 @@ watch(
 onMounted(() => {
   loadDeviceDetail()
   loadCommands()
+  loadMaintenances()
   window.addEventListener('resize', () => {
     gaugeChart?.resize()
     tempChart?.resize()

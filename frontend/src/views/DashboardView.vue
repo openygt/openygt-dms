@@ -101,6 +101,42 @@
       </el-card>
     </div>
 
+    <!-- 异常预警列表 -->
+    <el-card shadow="never" style="margin-top: var(--ygt-space-4)">
+      <template #header>
+        <div class="card-header">
+          <span>异常预警</span>
+          <div>
+            <el-tag v-if="alarmList.length > 0" size="small" type="danger">{{ alarmList.length }} 条待处理</el-tag>
+            <el-tag v-else size="small" type="success">无异常</el-tag>
+            <el-button size="small" type="primary" style="margin-left: 8px" @click="$router.push('/alarms')">查看全部</el-button>
+          </div>
+        </div>
+      </template>
+      <LoadingState v-if="alarmLoading" description="加载告警数据..." />
+      <EmptyState
+        v-else-if="alarmList.length === 0"
+        title="暂无异常预警"
+        description="系统运行正常，未检测到异常"
+      />
+      <div v-else class="alarm-list">
+        <div v-for="alarm in alarmList.slice(0, 5)" :key="alarm.id" class="alarm-item" :class="`alarm-${alarm.alarmLevel?.toLowerCase() || 'info'}`">
+          <div class="alarm-main">
+            <div class="alarm-top">
+              <el-tag size="small" :type="alarmLevelType(alarm.alarmLevel)">{{ alarm.alarmLevel || 'INFO' }}</el-tag>
+              <span class="alarm-device">{{ alarm.deviceCode || '-' }}</span>
+              <span class="alarm-time">{{ formatDateTime(alarm.createdAt) }}</span>
+            </div>
+            <div class="alarm-content">{{ alarm.content || alarm.alarmType || '-' }}</div>
+          </div>
+          <el-button size="small" type="success" @click="resolveAlarm(alarm.id)">处理</el-button>
+        </div>
+        <div v-if="alarmTotal > 5" class="alarm-more">
+          <el-link type="primary" @click="$router.push('/alarms')">还有 {{ alarmTotal - 5 }} 条，点击查看全部</el-link>
+        </div>
+      </div>
+    </el-card>
+
     <!-- 系统信息 -->
     <el-card shadow="never" style="margin-top: var(--ygt-space-4)">
       <template #header>
@@ -130,6 +166,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import request from '@/api/request'
+import { ElMessage } from 'element-plus'
 import {
   Document, SuccessFilled, WarningFilled, Clock,
   Pointer, Cpu, Printer, List, TrendCharts, CaretTop, CaretBottom, Minus
@@ -149,6 +186,9 @@ const kpis = ref([
 
 const taskDist = ref<any[]>([])
 const deviceDist = ref<any[]>([])
+const alarmList = ref<any[]>([])
+const alarmTotal = ref(0)
+const alarmLoading = ref(false)
 
 const maxTaskCount = computed(() => Math.max(1, ...taskDist.value.map((d: any) => d.count || 0)))
 const maxDeviceCount = computed(() => Math.max(1, ...deviceDist.value.map((d: any) => d.count || 0)))
@@ -192,6 +232,25 @@ function statusColor(s: string) {
   return statusMap[s]?.color || 'var(--ygt-gray-400)'
 }
 
+function formatDateTime(dt?: string) {
+  if (!dt) return '-'
+  const d = new Date(dt)
+  if (isNaN(d.getTime())) return dt
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  })
+}
+
+function alarmLevelType(level?: string) {
+  if (!level) return 'info'
+  const l = level.toUpperCase()
+  if (l === 'CRITICAL' || l === '严重') return 'danger'
+  if (l === 'WARNING' || l === '警告') return 'warning'
+  if (l === 'INFO' || l === '提示') return 'info'
+  return 'info'
+}
+
 function deviceTypeName(type: string) {
   const map: Record<string, string> = { '1': '煎药机', '2': '包装机', '3': '标签打印机', '4': '激光打印机', '5': 'PDA' }
   return map[type] || type
@@ -229,8 +288,13 @@ async function fetchDashboard() {
       { label: '进行中', value: inProgress, sub: '占比 ' + inProgressRate + '%', trend: data.inProgressTrend || 0, icon: 'Clock', type: 'warning' },
       { label: '正在报警', value: alerting, sub: '需干预', trend: data.alertingTrend || 0, icon: 'WarningFilled', type: 'danger' }
     ]
-    taskDist.value = data.taskStatusDistribution || []
-    deviceDist.value = data.deviceTypeDistribution || []
+    taskDist.value = (data.taskStatusDistribution || []).map((d: any) => ({ status: d.status || d.status, count: d.count || 0 }))
+    deviceDist.value = (data.deviceTypeDistribution || []).map((d: any) => ({
+      deviceType: d.deviceType || d.device_type,
+      count: d.count || 0,
+      onlineCount: d.onlineCount || d.onlineCount || 0,
+      onlineWithAlarmCount: d.onlineWithAlarmCount || d.onlineWithAlarmCount || 0
+    }))
   } catch (e) {
     console.error('Dashboard fetch error:', e)
   } finally {
@@ -238,7 +302,35 @@ async function fetchDashboard() {
   }
 }
 
-onMounted(fetchDashboard)
+async function fetchAlarms() {
+  alarmLoading.value = true
+  try {
+    const res: any = await request.get('/v1/eq/alarms', { params: { status: 'PENDING', page: 1, size: 10 } })
+    const page = res.data || {}
+    alarmList.value = page.records || []
+    alarmTotal.value = page.total || 0
+  } catch (e) {
+    console.error('Alarm fetch error:', e)
+  } finally {
+    alarmLoading.value = false
+  }
+}
+
+async function resolveAlarm(id: number) {
+  try {
+    await request.put(`/v1/eq/alarms/${id}/resolve`)
+    ElMessage.success('告警已处理')
+    fetchAlarms()
+    fetchDashboard()
+  } catch (e) {
+    ElMessage.error('处理失败')
+  }
+}
+
+onMounted(() => {
+  fetchDashboard()
+  fetchAlarms()
+})
 </script>
 
 <style scoped>
@@ -459,6 +551,67 @@ onMounted(fetchDashboard)
   font-size: var(--ygt-text-sm);
   font-weight: var(--ygt-fw-semibold);
   color: var(--ygt-text-primary);
+}
+
+/* 异常预警列表 */
+.alarm-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ygt-space-3);
+}
+.alarm-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ygt-space-3);
+  padding: var(--ygt-space-3) var(--ygt-space-4);
+  border-radius: var(--ygt-radius-md);
+  border-left: 3px solid var(--ygt-info);
+  background: var(--ygt-bg-surface);
+  transition: background var(--ygt-duration-fast) var(--ygt-ease-out);
+}
+.alarm-item:hover {
+  background: var(--ygt-gray-50);
+}
+.alarm-critical {
+  border-left-color: var(--ygt-danger);
+}
+.alarm-warning {
+  border-left-color: var(--ygt-warning);
+}
+.alarm-info {
+  border-left-color: var(--ygt-info);
+}
+.alarm-main {
+  flex: 1;
+  min-width: 0;
+}
+.alarm-top {
+  display: flex;
+  align-items: center;
+  gap: var(--ygt-space-2);
+  margin-bottom: var(--ygt-space-1);
+}
+.alarm-device {
+  font-size: var(--ygt-text-sm);
+  font-weight: var(--ygt-fw-medium);
+  color: var(--ygt-text-primary);
+}
+.alarm-time {
+  font-size: var(--ygt-text-xs);
+  color: var(--ygt-text-tertiary);
+  margin-left: auto;
+}
+.alarm-content {
+  font-size: var(--ygt-text-sm);
+  color: var(--ygt-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.alarm-more {
+  text-align: center;
+  padding-top: var(--ygt-space-2);
 }
 
 /* 系统信息 */

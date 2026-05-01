@@ -5,6 +5,7 @@ import cn.org.openygt.common.dto.ProdTaskDTO;
 import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.ProductionQueryService;
 import cn.org.openygt.quality.entity.Inspection;
+import cn.org.openygt.quality.mapper.InspectionItemMapper;
 import cn.org.openygt.quality.mapper.InspectionMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,6 +35,9 @@ class QualityServiceImplTest {
     @Mock
     private ProductionQueryService productionQueryService;
 
+    @Mock
+    private InspectionItemMapper inspectionItemMapper;
+
     private QualityServiceImpl qualityService;
 
     @Captor
@@ -41,7 +45,7 @@ class QualityServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        qualityService = new QualityServiceImpl(inspectionMapper, productionQueryService);
+        qualityService = new QualityServiceImpl(inspectionMapper, inspectionItemMapper, productionQueryService);
     }
 
     // ==================== inspect ====================

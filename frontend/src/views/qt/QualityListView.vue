@@ -15,11 +15,12 @@
             {{ formatDateTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="360" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="success" @click="openInspectDialog(row, 'PASS')">通过</el-button>
             <el-button size="small" type="danger" @click="openInspectDialog(row, 'CONCESSION')">不通过</el-button>
             <el-button size="small" type="warning" @click="openReworkDialog(row)">返工</el-button>
+            <el-button size="small" type="primary" @click="openDetailInspectDialog(row)">详细质检</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -124,6 +125,55 @@
         <el-button type="primary" @click="handleReworkSubmit">确认返工</el-button>
       </template>
     </el-dialog>
+
+    <!-- 详细质检弹窗 -->
+    <el-dialog v-model="detailInspectVisible" title="详细质检执行" width="640px">
+      <el-form :model="detailInspectForm" label-width="100px">
+        <el-form-item label="任务号">
+          <span>{{ detailInspectForm.taskId }}</span>
+        </el-form-item>
+        <el-form-item label="总体结果">
+          <el-radio-group v-model="detailInspectForm.overallResult">
+            <el-radio label="PASS">通过</el-radio>
+            <el-radio label="CONCESSION">不通过</el-radio>
+            <el-radio label="REWORK">返工</el-radio>
+            <el-radio label="SCRAP">报废</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="detailInspectForm.overallResult === 'REWORK'" label="返工节点" required>
+          <el-select v-model="detailInspectForm.reworkNode" placeholder="请选择返工节点" style="width: 100%">
+            <el-option label="待泡药" value="待泡药" />
+            <el-option label="待煎药" value="待煎药" />
+            <el-option label="待出液" value="待出液" />
+            <el-option label="待包装" value="待包装" />
+            <el-option label="待贴标" value="待贴标" />
+          </el-select>
+        </el-form-item>
+
+        <el-divider>检查项明细</el-divider>
+
+        <div v-for="(item, idx) in detailInspectForm.items" :key="idx" class="inspect-item-row">
+          <div class="inspect-item-header">
+            <span class="inspect-item-name">{{ item.itemName }}</span>
+            <el-radio-group v-model="item.result" size="small">
+              <el-radio label="PASS">通过</el-radio>
+              <el-radio label="FAIL">不通过</el-radio>
+              <el-radio label="NA">不适用</el-radio>
+            </el-radio-group>
+          </div>
+          <el-input v-if="item.itemCode === 'DOSE'" v-model="item.actualValue" placeholder="实际值（如 200ml）" size="small" style="width: 200px; margin-top: 4px" />
+          <el-input v-model="item.remark" placeholder="备注" size="small" style="margin-top: 4px" />
+        </div>
+
+        <el-form-item label="总体备注" style="margin-top: 16px">
+          <el-input v-model="detailInspectForm.remark" type="textarea" rows="3" placeholder="请输入总体备注..." />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="detailInspectVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleDetailInspectSubmit">提交质检</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -173,6 +223,24 @@ const inspectTitle = computed(() => {
 const reworkVisible = ref(false)
 const reworkForm = ref({ taskId: 0, reworkNode: '', remark: '' })
 const reworkNodes = ref<{ label: string; value: string }[]>([])
+
+// 详细质检弹窗
+const detailInspectVisible = ref(false)
+const detailInspectForm = ref({
+  taskId: 0,
+  overallResult: 'PASS',
+  reworkNode: '',
+  remark: '',
+  items: [] as { itemCode: string; itemName: string; result: string; actualValue: string; remark: string }[]
+})
+
+const defaultInspectItems = [
+  { itemCode: 'APPEARANCE', itemName: '外观检查', result: 'PASS', actualValue: '', remark: '' },
+  { itemCode: 'ODOR', itemName: '气味检查', result: 'PASS', actualValue: '', remark: '' },
+  { itemCode: 'DOSE', itemName: '剂量检查', result: 'PASS', actualValue: '', remark: '' },
+  { itemCode: 'SEAL', itemName: '密封检查', result: 'PASS', actualValue: '', remark: '' },
+  { itemCode: 'LABEL', itemName: '标签核对', result: 'PASS', actualValue: '', remark: '' }
+]
 
 function resultText(result?: string) {
   const map: Record<string, string> = {
@@ -347,8 +415,70 @@ async function handleReworkSubmit() {
   } catch (e) {}
 }
 
+// 打开详细质检弹窗
+function openDetailInspectDialog(row: Task) {
+  detailInspectForm.value = {
+    taskId: row.id,
+    overallResult: 'PASS',
+    reworkNode: '',
+    remark: '',
+    items: JSON.parse(JSON.stringify(defaultInspectItems))
+  }
+  detailInspectVisible.value = true
+}
+
+// 提交详细质检
+async function handleDetailInspectSubmit() {
+  const form = detailInspectForm.value
+  if (form.overallResult === 'REWORK' && !form.reworkNode) {
+    ElMessage.warning('请选择返工节点')
+    return
+  }
+  try {
+    const req = {
+      taskId: form.taskId,
+      operatorId: 'admin',
+      overallResult: form.overallResult,
+      remark: form.remark,
+      reworkNode: form.reworkNode,
+      items: form.items
+    }
+    // 1. 调用详细质检接口
+    await request.post('/v1/qt/inspect/detail', req)
+    // 2. 更新生产任务状态
+    await request.post(`/v1/prod/tasks/${form.taskId}/quality`, {
+      result: form.overallResult,
+      operatorId: 'admin',
+      remark: form.remark,
+      reworkNode: form.reworkNode
+    })
+    ElMessage.success('质检已提交')
+    detailInspectVisible.value = false
+    fetchPendingTasks()
+    fetchData()
+  } catch (e) {}
+}
+
 onMounted(() => {
   fetchPendingTasks()
   fetchData()
 })
 </script>
+
+<style scoped>
+.inspect-item-row {
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 8px;
+}
+.inspect-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.inspect-item-name {
+  font-weight: 500;
+  color: var(--el-text-color-primary);
+}
+</style>
