@@ -58,6 +58,18 @@
       }
     },
     {
+      "path": "pages/mine/password",
+      "style": {
+        "navigationBarTitleText": "修改密码"
+      }
+    },
+    {
+      "path": "pages/task/temperature",
+      "style": {
+        "navigationBarTitleText": "温度曲线"
+      }
+    },
+    {
       "path": "pages/device/bind",
       "style": {
         "navigationBarTitleText": "设备绑定"
@@ -73,6 +85,25 @@
       "path": "pages/reprint/index",
       "style": {
         "navigationBarTitleText": "重打印"
+      }
+    },
+    {
+      "path": "pages/voice/index",
+      "style": {
+        "navigationBarTitleText": "语音设置"
+      }
+    },
+    {
+      "path": "pages/patient/query",
+      "style": {
+        "navigationBarTitleText": "处方进度查询",
+        "navigationStyle": "custom"
+      }
+    },
+    {
+      "path": "pages/shelf/index",
+      "style": {
+        "navigationBarTitleText": "货架管理"
       }
     }
   ],
