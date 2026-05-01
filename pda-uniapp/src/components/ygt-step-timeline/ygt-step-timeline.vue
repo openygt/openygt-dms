@@ -4,9 +4,10 @@
       v-for="(step, idx) in steps"
       :key="step.value || idx"
       class="timeline-node"
+      :data-testid="'step-' + step.value"
       :class="{
         'node-done': step.status === 'done' || step.completed === true,
-        'node-current': step.status === 'current' || step.current === true,
+        'node-current step-current': step.status === 'current' || step.current === true,
         'node-pending': step.status === 'pending' || (!step.completed && !step.current)
       }"
       @click="$emit('click', step, idx)"

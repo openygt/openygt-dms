@@ -1,7 +1,7 @@
 <template>
   <view class="scan-page" :class="fontSizeClass">
     <!-- 扫码主区域 -->
-    <view class="scan-hero" @click="doScan" data-testid="scan-hero">
+    <view class="scan-hero" @click="doScan" data-testid="btn-scan">
       <view class="scan-pulse" :class="{ active: scanning }">
         <view class="scan-inner">
           <text class="scan-icon">□</text>
