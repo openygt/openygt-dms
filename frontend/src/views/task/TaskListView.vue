@@ -2,7 +2,13 @@
   <div>
     <el-card>
       <template #header>
-        <span>任务管理</span>
+        <div style="display: flex; align-items: center; justify-content: space-between">
+          <span>任务管理</span>
+          <el-radio-group v-model="viewMode" size="small">
+            <el-radio-button label="list">列表视图</el-radio-button>
+            <el-radio-button label="kanban">看板视图</el-radio-button>
+          </el-radio-group>
+        </div>
       </template>
 
       <!-- 查询表单 -->
@@ -49,43 +55,72 @@
         </el-form-item>
       </el-form>
 
-      <el-table :data="taskList" v-loading="loading" border>
-        <el-table-column prop="id" label="任务号" width="80" />
-        <el-table-column prop="prescriptionId" label="处方号" width="100" />
-        <el-table-column prop="status" label="状态" width="120">
-          <template #default="{ row }">
-            <el-tag :type="statusType(row.status)">{{ row.status }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="operatorId" label="当前操作人" width="120">
-          <template #default="{ row }">
-            {{ formatOperator(row.operatorId) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="updatedAt" label="更新时间">
-          <template #default="{ row }">
-            {{ formatDateTime(row.updatedAt) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
-          <template #default="{ row }">
-            <el-button v-if="row.status === '待泡药'" size="small" type="primary" @click="startSoak(row)">开始泡药</el-button>
-            <el-button size="small" @click="viewDetail(row)">详情</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <!-- 列表视图 -->
+      <template v-if="viewMode === 'list'">
+        <el-table :data="taskList" v-loading="loading" border>
+          <el-table-column prop="id" label="任务号" width="80" />
+          <el-table-column prop="prescriptionId" label="处方号" width="100" />
+          <el-table-column prop="status" label="状态" width="120">
+            <template #default="{ row }">
+              <el-tag :type="statusType(row.status)">{{ row.status }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="operatorId" label="当前操作人" width="120">
+            <template #default="{ row }">
+              {{ formatOperator(row.operatorId) }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="updatedAt" label="更新时间">
+            <template #default="{ row }">
+              {{ formatDateTime(row.updatedAt) }}
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="200" fixed="right">
+            <template #default="{ row }">
+              <el-button v-if="row.status === '待泡药'" size="small" type="primary" @click="startSoak(row)">开始泡药</el-button>
+              <el-button size="small" @click="viewDetail(row)">详情</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
 
-      <!-- 分页 -->
-      <el-pagination
-        v-model:current-page="pagination.page"
-        v-model:page-size="pagination.size"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="pagination.total"
-        @size-change="handleSizeChange"
-        @current-change="handlePageChange"
-        style="margin-top: 16px; justify-content: flex-end;"
-      />
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.size"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="pagination.total"
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+          style="margin-top: 16px; justify-content: flex-end;"
+        />
+      </template>
+
+      <!-- 看板视图 -->
+      <template v-else>
+        <div v-loading="loading" class="kanban-board">
+          <div v-for="col in kanbanColumns" :key="col.status" class="kanban-column">
+            <div class="kanban-header">
+              <span class="kanban-title">{{ col.label }}</span>
+              <el-tag size="small" :type="statusType(col.status)">{{ col.tasks.length }}</el-tag>
+            </div>
+            <div class="kanban-body">
+              <div v-for="task in col.tasks" :key="task.id" class="kanban-card" @click="viewDetail(task)">
+                <div class="kanban-card-top">
+                  <span class="kanban-card-id">#{{ task.id }}</span>
+                  <el-tag size="small" :type="statusType(task.status)">{{ task.status }}</el-tag>
+                </div>
+                <div class="kanban-card-info">处方: {{ task.prescriptionId || '-' }}</div>
+                <div class="kanban-card-info">操作人: {{ formatOperator(task.operatorId) }}</div>
+                <div class="kanban-card-time">{{ formatDateTime(task.updatedAt) }}</div>
+                <div class="kanban-card-actions">
+                  <el-button v-if="task.status === '待泡药'" size="small" type="primary" @click.stop="startSoak(task)">开始泡药</el-button>
+                </div>
+              </div>
+              <el-empty v-if="col.tasks.length === 0" description="无任务" :image-size="60" />
+            </div>
+          </div>
+        </div>
+      </template>
     </el-card>
 
     <el-dialog v-model="detailVisible" title="任务详情" width="600px">
@@ -98,7 +133,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
 
@@ -115,6 +150,7 @@ const taskList = ref<Task[]>([])
 const loading = ref(false)
 const detailVisible = ref(false)
 const selectedTask = ref<Task | null>(null)
+const viewMode = ref<'list' | 'kanban'>('list')
 
 const queryForm = ref({
   id: '',
@@ -126,8 +162,30 @@ const queryForm = ref({
 
 const pagination = ref({
   page: 1,
-  size: 10,
+  size: 100,
   total: 0
+})
+
+const kanbanStatuses = [
+  { status: '待泡药', label: '待泡药' },
+  { status: '泡药中', label: '泡药中' },
+  { status: '待煎药', label: '待煎药' },
+  { status: '煎药中', label: '煎药中' },
+  { status: '待出液', label: '待出液' },
+  { status: '出液中', label: '出液中' },
+  { status: '待包装', label: '待包装' },
+  { status: '包装中', label: '包装中' },
+  { status: '待贴标', label: '待贴标' },
+  { status: '待质检', label: '待质检' },
+  { status: '待交接', label: '待交接' },
+  { status: '已完成', label: '已完成' }
+]
+
+const kanbanColumns = computed(() => {
+  return kanbanStatuses.map(col => ({
+    ...col,
+    tasks: taskList.value.filter(t => t.status === col.status)
+  }))
 })
 
 function statusType(status: string) {
@@ -161,7 +219,7 @@ async function fetchTasks() {
   try {
     const params: any = {
       page: pagination.value.page,
-      size: pagination.value.size
+      size: viewMode.value === 'kanban' ? 500 : pagination.value.size
     }
     if (queryForm.value.id) params.id = queryForm.value.id
     if (queryForm.value.prescriptionId) params.prescriptionId = queryForm.value.prescriptionId
@@ -237,5 +295,84 @@ onMounted(fetchTasks)
 <style scoped>
 .query-form {
   margin-bottom: 16px;
+}
+
+.kanban-board {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.kanban-column {
+  flex: 0 0 220px;
+  min-width: 220px;
+  max-height: calc(100vh - 300px);
+  display: flex;
+  flex-direction: column;
+  background: var(--el-bg-color-page);
+  border-radius: 8px;
+  border: 1px solid var(--el-border-color-lighter);
+}
+
+.kanban-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  font-weight: 500;
+  font-size: 14px;
+  background: var(--el-bg-color);
+  border-radius: 8px 8px 0 0;
+}
+
+.kanban-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.kanban-card {
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color-lighter);
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.kanban-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.kanban-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.kanban-card-id {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--el-color-primary);
+}
+
+.kanban-card-info {
+  font-size: 12px;
+  color: var(--el-text-color-regular);
+  margin-bottom: 2px;
+}
+
+.kanban-card-time {
+  font-size: 11px;
+  color: var(--el-text-color-secondary);
+  margin-top: 4px;
+}
+
+.kanban-card-actions {
+  margin-top: 6px;
 }
 </style>

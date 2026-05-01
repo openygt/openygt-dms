@@ -4,7 +4,9 @@ import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.common.dto.InspectionResult;
 import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.QualityService;
+import cn.org.openygt.quality.dto.InspectExecuteRequest;
 import cn.org.openygt.quality.entity.Inspection;
+import cn.org.openygt.quality.entity.InspectionItem;
 import cn.org.openygt.quality.service.QualityServiceImpl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
+import java.util.List;
 
 /**
  * 质量追溯接口。
@@ -71,5 +74,21 @@ public class QualityController {
             @RequestParam(required = false) String startTime,
             @RequestParam(required = false) String endTime) {
         return ApiResponse.success(qualityServiceImpl.listInspections(result, startTime, endTime, page, size));
+    }
+
+    /**
+     * 带检查项明细的质检执行（Phase 5.5）。
+     */
+    @PostMapping("/inspect/detail")
+    public ApiResponse<InspectionResult> inspectWithItems(@Validated @RequestBody InspectExecuteRequest req) {
+        return ApiResponse.success(qualityServiceImpl.inspectWithItems(req));
+    }
+
+    /**
+     * 查询质检记录的检查项明细。
+     */
+    @GetMapping("/inspection/{inspectionId}/items")
+    public ApiResponse<List<InspectionItem>> getInspectionItems(@PathVariable Long inspectionId) {
+        return ApiResponse.success(qualityServiceImpl.getInspectionItems(inspectionId));
     }
 }

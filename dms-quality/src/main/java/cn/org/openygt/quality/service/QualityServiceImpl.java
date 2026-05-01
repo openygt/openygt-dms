@@ -4,7 +4,10 @@ import cn.org.openygt.common.dto.InspectionResult;
 import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.ProductionQueryService;
 import cn.org.openygt.common.service.QualityService;
+import cn.org.openygt.quality.dto.InspectExecuteRequest;
 import cn.org.openygt.quality.entity.Inspection;
+import cn.org.openygt.quality.entity.InspectionItem;
+import cn.org.openygt.quality.mapper.InspectionItemMapper;
 import cn.org.openygt.quality.mapper.InspectionMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -22,6 +25,7 @@ import java.util.List;
 public class QualityServiceImpl implements QualityService {
 
     private final InspectionMapper inspectionMapper;
+    private final InspectionItemMapper inspectionItemMapper;
     private final ProductionQueryService productionQueryService;
 
     @Override
@@ -126,6 +130,73 @@ public class QualityServiceImpl implements QualityService {
             default:
                 throw new IllegalArgumentException("未知的质检结果: " + result);
         }
+    }
+
+    /**
+     * 带检查项明细的质检执行（Phase 5.5 增强）。
+     */
+    @Transactional
+    public InspectionResult inspectWithItems(InspectExecuteRequest req) {
+        Long taskId = req.getTaskId();
+        InspectionResultType result = InspectionResultType.valueOf(req.getOverallResult());
+        String operatorId = req.getOperatorId();
+        String remark = req.getRemark();
+        String reworkNode = req.getReworkNode();
+
+        // 通过 SPI 验证任务存在性
+        if (productionQueryService.getTaskById(taskId) == null) {
+            throw new IllegalArgumentException("任务不存在: " + taskId);
+        }
+
+        // 写入质检记录
+        boolean isException = isExceptionResult(result);
+        Inspection inspection = new Inspection();
+        inspection.setTaskId(taskId);
+        inspection.setResult(result);
+        inspection.setOperatorId(operatorId);
+        inspection.setRemark(remark);
+        inspection.setInspectedAt(LocalDateTime.now());
+        inspection.setIsException(isException ? 1 : 0);
+        inspection.setExceptionReason(isException ? remark : null);
+        inspectionMapper.insert(inspection);
+
+        // 写入检查项明细
+        if (req.getItems() != null && !req.getItems().isEmpty()) {
+            int sort = 1;
+            for (InspectExecuteRequest.InspectItemDTO item : req.getItems()) {
+                InspectionItem ii = new InspectionItem();
+                ii.setInspectionId(inspection.getId());
+                ii.setItemCode(item.getItemCode());
+                ii.setItemName(item.getItemName());
+                ii.setResult(item.getResult());
+                ii.setActualValue(item.getActualValue());
+                ii.setRemark(item.getRemark());
+                ii.setSortOrder(sort++);
+                inspectionItemMapper.insert(ii);
+            }
+        }
+
+        InspectionResult ir = new InspectionResult();
+        ir.setInspectionId(inspection.getId());
+        ir.setTaskId(taskId);
+        ir.setResult(result);
+        ir.setNextStatus(deduceNextStatus(result, reworkNode));
+        ir.setOperatorId(operatorId);
+        ir.setRemark(remark);
+        ir.setInspectedAt(LocalDateTime.now());
+        ir.setIsException(isExceptionResult(result) ? 1 : 0);
+        ir.setExceptionReason(isExceptionResult(result) ? remark : null);
+
+        log.info("质检完成(含明细): taskId={}, result={}, operatorId={}, items={}", taskId, result, operatorId,
+                req.getItems() != null ? req.getItems().size() : 0);
+        return ir;
+    }
+
+    /**
+     * 查询质检记录的检查项明细。
+     */
+    public List<InspectionItem> getInspectionItems(Long inspectionId) {
+        return inspectionItemMapper.selectByInspectionId(inspectionId);
     }
 
     private boolean isExceptionResult(InspectionResultType result) {
