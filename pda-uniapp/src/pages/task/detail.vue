@@ -33,8 +33,68 @@
       </view>
     </view>
 
-    <!-- 药材清单 -->
-    <view class="medicine-section" v-if="task.medicines && task.medicines.length > 0">
+    <!-- 煎药流程进度 -->
+    <view class="progress-section">
+      <text class="section-title">煎药流程进度</text>
+      <view class="progress-steps">
+        <view
+          class="step-node"
+          v-for="(step, idx) in decoctionSteps"
+          :key="step.key"
+          :class="{
+            'step-done': step.status === 'done',
+            'step-current': step.status === 'current',
+            'step-pending': step.status === 'pending'
+          }"
+        >
+          <!-- 连接线 -->
+          <view class="step-connector" v-if="idx > 0">
+            <view class="connector-line" :class="{ 'line-active': step.status !== 'pending' }"></view>
+          </view>
+
+          <view class="step-marker">
+            <view class="step-circle">
+              <text class="step-check" v-if="step.status === 'done'">✓</text>
+              <text class="step-num" v-else>{{ idx + 1 }}</text>
+            </view>
+          </view>
+
+          <view class="step-body">
+            <text class="step-name">{{ step.name }}</text>
+            <text class="step-plan-time" v-if="step.planTime">计划: {{ step.planTime }}</text>
+            <text class="step-actual-time" v-if="step.actualTime">实际: {{ step.actualTime }}</text>
+            <text class="step-hint" v-if="step.status === 'current'">进行中</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 药材分组展示 -->
+    <view class="medicine-group-section" v-if="prescription && prescription.groups && prescription.groups.length > 0">
+      <text class="section-title">药材分组 ({{ prescription.groups.length }}组)</text>
+      <view class="group-list">
+        <view
+          class="group-card"
+          v-for="group in prescription.groups"
+          :key="group.type"
+          :class="getGroupClass(group.type)"
+        >
+          <view class="group-header">
+            <text class="group-tag" :class="getGroupClass(group.type)">{{ group.name }}</text>
+            <text class="group-count">{{ group.medicines.length }}味</text>
+          </view>
+          <view class="group-medicines">
+            <view class="group-med-item" v-for="(med, mIdx) in group.medicines" :key="mIdx">
+              <text class="group-med-name">{{ med.name }}</text>
+              <text class="group-med-dosage">{{ med.dosage }}{{ med.unit }}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 药材清单（无分组时显示） -->
+    <view class="medicine-section" v-else-if="task.medicines && task.medicines.length > 0">
       <text class="section-title">药材清单 ({{ task.medicines.length }}味)</text>
       <view class="medicine-list">
         <view class="medicine-item" v-for="(med, idx) in task.medicines" :key="idx">
@@ -69,6 +129,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { get } from '../../utils/request.js'
 
 const task = ref({})
+const prescription = ref({})
 const barcode = ref('')
 
 const statusColor = computed(() => {
@@ -96,6 +157,42 @@ const canAction = computed(() => {
   return task.value.nextAction != null && task.value.status !== 'COMPLETED' && task.value.status !== 'CANCELLED'
 })
 
+// 煎药流程步骤：泡药→头煎→二煎→合并→过滤→包装
+const decoctionSteps = computed(() => {
+  const stepDefs = [
+    { key: 'SOAK', name: '泡药' },
+    { key: 'FIRST_DECOCT', name: '头煎' },
+    { key: 'SECOND_DECOCT', name: '二煎' },
+    { key: 'MERGE', name: '合并' },
+    { key: 'FILTER', name: '过滤' },
+    { key: 'PACKAGE', name: '包装' }
+  ]
+  const steps = task.value.decoctionSteps || task.value.steps || []
+  let currentFound = false
+  return stepDefs.map(def => {
+    const s = steps.find(x => x.key === def.key || x.stepType === def.key || x.label === def.name)
+    let status = 'pending'
+    if (s) {
+      if (s.completed === true || s.status === 'done') {
+        status = 'done'
+      } else if (s.current === true || s.status === 'current') {
+        status = 'current'
+        currentFound = true
+      } else if (!currentFound) {
+        status = 'done'
+      }
+    } else if (!currentFound && task.value.status === 'COMPLETED') {
+      status = 'done'
+    }
+    return {
+      ...def,
+      status,
+      planTime: s ? (s.planTime || s.planTimeStr) : '',
+      actualTime: s ? (s.actualTime || s.actualTimeStr || s.time) : ''
+    }
+  })
+})
+
 onLoad((options) => {
   barcode.value = options.barcode || ''
   if (barcode.value) {
@@ -108,11 +205,35 @@ async function loadTask() {
     uni.showLoading({ title: '加载中' })
     const res = await get(`/task/${barcode.value}`)
     task.value = res
+    // 如果有关联处方信息，赋值给 prescription
+    if (res.prescription) {
+      prescription.value = res.prescription
+    } else if (res.medicines && res.medicines.length > 0) {
+      // 构造默认不分组的药材清单，用于兼容旧数据
+      prescription.value = {
+        groups: [{
+          type: 'NORMAL',
+          name: '群煎组',
+          medicines: res.medicines
+        }]
+      }
+    }
   } catch (e) {
     uni.showToast({ title: e.message || '加载失败', icon: 'none' })
   } finally {
     uni.hideLoading()
   }
+}
+
+function getGroupClass(type) {
+  const map = {
+    PRE_DECOCT: 'group-red',
+    NORMAL: 'group-blue',
+    POST_DECOCT: 'group-green',
+    WRAP: 'group-orange',
+    DISSOLVE: 'group-purple'
+  }
+  return map[type] || 'group-blue'
 }
 
 function handleMainAction() {
@@ -177,6 +298,140 @@ function goLog() {
 .info-row { display: flex; justify-content: space-between; padding: 12rpx 0; }
 .info-label { font-size: 28rpx; color: #666; }
 .info-value { font-size: 28rpx; color: #333; font-weight: 500; }
+
+/* 进度区域 */
+.progress-section { background: #fff; margin: 20rpx; border-radius: 16rpx; padding: 30rpx; }
+.progress-steps { display: flex; flex-wrap: wrap; }
+.step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 33.33%;
+  padding: 20rpx 0;
+  position: relative;
+}
+.step-connector {
+  position: absolute;
+  left: -50%;
+  top: 46rpx;
+  width: 100%;
+  height: 4rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.connector-line {
+  width: 60%;
+  height: 4rpx;
+  background: #e0e0e0;
+  border-radius: 2rpx;
+}
+.connector-line.line-active {
+  background: #4caf50;
+}
+.step-marker { margin-bottom: 12rpx; }
+.step-circle {
+  width: 68rpx;
+  height: 68rpx;
+  border-radius: 50%;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.step-done .step-circle {
+  background: #4caf50;
+}
+.step-current .step-circle {
+  background: #0066CC;
+  animation: pulse-ring 2s ease-in-out infinite;
+}
+.step-check {
+  font-weight: 600;
+  font-size: 32rpx;
+  color: #fff;
+}
+.step-num {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #999;
+}
+.step-current .step-num {
+  color: #fff;
+}
+.step-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.step-name {
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #333;
+}
+.step-plan-time {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 6rpx;
+}
+.step-actual-time {
+  font-size: 22rpx;
+  color: #4caf50;
+  margin-top: 4rpx;
+}
+.step-hint {
+  font-size: 22rpx;
+  color: #0066CC;
+  margin-top: 4rpx;
+}
+.step-pending .step-name { color: #999; }
+.step-pending .step-num { color: #bbb; }
+
+@keyframes pulse-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 102, 204, 0.2); }
+  50% { box-shadow: 0 0 0 10rpx rgba(0, 102, 204, 0); }
+}
+
+/* 药材分组 */
+.medicine-group-section { background: #fff; margin: 20rpx; border-radius: 16rpx; padding: 30rpx; }
+.group-list { display: flex; flex-direction: column; gap: 20rpx; }
+.group-card {
+  border-radius: 12rpx;
+  padding: 24rpx;
+  border-left: 8rpx solid #ccc;
+  background: #fafafa;
+}
+.group-card.group-red { border-left-color: #ef5350; background: #fff5f5; }
+.group-card.group-blue { border-left-color: #2196f3; background: #f0f7ff; }
+.group-card.group-green { border-left-color: #4caf50; background: #f0fff0; }
+.group-card.group-orange { border-left-color: #ff9800; background: #fff8e1; }
+.group-card.group-purple { border-left-color: #9c27b0; background: #f3e5f5; }
+.group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16rpx; }
+.group-tag {
+  font-size: 26rpx;
+  font-weight: 600;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+}
+.group-tag.group-red { color: #c62828; background: #ffcdd2; }
+.group-tag.group-blue { color: #1565c0; background: #bbdefb; }
+.group-tag.group-green { color: #2e7d32; background: #c8e6c9; }
+.group-tag.group-orange { color: #e65100; background: #ffe0b2; }
+.group-tag.group-purple { color: #6a1b9a; background: #e1bee7; }
+.group-count { font-size: 24rpx; color: #999; }
+.group-medicines { display: flex; flex-wrap: wrap; gap: 12rpx; }
+.group-med-item {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  background: rgba(255,255,255,0.8);
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+}
+.group-med-name { font-size: 26rpx; color: #333; }
+.group-med-dosage { font-size: 24rpx; color: #666; }
+
+/* 原药材清单 */
 .medicine-section { background: #fff; margin: 20rpx; border-radius: 16rpx; padding: 30rpx; }
 .section-title { font-size: 30rpx; font-weight: 600; color: #333; margin-bottom: 20rpx; display: block; }
 .medicine-list { display: flex; flex-wrap: wrap; gap: 16rpx; }

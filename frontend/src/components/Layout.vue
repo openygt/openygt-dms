@@ -25,8 +25,16 @@
           </template>
           <el-menu-item index="/prod/receive">处方接收</el-menu-item>
           <el-menu-item index="/tasks">煎煮任务</el-menu-item>
+          <el-menu-item index="/task-assignment">任务调度中心</el-menu-item>
+          <el-menu-item index="/task-rollback">异常回退处理</el-menu-item>
+          <el-menu-item index="/step-visualization">煎药流程跟踪</el-menu-item>
+          <el-menu-item index="/herb-group">药材分组投料</el-menu-item>
+          <el-menu-item index="/emergency">急诊快速通道</el-menu-item>
           <el-menu-item index="/quality">质检管理</el-menu-item>
           <el-menu-item index="/prod/delivery">交付管理</el-menu-item>
+          <el-menu-item index="/step-visualization">煎药流程跟踪</el-menu-item>
+          <el-menu-item index="/herb-group">药材分组投料</el-menu-item>
+          <el-menu-item index="/emergency">急诊快速通道</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="/eq">
           <template #title>
@@ -37,6 +45,7 @@
           <el-menu-item index="/devices">设备台账</el-menu-item>
           <el-menu-item index="/alarms">告警日志</el-menu-item>
           <el-menu-item index="/alarm-configs">告警配置</el-menu-item>
+          <el-menu-item index="/time-monitor">时效预警看板</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="/formula">
           <template #title>
@@ -68,6 +77,7 @@
           <el-menu-item index="/device-utilization">设备利用率</el-menu-item>
           <el-menu-item index="/consume-log">药材消耗</el-menu-item>
           <el-menu-item index="/report/qc-rate">质检合格率</el-menu-item>
+          <el-menu-item index="/patient-query">患者进度查询</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="/print">
           <template #title>
@@ -87,6 +97,7 @@
           <el-menu-item index="/base/department">科室管理</el-menu-item>
           <el-menu-item index="/base/doctor">医师管理</el-menu-item>
           <el-menu-item index="/base/medicine">药材目录</el-menu-item>
+          <el-menu-item index="/shelf-manage">成品货架管理</el-menu-item>
         </el-sub-menu>
         <el-sub-menu index="/system">
           <template #title>
@@ -98,6 +109,8 @@
           <el-menu-item index="/menus">菜单管理</el-menu-item>
           <el-menu-item index="/logs">操作审计</el-menu-item>
           <el-menu-item index="/configs">系统参数</el-menu-item>
+          <el-menu-item index="/employee-barcode">员工身份条码</el-menu-item>
+          <el-menu-item index="/voice-setting">语音播报配置</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
