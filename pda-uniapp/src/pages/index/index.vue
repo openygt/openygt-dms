@@ -45,6 +45,18 @@
           <view class="action-icon log">📋</view>
           <text class="action-text">操作日志</text>
         </view>
+        <view class="action-item" @click="goVoice" data-testid="btn-voice">
+          <view class="action-icon voice">🔊</view>
+          <text class="action-text">语音提醒</text>
+        </view>
+        <view class="action-item" @click="goPatientQuery" data-testid="btn-patient" v-if="canPatientQuery">
+          <view class="action-icon patient">👤</view>
+          <text class="action-text">患者查询</text>
+        </view>
+        <view class="action-item" @click="goShelf" data-testid="btn-shelf">
+          <view class="action-icon shelf">📦</view>
+          <text class="action-text">货架管理</text>
+        </view>
       </view>
     </view>
 
@@ -82,6 +94,12 @@ import { get } from '../../utils/request.js'
 const userInfo = ref(uni.getStorageSync(config.userInfoKey) || {})
 const pendingCount = ref(0)
 const recentTasks = ref([])
+
+const canPatientQuery = computed(() => {
+  // 根据用户角色判断是否有患者查询权限（管理员/客服/药房窗口）
+  const roles = userInfo.value.roles || []
+  return roles.includes('ADMIN') || roles.includes('RECEPTION') || roles.includes('PHARMACY')
+})
 
 const greeting = computed(() => {
   const hour = new Date().getHours()
@@ -132,6 +150,9 @@ function goReprint() { uni.navigateTo({ url: '/pages/reprint/index' }) }
 function goConfirm() { uni.switchTab({ url: '/pages/task/scan' }) }
 function goPhoto() { uni.switchTab({ url: '/pages/task/scan' }) }
 function goLog() { uni.switchTab({ url: '/pages/log/list' }) }
+function goVoice() { uni.navigateTo({ url: '/pages/voice/index' }) }
+function goPatientQuery() { uni.navigateTo({ url: '/pages/patient/query' }) }
+function goShelf() { uni.navigateTo({ url: '/pages/shelf/index' }) }
 function goTaskDetail(barcode) {
   uni.navigateTo({ url: `/pages/task/detail?barcode=${barcode}` })
 }
@@ -170,6 +191,9 @@ async function doSync() {
 .action-icon.confirm { background: #e8f5e9; }
 .action-icon.photo { background: #fff3e0; }
 .action-icon.log { background: #f3e5f5; }
+.action-icon.voice { background: #e8eaf6; }
+.action-icon.patient { background: #fce4ec; }
+.action-icon.shelf { background: #e0f2f1; }
 .action-text { font-size: 26rpx; color: #555; }
 .recent-section { padding: 0 30rpx 30rpx; }
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }

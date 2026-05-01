@@ -7,13 +7,14 @@
       </view>
       <view class="user-info">
         <text class="user-name">{{ userInfo.userCode || '未登录' }}</text>
+        <text class="user-role">{{ displayRole }}</text>
         <text class="user-device">{{ userInfo.deviceCode || '未绑定设备' }}</text>
       </view>
     </view>
 
     <!-- 设置列表 -->
     <view class="setting-group">
-      <view class="setting-item" @click="goOnlineList">
+      <view class="setting-item" @click="goOnlineList" v-if="canViewOnline">
         <view class="setting-left">
           <view class="setting-icon" style="background: rgba(0,102,204,0.1)">
             <text class="setting-icon-text" style="color: $ygt-primary">●</text>
@@ -47,6 +48,16 @@
           <text class="setting-value">{{ fontSizeLabel }}</text>
           <text class="setting-arrow">›</text>
         </view>
+      </view>
+
+      <view class="setting-item" @click="goChangePassword">
+        <view class="setting-left">
+          <view class="setting-icon" style="background: rgba(124,58,237,0.1)">
+            <text class="setting-icon-text" style="color: #7c3aed">🔒</text>
+          </view>
+          <text class="setting-label">修改密码</text>
+        </view>
+        <text class="setting-arrow">›</text>
       </view>
 
       <view class="setting-item" @click="toggleSound">
@@ -85,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import config from '../../utils/config.js'
 import { getQueue } from '../../utils/storage.js'
@@ -98,6 +109,25 @@ const fontSizeLabel = ref('标准')
 const soundEnabled = ref(true)
 
 const FONT_LABELS = { normal: '标准', large: '大', xlarge: '特大' }
+
+const ROLE_NAME_MAP = {
+  'ROLE_ADMIN': '系统管理员',
+  'ROLE_DIRECTOR': '主任',
+  'ROLE_LEADER': '班组长',
+  'ROLE_WORKER': '操作工',
+  'ROLE_INSPECTOR': '质检员'
+}
+
+const displayRole = computed(() => {
+  const perms = userInfo.value.permissions || []
+  const role = perms.find(p => p.startsWith('ROLE_'))
+  return ROLE_NAME_MAP[role] || (role ? role.replace('ROLE_', '') : '未分配角色')
+})
+
+const canViewOnline = computed(() => {
+  const perms = userInfo.value.permissions || []
+  return perms.includes('ROLE_ADMIN') || perms.includes('ROLE_DIRECTOR') || perms.includes('ROLE_LEADER')
+})
 
 onShow(() => {
   userInfo.value = uni.getStorageSync(config.userInfoKey) || {}
@@ -112,6 +142,10 @@ onShow(() => {
 
 function goOnlineList() {
   uni.navigateTo({ url: '/pages/online/list' })
+}
+
+function goChangePassword() {
+  uni.navigateTo({ url: '/pages/mine/password' })
 }
 
 async function syncData() {
@@ -243,6 +277,16 @@ async function handleLogout() {
   font-size: 36rpx;
   font-weight: 600;
   color: #fff;
+}
+
+.user-role {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.9);
+  margin-top: 4rpx;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2rpx 12rpx;
+  border-radius: 8rpx;
+  display: inline-block;
 }
 
 .user-device {

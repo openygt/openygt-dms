@@ -2,10 +2,13 @@ package cn.org.openygt.system.controller;
 import cn.org.openygt.system.SystemModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
+import cn.org.openygt.common.dto.ChangePasswordRequest;
 import cn.org.openygt.system.entity.SysUser;
 import cn.org.openygt.system.service.SysUserService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping(SystemModule.API_PREFIX + "/users")
@@ -43,6 +46,16 @@ public class SysUserController {
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         userService.delete(id);
+        return ApiResponse.success();
+    }
+
+    @PostMapping("/change-password")
+    public ApiResponse<Void> changePassword(@RequestAttribute("userId") Long userId,
+                                             @RequestBody @Valid ChangePasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            return ApiResponse.error(400, "两次输入的新密码不一致");
+        }
+        userService.changePassword(userId, request.getOldPassword(), request.getNewPassword());
         return ApiResponse.success();
     }
 }
