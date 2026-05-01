@@ -1,0 +1,334 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: device-lifecycle.spec.ts >> Flow 2: 设备生命周期 >> 异常: 删除取消操作
+- Location: e2e/device-lifecycle.spec.ts:71:3
+
+# Error details
+
+```
+TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+Call log:
+  - waiting for locator('.el-table') to be visible
+
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - complementary [ref=e5]:
+    - generic [ref=e6]:
+      - img [ref=e8]
+      - generic [ref=e11]: 智能煎药管理系统
+    - menubar [ref=e12]:
+      - menuitem "实时看板" [ref=e13] [cursor=pointer]:
+        - img [ref=e15]
+        - generic [ref=e17]: 实时看板
+      - menuitem "生产执行" [ref=e18]:
+        - generic [ref=e19] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e24]: 生产执行
+          - img [ref=e26]
+      - menuitem "设备管理" [ref=e28]:
+        - generic [ref=e29] [cursor=pointer]:
+          - img [ref=e31]
+          - generic [ref=e34]: 设备管理
+          - img [ref=e36]
+      - menuitem "工艺配置" [ref=e38]:
+        - generic [ref=e39] [cursor=pointer]:
+          - img [ref=e41]
+          - generic [ref=e43]: 工艺配置
+          - img [ref=e45]
+      - menuitem "质量追溯" [ref=e47]:
+        - generic [ref=e48] [cursor=pointer]:
+          - img [ref=e50]
+          - generic [ref=e52]: 质量追溯
+          - img [ref=e54]
+      - menuitem "数据分析" [ref=e56]:
+        - generic [ref=e57] [cursor=pointer]:
+          - img [ref=e59]
+          - generic [ref=e61]: 数据分析
+          - img [ref=e63]
+      - menuitem "打印配置" [ref=e65]:
+        - generic [ref=e66] [cursor=pointer]:
+          - img [ref=e68]
+          - generic [ref=e70]: 打印配置
+          - img [ref=e72]
+      - menuitem "基础数据" [ref=e74]:
+        - generic [ref=e75] [cursor=pointer]:
+          - img [ref=e77]
+          - generic [ref=e81]: 基础数据
+          - img [ref=e83]
+      - menuitem "系统管理" [ref=e85]:
+        - generic [ref=e86] [cursor=pointer]:
+          - img [ref=e88]
+          - generic [ref=e91]: 系统管理
+          - img [ref=e93]
+  - generic [ref=e95]:
+    - generic [ref=e96]:
+      - generic [ref=e97]: 实时看板
+      - generic [ref=e98]:
+        - 'button "当前主题: 跟随系统" [ref=e100] [cursor=pointer]':
+          - img [ref=e102]
+        - separator [ref=e105]
+        - generic [ref=e106]: 当前用户：未知用户
+        - button "退出" [ref=e107] [cursor=pointer]:
+          - generic [ref=e108]: 退出
+    - main [ref=e109]:
+      - generic [ref=e110]:
+        - heading "实时看板" [level=1] [ref=e111]
+        - generic [ref=e112]:
+          - generic [ref=e113]:
+            - generic [ref=e114]:
+              - img [ref=e116]
+              - generic [ref=e118]: 总任务数
+            - generic [ref=e120]: "0"
+            - generic [ref=e121]: 今日任务
+          - generic [ref=e122]:
+            - generic [ref=e123]:
+              - img [ref=e125]
+              - generic [ref=e127]: 已完成
+            - generic [ref=e129]: "0"
+            - generic [ref=e130]: 占比 0%
+          - generic [ref=e131]:
+            - generic [ref=e132]:
+              - img [ref=e134]
+              - generic [ref=e138]: 进行中
+            - generic [ref=e140]: "0"
+            - generic [ref=e141]: 占比 0%
+          - generic [ref=e142]:
+            - generic [ref=e143]:
+              - img [ref=e145]
+              - generic [ref=e147]: 正在报警
+            - generic [ref=e149]: "0"
+            - generic [ref=e150]: 需干预
+        - generic [ref=e151]:
+          - generic [ref=e152] [cursor=pointer]:
+            - img [ref=e155]
+            - generic [ref=e157]: 任务管理
+          - generic [ref=e158] [cursor=pointer]:
+            - img [ref=e161]
+            - generic [ref=e164]: 设备管理
+          - generic [ref=e165] [cursor=pointer]:
+            - img [ref=e168]
+            - generic [ref=e170]: 打印管理
+          - generic [ref=e171] [cursor=pointer]:
+            - img [ref=e174]
+            - generic [ref=e176]: 产能报表
+        - generic [ref=e177]:
+          - generic [ref=e178]:
+            - generic [ref=e180]:
+              - generic [ref=e181]: 任务状态分布
+              - generic [ref=e183]: 今日
+            - generic [ref=e185]:
+              - img [ref=e187]
+              - generic [ref=e189]: 暂无任务数据
+              - generic [ref=e190]: 今日还没有生成任务
+          - generic [ref=e191]:
+            - generic [ref=e193]:
+              - generic [ref=e194]: 设备类型分布
+              - generic [ref=e195]:
+                - generic [ref=e197]: 总数/在线/在线有异常
+                - button "进入监控" [ref=e198] [cursor=pointer]:
+                  - generic [ref=e199]: 进入监控
+            - generic [ref=e201]:
+              - img [ref=e203]
+              - generic [ref=e205]: 暂无设备数据
+              - generic [ref=e206]: 还没有录入设备信息
+        - generic [ref=e207]:
+          - generic [ref=e209]:
+            - generic [ref=e210]: 异常预警
+            - generic [ref=e211]:
+              - generic [ref=e213]: 3 条待处理
+              - button "查看全部" [ref=e214] [cursor=pointer]:
+                - generic [ref=e215]: 查看全部
+          - generic [ref=e217]:
+            - generic [ref=e218]:
+              - generic [ref=e219]:
+                - generic [ref=e220]:
+                  - generic [ref=e222]: CRITICAL
+                  - generic [ref=e223]: DECOCT_004
+                  - generic [ref=e224]: 2026/04/30 09:30:00
+                - generic [ref=e225]: 煎药机4号温度传感器异常，当前145°C
+              - button "处理" [ref=e226] [cursor=pointer]:
+                - generic [ref=e227]: 处理
+            - generic [ref=e228]:
+              - generic [ref=e229]:
+                - generic [ref=e230]:
+                  - generic [ref=e232]: WARNING
+                  - generic [ref=e233]: DECOCT_005
+                  - generic [ref=e234]: 2026/04/30 10:00:00
+                - generic [ref=e235]: 煎药机5号离线超过30分钟
+              - button "处理" [ref=e236] [cursor=pointer]:
+                - generic [ref=e237]: 处理
+            - generic [ref=e238]:
+              - generic [ref=e239]:
+                - generic [ref=e240]:
+                  - generic [ref=e242]: INFO
+                  - generic [ref=e243]: DECOCT_002
+                  - generic [ref=e244]: 2026/04/30 10:15:00
+                - generic [ref=e245]: 煎药机2号浸泡超时
+              - button "处理" [ref=e246] [cursor=pointer]:
+                - generic [ref=e247]: 处理
+        - generic [ref=e248]:
+          - generic [ref=e251]: 系统信息
+          - generic [ref=e253]:
+            - generic [ref=e254]:
+              - generic [ref=e255]: 系统版本
+              - generic [ref=e256]: OpenYGT-DMS 智能煎药管理系统 v1.0
+            - generic [ref=e257]:
+              - generic [ref=e258]: 当前用户
+              - generic [ref=e259]: 未知用户
+            - generic [ref=e260]:
+              - generic [ref=e261]: 当前角色
+              - generic [ref=e262]: "-"
+```
+
+# Test source
+
+```ts
+  1   | import { Page, expect, Locator } from '@playwright/test'
+  2   | 
+  3   | /**
+  4   |  * Login as admin and wait for dashboard to load
+  5   |  */
+  6   | export async function login(page: Page) {
+  7   |   await page.goto('/login')
+  8   |   await page.waitForSelector('.login-card', { timeout: 10000 })
+  9   | 
+  10  |   // Fill login form
+  11  |   const usernameInput = page.locator('.login-card input').first()
+  12  |   const passwordInput = page.locator('.login-card input').nth(1)
+  13  |   await usernameInput.fill('admin')
+  14  |   await passwordInput.fill('admin123')
+  15  | 
+  16  |   // Click login button
+  17  |   await page.locator('.login-card .el-button--primary').click()
+  18  | 
+  19  |   // Wait for navigation to dashboard
+  20  |   await page.waitForURL(/(\/dashboard|\/)/, { timeout: 10000 })
+  21  |   await page.waitForTimeout(1000)
+  22  | }
+  23  | 
+  24  | /**
+  25  |  * Navigate to a route and wait for content to render
+  26  |  */
+  27  | export async function navigate(page: Page, route: string) {
+  28  |   await page.goto(route)
+  29  |   await page.waitForTimeout(1500) // Wait for async data to load
+  30  | }
+  31  | 
+  32  | /**
+  33  |  * Wait for table data to load (rows appear)
+  34  |  */
+  35  | export async function waitTable(page: Page, selector = '.el-table') {
+  36  |   const table = page.locator(selector)
+> 37  |   await table.waitFor({ state: 'visible', timeout: 10000 })
+      |               ^ TimeoutError: locator.waitFor: Timeout 10000ms exceeded.
+  38  |   // Wait for at least one row
+  39  |   const rows = table.locator('.el-table__body-wrapper tbody tr')
+  40  |   await rows.first().waitFor({ state: 'attached', timeout: 10000 }).catch(() => {})
+  41  | }
+  42  | 
+  43  | /**
+  44  |  * Get cell text at a specific row and column in a table
+  45  |  */
+  46  | export async function getCell(page: Page, row: number, col: number, selector = '.el-table'): Promise<string> {
+  47  |   const cell = page.locator(`${selector} .el-table__body-wrapper tbody tr`).nth(row).locator('td').nth(col)
+  48  |   return (await cell.textContent()) || ''
+  49  | }
+  50  | 
+  51  | /**
+  52  |  * Assert Element Plus tag has the correct type class
+  53  |  */
+  54  | export async function assertTag(page: Page, selector: string, type: 'success' | 'warning' | 'info' | 'danger' | 'primary' | '') {
+  55  |   const tag = page.locator(selector)
+  56  |   await tag.waitFor({ state: 'visible', timeout: 5000 })
+  57  |   if (type) {
+  58  |     await expect(tag).toHaveClass(new RegExp(`el-tag--${type}`))
+  59  |   }
+  60  | }
+  61  | 
+  62  | /**
+  63  |  * Assert KPI card value is a number
+  64  |  */
+  65  | export async function assertCard(page: Page, selector: string) {
+  66  |   const el = page.locator(selector)
+  67  |   await el.waitFor({ state: 'visible', timeout: 5000 })
+  68  |   const text = (await el.textContent()) || ''
+  69  |   expect(text.trim()).not.toBe('')
+  70  | }
+  71  | 
+  72  | /**
+  73  |  * Assert ECharts canvas is rendered inside a container
+  74  |  */
+  75  | export async function assertChart(page: Page, selector: string) {
+  76  |   const container = page.locator(selector)
+  77  |   await container.waitFor({ state: 'visible', timeout: 5000 })
+  78  |   // ECharts renders a canvas inside the container
+  79  |   const canvas = container.locator('canvas')
+  80  |   await expect(canvas).toBeAttached({ timeout: 5000 })
+  81  | }
+  82  | 
+  83  | /**
+  84  |  * Assert empty state is visible
+  85  |  */
+  86  | export async function assertEmpty(page: Page, selector = '.el-empty') {
+  87  |   const empty = page.locator(selector)
+  88  |   await empty.waitFor({ state: 'visible', timeout: 5000 })
+  89  | }
+  90  | 
+  91  | /**
+  92  |  * Assert error/alert state is visible
+  93  |  */
+  94  | export async function assertError(page: Page, selector = '.el-alert--error') {
+  95  |   const alert = page.locator(selector)
+  96  |   await alert.waitFor({ state: 'visible', timeout: 5000 })
+  97  | }
+  98  | 
+  99  | /**
+  100 |  * Click a dialog/confirm button by text
+  101 |  */
+  102 | export async function clickDialog(page: Page, btnText: string) {
+  103 |   const btn = page.locator('.el-dialog .el-button').filter({ hasText: btnText })
+  104 |   await btn.click()
+  105 |   // Wait for dialog to close
+  106 |   await page.waitForTimeout(500)
+  107 | }
+  108 | 
+  109 | /**
+  110 |  * Fill a form field (label-based lookup for Element Plus)
+  111 |  */
+  112 | export async function fillFormField(page: Page, label: string, value: string) {
+  113 |   // Find the form item by label text
+  114 |   const formItem = page.locator('.el-form-item').filter({ hasText: label })
+  115 |   const input = formItem.locator('input, textarea')
+  116 |   await input.fill(value)
+  117 | }
+  118 | 
+  119 | /**
+  120 |  * Fill an entire form with a data map { label: value }
+  121 |  */
+  122 | export async function fillForm(page: Page, data: Record<string, string>) {
+  123 |   for (const [label, value] of Object.entries(data)) {
+  124 |     await fillFormField(page, label, value)
+  125 |   }
+  126 | }
+  127 | 
+  128 | /**
+  129 |  * Submit a form by pressing the submit button
+  130 |  */
+  131 | export async function submitForm(page: Page, btnText = '保存') {
+  132 |   const btn = page.locator('.el-dialog .el-button--primary').filter({ hasText: btnText })
+  133 |   await btn.click()
+  134 |   await page.waitForTimeout(800)
+  135 | }
+  136 | 
+  137 | /**
+```
