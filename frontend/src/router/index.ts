@@ -56,14 +56,11 @@ const router = createRouter({
         { path: 'prescription-defaults', name: 'PrescriptionDefaults', component: () => import('@/views/eq/PrescriptionDefaultView.vue'), meta: { title: '处方默认设置' } },
         { path: 'device-utilization', name: 'DeviceUtilization', component: () => import('@/views/eq/DeviceUtilizationView.vue'), meta: { title: '设备利用率' } },
         { path: 'alarm-configs', name: 'AlarmConfigs', component: () => import('@/views/monitor/AlarmConfigView.vue'), meta: { title: '告警配置' } },
-<<<<<<< HEAD
         { path: 'step-visualization', name: 'StepVisualization', component: () => import('@/views/prod/StepVisualizationView.vue'), meta: { title: '煎药流程跟踪' } },
         { path: 'herb-group', name: 'HerbGroup', component: () => import('@/views/prod/HerbGroupView.vue'), meta: { title: '药材分组投料' } },
         { path: 'time-monitor', name: 'TimeMonitor', component: () => import('@/views/monitor/TimeMonitorView.vue'), meta: { title: '时效预警看板' } },
         { path: 'emergency', name: 'EmergencyPrescription', component: () => import('@/views/prod/EmergencyPrescriptionView.vue'), meta: { title: '急诊快速通道' } },
-=======
         { path: 'temperature-curve', name: 'TemperatureCurve', component: () => import('@/views/eq/TemperatureCurveView.vue'), meta: { title: '温度曲线', perm: 'eq:device:monitor' } },
->>>>>>> 94d5f3f82dca46d15d2f04612bc197a25fdfa938
       ]
     },
     { path: '/:pathMatch(.*)*', redirect: '/' }
