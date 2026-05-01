@@ -179,11 +179,11 @@ async function handleConfirm() {
   const stepLabel = steps.value.find(s => s.value === selectedStep.value)?.label || ''
   const needConfirm = ['END_DECOCT', 'END_PACKAGE', 'INSPECT_PASS'].includes(selectedStep.value)
   if (needConfirm) {
-    const [confirmErr, confirmRes] = await uni.showModal({
+    const { confirm } = await uni.showModal({
       title: '⚠ 确认操作',
       content: `您即将确认: ${stepLabel}，确认后不可撤销，是否继续？`
     })
-    if (!confirmRes || !confirmRes.confirm) return
+    if (!confirm) return
   }
 
   loading.value = true

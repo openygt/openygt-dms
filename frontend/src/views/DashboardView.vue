@@ -193,12 +193,16 @@ const alarmLoading = ref(false)
 const maxTaskCount = computed(() => Math.max(1, ...taskDist.value.map((d: any) => d.count || 0)))
 const maxDeviceCount = computed(() => Math.max(1, ...deviceDist.value.map((d: any) => d.count || 0)))
 
-const quickActions = [
-  { label: '任务管理', path: '/tasks', icon: 'List', bg: 'var(--ygt-primary-500)' },
-  { label: '设备管理', path: '/devices', icon: 'Cpu', bg: 'var(--ygt-success)' },
-  { label: '打印管理', path: '/print-center', icon: 'Printer', bg: 'var(--ygt-warning)' },
-  { label: '产能报表', path: '/capacity', icon: 'TrendCharts', bg: 'var(--ygt-info)' },
-]
+const quickActions = computed(() => {
+  const actions = [
+    { label: '任务管理', path: '/tasks', icon: 'List', bg: 'var(--ygt-primary-500)', perm: 'prod:task:list' },
+    { label: '设备管理', path: '/devices', icon: 'Cpu', bg: 'var(--ygt-success)', perm: 'eq:device:list' },
+    { label: '打印管理', path: '/print-center', icon: 'Printer', bg: 'var(--ygt-warning)', perm: 'prt:queue:view' },
+    { label: '产能报表', path: '/capacity', icon: 'TrendCharts', bg: 'var(--ygt-info)', perm: 'ops:capacity:view' },
+    { label: '温度曲线', path: '/temperature-curve', icon: 'Odometer', bg: '#e91e63', perm: 'eq:device:monitor' },
+  ]
+  return actions.filter(a => userStore.hasPermission(a.perm))
+})
 
 const statusMap: Record<string, { label: string; color: string }> = {
   '待泡药': { label: '待泡药', color: 'var(--ygt-gray-400)' },

@@ -117,6 +117,7 @@
       </button>
       <view class="sub-actions">
         <button class="sub-btn" @click="goPhoto" data-testid="btn-go-photo">拍照留档</button>
+        <button class="sub-btn" @click="goTemperature" data-testid="btn-go-temp">温度曲线</button>
         <button class="sub-btn" @click="goLog" data-testid="btn-go-log">操作日志</button>
       </view>
     </view>
@@ -280,6 +281,9 @@ function onClickStep(step) {
 
 function goPhoto() {
   uni.navigateTo({ url: `/pages/photo/upload?taskId=${task.value.taskId}` })
+}
+function goTemperature() {
+  uni.navigateTo({ url: `/pages/task/temperature?barcode=${barcode.value}` })
 }
 function goLog() {
   uni.switchTab({ url: '/pages/log/list' })

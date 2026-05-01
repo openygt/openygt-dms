@@ -120,12 +120,14 @@ async function handleLogin() {
 
 function doLoginSuccess(res) {
   uni.setStorageSync(config.tokenKey, res.token)
-  uni.setStorageSync(config.userInfoKey, {
+  const userInfo = {
     userCode: res.userCode,
     userName: res.userName || res.userCode,
     deviceCode: res.deviceCode,
-    recordId: res.recordId
-  })
+    recordId: res.recordId,
+    permissions: res.permissions || []
+  }
+  uni.setStorageSync(config.userInfoKey, userInfo)
   startHeartbeat()
   uni.showToast({ title: (res.userName || res.userCode) + ' 登录成功', icon: 'success' })
   setTimeout(() => { uni.switchTab({ url: '/pages/index/index' }) }, 1000)

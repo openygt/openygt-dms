@@ -5,8 +5,8 @@
         <div style="display: flex; justify-content: space-between; align-items: center">
           <span>设备管理</span>
           <div>
-            <el-button @click="pairingDialogVisible = true">生产线配对</el-button>
-            <el-button type="primary" @click="openDialog()">新增设备</el-button>
+            <el-button v-if="userStore.hasPermission('eq:device:pair')" @click="pairingDialogVisible = true">生产线配对</el-button>
+            <el-button type="primary" v-if="userStore.hasPermission('eq:device:create')" @click="openDialog()">新增设备</el-button>
           </div>
         </div>
       </template>
@@ -74,10 +74,10 @@
         <el-table-column label="操作" width="340" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" @click="goToMonitor(row)">监控</el-button>
-            <el-button size="small" @click="openDialog(row)">编辑</el-button>
+            <el-button size="small" v-if="userStore.hasPermission('eq:device:update')" @click="openDialog(row)">编辑</el-button>
             <el-button size="small" @click="viewDetail(row)">详情</el-button>
             <el-button size="small" type="info" @click="openPrintLabel(row)">标签</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button size="small" type="danger" v-if="userStore.hasPermission('eq:device:delete')" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -312,6 +312,9 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
