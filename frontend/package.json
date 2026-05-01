@@ -23,7 +23,9 @@
     "@playwright/test": "^1.59.1",
     "@types/sockjs-client": "^1.5.4",
     "@vitejs/plugin-vue": "^5.0.4",
+    "allure-playwright": "^3.7.1",
     "sass": "^1.75.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.4.5",
     "vite": "^5.2.8",
     "vue-tsc": "^2.0.11"
