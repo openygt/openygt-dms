@@ -32,6 +32,10 @@
             <artifactId>dms-production</artifactId>
         </dependency>
         <dependency>
+            <groupId>cn.org.openygt</groupId>
+            <artifactId>dms-equipment</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>mybatis-plus-boot-starter</artifactId>
         </dependency>

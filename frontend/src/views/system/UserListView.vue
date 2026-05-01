@@ -4,7 +4,7 @@
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
           <span>用户管理</span>
-          <el-button type="primary" @click="openDialog()">新增用户</el-button>
+          <el-button type="primary" v-if="userStore.hasPermission('sys:user:create')" @click="openDialog()">新增用户</el-button>
         </div>
       </template>
       <el-form :inline="true" @submit.prevent>
@@ -29,9 +29,9 @@
         <el-table-column prop="createdAt" label="创建时间" />
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openDialog(row)">编辑</el-button>
-            <el-button size="small" type="warning" @click="openRoleDialog(row)">分配角色</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button size="small" v-if="userStore.hasPermission('sys:user:update')" @click="openDialog(row)">编辑</el-button>
+            <el-button size="small" type="warning" v-if="userStore.hasPermission('sys:role:assign')" @click="openRoleDialog(row)">分配角色</el-button>
+            <el-button size="small" type="danger" v-if="userStore.hasPermission('sys:user:delete')" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -97,6 +97,9 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import request from '@/api/request'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 interface User {
   id: number

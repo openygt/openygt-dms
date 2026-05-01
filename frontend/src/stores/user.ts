@@ -72,9 +72,18 @@ export const useUserStore = defineStore('user', () => {
         'prod:task:list', 'prod:prescription:list',
         'eq:device:list', 'eq:alarm:list',
         'prt:queue:view', 'qt:inspect:list',
-        'inv:log:list', 'ops:capacity:view'
+        'inv:log:list', 'ops:capacity:view',
+        'sys:user:update', 'sys:user:change-password'
       ]
       if (workerPerms.includes(perm)) return true
+    }
+    // 班组长额外权限
+    if (perms.includes('ROLE_LEADER')) {
+      const leaderPerms = [
+        'sys:user:create', 'sys:user:delete',
+        'sys:role:assign', 'eq:device:create', 'eq:device:update', 'eq:device:delete'
+      ]
+      if (leaderPerms.includes(perm)) return true
     }
     return perms.includes(perm)
   }

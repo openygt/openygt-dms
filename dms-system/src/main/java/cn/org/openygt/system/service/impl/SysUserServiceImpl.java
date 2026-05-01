@@ -96,6 +96,20 @@ public class SysUserServiceImpl implements SysUserService {
     }
 
     @Override
+    @Transactional
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        SysUser user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new IllegalArgumentException("用户不存在");
+        }
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new IllegalArgumentException("旧密码错误");
+        }
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userMapper.updateById(user);
+    }
+
+    @Override
     public TokenResponse login(LoginRequest request) {
         SysUser user = getByUsername(request.getUsername());
         if (user == null) {
