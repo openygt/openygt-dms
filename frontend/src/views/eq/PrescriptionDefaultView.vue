@@ -1,7 +1,8 @@
 <template>
   <div class="prescription-default">
+    <div class="page-header-title">处方默认设置：<span class="page-header-sub">处方默认参数、自动填充规则</span></div>
     <div class="page-header">
-      <h2>处方默认设置</h2>
+
       <el-button @click="resetDefaults">恢复默认</el-button>
     </div>
 

@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
-    <el-page-header title="语音播报配置" content="PDA语音设置与播报日志" />
-
+    <div class="page-header-title">语音播报：<span class="page-header-sub">语速/音量/语音包/免打扰、任务到达播报</span></div>
     <el-row :gutter="16">
       <el-col :xs="24" :md="12">
         <el-card shadow="never">

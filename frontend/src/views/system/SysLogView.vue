@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div class="page-header-title">操作日志：<span class="page-header-sub">用户操作审计、系统事件记录</span></div>
     <el-card>
       <template #header>
         <span>系统日志</span>

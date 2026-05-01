@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
-    <el-page-header title="任务调度中心" content="智能分配与调度煎药任务" />
-
+    <div class="page-header-title">排产调度：<span class="page-header-sub">甘特图排产、设备分配、员工指派、负载均衡</span></div>
     <!-- 顶部操作栏 -->
     <el-card class="search-card" shadow="never">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px">

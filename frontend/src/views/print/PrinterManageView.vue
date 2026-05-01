@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
-    <el-page-header title="打印机管理" content="管理标签打印机和激光打印机" />
-
+    <div class="page-header-title">打印管理：<span class="page-header-sub">标签打印机/工单打印机配置、状态监控</span></div>
     <el-card class="search-card" shadow="never">
       <el-form :model="searchForm" inline>
         <el-form-item label="关键词">

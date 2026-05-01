@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
-    <el-page-header title="药材分组投料" content="按煎煮要求分组展示药材，扫码确认投料" />
-
+    <div class="page-header-title">分组投料：<span class="page-header-sub">先煎/群煎/后下/冲服、扫码确认、倒计时提醒</span></div>
     <el-card class="info-card" shadow="never">
       <template #header>
         <div class="card-header">

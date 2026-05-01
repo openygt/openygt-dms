@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div class="page-header-title">药材消耗：<span class="page-header-sub">药材领用、消耗记录、库存扣减</span></div>
     <el-card>
       <template #header>
         <span>药材消耗</span>

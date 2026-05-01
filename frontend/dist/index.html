@@ -5,11 +5,49 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>智能煎药管理系统</title>
-    <script type="module" crossorigin src="/assets/index-Dfzg1hw7.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/vendor-dd9vuG1N.js">
-    <link rel="stylesheet" crossorigin href="/assets/index-CY-tVnpq.css">
+    <script type="module" crossorigin src="/assets/index-CqMRxbp0.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-94ZOP9T4.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-BZAwmhrV.css">
   </head>
   <body>
     <div id="app"></div>
+    <div id="app-loading">
+      <div class="app-loading-spinner"></div>
+      <div class="app-loading-text">系统加载中，请稍候...</div>
+    </div>
+    <style>
+      #app-loading {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background: #f5f7fa;
+        z-index: 99999;
+        transition: opacity 0.3s ease;
+      }
+      .app-loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #e4e7ed;
+        border-top-color: #409eff;
+        border-radius: 50%;
+        animation: app-loading-spin 0.8s linear infinite;
+      }
+      .app-loading-text {
+        font-size: 14px;
+        color: #606266;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      }
+      @keyframes app-loading-spin {
+        to { transform: rotate(360deg); }
+      }
+      #app-loading.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+    </style>
   </body>
 </html>

@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
-    <el-page-header title="成品货架管理" content="煎药成品上架、下架及货架状态管理" />
-
+    <div class="page-header-title">成品暂存：<span class="page-header-sub">成品货架、入库/出库、库存预警</span></div>
     <el-card class="search-card" shadow="never">
       <el-form :model="searchForm" inline @submit.prevent>
         <el-form-item label="区域">

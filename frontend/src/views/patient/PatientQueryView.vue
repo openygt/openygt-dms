@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
-    <el-page-header title="患者进度查询" content="支持扫码或手机号查询煎药进度" />
-
+    <div class="page-header-title">进度查询：<span class="page-header-sub">患者查询煎药进度、预计完成时间</span></div>
     <!-- 查询区域 -->
     <el-card shadow="never">
       <el-row :gutter="24">

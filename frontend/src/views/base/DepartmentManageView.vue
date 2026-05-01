@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div class="page-header-title">科室管理：<span class="page-header-sub">科室信息、医师关联</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

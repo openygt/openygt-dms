@@ -1,7 +1,8 @@
 <template>
   <div class="workload-stat">
+    <div class="page-header-title">工作量统计：<span class="page-header-sub">按人员/设备统计工作量、效率对比</span></div>
     <div class="page-header">
-      <h2>工作量统计</h2>
+
       <el-button type="primary" @click="exportExcel">导出Excel</el-button>
     </div>
 

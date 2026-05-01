@@ -1,5 +1,7 @@
 <template>
   <div class="device-trace-detail" v-loading="loading">
+    <el-page-header title="追溯详情" content="单张处方全链路追溯明细" class="mb-4" />
+
     <div class="page-header">
       <h2>追溯详情 - {{ prescriptionNo }}</h2>
       <el-button @click="router.back()">返回</el-button>

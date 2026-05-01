@@ -8,10 +8,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import cn.org.openygt.production.ProductionModule;
+
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/voice")
+@RequestMapping(ProductionModule.API_PREFIX + "/voice")
 @RequiredArgsConstructor
 public class VoiceController {
 
@@ -23,7 +25,7 @@ public class VoiceController {
     }
 
     @GetMapping("/settings")
-    public ApiResponse<VoiceSetting> getSettings(@RequestParam String deviceId) {
+    public ApiResponse<VoiceSetting> getSettings(@RequestParam(required = false) String deviceId) {
         return ApiResponse.success(voiceService.getSetting(deviceId));
     }
 

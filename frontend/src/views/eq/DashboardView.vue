@@ -1,7 +1,8 @@
 <template>
   <div class="eq-dashboard">
+    <div class="page-header-title">数据看板：<span class="page-header-sub">设备运行数据、产能趋势、告警统计</span></div>
     <div class="page-header">
-      <h2>数据看板</h2>
+
       <el-radio-group v-model="dateRange" @change="loadAll">
         <el-radio-button label="today">今日</el-radio-button>
         <el-radio-button label="week">本周</el-radio-button>

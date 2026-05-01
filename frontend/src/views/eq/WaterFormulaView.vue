@@ -1,7 +1,8 @@
 <template>
   <div class="water-formula">
+    <div class="page-header-title">加水公式：<span class="page-header-sub">按方剂类型/付数/药材计算加水量</span></div>
     <div class="page-header">
-      <h2>加水量公式管理</h2>
+
       <el-button type="primary" @click="showDialog = true">新增公式</el-button>
     </div>
 

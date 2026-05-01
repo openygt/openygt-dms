@@ -1,7 +1,8 @@
 <template>
   <div class="device-trace">
+    <div class="page-header-title">处方追溯：<span class="page-header-sub">从接收→煎煮→质检→发药全链路追溯</span></div>
     <div class="page-header">
-      <h2>煎药过程追溯</h2>
+
     </div>
 
     <el-card class="filter-card">

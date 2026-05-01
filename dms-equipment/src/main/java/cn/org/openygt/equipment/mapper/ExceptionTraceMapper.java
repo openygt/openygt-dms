@@ -38,15 +38,19 @@ public interface ExceptionTraceMapper {
     @Select("SELECT * FROM prod_exception_log WHERE is_deleted = 0 AND id = #{id}")
     Map<String, Object> getById(@Param("id") Long id);
 
-    @Select("SELECT exception_type as name, COUNT(*) as value FROM prod_exception_log WHERE is_deleted = 0 "
+    @Select("<script>"
+            + "SELECT exception_type as name, COUNT(*) as value FROM prod_exception_log WHERE is_deleted = 0 "
             + "<if test='dateStart != null and dateStart !=\"\"'> AND created_at &gt;= #{dateStart}</if>"
             + "<if test='dateEnd != null and dateEnd !=\"\"'> AND created_at &lt;= #{dateEnd}</if>"
-            + " GROUP BY exception_type")
+            + " GROUP BY exception_type"
+            + "</script>")
     List<Map<String, Object>> statByType(@Param("dateStart") String dateStart, @Param("dateEnd") String dateEnd);
 
-    @Select("SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count FROM prod_exception_log WHERE is_deleted = 0 "
+    @Select("<script>"
+            + "SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count FROM prod_exception_log WHERE is_deleted = 0 "
             + "<if test='dateStart != null and dateStart !=\"\"'> AND created_at &gt;= #{dateStart}</if>"
             + "<if test='dateEnd != null and dateEnd !=\"\"'> AND created_at &lt;= #{dateEnd}</if>"
-            + " GROUP BY DATE_FORMAT(created_at, '%Y-%m') ORDER BY month")
+            + " GROUP BY DATE_FORMAT(created_at, '%Y-%m') ORDER BY month"
+            + "</script>")
     List<Map<String, Object>> statByMonth(@Param("dateStart") String dateStart, @Param("dateEnd") String dateEnd);
 }

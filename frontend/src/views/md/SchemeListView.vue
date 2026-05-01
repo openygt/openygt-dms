@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div class="page-header-title">煎药方案：<span class="page-header-sub">经典方/协定方/自定义方、各阶段时长/温度</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

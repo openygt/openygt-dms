@@ -6,8 +6,10 @@ import cn.org.openygt.production.service.EmployeeBarcodeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import cn.org.openygt.production.ProductionModule;
+
 @RestController
-@RequestMapping("/api/v1/employee")
+@RequestMapping(ProductionModule.API_PREFIX + "/employee")
 @RequiredArgsConstructor
 public class EmployeeBarcodeController {
 
