@@ -1,5 +1,6 @@
 <template>
   <div class="temperature-curve-page">
+    <div class="page-header-title">温曲查询：<span class="page-header-sub">按处方/设备查询历史温度曲线</span></div>
     <el-card class="search-card">
       <el-form :inline="true" :model="searchForm">
         <el-form-item label="任务条码">
@@ -36,6 +37,7 @@
 import { ref, reactive, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
 import request from '@/api/request'
+import { getTraceTemperatureCurve } from '@/api/equipment'
 
 const searchForm = reactive({
   barcode: '',
@@ -61,9 +63,7 @@ async function queryCurve() {
     if (!prescriptionNo) {
       return
     }
-    const res: any = await request.get(`/v1/equipment/traces/${prescriptionNo}/temperature-curve`, {
-      params: { granularity: '1min' }
-    })
+    const res: any = await getTraceTemperatureCurve(prescriptionNo, '1min')
     curveData.value = res.data
     nextTick(() => renderChart())
   } catch (e) {

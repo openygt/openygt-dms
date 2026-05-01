@@ -21,3 +21,10 @@ app.use(createPinia())
 app.use(router)
 app.use(ElementPlus, { locale: zhCn })
 app.mount('#app')
+
+// 隐藏全局加载动画
+const loadingEl = document.getElementById('app-loading')
+if (loadingEl) {
+  loadingEl.classList.add('hidden')
+  setTimeout(() => loadingEl.remove(), 350)
+}

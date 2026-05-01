@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
-    <el-page-header title="时效预警看板" content="监控各生产环节时效状态，及时处理预警" />
-
+    <div class="page-header-title">时效监控：<span class="page-header-sub">各设备倒计时、超时预警、时效达成率</span></div>
     <!-- 统计卡片 -->
     <el-row :gutter="16" class="stat-row">
       <el-col :span="6">
@@ -169,7 +168,8 @@ async function loadData() {
       getActiveAlerts()
     ])
     const dashboardData = dashboardRes.data || {}
-    const alertsData = alertsRes.data || []
+    const alertsPage = alertsRes.data || { records: [] }
+    const alertsData = alertsPage.records || []
 
     tableData.value = alertsData.map((item: any) => ({
       id: item.id,
@@ -183,10 +183,10 @@ async function loadData() {
       alertId: item.alertId
     }))
 
-    stat.normal = dashboardData.normal || 0
-    stat.warning = dashboardData.warning || 0
-    stat.timeout = dashboardData.timeout || 0
-    stat.resolved = dashboardData.resolved || 0
+    stat.normal = dashboardData.onTimeTasks || 0
+    stat.warning = dashboardData.warningTasks || 0
+    stat.timeout = dashboardData.alertTasks || 0
+    stat.resolved = 0
   } catch (e) {
     ElMessage.error('加载数据失败')
   } finally {

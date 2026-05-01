@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div class="page-header-title">处方接收：<span class="page-header-sub">处方审核、接收确认、异常退回</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

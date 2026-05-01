@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div class="page-header-title">处方管理：<span class="page-header-sub">处方查询、状态跟踪、明细查看</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

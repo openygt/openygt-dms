@@ -1,7 +1,8 @@
 <template>
   <div class="alarm-config">
+    <div class="page-header-title">告警配置：<span class="page-header-sub">告警阈值、通知方式、升级策略</span></div>
     <div class="page-header">
-      <h2>告警配置</h2>
+
       <el-button type="primary" @click="showDialog = true">新增配置</el-button>
     </div>
 

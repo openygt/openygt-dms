@@ -1,5 +1,6 @@
 <template>
   <div class="alarm-realtime">
+    <div class="page-header-title">实时告警：<span class="page-header-sub">实时告警推送、声音提醒、快速处理</span></div>
     <el-badge :value="unreadCount" :hidden="!unreadCount" class="alarm-badge">
       <el-button circle @click="showPanel = !showPanel">
         <el-icon><Bell /></el-icon>

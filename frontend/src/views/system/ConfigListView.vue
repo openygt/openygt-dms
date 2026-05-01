@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div class="page-header-title">参数配置：<span class="page-header-sub">系统参数、业务规则、开关配置</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

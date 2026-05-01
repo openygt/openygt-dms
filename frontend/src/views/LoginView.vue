@@ -1,5 +1,7 @@
 <template>
   <div class="login-container">
+    <div class="page-header-title">登录</div>
+
     <div class="login-card">
       <h1 class="login-title">智能煎药管理系统</h1>
       <p class="login-subtitle">OpenYGT · 开源医共体</p>

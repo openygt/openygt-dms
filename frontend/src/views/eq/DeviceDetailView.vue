@@ -1,5 +1,7 @@
 <template>
   <div class="device-detail">
+    <el-page-header title="设备详情" content="设备运行参数、历史记录、维护信息" class="mb-4" />
+
     <!-- 返回按钮 -->
     <div class="detail-header">
       <el-button :icon="ArrowLeft" size="large" @click="router.back()">返回</el-button>

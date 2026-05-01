@@ -14,107 +14,119 @@
         background-color="transparent"
         style="border-right: none"
       >
-        <el-menu-item index="/dashboard">
-          <el-icon><DataLine /></el-icon>
-          <span>实时看板</span>
-        </el-menu-item>
+        <!-- 1. 生产指挥 -->
+        <el-sub-menu index="/command">
+          <template #title>
+            <el-icon><DataLine /></el-icon>
+            <span>生产指挥</span>
+          </template>
+          <el-menu-item v-if="userStore.hasPermission('ops:dashboard:view')" index="/dashboard">生产看板</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:assignment:view')" index="/task-assignment">排产调度</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:monitor:view')" index="/time-monitor">时效监控</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:alarm:view')" index="/alarms">告警管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:device:monitor')" index="/device-monitor">设备监控</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('ops:capacity:view')" index="/capacity">产能统计</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:device:efficiency')" index="/device-utilization">设备效能</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:device:control')" index="/device-command">设备操控</el-menu-item>
+        </el-sub-menu>
+
+        <!-- 2. 煎药作业 -->
         <el-sub-menu index="/prod">
           <template #title>
             <el-icon><FirstAidKit /></el-icon>
-            <span>生产执行</span>
+            <span>煎药作业</span>
           </template>
-          <el-menu-item index="/prod/receive">处方接收</el-menu-item>
-          <el-menu-item index="/tasks">煎煮任务</el-menu-item>
-          <el-menu-item index="/task-assignment">任务调度中心</el-menu-item>
-          <el-menu-item index="/task-rollback">异常回退处理</el-menu-item>
-          <el-menu-item index="/step-visualization">煎药流程跟踪</el-menu-item>
-          <el-menu-item index="/herb-group">药材分组投料</el-menu-item>
-          <el-menu-item index="/emergency">急诊快速通道</el-menu-item>
-          <el-menu-item index="/quality">质检管理</el-menu-item>
-          <el-menu-item index="/prod/delivery">交付管理</el-menu-item>
-          <el-menu-item index="/step-visualization">煎药流程跟踪</el-menu-item>
-          <el-menu-item index="/herb-group">药材分组投料</el-menu-item>
-          <el-menu-item index="/emergency">急诊快速通道</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:task:view')" index="/tasks">煎药任务</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:trace:view')" index="/step-visualization">流程跟踪</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:dosing:view')" index="/herb-group">分组投料</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:voice:view')" index="/voice-setting">语音播报</el-menu-item>
         </el-sub-menu>
-        <el-sub-menu index="/eq">
+
+        <!-- 3. 质量检验 -->
+        <el-sub-menu index="/qc">
           <template #title>
-            <el-icon><Cpu /></el-icon>
-            <span>设备管理</span>
+            <el-icon><CircleCheck /></el-icon>
+            <span>质量检验</span>
           </template>
-          <el-menu-item index="/device-monitor">设备监控</el-menu-item>
-          <el-menu-item index="/devices">设备台账</el-menu-item>
-          <el-menu-item index="/alarms">告警日志</el-menu-item>
-          <el-menu-item index="/alarm-configs">告警配置</el-menu-item>
-<<<<<<< HEAD
-          <el-menu-item index="/time-monitor">时效预警看板</el-menu-item>
-=======
-          <el-menu-item index="/temperature-curve">温度曲线</el-menu-item>
->>>>>>> 94d5f3f82dca46d15d2f04612bc197a25fdfa938
+          <el-menu-item v-if="userStore.hasPermission('qt:inspect:view')" index="/quality">质量检验</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:rework:view')" index="/task-rollback">返工处理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:temp:view')" index="/temperature-curve">温曲查询</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('qt:yield:view')" index="/report/qc-rate">合格统计</el-menu-item>
         </el-sub-menu>
+
+        <!-- 4. 发药管理 -->
+        <el-sub-menu index="/dispatch">
+          <template #title>
+            <el-icon><Box /></el-icon>
+            <span>发药管理</span>
+          </template>
+          <el-menu-item v-if="userStore.hasPermission('inv:storage:view')" index="/shelf-manage">成品暂存</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:dispatch:view')" index="/prod/delivery">发药确认</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:progress:view')" index="/patient-query">进度查询</el-menu-item>
+        </el-sub-menu>
+
+        <!-- 5. 追溯查询 -->
+        <el-sub-menu index="/trace">
+          <template #title>
+            <el-icon><Search /></el-icon>
+            <span>追溯查询</span>
+          </template>
+          <el-menu-item v-if="userStore.hasPermission('trace:rx:view')" index="/traces">处方追溯</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('trace:batch:view')" index="/trace/batch">批次追溯</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('trace:exc:view')" index="/trace/exception">异常追溯</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('sys:log:view')" index="/logs">操作日志</el-menu-item>
+        </el-sub-menu>
+
+        <!-- 6. 工艺配置 -->
         <el-sub-menu index="/formula">
           <template #title>
             <el-icon><Setting /></el-icon>
             <span>工艺配置</span>
           </template>
-          <el-menu-item index="/schemes">煎煮方案</el-menu-item>
-          <el-menu-item index="/water-formulas">加水量公式</el-menu-item>
-          <el-menu-item index="/prescription-defaults">处方默认设置</el-menu-item>
-          <el-menu-item index="/formula/package-spec">包装规格</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('md:scheme:view')" index="/schemes">煎药方案</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:water:view')" index="/water-formulas">加水公式</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('md:package:view')" index="/formula/package-spec">包装规格</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:alarm:view')" index="/alarm-configs">告警配置</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:maint:view')" index="/device-maintenance">设备维保</el-menu-item>
         </el-sub-menu>
-        <el-sub-menu index="/trace">
-          <template #title>
-            <el-icon><Search /></el-icon>
-            <span>质量追溯</span>
-          </template>
-          <el-menu-item index="/traces">处方追溯</el-menu-item>
-          <el-menu-item index="/trace/batch">批次追溯</el-menu-item>
-          <el-menu-item index="/trace/exception">异常追溯</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="/report">
-          <template #title>
-            <el-icon><TrendCharts /></el-icon>
-            <span>数据分析</span>
-          </template>
-          <el-menu-item index="/eq-dashboard">数据看板</el-menu-item>
-          <el-menu-item index="/capacity">产能报表</el-menu-item>
-          <el-menu-item index="/workload">工作量统计</el-menu-item>
-          <el-menu-item index="/device-utilization">设备利用率</el-menu-item>
-          <el-menu-item index="/consume-log">药材消耗</el-menu-item>
-          <el-menu-item index="/report/qc-rate">质检合格率</el-menu-item>
-          <el-menu-item index="/patient-query">患者进度查询</el-menu-item>
-        </el-sub-menu>
-        <el-sub-menu index="/print">
-          <template #title>
-            <el-icon><Printer /></el-icon>
-            <span>打印配置</span>
-          </template>
-          <el-menu-item index="/print/template">标签模板</el-menu-item>
-          <el-menu-item index="/print/printer">打印机管理</el-menu-item>
-          <el-menu-item index="/print/log">打印记录</el-menu-item>
-        </el-sub-menu>
+
+        <!-- 7. 基础数据 -->
         <el-sub-menu index="/base">
           <template #title>
             <el-icon><OfficeBuilding /></el-icon>
             <span>基础数据</span>
           </template>
-          <el-menu-item index="/hospitals">医院管理</el-menu-item>
-          <el-menu-item index="/base/department">科室管理</el-menu-item>
-          <el-menu-item index="/base/doctor">医师管理</el-menu-item>
-          <el-menu-item index="/base/medicine">药材目录</el-menu-item>
-          <el-menu-item index="/shelf-manage">成品货架管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('md:hospital:view')" index="/hospitals">医院管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('md:dept:view')" index="/base/department">科室管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('md:doctor:view')" index="/base/doctor">医师管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('md:herb:view')" index="/base/medicine">药材管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('sys:user:view')" index="/users">人员管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('sys:barcode:view')" index="/employee-barcode">身份条码</el-menu-item>
         </el-sub-menu>
+
+        <!-- 8. 打印中心 -->
+        <el-sub-menu index="/print">
+          <template #title>
+            <el-icon><Printer /></el-icon>
+            <span>打印中心</span>
+          </template>
+          <el-menu-item v-if="userStore.hasPermission('prt:label:view')" index="/print/template">标签打印</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prt:printer:view')" index="/print/printer">打印管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prt:log:view')" index="/print/log">打印记录</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prt:workorder:view')" index="/work-order-print">工单打印</el-menu-item>
+        </el-sub-menu>
+
+        <!-- 9. 系统管理 -->
         <el-sub-menu index="/system">
           <template #title>
             <el-icon><Lock /></el-icon>
             <span>系统管理</span>
           </template>
-          <el-menu-item index="/users">用户管理</el-menu-item>
-          <el-menu-item index="/roles">角色权限</el-menu-item>
-          <el-menu-item index="/menus">菜单管理</el-menu-item>
-          <el-menu-item index="/logs">操作审计</el-menu-item>
-          <el-menu-item index="/configs">系统参数</el-menu-item>
-          <el-menu-item index="/employee-barcode">员工身份条码</el-menu-item>
-          <el-menu-item index="/voice-setting">语音播报配置</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('sys:user:view')" index="/sys/users">用户管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('sys:role:view')" index="/roles">权限管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('sys:menu:view')" index="/menus">菜单管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('sys:config:view')" index="/configs">参数配置</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('sys:log:view')" index="/sys/logs">系统日志</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -253,6 +265,19 @@ function openChangePassword() {
 .layout-main {
   background: var(--ygt-bg-page);
   padding: var(--ygt-space-4);
+}
+
+/* 页面标题样式 */
+.page-header-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--el-text-color-primary);
+  margin-bottom: 16px;
+}
+.page-header-sub {
+  font-weight: normal;
+  color: var(--el-text-color-secondary);
+  font-size: 14px;
 }
 
 /* 移动端适配 */

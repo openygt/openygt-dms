@@ -2,150 +2,154 @@ import request from './request'
 
 // ========== 步骤可视化 ==========
 export function getTaskSteps(taskId: number | string) {
-  return request.get(`/v1/prod/tasks/${taskId}/steps`)
+  return request.get(`/v1/prod/task/${taskId}/steps`)
 }
 
 export function getStepDetail(taskId: number | string, stepCode: string) {
-  return request.get(`/v1/prod/tasks/${taskId}/steps/${stepCode}`)
+  return request.get(`/v1/prod/task/${taskId}/step-detail`, { params: { stepCode } })
 }
 
 // ========== 药材分组 ==========
 export function getHerbGroups(prescriptionId: number | string) {
-  return request.get(`/v1/prod/prescriptions/${prescriptionId}/herb-groups`)
+  return request.get(`/v1/prod/prescription/${prescriptionId}/herb-groups`)
 }
 
 export function confirmHerbGroup(groupId: number | string) {
-  return request.post(`/v1/prod/herb-groups/${groupId}/confirm`)
+  return request.post(`/v1/prod/herb-group/${groupId}/confirm`)
 }
 
 // ========== 时效预警 ==========
 export function getTimeMonitorDashboard() {
-  return request.get('/v1/monitor/time-monitor/dashboard')
+  return request.get('/v1/prod/monitor/time-monitor/dashboard')
 }
 
 export function getTimeMonitor(taskId: number | string) {
-  return request.get(`/v1/monitor/time-monitor/tasks/${taskId}`)
+  return request.get(`/v1/prod/monitor/time-monitor/${taskId}`)
 }
 
 export function createTimeRule(data: any) {
-  return request.post('/v1/monitor/time-rules', data)
+  return request.post('/v1/prod/monitor/time-rule', data)
 }
 
 export function updateTimeRule(id: number | string, data: any) {
-  return request.put(`/v1/monitor/time-rules/${id}`, data)
+  return request.put(`/v1/prod/monitor/time-rule/${id}`, data)
 }
 
 export function getActiveAlerts() {
-  return request.get('/v1/monitor/time-monitor/alerts/active')
+  return request.get('/v1/prod/monitor/alert/active')
 }
 
 export function resolveAlert(alertId: number | string) {
-  return request.post(`/v1/monitor/time-monitor/alerts/${alertId}/resolve`)
+  return request.post(`/v1/prod/monitor/alert/${alertId}/resolve`)
 }
 
 export function getAlertStatistics() {
-  return request.get('/v1/monitor/time-monitor/alerts/statistics')
+  return request.get('/v1/prod/monitor/alert/statistics')
 }
 
 // ========== 急诊处方 ==========
 export function getEmergencyPrescriptions(params?: any) {
-  return request.get('/v1/prod/emergency-prescriptions', { params })
+  return request.get('/v1/prod/prescription/emergency', { params })
 }
 
 export function markEmergency(prescriptionId: number | string) {
-  return request.post(`/v1/prod/prescriptions/${prescriptionId}/mark-emergency`)
+  return request.post(`/v1/prod/prescription/${prescriptionId}/emergency`)
 }
 
 export function signEmergency(emergencyId: number | string) {
-  return request.post(`/v1/prod/emergency-prescriptions/${emergencyId}/sign`)
+  return request.post(`/v1/prod/emergency/${emergencyId}/sign`)
 }
 
 // ========== 智能分配 ==========
 export function autoAssign(data: any) {
-  return request.post('/v1/prod/assignments/auto', data)
+  return request.post('/v1/prod/assignment/auto', data)
 }
 
 export function manualAssign(data: any) {
-  return request.post('/v1/prod/assignments/manual', data)
+  return request.post('/v1/prod/assignment/manual', data)
 }
 
 export function reassign(assignmentId: number | string, data: any) {
-  return request.put(`/v1/prod/assignments/${assignmentId}/reassign`, data)
+  return request.put(`/v1/prod/assignment/${assignmentId}/reassign`, data)
 }
 
 export function getSchedule(params?: any) {
-  return request.get('/v1/prod/schedule', { params })
+  return request.get('/v1/prod/assignment/schedule', { params })
 }
 
 export function getEmployeeLoad(date: string) {
-  return request.get(`/v1/prod/employees/load`, { params: { date } })
+  return request.get(`/v1/prod/assignment/employee-load`, { params: { date } })
 }
 
 export function getDeviceLoad(date: string) {
-  return request.get(`/v1/prod/devices/load`, { params: { date } })
+  return request.get(`/v1/prod/assignment/device-load`, { params: { date } })
 }
 
 // ========== 任务回退 ==========
 export function rollbackTask(taskId: number | string, data: any) {
-  return request.post(`/v1/prod/tasks/${taskId}/rollback`, data)
+  return request.post(`/v1/prod/task/${taskId}/rollback`, data)
 }
 
 export function approveRollback(rollbackId: number | string, data: any) {
-  return request.put(`/v1/prod/rollbacks/${rollbackId}/approve`, data)
+  return request.put(`/v1/prod/rollback/${rollbackId}/approve`, data)
 }
 
 export function getRollbackList(params?: any) {
-  return request.get('/v1/prod/rollbacks', { params })
+  return request.get('/v1/prod/rollback/list', { params })
 }
 
 // ========== 患者端 ==========
 export function queryByCode(data: any) {
-  return request.post('/v1/patient/query-by-code', data)
+  return request.post('/v1/prod/patient/query-by-code', data)
 }
 
 export function queryByPhone(data: any) {
-  return request.post('/v1/patient/query-by-phone', data)
+  return request.post('/v1/prod/patient/query-by-phone', data)
 }
 
 export function getPatientProgress(token: string) {
-  return request.get('/v1/patient/progress', { params: { token } })
+  return request.get(`/v1/prod/patient/progress/${token}`)
 }
 
 export function getPrescriptionTrace(prescriptionId: number | string) {
-  return request.get(`/v1/patient/prescriptions/${prescriptionId}/trace`)
+  return request.get(`/v1/prod/patient/prescription/${prescriptionId}/trace`)
 }
 
 // ========== 货架管理 ==========
 export function getShelfList(params?: any) {
-  return request.get('/v1/warehouse/shelves', { params })
+  return request.get('/v1/prod/shelf/list', { params })
 }
 
 export function putOnShelf(data: any) {
-  return request.post('/v1/warehouse/shelves/put-on', data)
+  return request.post('/v1/prod/shelf/put-on', data)
 }
 
 export function takeOffShelf(data: any) {
-  return request.post('/v1/warehouse/shelves/take-off', data)
+  return request.post('/v1/prod/shelf/take-off', data)
 }
 
 // ========== PDA语音 ==========
 export function tts(data: any) {
-  return request.post('/v1/pda/tts', data)
+  return request.post('/v1/prod/voice/tts', data)
 }
 
 export function getVoiceSettings() {
-  return request.get('/v1/pda/voice-settings')
+  return request.get('/v1/prod/voice/settings')
 }
 
 export function updateVoiceSettings(data: any) {
-  return request.put('/v1/pda/voice-settings', data)
+  return request.post('/v1/prod/voice/settings', data)
+}
+
+export function deleteVoiceSetting(id: number | string) {
+  return request.delete(`/v1/prod/voice/settings/${id}`)
 }
 
 // ========== 员工条码 ==========
 export function getEmployeeBarcode(employeeId: number | string) {
-  return request.get(`/v1/system/employees/${employeeId}/barcode`)
+  return request.get(`/v1/prod/employee/${employeeId}/barcode`)
 }
 
 export function printEmployeeBarcode(employeeId: number | string) {
-  return request.post(`/v1/system/employees/${employeeId}/barcode/print`)
+  return request.post(`/v1/prod/employee/${employeeId}/barcode/print`)
 }

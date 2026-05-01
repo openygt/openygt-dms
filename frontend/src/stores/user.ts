@@ -58,33 +58,43 @@ export const useUserStore = defineStore('user', () => {
   }
 
   function hasPermission(perm: string) {
-    // 当前系统 JWT permissions 为角色码，需做角色→权限映射
     const perms = permissions.value
     // 管理员/主任拥有全部权限
     if (perms.includes('ROLE_ADMIN') || perms.includes('ROLE_DIRECTOR')) {
       return true
     }
-    // 班组长/操作工/质检员拥有基础操作权限
-    const workerRoles = ['ROLE_LEADER', 'ROLE_WORKER', 'ROLE_INSPECTOR']
-    const hasWorkerRole = perms.some((r: string) => workerRoles.includes(r))
-    if (hasWorkerRole) {
-      const workerPerms = [
-        'prod:task:list', 'prod:prescription:list',
-        'eq:device:list', 'eq:alarm:list',
-        'prt:queue:view', 'qt:inspect:list',
-        'inv:log:list', 'ops:capacity:view',
-        'sys:user:update', 'sys:user:change-password'
-      ]
-      if (workerPerms.includes(perm)) return true
-    }
-    // 班组长额外权限
-    if (perms.includes('ROLE_LEADER')) {
-      const leaderPerms = [
-        'sys:user:create', 'sys:user:delete',
-        'sys:role:assign', 'eq:device:create', 'eq:device:update', 'eq:device:delete'
-      ]
-      if (leaderPerms.includes(perm)) return true
-    }
+
+    // 各角色权限集合
+    const workerPerms = [
+      'prod:task:view', 'prod:trace:view', 'prod:dosing:view', 'prod:voice:view',
+      'eq:device:monitor', 'eq:temp:view', 'qt:inspect:view',
+      'trace:rx:view', 'trace:batch:view', 'trace:exc:view', 'sys:log:view',
+      'sys:user:update', 'sys:user:change-password'
+    ]
+    const inspectorPerms = [
+      'qt:inspect:view', 'qt:yield:view', 'eq:temp:view',
+      'trace:rx:view', 'trace:batch:view', 'trace:exc:view', 'sys:log:view',
+      'eq:device:monitor', 'prod:progress:view'
+    ]
+    const leaderPerms = [
+      'ops:dashboard:view', 'prod:assignment:view', 'prod:monitor:view',
+      'eq:alarm:view', 'eq:device:monitor', 'ops:capacity:view', 'eq:device:efficiency',
+      'prod:task:view', 'prod:trace:view', 'prod:dosing:view', 'prod:voice:view',
+      'qt:inspect:view', 'prod:rework:view', 'eq:temp:view', 'qt:yield:view',
+      'inv:storage:view', 'prod:dispatch:view', 'prod:progress:view',
+      'trace:rx:view', 'trace:batch:view', 'trace:exc:view', 'sys:log:view',
+      'md:scheme:view', 'eq:water:view', 'md:package:view', 'eq:alarm:view',
+      'md:hospital:view', 'md:dept:view', 'md:doctor:view', 'md:herb:view',
+      'sys:user:view', 'sys:barcode:view',
+      'prt:label:view', 'prt:printer:view', 'prt:log:view',
+      'sys:user:create', 'sys:user:delete', 'sys:role:assign',
+      'eq:device:create', 'eq:device:update', 'eq:device:delete'
+    ]
+
+    if (perms.includes('ROLE_WORKER') && workerPerms.includes(perm)) return true
+    if (perms.includes('ROLE_INSPECTOR') && inspectorPerms.includes(perm)) return true
+    if (perms.includes('ROLE_LEADER') && leaderPerms.includes(perm)) return true
+
     return perms.includes(perm)
   }
 

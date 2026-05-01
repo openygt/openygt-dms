@@ -1,6 +1,6 @@
 <template>
   <div class="dashboard">
-    <h1 class="page-title">实时看板</h1>
+    <div class="page-header-title">生产看板：<span class="page-header-sub">今日任务数、进行中、已完成、设备在线率、告警数</span></div>
 
     <!-- KPI 卡片矩阵 -->
     <div class="kpi-grid">

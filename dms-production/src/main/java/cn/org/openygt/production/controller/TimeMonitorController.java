@@ -19,49 +19,50 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import cn.org.openygt.production.ProductionModule;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping(ProductionModule.API_PREFIX)
 @RequiredArgsConstructor
 public class TimeMonitorController {
 
     private final TimeMonitorService timeMonitorService;
 
-    @GetMapping("/time-monitor/dashboard")
+    @GetMapping("/monitor/time-monitor/dashboard")
     public ApiResponse<TimeMonitorDashboardDTO> getDashboard() {
         return ApiResponse.success(timeMonitorService.getDashboard());
     }
 
-    @GetMapping("/time-monitor/{taskId}")
+    @GetMapping("/monitor/time-monitor/{taskId}")
     public ApiResponse<List<TimeMonitor>> getTaskMonitors(@PathVariable Long taskId) {
         return ApiResponse.success(timeMonitorService.getTaskMonitors(taskId));
     }
 
-    @PostMapping("/time-rule")
+    @PostMapping("/monitor/time-rule")
     public ApiResponse<TimeRule> saveTimeRule(@Validated @RequestBody TimeRuleRequest request) {
         return ApiResponse.success(timeMonitorService.saveTimeRule(request));
     }
 
-    @GetMapping("/time-rule")
+    @GetMapping("/monitor/time-rule")
     public ApiResponse<List<TimeRule>> listTimeRules() {
         return ApiResponse.success(timeMonitorService.listTimeRules());
     }
 
-    @GetMapping("/alert/active")
+    @GetMapping("/monitor/alert/active")
     public ApiResponse<IPage<AlertLog>> listActiveAlerts(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ApiResponse.success(timeMonitorService.listActiveAlerts(page, size));
     }
 
-    @PostMapping("/alert/{alertId}/resolve")
+    @PostMapping("/monitor/alert/{alertId}/resolve")
     public ApiResponse<AlertLog> resolveAlert(@PathVariable Long alertId,
                                                @RequestParam Long resolvedBy) {
         return ApiResponse.success(timeMonitorService.resolveAlert(alertId, resolvedBy));
     }
 
-    @GetMapping("/alert/statistics")
+    @GetMapping("/monitor/alert/statistics")
     public ApiResponse<AlertStatisticsDTO> getAlertStatistics() {
         return ApiResponse.success(timeMonitorService.getAlertStatistics());
     }

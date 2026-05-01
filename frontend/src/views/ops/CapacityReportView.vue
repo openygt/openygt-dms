@@ -1,5 +1,6 @@
 <template>
   <div>
+    <div class="page-header-title">产能统计：<span class="page-header-sub">日报/月报、按设备/按员工/按方剂类型统计</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
-    <el-page-header title="标签模板" content="管理药袋标签打印模板" />
-
+    <div class="page-header-title">标签打印：药包外标签：<span class="page-header-sub">患者姓名、用法用量、煎药时间</span></div>
     <el-card class="search-card" shadow="never">
       <el-form :model="searchForm" inline>
         <el-form-item label="关键词">

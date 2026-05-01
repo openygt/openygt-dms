@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
-    <el-page-header title="交付管理" content="管理煎药完成后的交付流程" />
-
+    <div class="page-header-title">发药确认：<span class="page-header-sub">按处方/患者发药、签收确认</span></div>
     <el-card class="search-card" shadow="never">
       <el-form :model="searchForm" inline>
         <el-form-item label="状态">

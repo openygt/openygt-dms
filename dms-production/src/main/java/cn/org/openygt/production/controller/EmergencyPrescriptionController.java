@@ -1,5 +1,7 @@
 package cn.org.openygt.production.controller;
 
+import cn.org.openygt.production.ProductionModule;
+
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.production.dto.EmergencyPrescriptionDTO;
 import cn.org.openygt.production.dto.EmergencySignRequest;
@@ -16,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping(ProductionModule.API_PREFIX)
 @RequiredArgsConstructor
 public class EmergencyPrescriptionController {
 

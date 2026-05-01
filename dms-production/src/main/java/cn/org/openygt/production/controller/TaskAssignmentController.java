@@ -17,8 +17,10 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import cn.org.openygt.production.ProductionModule;
+
 @RestController
-@RequestMapping("/api/v1/assignment")
+@RequestMapping(ProductionModule.API_PREFIX + "/assignment")
 @RequiredArgsConstructor
 public class TaskAssignmentController {
 

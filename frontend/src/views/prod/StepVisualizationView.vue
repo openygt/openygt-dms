@@ -1,7 +1,6 @@
 <template>
   <div class="page-container">
-    <el-page-header title="煎药流程跟踪" content="实时展示煎药任务各步骤进度" />
-
+    <div class="page-header-title">流程跟踪：<span class="page-header-sub">泡药→头煎→二煎→出液→包装→质检，走到哪一步</span></div>
     <el-card class="step-card" shadow="never">
       <template #header>
         <div class="card-header">

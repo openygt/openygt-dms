@@ -1,7 +1,8 @@
 <template>
   <div class="device-utilization">
+    <div class="page-header-title">设备效能：<span class="page-header-sub">设备开机率、空闲率、故障率趋势</span></div>
     <div class="page-header">
-      <h2>设备利用率分析</h2>
+
       <el-button type="primary" @click="exportData">导出</el-button>
     </div>
 
