@@ -73,6 +73,8 @@
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
                     <mainClass>cn.org.openygt.iot.gateway.IoTGatewayApplication</mainClass>
+                    <classifier>exec</classifier>
+                    <layout>ZIP</layout>
                 </configuration>
             </plugin>
         </plugins>

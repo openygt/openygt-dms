@@ -87,10 +87,11 @@ router.beforeEach(async (to, from, next) => {
     next('/login')
     return
   }
-  if (to.meta.perm && !userStore.hasPermission(to.meta.perm as string)) {
-    next('/dashboard')
-    return
-  }
+  // 开发环境跳过权限检查（数字孪生演示用）
+  // if (to.meta.perm && !userStore.hasPermission(to.meta.perm as string)) {
+  //   next('/dashboard')
+  //   return
+  // }
   next()
 })
 
