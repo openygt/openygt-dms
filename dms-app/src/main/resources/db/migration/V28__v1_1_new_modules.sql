@@ -322,3 +322,19 @@ INSERT INTO dms_herb_group_rule (group_code, group_name, group_color, group_icon
 ('MELT', '烊化组', '#AA44FF', 'drop', 'MELT', 0, '胶类药材用药液冲服，不入锅', 5, 1),
 ('DIRECT', '冲服组', '#888888', 'dot', 'DIRECT', 0, '贵重粉直接冲服', 6, 1)
 ON DUPLICATE KEY UPDATE group_name = VALUES(group_name);
+
+-- 29. 处方药材明细表（prod_prescription_medicine）
+CREATE TABLE IF NOT EXISTS prod_prescription_medicine (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    prescription_id BIGINT NOT NULL COMMENT '处方ID',
+    medicine_id BIGINT COMMENT '药材ID',
+    medicine_name VARCHAR(100) COMMENT '药材名称',
+    dosage DECIMAL(10,2) COMMENT '剂量',
+    unit VARCHAR(20) COMMENT '单位',
+    med_usage VARCHAR(100) COMMENT '用法',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    tenant_id VARCHAR(32) DEFAULT 'default',
+    deleted INT DEFAULT 0 COMMENT '逻辑删除',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_prescription_id (prescription_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='处方药材明细表';

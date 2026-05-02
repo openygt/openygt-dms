@@ -613,4 +613,49 @@ public class TaskServiceImpl implements TaskService {
             stepLogMapper.updateById(step);
         }
     }
+
+    // ==================== 挂起/恢复 (V30 新增) ====================
+
+    @Override
+    @Transactional
+    public Task suspendTask(Long taskId, String operatorId, String reason, Integer suspendType) {
+        Task task = taskMapper.selectByIdForUpdate(taskId);
+        if (task == null) throw new IllegalArgumentException("任务不存在");
+        String currentStatus = task.getStatus();
+        cn.org.openygt.common.enums.TaskStatusTransition.validateSuspend(currentStatus);
+        
+        task.setSuspendedFrom(currentStatus);
+        task.setSuspendReason(reason);
+        task.setSuspendTime(LocalDateTime.now());
+        transition(task, "已挂起", operatorId, "挂起任务: " + reason);
+        
+        // 释放设备
+        if (task.getDecoctDeviceId() != null) {
+            equipmentService.releaseDevice(task.getDecoctDeviceId());
+            task.setDecoctDeviceId(null);
+        }
+        if (task.getPackageDeviceId() != null) {
+            equipmentService.releaseDevice(task.getPackageDeviceId());
+            task.setPackageDeviceId(null);
+        }
+        taskMapper.updateById(task);
+        return task;
+    }
+
+    @Override
+    @Transactional
+    public Task resumeTask(Long taskId, String operatorId) {
+        Task task = taskMapper.selectByIdForUpdate(taskId);
+        if (task == null) throw new IllegalArgumentException("任务不存在");
+        cn.org.openygt.common.enums.TaskStatusTransition.validateResume(task.getStatus(), task.getSuspendedFrom());
+        
+        String targetStatus = task.getSuspendedFrom();
+        transition(task, targetStatus, operatorId, "恢复任务");
+        task.setSuspendedFrom(null);
+        task.setSuspendReason(null);
+        task.setSuspendTime(null);
+        task.setExpectedResumeTime(null);
+        taskMapper.updateById(task);
+        return task;
+    }
 }

@@ -8,10 +8,10 @@ ALTER TABLE md_hospital ADD COLUMN color_code VARCHAR(16) NULL COMMENT '院区�
 ALTER TABLE t_label_template ADD COLUMN hospital_color VARCHAR(16) NULL COMMENT '关联院区颜色' AFTER height_mm;
 
 -- 3. 时效监控实例 - 添加预警相关字段
-ALTER TABLE prod_time_monitor ADD COLUMN alert_level INT DEFAULT 0 COMMENT '告警级别:0=正常 1=预警 2=超时 3=告警 4=严重' AFTER remark;
-ALTER TABLE prod_time_monitor ADD COLUMN warning_count INT DEFAULT 0 COMMENT '累计告警次数' AFTER alert_level;
-ALTER TABLE prod_time_monitor ADD COLUMN last_warning_time DATETIME NULL COMMENT '最近一次告警时间' AFTER warning_count;
-ALTER TABLE prod_time_monitor ADD COLUMN status INT DEFAULT 1 COMMENT '监控状态:1=计划 2=执行中 3=已超时 4=已完成' AFTER last_warning_time;
+ALTER TABLE dms_time_monitor ADD COLUMN alert_level INT DEFAULT 0 COMMENT '告警级别:0=正常 1=预警 2=超时 3=告警 4=严重';
+ALTER TABLE dms_time_monitor ADD COLUMN warning_count INT DEFAULT 0 COMMENT '累计告警次数' AFTER alert_level;
+ALTER TABLE dms_time_monitor ADD COLUMN last_warning_time DATETIME NULL COMMENT '最近一次告警时间' AFTER warning_count;
+ALTER TABLE dms_time_monitor ADD COLUMN status INT DEFAULT 1 COMMENT '监控状态:1=计划 2=执行中 3=已超时 4=已完成' AFTER last_warning_time;
 
 -- 4. PDA审计日志 - 补全用户ID
 ALTER TABLE pda_audit_log ADD COLUMN user_id VARCHAR(64) NULL COMMENT '操作用户ID' AFTER operator_id;

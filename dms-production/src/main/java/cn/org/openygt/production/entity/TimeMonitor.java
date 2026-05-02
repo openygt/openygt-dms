@@ -22,6 +22,7 @@ public class TimeMonitor {
     private LocalDateTime actualEnd;
     private Integer remainingSeconds;
     private Integer status;
+    private Integer alertLevel;
     private Integer warningCount;
     private LocalDateTime lastWarningTime;
     private LocalDateTime createdAt;

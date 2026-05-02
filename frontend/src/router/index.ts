@@ -66,6 +66,11 @@ const router = createRouter({
         { path: 'time-monitor', name: 'TimeMonitor', component: () => import('@/views/monitor/TimeMonitorView.vue'), meta: { title: '时效监控' } },
         { path: 'emergency', name: 'EmergencyPrescription', component: () => import('@/views/prod/EmergencyPrescriptionView.vue'), meta: { title: '急诊快速通道' } },
         { path: 'temperature-curve', name: 'TemperatureCurve', component: () => import('@/views/eq/TemperatureCurveView.vue'), meta: { title: '温曲查询', perm: 'eq:device:monitor' } },
+        { path: 'digital-twin', name: 'DigitalTwin', component: () => import('@/views/digital-twin/DigitalTwinView.vue'), meta: { title: '数字孪生', perm: 'eq:device:monitor' } },
+        { path: 'toxic-medicine', name: 'ToxicMedicine', component: () => import('@/views/toxic-medicine/ToxicMedicineView.vue'), meta: { title: '毒性药材管理', perm: 'base:toxic:manage' } },
+        { path: 'exception-order', name: 'ExceptionOrder', component: () => import('@/views/exception-order/ExceptionOrderView.vue'), meta: { title: '异常工单', perm: 'prod:exception:manage' } },
+        { path: 'retain-sample', name: 'RetainSample', component: () => import('@/views/retain-sample/RetainSampleView.vue'), meta: { title: '留样管理', perm: 'qt:retain:manage' } },
+        { path: 'wash-record', name: 'WashRecord', component: () => import('@/views/wash-record/WashRecordView.vue'), meta: { title: '清洗记录', perm: 'eq:wash:view' } },
       ]
     },
     { path: '/:pathMatch(.*)*', redirect: '/' }

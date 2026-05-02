@@ -17,17 +17,38 @@ class TaskStatusTransitionTest {
     }
 
     @Test
-    @DisplayName("正常路径：包装中 → 待交付 允许（v1.1 合并路径）")
-    void testNormalWrapToDeliver() {
+    @DisplayName("正常路径：包装中 → 待质检 允许（V30 WAIT_LABEL合并）")
+    void testNormalWrapToQc() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateNormal("包装中", "待交付"));
+                TaskStatusTransition.validateNormal("包装中", "待质检"));
     }
 
     @Test
-    @DisplayName("正常路径：待交付 → 待质检 允许（v1.1 合并路径）")
-    void testNormalDeliverToQc() {
+    @DisplayName("正常路径：待质检 → 已暂存 允许（V30 新增）")
+    void testNormalQcToStored() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateNormal("待交付", "待质检"));
+                TaskStatusTransition.validateNormal("待质检", "已暂存"));
+    }
+
+    @Test
+    @DisplayName("正常路径：已暂存 → 待交接 允许（V30 新增）")
+    void testNormalStoredToHandover() {
+        assertDoesNotThrow(() ->
+                TaskStatusTransition.validateNormal("已暂存", "待交接"));
+    }
+
+    @Test
+    @DisplayName("正常路径：待质检 → 待二次判定 允许（V30 FAIL明确化）")
+    void testNormalQcToSecondJudgement() {
+        assertDoesNotThrow(() ->
+                TaskStatusTransition.validateNormal("待质检", "待二次判定"));
+    }
+
+    @Test
+    @DisplayName("正常路径：待二次判定 → 已暂存 允许")
+    void testNormalSecondJudgementToStored() {
+        assertDoesNotThrow(() ->
+                TaskStatusTransition.validateNormal("待二次判定", "已暂存"));
     }
 
     @Test
@@ -39,7 +60,7 @@ class TaskStatusTransitionTest {
     }
 
     @Test
-    @DisplayName("正常路径：待贴标 → 待交接 非法（v1.1 已合并）")
+    @DisplayName("正常路径：待贴标 → 待交接 非法（V30 已合并）")
     void testNormalLabelToHandoverIllegal() {
         assertThrows(IllegalStateException.class, () ->
                 TaskStatusTransition.validateNormal("待贴标", "待交接"));
@@ -53,17 +74,24 @@ class TaskStatusTransitionTest {
     }
 
     @Test
-    @DisplayName("回退路径：待交付 → 包装中 允许（v1.1 新增）")
-    void testRollbackDeliverToWrapping() {
+    @DisplayName("回退路径：已暂存 → 待质检 允许（V30 新增）")
+    void testRollbackStoredToQc() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateRollback("待交付", "包装中"));
+                TaskStatusTransition.validateRollback("已暂存", "待质检"));
     }
 
     @Test
-    @DisplayName("回退路径：已完成 → 待质检 允许（召回）")
-    void testRollbackCompletedToQc() {
+    @DisplayName("回退路径：待交接 → 已暂存 允许（V30 新增）")
+    void testRollbackHandoverToStored() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateRollback("已完成", "待质检"));
+                TaskStatusTransition.validateRollback("待交接", "已暂存"));
+    }
+
+    @Test
+    @DisplayName("回退路径：已完成 → 已暂存 允许（V30 召回路径变更）")
+    void testRollbackCompletedToStored() {
+        assertDoesNotThrow(() ->
+                TaskStatusTransition.validateRollback("已完成", "已暂存"));
     }
 
     @Test
@@ -88,19 +116,51 @@ class TaskStatusTransitionTest {
     }
 
     @Test
-    @DisplayName("查询正常目标：包装中 包含 待贴标/待交付/待质检")
-    void testGetNormalTargetsFromWrapping() {
-        List<String> targets = TaskStatusTransition.getNormalTargets("包装中");
-        assertTrue(targets.contains("待贴标"));
-        assertTrue(targets.contains("待交付"));
-        assertTrue(targets.contains("待质检"));
+    @DisplayName("挂起路径：运行中状态 → 已挂起 允许")
+    void testSuspendFromRunning() {
+        assertDoesNotThrow(() ->
+                TaskStatusTransition.validateSuspend("煎药中"));
+        assertDoesNotThrow(() ->
+                TaskStatusTransition.validateSuspend("已暂存"));
     }
 
     @Test
-    @DisplayName("查询回退目标：待交付 包含 包装中")
-    void testGetRollbackTargetsFromDeliver() {
-        List<String> targets = TaskStatusTransition.getRollbackTargets("待交付");
-        assertTrue(targets.contains("包装中"));
+    @DisplayName("挂起路径：终态 → 已挂起 非法")
+    void testSuspendFromTerminalIllegal() {
+        assertThrows(IllegalStateException.class, () ->
+                TaskStatusTransition.validateSuspend("已完成"));
+        assertThrows(IllegalStateException.class, () ->
+                TaskStatusTransition.validateSuspend("已报废"));
+    }
+
+    @Test
+    @DisplayName("恢复路径：已挂起 → 挂起前状态 允许")
+    void testResumeFromSuspended() {
+        assertDoesNotThrow(() ->
+                TaskStatusTransition.validateResume("已挂起", "煎药中"));
+    }
+
+    @Test
+    @DisplayName("恢复路径：非挂起状态 非法")
+    void testResumeFromNonSuspendedIllegal() {
+        assertThrows(IllegalStateException.class, () ->
+                TaskStatusTransition.validateResume("煎药中", "煎药中"));
+    }
+
+    @Test
+    @DisplayName("查询正常目标：包装中 包含 待质检（V30合并后）")
+    void testGetNormalTargetsFromWrapping() {
+        List<String> targets = TaskStatusTransition.getNormalTargets("包装中");
+        assertTrue(targets.contains("待质检"));
+        assertFalse(targets.contains("待贴标"));
+        assertFalse(targets.contains("待交付"));
+    }
+
+    @Test
+    @DisplayName("查询回退目标：已暂存 包含 待质检（V30新增）")
+    void testGetRollbackTargetsFromStored() {
+        List<String> targets = TaskStatusTransition.getRollbackTargets("已暂存");
+        assertTrue(targets.contains("待质检"));
     }
 
     @Test

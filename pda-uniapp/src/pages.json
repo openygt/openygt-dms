@@ -27,6 +27,12 @@
       }
     },
     {
+      "path": "pages/task/unified-scan",
+      "style": {
+        "navigationBarTitleText": "统一扫码"
+      }
+    },
+    {
       "path": "pages/task/detail",
       "style": {
         "navigationBarTitleText": "任务详情"

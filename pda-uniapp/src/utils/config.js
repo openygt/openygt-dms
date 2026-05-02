@@ -1,8 +1,8 @@
 // API 配置
 // 开发环境用真实后端
-const API_BASE_URL_DEV = 'http://localhost:8080/api/v1/pda'
+const API_BASE_URL_DEV = 'http://localhost:8081/api/v1/pda'
 // E2E 测试环境用 Mock Server（自动识别，也可手动切换）
-const API_BASE_URL_MOCK = 'http://localhost:3456/api/v1/pda'
+const API_BASE_URL_MOCK = 'http://localhost:8082/api/v1/pda'
 
 const isMockEnv = typeof uni !== 'undefined' && uni.getStorageSync && uni.getStorageSync('pda_mock_env') === '1'
 const API_BASE_URL = isMockEnv ? API_BASE_URL_MOCK : API_BASE_URL_DEV

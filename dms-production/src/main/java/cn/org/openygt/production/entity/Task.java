@@ -50,6 +50,18 @@ public class Task {
     private String handoverType;
     private String handoverUser;
     private LocalDateTime handoverTime;
+    // === 挂起相关字段 (V30) ===
+    private String suspendedFrom;
+    private String suspendReason;
+    private LocalDateTime suspendTime;
+    private LocalDateTime expectedResumeTime;
+    // === 工艺参数快照 (V30) ===
+    private String schemeSnapshot;
+    // === 煎法计划 (V31) ===
+    private String decoctionPlan;
+    // === 紧急处方/优先级 (V32) ===
+    private Integer isEmergency;
+    private Integer priority;
     @TableLogic
     private Integer deleted;
     private LocalDateTime createdAt;
