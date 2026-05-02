@@ -18,6 +18,8 @@ export interface DeviceState {
   pressure?: number
   faultCode?: string
   lastHeartbeat?: string
+  manufacturer?: string
+  modelNum?: string
   packageNum?: number
   packageCapacity?: number
   printCopies?: number
