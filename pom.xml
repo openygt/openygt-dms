@@ -33,6 +33,7 @@
         <module>dms-masterdata</module>
         <module>dms-system</module>
         <module>dms-equipment</module>
+        <module>dms-iot-gateway</module>
         <module>dms-inventory</module>
         <module>dms-production</module>
         <module>dms-quality</module>

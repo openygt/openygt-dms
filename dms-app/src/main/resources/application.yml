@@ -46,6 +46,21 @@ pda:
   upload:
     path: uploads/pda
 
+# ==================== 煎药系统配置 ====================
+
+# 处方管理配置
+dms:
+  prescription:
+    # 药品目录模式：FLEXIBLE（默认）- 可选关联 / STRICT - 必须关联
+    catalog-mode: FLEXIBLE
+  his:
+    # 是否启用定时拉取HIS处方
+    pull-enabled: false
+    # 定时拉取间隔（默认每5分钟）
+    pull-cron: "0 */5 * * * *"
+    # HIS适配器列表
+    adapters: []
+
 logging:
   level:
     cn.org.openygt: DEBUG
