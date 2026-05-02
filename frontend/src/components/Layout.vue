@@ -28,6 +28,7 @@
           <el-menu-item v-if="userStore.hasPermission('ops:capacity:view')" index="/capacity">产能统计</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:device:efficiency')" index="/device-utilization">设备效能</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:device:control')" index="/device-command">设备操控</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:device:monitor')" index="/digital-twin">数字孪生</el-menu-item>
         </el-sub-menu>
 
         <!-- 2. 煎药作业 -->
@@ -49,6 +50,8 @@
             <span>质量检验</span>
           </template>
           <el-menu-item v-if="userStore.hasPermission('qt:inspect:view')" index="/quality">质量检验</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('qt:retain:manage')" index="/retain-sample">留样管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:exception:manage')" index="/exception-order">异常工单</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('prod:rework:view')" index="/task-rollback">返工处理</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:temp:view')" index="/temperature-curve">温曲查询</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('qt:yield:view')" index="/report/qc-rate">合格统计</el-menu-item>
@@ -88,6 +91,7 @@
           <el-menu-item v-if="userStore.hasPermission('md:package:view')" index="/formula/package-spec">包装规格</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:alarm:view')" index="/alarm-configs">告警配置</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:maint:view')" index="/device-maintenance">设备维保</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:wash:view')" index="/wash-record">清洗记录</el-menu-item>
         </el-sub-menu>
 
         <!-- 7. 基础数据 -->
@@ -100,6 +104,7 @@
           <el-menu-item v-if="userStore.hasPermission('md:dept:view')" index="/base/department">科室管理</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('md:doctor:view')" index="/base/doctor">医师管理</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('md:herb:view')" index="/base/medicine">药材管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('base:toxic:manage')" index="/toxic-medicine">毒性药材管理</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('sys:user:view')" index="/users">人员管理</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('sys:barcode:view')" index="/employee-barcode">身份条码</el-menu-item>
         </el-sub-menu>

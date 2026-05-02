@@ -115,16 +115,16 @@ CREATE INDEX idx_device_command_status ON device_command(status);
 CREATE INDEX idx_device_command_type ON device_command(command_type);
 
 -- ========== 6. eq_temperature_log 补充字段 ==========
-ALTER TABLE eq_temperature_log ADD COLUMN IF NOT EXISTS recorded_at DATETIME COMMENT '设备上报时间';
+ALTER TABLE eq_temperature_log ADD COLUMN recorded_at DATETIME COMMENT '设备上报时间';
 CREATE INDEX idx_eq_temp_log_recorded ON eq_temperature_log(device_id, recorded_at);
 
 -- ========== 7. md_decoct_scheme 扩展字段 ==========
 ALTER TABLE md_decoct_scheme
-    ADD COLUMN IF NOT EXISTS first_decoct_time INT DEFAULT 30 COMMENT '一煎时间(分钟)',
-    ADD COLUMN IF NOT EXISTS second_decoct_time INT DEFAULT 20 COMMENT '二煎时间(分钟)',
-    ADD COLUMN IF NOT EXISTS soak_time INT DEFAULT 30 COMMENT '浸泡时间(分钟)',
-    ADD COLUMN IF NOT EXISTS drain_time INT DEFAULT 10 COMMENT '出液时间(分钟)',
-    ADD COLUMN IF NOT EXISTS package_time INT DEFAULT 15 COMMENT '包装时间(分钟)',
-    ADD COLUMN IF NOT EXISTS late_add_remind_time INT DEFAULT 5 COMMENT '后下提醒提前时间(分钟)',
-    ADD COLUMN IF NOT EXISTS temp_rise_rate DECIMAL(3,1) DEFAULT 3.0 COMMENT '升温速率(°C/min)',
-    ADD COLUMN IF NOT EXISTS is_default TINYINT(1) DEFAULT 0 COMMENT '是否默认方案';
+    ADD COLUMN first_decoct_time INT DEFAULT 30 COMMENT '一煎时间(分钟)',
+    ADD COLUMN second_decoct_time INT DEFAULT 20 COMMENT '二煎时间(分钟)',
+    ADD COLUMN soak_time INT DEFAULT 30 COMMENT '浸泡时间(分钟)',
+    ADD COLUMN drain_time INT DEFAULT 10 COMMENT '出液时间(分钟)',
+    ADD COLUMN package_time INT DEFAULT 15 COMMENT '包装时间(分钟)',
+    ADD COLUMN late_add_remind_time INT DEFAULT 5 COMMENT '后下提醒提前时间(分钟)',
+    ADD COLUMN temp_rise_rate DECIMAL(3,1) DEFAULT 3.0 COMMENT '升温速率(°C/min)',
+    ADD COLUMN is_default TINYINT(1) DEFAULT 0 COMMENT '是否默认方案';

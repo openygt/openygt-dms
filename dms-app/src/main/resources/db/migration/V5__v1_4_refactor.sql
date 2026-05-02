@@ -2,8 +2,8 @@
 -- V5: v1.4 配套迁移脚本
 -- ============================================
 
--- 1. qt_inspection 新增业务字段 inspected_at（与 created_at 解耦）
-ALTER TABLE qt_inspection ADD COLUMN inspected_at DATETIME;
+-- 1. qt_inspection 的 inspected_at 字段已在 V4 创建，此处跳过
+-- ALTER TABLE qt_inspection ADD COLUMN inspected_at DATETIME;
 
 -- 2. prt_task 新增 max_retry 字段（打印重试上限）
 ALTER TABLE prt_task ADD COLUMN max_retry BIGINT DEFAULT 3;

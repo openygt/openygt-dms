@@ -42,4 +42,8 @@ public interface TaskService {
     Task retryPrint(Long taskId, String deviceCode, String operatorId);
 
     Task forceStatus(Long taskId, String targetStatus, String operatorId, String deviceCode, String remark);
+
+    // V30 新增：挂起/恢复
+    Task suspendTask(Long taskId, String operatorId, String reason, Integer suspendType);
+    Task resumeTask(Long taskId, String operatorId);
 }

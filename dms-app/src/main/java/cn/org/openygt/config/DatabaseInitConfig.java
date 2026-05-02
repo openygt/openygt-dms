@@ -3,6 +3,8 @@ package cn.org.openygt.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -24,6 +26,7 @@ import java.util.Comparator;
  * <p>重复版本号会被去重（取排序后的第一个）。</p>
  */
 @Component
+@Order(Ordered.HIGHEST_PRECEDENCE)
 public class DatabaseInitConfig implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DatabaseInitConfig.class);
@@ -42,20 +45,13 @@ public class DatabaseInitConfig implements CommandLineRunner {
             ensureMigrationTable(conn);
 
             Resource[] resources = resolver.getResources(MIGRATION_PATTERN);
-            Arrays.sort(resources, Comparator.comparing(Resource::getFilename));
+            Arrays.sort(resources, (r1, r2) -> compareVersionStrings(r1.getFilename(), r2.getFilename()));
 
-            String lastExecutedVersion = null;
             for (Resource resource : resources) {
                 String filename = resource.getFilename();
                 if (filename == null) {
                     continue;
                 }
-                String version = extractVersion(filename);
-                if (version != null && version.equals(lastExecutedVersion)) {
-                    log.warn("检测到重复版本号 {}，跳过脚本: {}", version, filename);
-                    continue;
-                }
-                lastExecutedVersion = version;
 
                 if (!hasRun(conn, filename)) {
                     log.info("执行迁移脚本: {}", filename);
@@ -66,6 +62,27 @@ public class DatabaseInitConfig implements CommandLineRunner {
                 }
             }
         }
+    }
+
+    private int compareVersionStrings(String f1, String f2) {
+        String v1 = extractVersion(f1);
+        String v2 = extractVersion(f2);
+        if (v1 == null && v2 == null) return f1.compareTo(f2);
+        if (v1 == null) return 1;
+        if (v2 == null) return -1;
+        String[] p1 = v1.substring(1).split("_");
+        String[] p2 = v2.substring(1).split("_");
+        int len = Math.min(p1.length, p2.length);
+        for (int i = 0; i < len; i++) {
+            try {
+                int cmp = Integer.compare(Integer.parseInt(p1[i]), Integer.parseInt(p2[i]));
+                if (cmp != 0) return cmp;
+            } catch (NumberFormatException e) {
+                int cmp = p1[i].compareTo(p2[i]);
+                if (cmp != 0) return cmp;
+            }
+        }
+        return Integer.compare(p1.length, p2.length);
     }
 
     private String extractVersion(String filename) {
@@ -81,6 +98,14 @@ public class DatabaseInitConfig implements CommandLineRunner {
                 + "id BIGINT AUTO_INCREMENT PRIMARY KEY,"
                 + "script VARCHAR(100) NOT NULL UNIQUE,"
                 + "executed_at DATETIME DEFAULT CURRENT_TIMESTAMP"
+                + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            // 预创建 shedlock 表，避免调度任务在迁移完成前触发时找不到表
+            stmt.execute("CREATE TABLE IF NOT EXISTS shedlock ("
+                + "name VARCHAR(64) NOT NULL,"
+                + "lock_until TIMESTAMP(3) NOT NULL,"
+                + "locked_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),"
+                + "locked_by VARCHAR(255) NOT NULL,"
+                + "PRIMARY KEY (name)"
                 + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         }
     }
