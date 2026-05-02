@@ -60,4 +60,11 @@ public class Prescription {
     private String deptName;
     @TableField(exist = false)
     private List<PrescriptionMedicine> medicineItems;
+
+    /** V34: 导入异常标识 0=正常 1=异常待处理 */
+    private Integer importException;
+    /** V34: 异常原因 */
+    private String exceptionReason;
+    /** V34: 原始导入数据(JSON) */
+    private String rawImportData;
 }

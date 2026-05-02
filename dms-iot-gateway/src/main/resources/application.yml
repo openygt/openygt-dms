@@ -1,0 +1,31 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: openygt-dms-iot
+
+iot:
+  gateway:
+    name: ${spring.application.name}
+  mqtt:
+    broker: tcp://localhost:1883
+    client-id: openygt-iot-gateway
+    qos: 1
+  tcp:
+    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    cn.org.openygt.iot: INFO
+    io.netty: WARN
+    org.eclipse.paho.client.mqttv3: WARN

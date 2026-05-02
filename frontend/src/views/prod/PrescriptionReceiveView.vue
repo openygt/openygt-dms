@@ -89,11 +89,11 @@
           <el-descriptions-item label="任务号">{{ detail.taskNo || '-' }}</el-descriptions-item>
         </el-descriptions>
         <h4 style="margin-top: 16px">药品明细</h4>
-        <el-table :data="detail.items || []" border size="small">
+        <el-table :data="detail.medicineItems || detail.items || []" border size="small">
           <el-table-column prop="medicineName" label="药品名称" />
-          <el-table-column prop="spec" label="规格" width="120" />
-          <el-table-column prop="dose" label="剂量" width="100" />
+          <el-table-column prop="dosage" label="剂量" width="100" />
           <el-table-column prop="unit" label="单位" width="80" />
+          <el-table-column prop="medUsage" label="用法" width="80" />
         </el-table>
       </div>
     </el-drawer>
@@ -105,15 +105,14 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getPrescriptionReceiveList,
-  getPrescriptionById,
+  getPrescriptionDetail,
   receivePrescription,
   rejectPrescription
 } from '@/api/prescription'
 
 interface PrescriptionItem {
   medicineName: string
-  spec: string
-  dose: number
+  dosage: number
   unit: string
 }
 
@@ -129,6 +128,7 @@ interface Prescription {
   taskNo?: string
   rejectReason?: string
   items?: PrescriptionItem[]
+  medicineItems?: PrescriptionItem[]
 }
 
 const list = ref<Prescription[]>([])
@@ -178,7 +178,7 @@ async function openDetail(row: Prescription) {
   drawerVisible.value = true
   detailLoading.value = true
   try {
-    const res: any = await getPrescriptionById(row.id)
+    const res: any = await getPrescriptionDetail(row.id)
     detail.value = res.data || null
   } catch (e) {
     detail.value = row
