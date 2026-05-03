@@ -17,5 +17,5 @@ public interface IoTGatewayClient {
      * @param commandType  指令类型，如 START_SOAK, START_DECOCT 等
      * @param params       指令参数
      */
-    void sendCommand(String deviceCode, String protocolType, String commandType, Map<String, Object> params);
+    boolean sendCommand(String deviceCode, String protocolType, String commandType, Map<String, Object> params);
 }

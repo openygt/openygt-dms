@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 设备 WebSocket 控制器。
@@ -60,7 +61,7 @@ public class DeviceWebSocketController {
      * 推送租户全部设备状态快照。
      */
     public void pushTenantDevicesSnapshot(Long tenantId) {
-        List<EqDevice> onlineDevices = listOnlineDevices();
+        List<EqDevice> onlineDevices = listActiveDevices(String.valueOf(tenantId));
         Map<String, Object> payload = new HashMap<>();
         payload.put("tenantId", tenantId);
         payload.put("onlineCount", onlineDevices.size());
@@ -82,7 +83,7 @@ public class DeviceWebSocketController {
 
     @SubscribeMapping("/tenant/devices")
     public List<EqDevice> subscribeTenantDevices() {
-        return listOnlineDevices();
+        return listActiveDevices(null);
     }
 
     // ===== Phase 1 新增 =====
@@ -93,7 +94,7 @@ public class DeviceWebSocketController {
     public void pushTenantDevicesSnapshot(String tenantId) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("tenantId", tenantId);
-        payload.put("devices", listOnlineDevices());
+        payload.put("devices", listActiveDevices(tenantId));
         payload.put("timestamp", System.currentTimeMillis());
         messagingTemplate.convertAndSend("/topic/tenant/" + tenantId + "/devices/snapshot", payload);
     }
@@ -118,18 +119,15 @@ public class DeviceWebSocketController {
      *
      * <p>替代原 DeviceConnManager.listOnline()，避免直接依赖 IoT 连接管理层。</p>
      */
-    private List<EqDevice> listOnlineDevices() {
+    private List<EqDevice> listActiveDevices(String tenantId) {
         try {
-            // 查询 status = 'online' 或 lastHeartbeat 在 5 分钟内的设备
-            // 注意：具体条件需根据业务需求调整，此处使用简化逻辑
-            List<EqDevice> allDevices = eqDeviceMapper.selectList(null);
-            List<EqDevice> onlineDevices = new ArrayList<>();
-            for (EqDevice device : allDevices) {
-                if ("online".equalsIgnoreCase(device.getStatus())) {
-                    onlineDevices.add(device);
-                }
+            List<EqDevice> activeDevices = eqDeviceMapper.findAllActive();
+            if (tenantId == null || tenantId.trim().isEmpty()) {
+                return activeDevices;
             }
-            return onlineDevices;
+            return activeDevices.stream()
+                    .filter(device -> tenantId.equals(device.getTenantId()))
+                    .collect(Collectors.toList());
         } catch (Exception e) {
             log.error("查询在线设备列表失败", e);
             return new ArrayList<>();

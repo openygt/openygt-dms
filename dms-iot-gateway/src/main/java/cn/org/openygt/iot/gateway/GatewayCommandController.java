@@ -50,7 +50,10 @@ public class GatewayCommandController {
 
         DeviceCommandDTO command = new DeviceCommandDTO();
         command.setCommandType(request.getCommandType());
-        command.setParams(request.getParams());
+        Map<String, Object> params = request.getParams() != null ? new HashMap<>(request.getParams()) : new HashMap<String, Object>();
+        params.put("deviceCode", deviceCode);
+        params.put("protocolType", protocolType);
+        command.setParams(params);
 
         try {
             adapter.sendCommand(deviceCode, command);
