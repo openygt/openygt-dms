@@ -19,10 +19,14 @@
 
       <!-- 搜索 -->
       <el-form v-if="activeTab === 'list'" :inline="true" @submit.prevent>
-        <el-form-item label="医院">
-          <el-select v-model="search.hospitalId" placeholder="全部" clearable style="width: 160px">
-            <el-option v-for="h in hospitals" :key="h.id" :label="h.name" :value="h.id" />
-          </el-select>
+        <el-form-item label="处方号">
+          <el-input v-model="search.prescriptionNumber" placeholder="处方号" clearable style="width: 140px" />
+        </el-form-item>
+        <el-form-item label="患者姓名">
+          <el-input v-model="search.patientName" placeholder="患者姓名" clearable style="width: 140px" />
+        </el-form-item>
+        <el-form-item label="患者手机号">
+          <el-input v-model="search.patientPhone" placeholder="患者手机号" clearable style="width: 140px" />
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="search.status" placeholder="全部" clearable style="width: 120px">
@@ -35,9 +39,6 @@
           <el-date-picker v-model="search.dateRange" type="daterange" range-separator="至"
             start-placeholder="开始日期" end-placeholder="结束日期" value-format="YYYY-MM-DD" style="width: 240px" />
         </el-form-item>
-        <el-form-item label="搜索">
-          <el-input v-model="search.keyword" placeholder="患者姓名" clearable style="width: 160px" />
-        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleQuery">查询</el-button>
           <el-button @click="resetSearch">重置</el-button>
@@ -48,20 +49,27 @@
     <!-- 处方列表 -->
     <el-card style="margin-top: 12px">
       <el-table v-if="activeTab === 'list'" :data="list" v-loading="loading" border>
-        <el-table-column prop="id" label="处方号" width="80" />
-        <el-table-column label="医院"><template #default="{row}">{{ hospitalMap[row.hospitalId] || '-' }}</template></el-table-column>
-        <el-table-column prop="patientName" label="患者姓名" />
-        <el-table-column label="类型" width="80"><template #default="{row}">{{ row.patientType === 1 ? '住院' : '门诊' }}</template></el-table-column>
+        <el-table-column prop="prescriptionNumber" label="处方号" width="100" />
+        <el-table-column prop="patientName" label="患者姓名" width="100" />
+        <el-table-column prop="patientPhone" label="电话" width="120" />
+        <el-table-column label="医院" width="120"><template #default="{row}">{{ hospitalMap[row.hospitalId] || '-' }}</template></el-table-column>
         <el-table-column prop="doctorName" label="医师" width="100" />
         <el-table-column prop="repetition" label="付数" width="60" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column label="配送" width="80"><template #default="{row}">{{ DELIVERY_TYPES.find(d => d.value === row.deliveryType)?.label || '-' }}</template></el-table-column>
+        <el-table-column label="制剂" width="100"><template #default="{row}">{{ PREPARATION_TYPES.find(p => p.value === row.preparationType)?.label || '-' }}</template></el-table-column>
+        <el-table-column label="服用" width="100"><template #default="{row}">{{ USAGE_METHODS.find(u => u.value === row.usageMethod)?.label || '-' }}</template></el-table-column>
+        <el-table-column label="状态" width="100">
           <template #default="{row}"><el-tag :type="statusType(row.status)">{{ row.status }}</el-tag></template>
         </el-table-column>
         <el-table-column label="创建时间" width="160"><template #default="{row}">{{ formatTime(row.createdAt) }}</template></el-table-column>
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="openCreateDialog(row)">编辑</el-button>
             <el-button size="small" @click="viewDetail(row)">详情</el-button>
+            <el-button v-if="row.receiveStatus === 'PENDING'" size="small" type="danger" @click="openRejectDialog(row)">驳回</el-button>
+            <el-button v-if="row.receiveStatus === 'PENDING'" size="small" type="warning" @click="openUrgentDialog(row)">加急</el-button>
+            <el-button v-if="row.receiveStatus === 'REJECTED'" size="small" type="success" @click="handleReactivate(row)">重新激活</el-button>
+            <el-button v-if="row.receiveStatus === 'PENDING'" size="small" @click="handleCancel(row)">取消</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -96,8 +104,20 @@
       <el-form :model="form" :rules="formRules" label-width="100px">
         <el-row :gutter="16">
           <el-col :span="12">
+            <el-form-item label="处方号">
+              <el-input v-model="form.prescriptionNumber" placeholder="处方编号" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
             <el-form-item label="患者姓名" prop="patientName">
               <el-input v-model="form.patientName" placeholder="必填" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="患者电话">
+              <el-input v-model="form.patientPhone" placeholder="联系电话" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -112,8 +132,8 @@
           <el-col :span="12">
             <el-form-item label="患者类型">
               <el-radio-group v-model="form.patientType">
-                <el-radio :label="0">门诊</el-radio>
-                <el-radio :label="1">住院</el-radio>
+                <el-radio :value="0">门诊</el-radio>
+                <el-radio :value="1">住院</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -134,6 +154,36 @@
               <el-select v-model="form.schemeId" placeholder="默认" clearable style="width:100%">
                 <el-option v-for="s in schemes" :key="s.id" :label="s.schemeName || s.name" :value="s.id" />
               </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="制剂类型">
+              <el-select v-model="form.preparationType" placeholder="请选择" clearable style="width:100%">
+                <el-option v-for="p in PREPARATION_TYPES" :key="p.value" :label="p.label" :value="p.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="16">
+          <el-col :span="12">
+            <el-form-item label="服用方法">
+              <el-select v-model="form.usageMethod" placeholder="请选择" clearable style="width:100%">
+                <el-option v-for="u in USAGE_METHODS" :key="u.value" :label="u.label" :value="u.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="配送方式">
+              <el-select v-model="form.deliveryType" placeholder="请选择" clearable style="width:100%">
+                <el-option v-for="d in DELIVERY_TYPES" :key="d.value" :label="d.label" :value="d.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="16">
+          <el-col :span="24">
+            <el-form-item label="配送地址">
+              <el-input v-model="form.deliveryAddress" placeholder="配送地址" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -266,12 +316,17 @@
     <el-drawer v-model="detailVisible" title="处方详情" size="600px">
       <div v-if="detail" v-loading="detailLoading">
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="处方号">{{ detail.id }}</el-descriptions-item>
+          <el-descriptions-item label="处方号">{{ detail.prescriptionNumber || detail.id }}</el-descriptions-item>
           <el-descriptions-item label="患者">{{ detail.patientName }}</el-descriptions-item>
+          <el-descriptions-item label="电话">{{ detail.patientPhone || '-' }}</el-descriptions-item>
           <el-descriptions-item label="医院">{{ hospitalMap[detail.hospitalId] || '-' }}</el-descriptions-item>
           <el-descriptions-item label="医师">{{ detail.doctorName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="类型">{{ detail.patientType === 1 ? '住院' : '门诊' }}</el-descriptions-item>
           <el-descriptions-item label="付数">{{ detail.repetition }}</el-descriptions-item>
+          <el-descriptions-item label="制剂">{{ PREPARATION_TYPES.find(p => p.value === detail.preparationType)?.label || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="服用">{{ USAGE_METHODS.find(u => u.value === detail.usageMethod)?.label || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="配送">{{ DELIVERY_TYPES.find(d => d.value === detail.deliveryType)?.label || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="地址" :span="2">{{ detail.deliveryAddress || '-' }}</el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="receiveStatusType(detail.receiveStatus)">{{ receiveStatusLabel(detail.receiveStatus) }}</el-tag>
           </el-descriptions-item>
@@ -301,6 +356,52 @@
         </div>
       </div>
     </el-drawer>
+
+    <!-- 驳回对话框 -->
+    <el-dialog v-model="rejectDialogVisible" title="驳回处方" width="400px">
+      <el-form label-width="100px">
+        <el-form-item label="驳回类型" required>
+          <el-select v-model="rejectForm.rejectType" placeholder="请选择" style="width:100%">
+            <el-option v-for="t in REJECT_TYPES" :key="t.value" :label="t.label" :value="t.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="驳回原因" required>
+          <el-input v-model="rejectForm.reason" type="textarea" rows="3" placeholder="请输入驳回原因" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="rejectDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleReject">确认驳回</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 加急对话框 -->
+    <el-dialog v-model="urgentDialogVisible" title="加急处理" width="500px">
+      <el-form label-width="100px">
+        <el-form-item label="急诊级别" required>
+          <el-radio-group v-model="urgentForm.level">
+            <el-radio-button v-for="l in URGENT_LEVELS" :key="l.value" :label="l.value">{{ l.label }}</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="送达方式">
+          <el-select v-model="urgentForm.deliveryType" placeholder="请选择" clearable style="width: 100%">
+            <el-option label="自取" value="SELF_PICKUP" />
+            <el-option label="配送" value="DELIVERY" />
+            <el-option label="院内配送" value="IN_HOUSE_DELIVERY" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="送达位置">
+          <el-input v-model="urgentForm.deliveryLocation" placeholder="请输入送达位置（如：内科病房 302床）" />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="urgentForm.delayReason" type="textarea" :rows="2" placeholder="请输入急诊备注信息" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="urgentDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleUrgent">确认加急</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -309,11 +410,13 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import request from '@/api/request'
+import { useUserStore } from '@/stores/user'
 import {
   listPrescriptions, createStructuredPrescription, updatePrescription,
   searchMedicines, importPrescriptionCsv,
   createPrescriptionFromOcr, uploadOcrImage,
-  getPrescriptionDetail
+  getPrescriptionDetail, rejectPrescription, markEmergency,
+  reactivatePrescription, cancelPrescription
 } from '@/api/prescription'
 
 // ==================== 数据结构 ====================
@@ -350,9 +453,10 @@ const exceptionSize = ref(10)
 const exceptionTotal = ref(0)
 
 const search = reactive({
-  hospitalId: undefined as number | undefined,
+  prescriptionNumber: '',
+  patientName: '',
+  patientPhone: '',
   status: '',
-  keyword: '',
   dateRange: null as [string, string] | null
 })
 
@@ -362,15 +466,81 @@ const hospitals = ref<any[]>([])
 const hospitalMap = ref<Record<number, string>>({})
 const schemeMap = ref<Record<number, string>>({})
 
+// 枚举定义
+const DELIVERY_TYPES = [
+  { label: '自取', value: 'SELF_PICKUP' },
+  { label: '配送', value: 'DELIVERY' },
+  { label: '院内配送', value: 'IN_HOUSE_DELIVERY' }
+]
+const PREPARATION_TYPES = [
+  { label: '汤剂', value: 'DECOCTION' },
+  { label: '浓煎剂', value: 'CONCENTRATED_DECOCTION' },
+  { label: '普通散剂', value: 'COARSE_POWDER' },
+  { label: '细粉', value: 'FINE_POWDER' },
+  { label: '破壁粉', value: 'CELL_BROKEN_POWDER' },
+  { label: '水丸', value: 'WATER_PILL' },
+  { label: '蜜丸', value: 'HONEY_PILL' },
+  { label: '浓缩丸', value: 'CONCENTRATED_PILL' },
+  { label: '糊丸', value: 'PASTE_PILL' },
+  { label: '膏方', value: 'MEDICINAL_PASTE' },
+  { label: '配方颗粒', value: 'GRANULES' },
+  { label: '酒剂（内服）', value: 'TINCTURE_INTERNAL' },
+  { label: '酒剂（外用）', value: 'TINCTURE_EXTERNAL' },
+  { label: '酊剂（内服）', value: 'SPIRIT_INTERNAL' },
+  { label: '酊剂（外用）', value: 'SPIRIT_EXTERNAL' },
+  { label: '茶剂', value: 'MEDICINAL_TEA' },
+  { label: '丹剂', value: 'DAN_MEDICINE' },
+  { label: '硬胶囊', value: 'HARD_CAPSULE' },
+  { label: '软胶囊', value: 'SOFT_CAPSULE' },
+  { label: '片剂', value: 'TABLET' },
+  { label: '糖浆剂', value: 'SYRUP' },
+  { label: '露剂', value: 'AROMATIC_WATER' },
+  { label: '栓剂', value: 'SUPPOSITORY' },
+  { label: '洗剂', value: 'WASH_SOLUTION' },
+  { label: '其他', value: 'OTHER' }
+]
+const USAGE_METHODS = [
+  { label: '内服', value: 'ORAL_INTERNAL' },
+  { label: '外用', value: 'TOPICAL' },
+  { label: '泡酒', value: 'WINE_SOAK' },
+  { label: '熏蒸', value: 'FUMIGATION' },
+  { label: '代茶饮', value: 'HERBAL_TEA' },
+  { label: '水煎服', value: 'WATER_DECOCTION' },
+  { label: '口服', value: 'ORAL' },
+  { label: '温服', value: 'WARM_TAKE' },
+  { label: '泡水代茶饮', value: 'INFUSION' },
+  { label: '擦洗', value: 'WIPE_WASH' },
+  { label: '敷贴', value: 'POULTICE' },
+  { label: '浸泡', value: 'SOAK' },
+  { label: '涂抹', value: 'APPLY' },
+  { label: '煎服', value: 'DECOCT_TAKE' },
+  { label: '冲服', value: 'DISSOLVE_TAKE' },
+  { label: '灌肠', value: 'ENEMA' },
+  { label: '含漱', value: 'GARGLE' },
+  { label: '酊剂外用', value: 'TINCTURE_APPLY' },
+  { label: '喷雾', value: 'SPRAY' },
+  { label: '撒粉', value: 'DUSTING' },
+  { label: '滴眼', value: 'EYE_DROPS' },
+  { label: '滴耳', value: 'EAR_DROPS' },
+  { label: '炖服', value: 'STEW_TAKE' },
+  { label: '熏洗', value: 'STEAM_WASH' },
+  { label: '涂擦', value: 'RUB' },
+  { label: '输液', value: 'INFUSION_IV' }
+]
+
 // 创建对话框
 const createDialogVisible = ref(false)
 const form = reactive<any>({
-  patientName: '', hospitalId: null, patientType: 0,
-  doctorName: '', schemeId: null, repetition: 1,
+  prescriptionNumber: '', patientName: '', patientPhone: '',
+  hospitalId: null, patientType: 0,
+  doctorName: '', schemeId: null, repetition: 7,
+  deliveryType: '', deliveryAddress: '',
+  preparationType: '', usageMethod: '',
   remark: '', medicineItems: [] as MedicineItem[]
 })
 
 const formRules = {
+  prescriptionNumber: [{ required: true, message: '请输入处方号', trigger: 'blur' }],
   patientName: [{ required: true, message: '请输入患者姓名', trigger: 'blur' }],
   hospitalId: [{ required: true, message: '请选择医院', trigger: 'change' }],
   doctorName: [{ required: true, message: '请输入医师姓名', trigger: 'blur' }]
@@ -395,6 +565,30 @@ const detailLoading = ref(false)
 const detail = ref<any>(null)
 const showRawData = ref(false)
 
+// 驳回
+const rejectDialogVisible = ref(false)
+const rejectForm = reactive({ id: null as number | null, rejectType: '', reason: '' })
+const REJECT_TYPES = [
+  { label: '审方未过', value: 'REVIEW_REJECTED' },
+  { label: '调剂复核未过', value: 'DISPENSING_REJECTED' },
+  { label: '其他', value: 'OTHER' }
+]
+
+// 加急
+const urgentDialogVisible = ref(false)
+const urgentForm = reactive({
+  id: null as number | null,
+  level: 1,
+  deliveryType: '',
+  deliveryLocation: '',
+  delayReason: ''
+})
+const URGENT_LEVELS = [
+  { label: '普通急诊', value: 1 },
+  { label: '危重急诊', value: 2 },
+  { label: '抢救', value: 3 }
+]
+
 // ==================== 计算属性 ====================
 
 const canSubmit = computed(() => {
@@ -409,9 +603,10 @@ async function fetchData() {
   loading.value = true
   try {
     const params: any = { page: page.value, size: size.value }
-    if (search.hospitalId != null) params.hospitalId = search.hospitalId
+    if (search.prescriptionNumber) params.prescriptionNumber = search.prescriptionNumber
+    if (search.patientName) params.patientName = search.patientName
+    if (search.patientPhone) params.patientPhone = search.patientPhone
     if (search.status) params.status = search.status
-    if (search.keyword) params.keyword = search.keyword
     if (search.dateRange && search.dateRange[0]) {
       params.startTime = search.dateRange[0]
       params.endTime = search.dateRange[1]
@@ -444,7 +639,8 @@ function handleTabChange() {
 
 function handleQuery() { page.value = 1; fetchData() }
 function resetSearch() {
-  search.hospitalId = undefined; search.status = ''; search.keyword = ''; search.dateRange = null
+  search.prescriptionNumber = ''; search.patientName = ''; search.patientPhone = ''
+  search.status = ''; search.dateRange = null
   page.value = 1; fetchData()
 }
 
@@ -479,18 +675,26 @@ function formatTime(dt: string) {
 
 // ==================== 创建处方 ====================
 
-function openCreateDialog(row?: any) {
+async function openCreateDialog(row?: any) {
   if (row) {
-    // 编辑模式：预填充数据
-    form.id = row.id
-    form.patientName = row.patientName || ''
-    form.hospitalId = row.hospitalId || null
-    form.patientType = row.patientType ?? 0
-    form.doctorName = row.doctorName || ''
-    form.schemeId = row.schemeId || null
-    form.repetition = row.repetition || 1
-    form.remark = row.remark || ''
-    form.medicineItems = row.medicineItems?.map((m: any) => ({
+    // 编辑模式：先加载详情（列表数据不含药材明细）
+    const detailRes: any = await getPrescriptionDetail(row.id)
+    const detail = detailRes.data
+    form.id = detail.id
+    form.prescriptionNumber = detail.prescriptionNumber || ''
+    form.patientName = detail.patientName || ''
+    form.patientPhone = detail.patientPhone || ''
+    form.hospitalId = detail.hospitalId || null
+    form.patientType = detail.patientType ?? 0
+    form.doctorName = detail.doctorName || ''
+    form.schemeId = detail.schemeId || null
+    form.repetition = detail.repetition || 7
+    form.deliveryType = detail.deliveryType || ''
+    form.deliveryAddress = detail.deliveryAddress || ''
+    form.preparationType = detail.preparationType || ''
+    form.usageMethod = detail.usageMethod || ''
+    form.remark = detail.remark || ''
+    form.medicineItems = detail.medicineItems?.map((m: any) => ({
       medicineId: m.medicineId || null,
       medicineName: m.medicineName || '',
       dosage: m.dosage || 10,
@@ -502,8 +706,11 @@ function openCreateDialog(row?: any) {
   } else {
     // 新增模式：清空表单
     form.id = undefined
-    form.patientName = ''; form.hospitalId = null; form.patientType = 0
-    form.doctorName = ''; form.schemeId = null; form.repetition = 1
+    form.prescriptionNumber = ''; form.patientName = ''; form.patientPhone = ''
+    form.hospitalId = null; form.patientType = 0
+    form.doctorName = ''; form.schemeId = null; form.repetition = 7
+    form.deliveryType = ''; form.deliveryAddress = ''
+    form.preparationType = ''; form.usageMethod = ''
     form.remark = ''; form.medicineItems = []
   }
   createDialogVisible.value = true
@@ -549,25 +756,40 @@ function onMedicineSelect(selected: any, row: any) {
 
 async function handleSave() {
   try {
+    // 前端防御：确保药材明细有效
+    const validItems = (form.medicineItems || []).filter((item: MedicineItem) =>
+      item && item.medicineName && item.medicineName.trim() && item.dosage != null && item.dosage > 0
+    )
+    if (validItems.length === 0) {
+      ElMessage.warning('请至少添加一条有效的药材明细（名称和用量必填）')
+      return
+    }
     const payload = {
-      patientName: form.patientName,
+      prescriptionNumber: form.prescriptionNumber || '',
+      patientName: form.patientName || '',
+      patientPhone: form.patientPhone || '',
       hospitalId: form.hospitalId,
-      patientType: form.patientType,
-      doctorName: form.doctorName,
-      schemeId: form.schemeId,
-      repetition: form.repetition,
-      remark: form.remark,
+      patientType: Number(form.patientType) || 0,
+      doctorName: form.doctorName || '',
+      schemeId: form.schemeId || null,
+      repetition: Number(form.repetition) || 7,
+      deliveryType: form.deliveryType || '',
+      deliveryAddress: form.deliveryAddress || '',
+      preparationType: form.preparationType || '',
+      usageMethod: form.usageMethod || '',
+      remark: form.remark || '',
       source: 'MANUAL',
-      medicineItems: form.medicineItems.map((item: MedicineItem, idx: number) => ({
-        medicineId: item.medicineId,
-        medicineName: item.medicineName,
-        dosage: item.dosage,
-        unit: item.unit,
-        decoctionMethod: item.decoctionMethod,
+      medicineItems: validItems.map((item: MedicineItem, idx: number) => ({
+        medicineId: item.medicineId || null,
+        medicineName: item.medicineName.trim(),
+        dosage: Number(item.dosage),
+        unit: item.unit || 'g',
+        decoctionMethod: item.decoctionMethod || 'NORMAL',
         sortOrder: idx + 1,
         batchNo: item.batchNo || null
       }))
     }
+    console.log('SAVE PAYLOAD:', JSON.stringify(payload))
     if (form.id) {
       await updatePrescription(form.id, payload)
       ElMessage.success('更新成功')
@@ -577,7 +799,10 @@ async function handleSave() {
     }
     createDialogVisible.value = false
     fetchData()
-  } catch { /* handled by interceptor */ }
+  } catch (err: any) {
+    console.error('SAVE ERROR:', err)
+    ElMessage.error(err?.message || '保存失败')
+  }
 }
 
 // ==================== CSV导入 ====================
@@ -691,6 +916,76 @@ async function viewDetail(row: any) {
     detail.value = res.data || null
   } catch { detail.value = row }
   finally { detailLoading.value = false }
+}
+
+// ==================== 驳回 ====================
+
+function openRejectDialog(row: any) {
+  rejectForm.id = row.id
+  rejectForm.rejectType = ''
+  rejectForm.reason = ''
+  rejectDialogVisible.value = true
+}
+
+async function handleReject() {
+  if (!rejectForm.rejectType) { ElMessage.warning('请选择驳回类型'); return }
+  if (!rejectForm.reason) { ElMessage.warning('请输入驳回原因'); return }
+  const userStore = useUserStore()
+  try {
+    await rejectPrescription(rejectForm.id!, {
+      rejectType: rejectForm.rejectType,
+      reason: rejectForm.reason,
+      operatorId: userStore.userInfo?.id || 0,
+      operatorName: userStore.userInfo?.username || 'admin'
+    })
+    ElMessage.success('驳回成功')
+    rejectDialogVisible.value = false
+    fetchData()
+  } catch { /* handled */ }
+}
+
+// ==================== 加急 ====================
+
+function openUrgentDialog(row: any) {
+  urgentForm.id = row.id
+  urgentForm.level = 1
+  urgentForm.deliveryType = ''
+  urgentForm.deliveryLocation = ''
+  urgentForm.delayReason = ''
+  urgentDialogVisible.value = true
+}
+
+async function handleUrgent() {
+  try {
+    await markEmergency(urgentForm.id!, urgentForm.level, {
+      deliveryType: urgentForm.deliveryType || undefined,
+      deliveryLocation: urgentForm.deliveryLocation || undefined,
+      delayReason: urgentForm.delayReason || undefined
+    })
+    ElMessage.success('加急成功')
+    urgentDialogVisible.value = false
+    fetchData()
+  } catch {
+    ElMessage.error('加急失败')
+  }
+}
+
+async function handleReactivate(row: any) {
+  try {
+    await ElMessageBox.confirm(`确认重新激活处方 #${row.prescriptionNumber || row.id}？`, '重新激活', { type: 'warning' })
+    await reactivatePrescription(row.id)
+    ElMessage.success('重新激活成功')
+    fetchData()
+  } catch { /* cancel */ }
+}
+
+async function handleCancel(row: any) {
+  try {
+    await ElMessageBox.confirm(`确认取消处方 #${row.prescriptionNumber || row.id}？取消后将不可恢复。`, '取消处方', { type: 'warning' })
+    await cancelPrescription(row.id)
+    ElMessage.success('取消成功')
+    fetchData()
+  } catch { /* cancel */ }
 }
 
 function formatJson(str: string) {

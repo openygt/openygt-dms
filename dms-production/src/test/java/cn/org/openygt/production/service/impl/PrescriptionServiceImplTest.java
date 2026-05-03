@@ -186,6 +186,29 @@ public class PrescriptionServiceImplTest {
             verify(toxicMedicineService, atLeastOnce()).lambdaQuery();
             verify(prescriptionMapper).insert(any(Prescription.class));
         }
+
+        @Test
+        @DisplayName("带medicineId但dosage为空时不应抛出NPE")
+        void testCreateWithNullDosageDoesNotThrowNpe() {
+            when(prescriptionConfig.isStrictMode()).thenReturn(false);
+            mockToxicServiceEmpty();
+            when(prescriptionMapper.insert(any(Prescription.class))).thenAnswer(invocation -> {
+                Prescription p = invocation.getArgument(0);
+                p.setId(102L);
+                return 1;
+            });
+            when(prescriptionMedicineMapper.selectByPrescriptionId(102L))
+                    .thenReturn(Collections.emptyList());
+
+            List<PrescriptionMedicineItemRequest> items = Collections.singletonList(
+                    medItem("附子", null, "g", 1L)
+            );
+            PrescriptionStructuredCreateRequest req = createReq("测试患者E", items);
+
+            Prescription result = assertDoesNotThrow(() -> service.createStructured(req));
+            assertEquals("测试患者E", result.getPatientName());
+            verify(prescriptionMapper).insert(any(Prescription.class));
+        }
     }
 
     // ==================== importFromCsv ====================

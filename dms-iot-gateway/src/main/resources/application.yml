@@ -8,6 +8,16 @@ spring:
 iot:
   gateway:
     name: ${spring.application.name}
+    backend-url: ${IOT_GATEWAY_BACKEND_URL:http://localhost:8080}
+    api-key: ${IOT_GATEWAY_API_KEY:}
+    retry:
+      max-attempts: ${IOT_GATEWAY_RETRY_MAX_ATTEMPTS:3}
+      backoff-millis: ${IOT_GATEWAY_RETRY_BACKOFF_MS:1000}
+    lifecycle:
+      auto-start-adapters: ${IOT_GATEWAY_AUTO_START_ADAPTERS:true}
+    http:
+      connect-timeout-millis: ${IOT_GATEWAY_HTTP_CONNECT_TIMEOUT_MS:3000}
+      read-timeout-millis: ${IOT_GATEWAY_HTTP_READ_TIMEOUT_MS:5000}
   mqtt:
     broker: tcp://localhost:1883
     client-id: openygt-iot-gateway

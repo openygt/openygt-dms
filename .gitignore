@@ -64,3 +64,4 @@ playwright-report/
 tests-e2e/
 e2e/
 frontend/test-evidence/
+.gitnexus

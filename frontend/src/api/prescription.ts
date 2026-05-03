@@ -14,8 +14,8 @@ export function receivePrescription(id: number | string) {
   return request.post(`/v1/prod/prescriptions/${id}/receive`)
 }
 
-export function rejectPrescription(id: number | string, data: { rejectType: string; reason: string }) {
-  return request.post(`/v1/prod/prescriptions/${id}/reject`, data)
+export function rejectPrescription(id: number | string, data: { rejectType: string; reason: string; operatorId: number; operatorName: string }) {
+  return request.post(`/v1/prod/prescriptions/${id}/reject?operatorId=${data.operatorId}&operatorName=${encodeURIComponent(data.operatorName)}`, data)
 }
 
 export function getPrescriptionDetail(id: number | string) {
@@ -72,6 +72,23 @@ export function pushSinglePrescription(hospitalCode: string, data: any) {
 
 export function createPrescriptionFromOcr(data: any) {
   return request.post('/v1/prod/prescriptions/ocr', data)
+}
+
+export function markEmergency(prescriptionId: number | string, emergencyLevel: number, extra?: { deliveryType?: string; deliveryLocation?: string; delayReason?: string }) {
+  const params = new URLSearchParams()
+  params.append('emergencyLevel', String(emergencyLevel))
+  if (extra?.deliveryType) params.append('deliveryType', extra.deliveryType)
+  if (extra?.deliveryLocation) params.append('deliveryLocation', extra.deliveryLocation)
+  if (extra?.delayReason) params.append('delayReason', extra.delayReason)
+  return request.post(`/v1/prod/prescription/${prescriptionId}/emergency?${params.toString()}`)
+}
+
+export function reactivatePrescription(id: number | string) {
+  return request.post(`/v1/prod/prescriptions/${id}/reactivate`)
+}
+
+export function cancelPrescription(id: number | string) {
+  return request.post(`/v1/prod/prescriptions/${id}/cancel`)
 }
 
 export function uploadOcrImage(file: File) {

@@ -55,6 +55,9 @@
               <el-button size="small" type="primary" @click="handleReceive(row)">接收</el-button>
               <el-button size="small" type="danger" @click="handleReject(row)">驳回</el-button>
             </template>
+            <template v-if="row.status === 'REJECTED'">
+              <el-button size="small" type="success" @click="handleReactivate(row)">重新激活</el-button>
+            </template>
           </template>
         </el-table-column>
       </el-table>
@@ -107,7 +110,8 @@ import {
   getPrescriptionReceiveList,
   getPrescriptionDetail,
   receivePrescription,
-  rejectPrescription
+  rejectPrescription,
+  reactivatePrescription
 } from '@/api/prescription'
 
 interface PrescriptionItem {
@@ -204,8 +208,17 @@ async function handleReject(row: Prescription) {
       inputPattern: /\S+/,
       inputErrorMessage: '驳回原因不能为空'
     })
-    await rejectPrescription(row.id, { rejectType: 'MANUAL', reason: value })
+    await rejectPrescription(row.id, { rejectType: 'MANUAL', reason: value, operatorId: 0, operatorName: 'admin' })
     ElMessage.success('驳回成功')
+    fetchData()
+  } catch (e) {}
+}
+
+async function handleReactivate(row: Prescription) {
+  try {
+    await ElMessageBox.confirm(`确认重新激活处方 #${row.prescriptionNo || row.id}？`, '重新激活', { type: 'warning' })
+    await reactivatePrescription(row.id)
+    ElMessage.success('重新激活成功')
     fetchData()
   } catch (e) {}
 }

@@ -29,6 +29,18 @@ public class DeviceMessage {
     /** 消息类型：TELEMETRY(遥测), STATUS(状态), ALARM(告警), COMMAND_ACK(指令响应) */
     private String messageType;
 
+    public MessageType getMessageTypeEnum() {
+        return MessageType.from(messageType);
+    }
+
+    public void setMessageType(String messageType) {
+        this.messageType = messageType;
+    }
+
+    public void setMessageType(MessageType messageType) {
+        this.messageType = messageType != null ? messageType.name() : null;
+    }
+
     /** 原始报文（Base64 或 HEX，用于调试审计） */
     private String rawPayload;
 
