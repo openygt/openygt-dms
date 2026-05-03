@@ -1,7 +1,8 @@
 package cn.org.openygt.iot.router;
 
+import cn.org.openygt.iot.config.GatewayProperties;
 import cn.org.openygt.iot.protocol.DeviceMessage;
-import org.springframework.beans.factory.annotation.Value;
+import cn.org.openygt.iot.protocol.MessageType;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -22,10 +23,13 @@ import java.util.Map;
 @Component
 public class MessageRouter {
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
+    private final GatewayProperties properties;
 
-    @Value("${iot.gateway.backend-url:http://localhost:8080}")
-    private String backendUrl;
+    public MessageRouter(RestTemplate restTemplate, GatewayProperties properties) {
+        this.restTemplate = restTemplate;
+        this.properties = properties;
+    }
 
     /**
      * 路由设备消息
@@ -36,17 +40,17 @@ public class MessageRouter {
             return;
         }
 
-        switch (message.getMessageType()) {
-            case "TELEMETRY":
+        switch (MessageType.from(message.getMessageType())) {
+            case TELEMETRY:
                 handleTelemetry(message);
                 break;
-            case "STATUS":
+            case STATUS:
                 handleStatus(message);
                 break;
-            case "ALARM":
+            case ALARM:
                 handleAlarm(message);
                 break;
-            case "COMMAND_ACK":
+            case COMMAND_ACK:
                 handleCommandAck(message);
                 break;
             default:
@@ -75,7 +79,7 @@ public class MessageRouter {
     }
 
     private void postToEquipment(DeviceMessage message) {
-        String url = backendUrl + "/api/v1/eq/gateway/report";
+        String url = properties.getBackendUrl() + "/api/v1/eq/gateway/report";
         Map<String, Object> request = new HashMap<>();
         request.put("protocolType", message.getProtocolType());
         request.put("tenantId", message.getTenantId());
@@ -105,11 +109,41 @@ public class MessageRouter {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
 
+        int maxAttempts = Math.max(1, properties.getRetry().getMaxAttempts());
+        long backoffMillis = Math.max(0L, properties.getRetry().getBackoffMillis());
+        Exception lastError = null;
+
+        for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                restTemplate.postForEntity(url, entity, Object.class);
+                if (attempt > 1) {
+                    log.info("消息回写成功: device={}, type={}, attempt={}/{}",
+                            message.getDeviceCode(), message.getMessageType(), attempt, maxAttempts);
+                }
+                return;
+            } catch (Exception e) {
+                lastError = e;
+                if (attempt < maxAttempts) {
+                    log.warn("消息回写失败，准备重试: device={}, type={}, attempt={}/{}",
+                            message.getDeviceCode(), message.getMessageType(), attempt, maxAttempts, e);
+                    sleepQuietly(backoffMillis);
+                }
+            }
+        }
+
+        log.error("消息回写 dms-equipment 失败，已达到最大重试次数: device={}, type={}, url={}",
+                message.getDeviceCode(), message.getMessageType(), url, lastError);
+    }
+
+    private void sleepQuietly(long backoffMillis) {
+        if (backoffMillis <= 0L) {
+            return;
+        }
         try {
-            restTemplate.postForEntity(url, entity, Object.class);
-        } catch (Exception e) {
-            log.error("消息回写 dms-equipment 失败: device={}, type={}, url={}",
-                    message.getDeviceCode(), message.getMessageType(), url, e);
+            Thread.sleep(backoffMillis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("消息回写重试被中断", e);
         }
     }
 

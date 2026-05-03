@@ -689,7 +689,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 .collect(Collectors.toMap(ToxicMedicine::getMedicineId, Function.identity()));
 
         for (PrescriptionMedicineItemRequest item : items) {
-            if (item.getMedicineId() == null) continue;
+            if (item.getMedicineId() == null || item.getDosage() == null) continue;
             ToxicMedicine toxic = toxicMap.get(item.getMedicineId());
             if (toxic == null || toxic.getMaxDosage() == null) continue;
             if (item.getDosage().compareTo(toxic.getMaxDosage()) > 0) {

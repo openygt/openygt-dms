@@ -52,12 +52,17 @@ export function getEmergencyPrescriptions(params?: any) {
   return request.get('/v1/prod/prescription/emergency', { params })
 }
 
-export function markEmergency(prescriptionId: number | string) {
-  return request.post(`/v1/prod/prescription/${prescriptionId}/emergency`)
+export function markEmergency(prescriptionId: number | string, emergencyLevel: number, extra?: { deliveryType?: string; deliveryLocation?: string; delayReason?: string }) {
+  const params = new URLSearchParams()
+  params.append('emergencyLevel', String(emergencyLevel))
+  if (extra?.deliveryType) params.append('deliveryType', extra.deliveryType)
+  if (extra?.deliveryLocation) params.append('deliveryLocation', extra.deliveryLocation)
+  if (extra?.delayReason) params.append('delayReason', extra.delayReason)
+  return request.post(`/v1/prod/prescription/${prescriptionId}/emergency?${params.toString()}`)
 }
 
-export function signEmergency(emergencyId: number | string) {
-  return request.post(`/v1/prod/emergency/${emergencyId}/sign`)
+export function signEmergency(emergencyId: number | string, nurseName: string) {
+  return request.post(`/v1/prod/emergency/${emergencyId}/sign`, { nurseName })
 }
 
 // ========== 智能分配 ==========
