@@ -48,11 +48,10 @@ export function searchMedicines(keyword: string) {
 
 // ==================== CSV 导入 ====================
 
-export function importPrescriptionCsv(file: File, hospitalId?: number, defaultRepetition?: number) {
+export function importPrescriptionCsv(file: File, hospitalId?: number) {
   const formData = new FormData()
   formData.append('file', file)
   if (hospitalId != null) formData.append('hospitalId', String(hospitalId))
-  if (defaultRepetition != null) formData.append('defaultRepetition', String(defaultRepetition))
   return request.post('/v1/prod/prescriptions/import', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
     timeout: 60000

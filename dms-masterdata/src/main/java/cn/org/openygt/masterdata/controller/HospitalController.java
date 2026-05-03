@@ -54,10 +54,10 @@ public class HospitalController {
         if (entity == null) return null;
         HospitalResponse resp = new HospitalResponse();
         resp.setId(entity.getId());
-        resp.setHospitalName(entity.getName());
-        resp.setHospitalCode(entity.getCode());
-        resp.setContactName(entity.getContactPerson());
-        resp.setContactPhone(entity.getPhone());
+        resp.setName(entity.getName());
+        resp.setCode(entity.getCode());
+        resp.setContactPerson(entity.getContactPerson());
+        resp.setPhone(entity.getPhone());
         resp.setAddress(entity.getAddress());
         resp.setStatus(entity.getStatus());
         resp.setCreatedAt(entity.getCreatedAt());

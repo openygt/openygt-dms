@@ -11,10 +11,10 @@ import java.time.LocalDateTime;
 public class HospitalResponse implements Serializable {
 
     private Long id;
-    private String hospitalName;
-    private String hospitalCode;
-    private String contactName;
-    private String contactPhone;
+    private String name;
+    private String code;
+    private String contactPerson;
+    private String phone;
     private String address;
     private Integer status;
     private LocalDateTime createdAt;
@@ -28,36 +28,36 @@ public class HospitalResponse implements Serializable {
         this.id = id;
     }
 
-    public String getHospitalName() {
-        return hospitalName;
+    public String getName() {
+        return name;
     }
 
-    public void setHospitalName(String hospitalName) {
-        this.hospitalName = hospitalName;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getHospitalCode() {
-        return hospitalCode;
+    public String getCode() {
+        return code;
     }
 
-    public void setHospitalCode(String hospitalCode) {
-        this.hospitalCode = hospitalCode;
+    public void setCode(String code) {
+        this.code = code;
     }
 
-    public String getContactName() {
-        return contactName;
+    public String getContactPerson() {
+        return contactPerson;
     }
 
-    public void setContactName(String contactName) {
-        this.contactName = contactName;
+    public void setContactPerson(String contactPerson) {
+        this.contactPerson = contactPerson;
     }
 
-    public String getContactPhone() {
-        return contactPhone;
+    public String getPhone() {
+        return phone;
     }
 
-    public void setContactPhone(String contactPhone) {
-        this.contactPhone = contactPhone;
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 
     public String getAddress() {
