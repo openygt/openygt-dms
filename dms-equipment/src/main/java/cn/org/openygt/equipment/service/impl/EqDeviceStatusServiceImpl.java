@@ -29,9 +29,9 @@ public class EqDeviceStatusServiceImpl implements EqDeviceStatusService {
 
     @Override
     public void saveSnapshot(EqDeviceStatus snapshot) {
-        snapshot.setSnapshotTime(LocalDateTime.now());
-        snapshot.setCreatedAt(LocalDateTime.now());
-        snapshot.setUpdatedAt(LocalDateTime.now());
+        if (snapshot.getSnapshotTime() == null) {
+            snapshot.setSnapshotTime(LocalDateTime.now());
+        }
         statusMapper.insert(snapshot);
         log.debug("设备[{}]状态快照已保存: {}", snapshot.getDeviceCode(), snapshot.getDetailStatus());
     }

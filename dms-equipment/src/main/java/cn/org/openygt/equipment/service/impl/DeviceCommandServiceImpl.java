@@ -1,10 +1,10 @@
 package cn.org.openygt.equipment.service.impl;
 
 import cn.org.openygt.common.service.EquipmentService;
-import cn.org.openygt.equipment.config.MqttConfig;
 import cn.org.openygt.equipment.entity.DeviceCommand;
 import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.mapper.DeviceCommandMapper;
+import cn.org.openygt.equipment.gateway.IoTGatewayClient;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import cn.org.openygt.equipment.service.DeviceCommandService;
 import cn.org.openygt.equipment.websocket.DeviceWebSocketController;
@@ -20,6 +20,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 设备指令服务实现。
+ *
+ * <p>Phase 3 解耦说明：已移除对 MqttConfig 的直接依赖，指令下发通过 dms-iot-gateway HTTP API 完成。</p>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -27,10 +32,10 @@ public class DeviceCommandServiceImpl implements DeviceCommandService {
 
     private final DeviceCommandMapper commandMapper;
     private final EqDeviceMapper deviceMapper;
-    private final MqttConfig mqttConfig;
     private final EquipmentService equipmentService;
     private final DeviceWebSocketController webSocketController;
     private final ObjectMapper objectMapper;
+    private final IoTGatewayClient iotGatewayClient;
 
     @Override
     @Transactional
@@ -49,12 +54,13 @@ public class DeviceCommandServiceImpl implements DeviceCommandService {
         // 1. 更新设备预期状态
         updateDeviceExpectedStatus(deviceCode, commandType);
 
-        // 2. 通过 MQTT 下发指令到设备
-        sendCommandToDevice(deviceCode, command);
-
-        // 3. 标记为已发送
-        command.setStatus("SENT");
-        command.setSendTime(LocalDateTime.now());
+        // 2. 通过 dms-iot-gateway 下发指令到设备
+        boolean sent = sendCommandToDevice(deviceCode, command);
+        command.setStatus(sent ? "SENT" : "FAILED");
+        command.setSendTime(sent ? LocalDateTime.now() : null);
+        if (!sent) {
+            command.setFailReason("IOT_GATEWAY_SEND_FAILED");
+        }
         command.setUpdatedAt(LocalDateTime.now());
         commandMapper.updateById(command);
 
@@ -114,19 +120,54 @@ public class DeviceCommandServiceImpl implements DeviceCommandService {
         }
     }
 
-    private void sendCommandToDevice(String deviceCode, DeviceCommand command) {
+    private boolean sendCommandToDevice(String deviceCode, DeviceCommand command) {
         try {
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("commandId", command.getId());
-            payload.put("commandType", command.getCommandType());
-            payload.put("payload", command.getCommandPayload());
-            payload.put("timestamp", System.currentTimeMillis());
-            String json = objectMapper.writeValueAsString(payload);
-            mqttConfig.publish("default", deviceCode, "command", json);
-            log.info("指令已下发到设备: {} -> {}", deviceCode, command.getCommandType());
+            // 查询设备协议类型
+            QueryWrapper<EqDevice> wrapper = new QueryWrapper<>();
+            wrapper.eq("device_code", deviceCode);
+            EqDevice device = deviceMapper.selectOne(wrapper);
+            String protocolType = device != null ? device.getProtocolType() : "penglin-mqtt";
+
+            Map<String, Object> params = new HashMap<>();
+            params.put("commandId", command.getId());
+            params.put("timestamp", System.currentTimeMillis());
+            params.put("deviceCode", deviceCode);
+            if (device != null) {
+                params.put("deviceType", device.getDeviceType());
+                params.put("tenantId", device.getTenantId());
+            }
+            params.putAll(parseCommandPayload(command.getCommandPayload()));
+
+            boolean sent = iotGatewayClient.sendCommand(deviceCode, protocolType, command.getCommandType(), params);
+            if (sent) {
+                log.info("指令已通过网关下发: {} -> {} [protocol={}]", deviceCode, command.getCommandType(), protocolType);
+            } else {
+                log.warn("指令通过网关下发失败: {} -> {} [protocol={}]", deviceCode, command.getCommandType(), protocolType);
+            }
+            return sent;
         } catch (Exception e) {
             log.error("指令下发失败: {} -> {}", deviceCode, command.getCommandType(), e);
+            return false;
         }
+    }
+
+    private Map<String, Object> parseCommandPayload(String payload) {
+        Map<String, Object> parsed = new HashMap<>();
+        if (payload == null || payload.trim().isEmpty()) {
+            return parsed;
+        }
+        try {
+            Object raw = objectMapper.readValue(payload, Object.class);
+            if (raw instanceof Map) {
+                parsed.putAll((Map<String, Object>) raw);
+            } else {
+                parsed.put("payload", raw);
+            }
+        } catch (Exception e) {
+            parsed.put("payload", payload);
+            log.debug("指令载荷不是 JSON 对象，按原始字符串透传: {}", payload);
+        }
+        return parsed;
     }
 
     @Override
@@ -136,11 +177,15 @@ public class DeviceCommandServiceImpl implements DeviceCommandService {
         if (command == null) {
             throw new IllegalArgumentException("指令不存在: " + commandId);
         }
-        command.setStatus("SENT");
-        command.setSendTime(LocalDateTime.now());
+        boolean sent = sendCommandToDevice(command.getDeviceCode(), command);
+        command.setStatus(sent ? "SENT" : "FAILED");
+        command.setSendTime(sent ? LocalDateTime.now() : null);
+        if (!sent) {
+            command.setFailReason("IOT_GATEWAY_SEND_FAILED");
+        }
         command.setUpdatedAt(LocalDateTime.now());
         commandMapper.updateById(command);
-        log.info("指令已发送: {} [id={}]", command.getCommandType(), commandId);
+        log.info("指令重发结果: {} [id={}, sent={}]", command.getCommandType(), commandId, sent);
         return command;
     }
 

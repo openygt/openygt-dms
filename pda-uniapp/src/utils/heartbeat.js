@@ -11,6 +11,11 @@ let heartbeatTimer = null
 let isRunning = false
 
 export function startHeartbeat() {
+  // H5 浏览器体验模式先关闭心跳，避免调用未就绪的后端接口导致持续 500。
+  if (typeof window !== 'undefined') {
+    console.log('Heartbeat disabled in H5 mode')
+    return
+  }
   if (isRunning) {
     console.log('Heartbeat already running')
     return

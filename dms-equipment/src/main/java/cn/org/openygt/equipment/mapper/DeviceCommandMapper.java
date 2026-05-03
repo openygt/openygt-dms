@@ -18,4 +18,11 @@ public interface DeviceCommandMapper extends BaseMapper<DeviceCommand> {
     @Select("SELECT * FROM device_command WHERE device_code = #{deviceCode} AND deleted = 0 ORDER BY created_at DESC LIMIT #{limit}")
     List<DeviceCommand> findRecentByDeviceCode(@Param("deviceCode") String deviceCode,
                                                 @Param("limit") int limit);
+
+    @Select("SELECT * FROM device_command " +
+            "WHERE device_code = #{deviceCode} AND command_type = #{commandType} " +
+            "AND status IN ('PENDING', 'SENT') AND deleted = 0 " +
+            "ORDER BY created_at DESC LIMIT 1")
+    DeviceCommand findLatestDeliveringCommand(@Param("deviceCode") String deviceCode,
+                                              @Param("commandType") String commandType);
 }
