@@ -1,6 +1,9 @@
 <template>
   <div>
-    <div class="page-header-title">医院管理：<span class="page-header-sub">医院信息维护、科室关联</span></div>
+    <div class="page-header-title">
+      医院管理
+      <div class="page-header-sub">医院信息维护、科室关联</div>
+    </div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
@@ -10,19 +13,19 @@
       </template>
       <el-form :inline="true" @submit.prevent>
         <el-form-item label="医院名称">
-          <el-input v-model="search.name" placeholder="医院名称" clearable />
+          <el-input v-model="search.keyword" placeholder="医院名称" clearable />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="fetchData">查询</el-button>
-          <el-button @click="search.name = ''; fetchData()">重置</el-button>
+          <el-button @click="search.keyword = ''; fetchData()">重置</el-button>
         </el-form-item>
       </el-form>
       <el-table :data="list" v-loading="loading" border>
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="hospitalName" label="医院名称" />
-        <el-table-column prop="hospitalCode" label="医院编码" />
-        <el-table-column prop="contactName" label="联系人" />
-        <el-table-column prop="contactPhone" label="联系电话" />
+        <el-table-column prop="name" label="医院名称" />
+        <el-table-column prop="code" label="医院编码" />
+        <el-table-column prop="contactPerson" label="联系人" />
+        <el-table-column prop="phone" label="联系电话" />
         <el-table-column prop="address" label="地址" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -42,16 +45,16 @@
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑医院' : '新增医院'" width="500px">
       <el-form :model="form" label-width="100px">
         <el-form-item label="医院名称" required>
-          <el-input v-model="form.hospitalName" />
+          <el-input v-model="form.name" />
         </el-form-item>
         <el-form-item label="医院编码" required>
-          <el-input v-model="form.hospitalCode" :disabled="!!form.id" />
+          <el-input v-model="form.code" :disabled="!!form.id" />
         </el-form-item>
         <el-form-item label="联系人">
-          <el-input v-model="form.contactName" />
+          <el-input v-model="form.contactPerson" />
         </el-form-item>
         <el-form-item label="联系电话">
-          <el-input v-model="form.contactPhone" />
+          <el-input v-model="form.phone" />
         </el-form-item>
         <el-form-item label="地址">
           <el-input v-model="form.address" type="textarea" rows="2" />
@@ -78,10 +81,10 @@ import request from '@/api/request'
 
 interface Hospital {
   id: number
-  hospitalName: string
-  hospitalCode: string
-  contactName: string
-  contactPhone: string
+  name: string
+  code: string
+  contactPerson: string
+  phone: string
   address: string
   status: number
 }
@@ -89,14 +92,14 @@ interface Hospital {
 const list = ref<Hospital[]>([])
 const loading = ref(false)
 const dialogVisible = ref(false)
-const search = ref({ name: '' })
+const search = ref({ keyword: '' })
 const form = ref<Partial<Hospital>>({ status: 1 })
 
 async function fetchData() {
   loading.value = true
   try {
     const params: any = {}
-    if (search.value.name) params.keyword = search.value.name
+    if (search.value.keyword) params.keyword = search.value.keyword
     const res: any = await request.get('/v1/md/hospitals', { params })
     list.value = res.data?.records || []
   } finally {

@@ -1,13 +1,14 @@
 <template>
   <div>
-    <div class="page-header-title">处方管理：<span class="page-header-sub">处方录入、导入、查询、异常处理</span></div>
+    <div class="page-header-title">处方录入：<span class="page-header-sub">手工录入处方、导入、查询和异常处方处理</span></div>
+    <div style="height: 16px"></div>
 
     <!-- 操作栏 -->
     <el-card>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
         <el-radio-group v-model="activeTab" @change="handleTabChange">
           <el-radio-button value="list">处方列表</el-radio-button>
-          <el-radio-button value="exceptions">异常处方</el-radio-button>
+          <el-radio-button value="exceptions">异常处方({{ exceptionCount }})</el-radio-button>
         </el-radio-group>
         <div v-if="activeTab === 'list'">
           <el-button type="primary" @click="openCreateDialog">新增处方</el-button>
@@ -20,7 +21,7 @@
       <el-form v-if="activeTab === 'list'" :inline="true" @submit.prevent>
         <el-form-item label="医院">
           <el-select v-model="search.hospitalId" placeholder="全部" clearable style="width: 160px">
-            <el-option v-for="h in hospitals" :key="h.id" :label="h.hospitalName" :value="h.id" />
+            <el-option v-for="h in hospitals" :key="h.id" :label="h.name" :value="h.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
@@ -59,6 +60,7 @@
         <el-table-column label="创建时间" width="160"><template #default="{row}">{{ formatTime(row.createdAt) }}</template></el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
+            <el-button size="small" @click="openCreateDialog(row)">编辑</el-button>
             <el-button size="small" @click="viewDetail(row)">详情</el-button>
           </template>
         </el-table-column>
@@ -74,30 +76,34 @@
         <el-table-column label="时间" width="160"><template #default="{row}">{{ formatTime(row.createdAt) }}</template></el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
+            <el-button size="small" @click="openCreateDialog(row)">编辑</el-button>
             <el-button size="small" type="warning" @click="resolveException(row)">纠正</el-button>
             <el-button size="small" @click="viewDetail(row)">详情</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <el-pagination v-if="total > 0" v-model:current-page="page" v-model:page-size="size" :total="total"
+      <el-pagination v-if="activeTab === 'list' && total > 0" v-model:current-page="page" v-model:page-size="size" :total="total"
         :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next" style="margin-top: 16px"
         @size-change="fetchData" @current-change="fetchData" />
+      <el-pagination v-if="activeTab === 'exceptions' && exceptionTotal > 0" v-model:current-page="exceptionPage" v-model:page-size="exceptionSize" :total="exceptionTotal"
+        :page-sizes="[10, 20, 50]" layout="total, sizes, prev, pager, next" style="margin-top: 16px"
+        @size-change="fetchExceptions" @current-change="fetchExceptions" />
     </el-card>
 
     <!-- ==================== 新增处方对话框 ==================== -->
-    <el-dialog v-model="createDialogVisible" title="新增处方" width="800px">
-      <el-form :model="form" label-width="100px">
+    <el-dialog v-model="createDialogVisible" :title="form.id ? '编辑处方' : '新增处方'" width="800px">
+      <el-form :model="form" :rules="formRules" label-width="100px">
         <el-row :gutter="16">
           <el-col :span="12">
-            <el-form-item label="患者姓名" required>
+            <el-form-item label="患者姓名" prop="patientName">
               <el-input v-model="form.patientName" placeholder="必填" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="医院">
+            <el-form-item label="医院" prop="hospitalId" required>
               <el-select v-model="form.hospitalId" placeholder="请选择" clearable style="width:100%">
-                <el-option v-for="h in hospitals" :key="h.id" :label="h.hospitalName" :value="h.id" />
+                <el-option v-for="h in hospitals" :key="h.id" :label="h.name" :value="h.id" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -112,8 +118,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="医师">
-              <el-input v-model="form.doctorName" />
+            <el-form-item label="医师" prop="doctorName" required>
+              <el-input v-model="form.doctorName" placeholder="必填" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -159,15 +165,6 @@
               <el-input v-model="row.unit" size="small" />
             </template>
           </el-table-column>
-          <el-table-column label="用法" width="110">
-            <template #default="{ row }">
-              <el-select v-model="row.medUsage" placeholder="常规" clearable size="small" style="width:100%">
-                <el-option label="先煎" value="先煎" /><el-option label="后下" value="后下" />
-                <el-option label="包煎" value="包煎" /><el-option label="另煎" value="另煎" />
-                <el-option label="烊化" value="烊化" /><el-option label="冲服" value="冲服" />
-              </el-select>
-            </template>
-          </el-table-column>
           <el-table-column label="煎法" width="110">
             <template #default="{ row }">
               <el-select v-model="row.decoctionMethod" placeholder="常规" clearable size="small" style="width:100%">
@@ -177,9 +174,9 @@
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="毒" width="40">
+          <el-table-column label="毒" width="55" align="center">
             <template #default="{ row }">
-              <el-tag v-if="row.isToxic" type="danger" size="small">毒</el-tag>
+              <el-checkbox v-model="row.isToxic" />
             </template>
           </el-table-column>
           <el-table-column label="操作" width="60" fixed="right">
@@ -198,7 +195,7 @@
     <!-- ==================== CSV导入对话框 ==================== -->
     <el-dialog v-model="importDialogVisible" title="CSV导入处方" width="500px">
       <div style="margin-bottom: 12px">
-        <p style="color:#666;font-size:13px">CSV格式：患者姓名,药材名称,用量,单位,用法,付数,备注</p>
+        <p style="color:#666;font-size:13px">CSV格式：患者姓名,药材名称,用量,单位,煎法,付数,备注</p>
         <p style="color:#666;font-size:13px">同一患者多行药材会自动合并为一个处方</p>
       </div>
       <el-upload drag accept=".csv" :auto-upload="false" :show-file-list="true"
@@ -209,12 +206,10 @@
       <el-form :inline="true" style="margin-top:12px">
         <el-form-item label="医院">
           <el-select v-model="importHospitalId" placeholder="全部" clearable style="width:160px">
-            <el-option v-for="h in hospitals" :key="h.id" :label="h.hospitalName" :value="h.id" />
+            <el-option v-for="h in hospitals" :key="h.id" :label="h.name" :value="h.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="默认付数">
-          <el-input-number v-model="importRepetition" :min="1" />
-        </el-form-item>
+
       </el-form>
       <template #footer>
         <el-button @click="importDialogVisible = false">取消</el-button>
@@ -259,7 +254,7 @@
           </el-table-column>
         </el-table>
         <el-button size="small" style="margin-top:8px"
-          @click="ocrResult.items.push({medicineName:'',dosage:'',unit:'g',medUsage:''})">+ 添加一行</el-button>
+          @click="ocrResult.items.push({medicineName:'',dosage:'',unit:'g'})">+ 添加一行</el-button>
       </div>
       <template #footer>
         <el-button @click="ocrDialogVisible = false">取消</el-button>
@@ -277,7 +272,9 @@
           <el-descriptions-item label="医师">{{ detail.doctorName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="类型">{{ detail.patientType === 1 ? '住院' : '门诊' }}</el-descriptions-item>
           <el-descriptions-item label="付数">{{ detail.repetition }}</el-descriptions-item>
-          <el-descriptions-item label="状态">{{ detail.status }}</el-descriptions-item>
+          <el-descriptions-item label="状态">
+            <el-tag :type="receiveStatusType(detail.receiveStatus)">{{ receiveStatusLabel(detail.receiveStatus) }}</el-tag>
+          </el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ formatTime(detail.createdAt) }}</el-descriptions-item>
           <el-descriptions-item v-if="detail.importException" label="异常" :span="2">
             <el-tag type="danger">异常处方</el-tag>
@@ -289,13 +286,11 @@
           <el-table-column prop="medicineName" label="药材名称" />
           <el-table-column prop="dosage" label="剂量" width="100" />
           <el-table-column prop="unit" label="单位" width="60" />
-          <el-table-column prop="medUsage" label="用法" width="80" />
-          <el-table-column prop="decoctionMethod" label="煎法" width="80" />
-          <el-table-column label="毒性" width="60">
-            <template #default="{row}">
-              <el-tag v-if="row.isToxic" type="danger" size="small">毒</el-tag>
-              <span v-else>-</span>
-            </template>
+          <el-table-column label="煎法" width="80">
+            <template #default="{row}">{{ decoctionMethodLabel(row.decoctionMethod) }}</template>
+          </el-table-column>
+          <el-table-column label="毒" width="55" align="center">
+            <template #default="{row}">{{ row.isToxic ? '是' : '否' }}</template>
           </el-table-column>
         </el-table>
         <div v-if="detail.rawImportData" style="margin-top:12px">
@@ -315,7 +310,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
 import request from '@/api/request'
 import {
-  listPrescriptions, createStructuredPrescription,
+  listPrescriptions, createStructuredPrescription, updatePrescription,
   searchMedicines, importPrescriptionCsv,
   createPrescriptionFromOcr, uploadOcrImage,
   getPrescriptionDetail
@@ -328,7 +323,6 @@ interface MedicineItem {
   medicineName: string
   dosage: number
   unit: string
-  medUsage: string
   decoctionMethod: string
   batchNo: string
   isToxic: boolean
@@ -337,7 +331,7 @@ interface MedicineItem {
 
 const defaultMedicineItem = (): MedicineItem => ({
   medicineId: null, medicineName: '', dosage: 10, unit: 'g',
-  medUsage: '', decoctionMethod: 'NORMAL', batchNo: '', isToxic: false
+  decoctionMethod: 'NORMAL', batchNo: '', isToxic: false
 })
 
 // ==================== 状态 ====================
@@ -345,12 +339,14 @@ const defaultMedicineItem = (): MedicineItem => ({
 const activeTab = ref('list')
 const loading = ref(false)
 const exceptionLoading = ref(false)
+const exceptionCount = ref(0)
 const page = ref(1)
 const size = ref(10)
 const total = ref(0)
 const list = ref<any[]>([])
 const exceptionList = ref<any[]>([])
 const exceptionPage = ref(1)
+const exceptionSize = ref(10)
 const exceptionTotal = ref(0)
 
 const search = reactive({
@@ -374,11 +370,17 @@ const form = reactive<any>({
   remark: '', medicineItems: [] as MedicineItem[]
 })
 
+const formRules = {
+  patientName: [{ required: true, message: '请输入患者姓名', trigger: 'blur' }],
+  hospitalId: [{ required: true, message: '请选择医院', trigger: 'change' }],
+  doctorName: [{ required: true, message: '请输入医师姓名', trigger: 'blur' }]
+}
+
 // 导入
 const importDialogVisible = ref(false)
 const importFile = ref<File | null>(null)
 const importHospitalId = ref<number | undefined>()
-const importRepetition = ref(1)
+
 const importing = ref(false)
 
 // OCR
@@ -426,10 +428,11 @@ async function fetchExceptions() {
   exceptionLoading.value = true
   try {
     const res: any = await request.get('/v1/prod/prescriptions/exceptions', {
-      params: { page: exceptionPage.value, size: 20 }
+      params: { page: exceptionPage.value, size: exceptionSize.value }
     })
     exceptionList.value = res.data?.records || []
     exceptionTotal.value = res.data?.total || 0
+    exceptionCount.value = res.data?.total || 0
   } finally {
     exceptionLoading.value = false
   }
@@ -450,6 +453,24 @@ function statusType(s?: string) {
   return map[s || ''] || ''
 }
 
+function receiveStatusLabel(s?: string) {
+  const map: Record<string, string> = { PENDING: '待接收', RECEIVED: '已接收', REJECTED: '已拒收' }
+  return map[s || ''] || s || '-'
+}
+
+function receiveStatusType(s?: string) {
+  const map: Record<string, string> = { PENDING: 'info', RECEIVED: 'success', REJECTED: 'danger' }
+  return map[s || ''] || ''
+}
+
+function decoctionMethodLabel(s?: string) {
+  const map: Record<string, string> = {
+    NORMAL: '常规', DECOCT_FIRST: '先煎', ADD_LATE: '后下',
+    WRAP_DECOCT: '包煎', SEPARATE_DECOCT: '另煎', INFUSE: '冲服'
+  }
+  return map[s || ''] || s || '-'
+}
+
 function formatTime(dt: string) {
   if (!dt) return '-'
   const d = new Date(dt)
@@ -458,10 +479,33 @@ function formatTime(dt: string) {
 
 // ==================== 创建处方 ====================
 
-function openCreateDialog() {
-  form.patientName = ''; form.hospitalId = null; form.patientType = 0
-  form.doctorName = ''; form.schemeId = null; form.repetition = 1
-  form.remark = ''; form.medicineItems = []
+function openCreateDialog(row?: any) {
+  if (row) {
+    // 编辑模式：预填充数据
+    form.id = row.id
+    form.patientName = row.patientName || ''
+    form.hospitalId = row.hospitalId || null
+    form.patientType = row.patientType ?? 0
+    form.doctorName = row.doctorName || ''
+    form.schemeId = row.schemeId || null
+    form.repetition = row.repetition || 1
+    form.remark = row.remark || ''
+    form.medicineItems = row.medicineItems?.map((m: any) => ({
+      medicineId: m.medicineId || null,
+      medicineName: m.medicineName || '',
+      dosage: m.dosage || 10,
+      unit: m.unit || 'g',
+      decoctionMethod: m.decoctionMethod || 'NORMAL',
+      batchNo: m.batchNo || '',
+      isToxic: !!m.isToxic
+    })) || []
+  } else {
+    // 新增模式：清空表单
+    form.id = undefined
+    form.patientName = ''; form.hospitalId = null; form.patientType = 0
+    form.doctorName = ''; form.schemeId = null; form.repetition = 1
+    form.remark = ''; form.medicineItems = []
+  }
   createDialogVisible.value = true
 }
 
@@ -481,7 +525,6 @@ function addMedicineBatch() {
           medicineName: parts[0],
           dosage: parseFloat(parts[1]) || 10,
           unit: parts[2] || 'g',
-          medUsage: parts[3] || '',
           decoctionMethod: 'NORMAL', batchNo: '', isToxic: false
         })
       }
@@ -520,14 +563,18 @@ async function handleSave() {
         medicineName: item.medicineName,
         dosage: item.dosage,
         unit: item.unit,
-        medUsage: item.medUsage || null,
         decoctionMethod: item.decoctionMethod,
         sortOrder: idx + 1,
         batchNo: item.batchNo || null
       }))
     }
-    await createStructuredPrescription(payload)
-    ElMessage.success('创建成功')
+    if (form.id) {
+      await updatePrescription(form.id, payload)
+      ElMessage.success('更新成功')
+    } else {
+      await createStructuredPrescription(payload)
+      ElMessage.success('创建成功')
+    }
     createDialogVisible.value = false
     fetchData()
   } catch { /* handled by interceptor */ }
@@ -544,7 +591,7 @@ async function handleImport() {
   importing.value = true
   try {
     const res: any = await importPrescriptionCsv(
-      importFile.value, importHospitalId.value, importRepetition.value)
+      importFile.value, importHospitalId.value)
     ElMessage.success(`导入完成：${res.data?.length || 0} 条处方`)
     importDialogVisible.value = false
     importFile.value = null
@@ -564,7 +611,7 @@ async function handleOcrImageChange(file: any) {
     // 模拟OCR识别结果（实际应调用OCR服务）
     ocrResult.value = {
       patientName: '', repetition: 1, imageUrl: ocrImageUrl.value,
-      items: [{ medicineName: '', dosage: '', unit: 'g', medUsage: '' }]
+      items: [{ medicineName: '', dosage: '', unit: 'g' }]
     }
     ElMessage.success('图片上传成功，请填写识别结果')
   } catch { /* handled */ }
@@ -605,7 +652,6 @@ async function resolveException(row: any) {
       medicineName: m.medicineName || '',
       dosage: m.dosage || 10,
       unit: m.unit || 'g',
-      medUsage: m.medUsage || '',
       decoctionMethod: m.decoctionMethod || 'NORMAL',
       batchNo: m.batchNo || '',
       isToxic: !!m.isToxic
@@ -624,7 +670,7 @@ async function resolveException(row: any) {
       source: 'MANUAL',
       medicineItems: form.medicineItems.map((item: any, idx: number) => ({
         medicineId: item.medicineId, medicineName: item.medicineName,
-        dosage: item.dosage, unit: item.unit, medUsage: item.medUsage || null,
+        dosage: item.dosage, unit: item.unit,
         decoctionMethod: item.decoctionMethod, sortOrder: idx + 1
       }))
     })
@@ -667,10 +713,11 @@ async function fetchHospitals() {
   try {
     const res: any = await request.get('/v1/md/hospitals', { params: { page: 1, size: 999 } })
     const list = res.data?.records || []
-    hospitals.value = list
-    hospitalMap.value = Object.fromEntries(list.map((h: any) => [h.id, h.hospitalName || h.name]))
+    const enabled = list.filter((h: any) => h.status === 1)
+    hospitals.value = enabled
+    hospitalMap.value = Object.fromEntries(enabled.map((h: any) => [h.id, h.name]))
   } catch {}
 }
 
-onMounted(() => { fetchData(); fetchSchemes(); fetchHospitals() })
+onMounted(() => { fetchData(); fetchExceptions(); fetchSchemes(); fetchHospitals() })
 </script>

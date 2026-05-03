@@ -14,6 +14,16 @@
         background-color="transparent"
         style="border-right: none"
       >
+        <!-- 0. 处方管理 -->
+        <el-sub-menu index="/rx">
+          <template #title>
+            <el-icon><Document /></el-icon>
+            <span>处方管理</span>
+          </template>
+          <el-menu-item index="/prescriptions">处方录入</el-menu-item>
+          <el-menu-item index="/emergency">紧急处方</el-menu-item>
+        </el-sub-menu>
+
         <!-- 1. 生产指挥 -->
         <el-sub-menu index="/command">
           <template #title>
@@ -139,6 +149,10 @@
       <el-header class="layout-header">
         <span class="header-title">{{ $route.meta.title || 'OpenYGT' }}</span>
         <div class="header-actions">
+          <el-breadcrumb separator=">">
+            <el-breadcrumb-item :to="{ path: '/prescriptions' }">处方录入</el-breadcrumb-item>
+          </el-breadcrumb>
+          <el-divider direction="vertical" />
           <ThemeToggle />
           <el-divider direction="vertical" />
           <span class="header-user">当前用户：{{ userStore.userInfo?.username || '未登录' }}</span>

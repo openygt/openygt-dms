@@ -1,6 +1,6 @@
 // API 配置
 // 开发环境用真实后端
-const API_BASE_URL_DEV = 'http://localhost:8081/api/v1/pda'
+const API_BASE_URL_DEV = 'http://47.95.216.32:8081/api/v1/pda'
 // E2E 测试环境用 Mock Server（自动识别，也可手动切换）
 const API_BASE_URL_MOCK = 'http://localhost:8082/api/v1/pda'
 

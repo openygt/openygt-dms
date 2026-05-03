@@ -34,7 +34,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PrescriptionServiceImplTest {
+public class PrescriptionServiceImplTest {
 
     @Mock
     private PrescriptionMapper prescriptionMapper;
