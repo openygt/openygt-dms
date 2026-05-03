@@ -1,6 +1,14 @@
 <template>
   <view class="container">
-    <view class="task-info" v-if="taskId">
+    <!-- 条码输入（无任务时显示） -->
+    <view class="barcode-input-area" v-if="!taskId">
+      <text class="barcode-label">请输入任务条码</text>
+      <input class="barcode-input" v-model="barcodeInput" placeholder="扫描或输入条码" @confirm="loadByBarcode" data-testid="input-photo-barcode" />
+      <button class="load-btn" @click="loadByBarcode">加载任务</button>
+    </view>
+
+    <template v-if="taskId">
+    <view class="task-info">
       <text class="info-label">任务: {{ taskBarcode }}</text>
       <text class="info-label" v-if="isForceMode" style="color:#f44336" data-testid="photo-force-mode">强制拍照留档模式</text>
     </view>
@@ -35,6 +43,7 @@
       <button class="skip-btn" v-if="isForceMode" @click="handleSkip" data-testid="btn-skip-photo">跳过</button>
       <button class="upload-btn" :loading="loading" :disabled="loading || photos.length === 0" @click="handleUpload" data-testid="btn-upload-photo">{{ isForceMode ? '提交留档' : '上传照片' }}</button>
     </view>
+    </template>
   </view>
 </template>
 
@@ -49,6 +58,12 @@ const taskId = ref('')
 const taskBarcode = ref('')
 const stepType = ref('')
 const isForceMode = ref(false)
+const barcodeInput = ref('')
+
+function loadByBarcode() {
+  if (!barcodeInput.value.trim()) { uni.showToast({ title: '请输入条码', icon: 'none' }); return }
+  taskId.value = taskBarcode.value = barcodeInput.value
+}
 const selectedType = ref('REVIEW')
 const photos = ref([])
 const remark = ref('')
@@ -134,6 +149,10 @@ function uploadFile(filePath) {
 
 <style scoped>
 .container { padding: 30rpx; padding-bottom: 160rpx; }
+.barcode-input-area { background: #fff; border-radius: 16rpx; padding: 40rpx; margin-bottom: 30rpx; text-align: center; }
+.barcode-label { font-size: 28rpx; color: #999; display: block; margin-bottom: 16rpx; }
+.barcode-input { width: 100%; height: 80rpx; border: 2rpx solid #ddd; border-radius: 12rpx; padding: 0 20rpx; font-size: 32rpx; box-sizing: border-box; margin-bottom: 16rpx; }
+.load-btn { width: 100%; height: 80rpx; background: #0066CC; color: #fff; font-size: 30rpx; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; }
 .task-info { background: #fff; border-radius: 16rpx; padding: 30rpx; margin-bottom: 30rpx; }
 .info-label { font-size: 30rpx; color: #333; display: block; }
 .photo-type { background: #fff; border-radius: 16rpx; padding: 30rpx; margin-bottom: 30rpx; }
