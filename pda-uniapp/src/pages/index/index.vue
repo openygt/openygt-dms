@@ -145,7 +145,7 @@ function formatTime(timeStr) {
 }
 
 function goScan() { uni.switchTab({ url: '/pages/task/scan' }) }
-function goScanManual() { uni.navigateTo({ url: '/pages/task/scan?mode=manual' }) }
+function goScanManual() { uni.setStorageSync('scan_mode', 'manual'); uni.switchTab({ url: '/pages/task/scan' }) }
 function goReprint() { uni.navigateTo({ url: '/pages/reprint/index' }) }
 function goConfirm() { uni.switchTab({ url: '/pages/task/scan' }) }
 function goPhoto() { uni.switchTab({ url: '/pages/task/scan' }) }

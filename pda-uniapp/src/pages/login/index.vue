@@ -52,7 +52,7 @@
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
-import { post } from '../../utils/request.js'
+import { get, post } from '../../utils/request.js'
 import config from '../../utils/config.js'
 import { startHeartbeat } from '../../utils/heartbeat.js'
 

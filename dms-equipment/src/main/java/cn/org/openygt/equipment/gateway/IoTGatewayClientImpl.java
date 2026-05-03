@@ -24,7 +24,7 @@ public class IoTGatewayClientImpl implements IoTGatewayClient {
     private String gatewayBaseUrl;
 
     @Override
-    public void sendCommand(String deviceCode, String protocolType, String commandType, Map<String, Object> params) {
+    public boolean sendCommand(String deviceCode, String protocolType, String commandType, Map<String, Object> params) {
         String url = gatewayBaseUrl + "/api/v1/iot/command";
 
         Map<String, Object> request = new HashMap<>();
@@ -44,15 +44,19 @@ public class IoTGatewayClientImpl implements IoTGatewayClient {
                 if (Boolean.TRUE.equals(success)) {
                     log.info("指令通过网关下发成功: device={}, protocol={}, type={}",
                             deviceCode, protocolType, commandType);
+                    return true;
                 } else {
                     String error = (String) response.getBody().get("error");
                     log.error("网关返回下发失败: device={}, error={}", deviceCode, error);
+                    return false;
                 }
             } else {
                 log.error("网关下发指令 HTTP 错误: status={}, device={}", response.getStatusCode(), deviceCode);
+                return false;
             }
         } catch (Exception e) {
             log.error("调用网关下发指令异常: device={}, url={}", deviceCode, url, e);
+            return false;
         }
     }
 }
