@@ -75,6 +75,14 @@ const fontSizeClass = ref('')
 
 onMounted(() => {
   loadHistory()
+  // 如果是"手动输入"模式，自动聚焦输入框
+  if (uni.getStorageSync('scan_mode') === 'manual') {
+    uni.removeStorageSync('scan_mode')
+    setTimeout(() => {
+      const input = document.querySelector('[data-testid="input-barcode"]')
+      if (input) input.focus()
+    }, 500)
+  }
   // 监听字号变化
   uni.$on('ygt-font-size-change', (size) => {
     fontSizeClass.value = size === 'normal' ? '' : `font-${size}`

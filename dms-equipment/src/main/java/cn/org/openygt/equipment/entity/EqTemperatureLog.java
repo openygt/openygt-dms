@@ -1,25 +1,32 @@
 package cn.org.openygt.equipment.entity;
 
-import cn.org.openygt.common.entity.BaseAuditEntity;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * 设备温度日志实体，对应表 {@code eq_temperature_log}。
  *
- * <p>温度数据为审计追踪数据，物理保留不逻辑删除（继承 BaseAuditEntity，无 deleted 字段）。</p>
+ * <p>该表在线上库中仅包含遥测相关字段，不包含 updated_at / alarm_reason / is_alarm 等扩展列。</p>
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @TableName("eq_temperature_log")
-public class EqTemperatureLog extends BaseAuditEntity {
+public class EqTemperatureLog {
+
+    @TableId(type = IdType.AUTO)
+    private Long id;
+
+    @TableField("tenant_id")
+    private String tenantId = "default";
 
     private Long deviceId;
+    private String deviceCode;
     private BigDecimal temperature;
-    private java.time.LocalDateTime recordedAt;   // 设备上报时间
-    private Integer isAlarm;
-    private String alarmReason;
+    private LocalDateTime createdAt;
+    private LocalDateTime recordedAt;
 }

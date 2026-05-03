@@ -1,9 +1,10 @@
 package cn.org.openygt.equipment.entity;
 
-import cn.org.openygt.common.entity.BaseAuditEntity;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -12,9 +13,14 @@ import java.time.LocalDateTime;
  * 设备实时状态快照表（无逻辑删除，物理保留历史）
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @TableName("eq_device_status")
-public class EqDeviceStatus extends BaseAuditEntity {
+public class EqDeviceStatus {
+
+    @TableId(type = IdType.AUTO)
+    private Long id;
+
+    @TableField("tenant_id")
+    private String tenantId = "default";
 
     /** 设备编码 */
     private String deviceCode;

@@ -1,5 +1,6 @@
 package cn.org.openygt.iot.adapter;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -12,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>Spring 容器启动时自动扫描并注册所有 {@link DeviceAdapter} 实现类。</p>
  */
+@Slf4j
 @Component
 public class AdapterRegistry {
 
@@ -41,13 +43,21 @@ public class AdapterRegistry {
 
     public void startAll() {
         for (DeviceAdapter adapter : adapters.values()) {
-            adapter.start();
+            try {
+                adapter.start();
+            } catch (Exception e) {
+                log.error("适配器启动失败: protocolType={}", adapter.getProtocolType(), e);
+            }
         }
     }
 
     public void stopAll() {
         for (DeviceAdapter adapter : adapters.values()) {
-            adapter.stop();
+            try {
+                adapter.stop();
+            } catch (Exception e) {
+                log.error("适配器停止失败: protocolType={}", adapter.getProtocolType(), e);
+            }
         }
     }
 }
