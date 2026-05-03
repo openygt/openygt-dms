@@ -145,10 +145,10 @@ function formatTime(timeStr) {
 }
 
 function goScan() { uni.switchTab({ url: '/pages/task/scan' }) }
-function goScanManual() { uni.setStorageSync('scan_mode', 'manual'); uni.switchTab({ url: '/pages/task/scan' }) }
+function goScanManual() { uni.navigateTo({ url: '/pages/task/unified-scan' }) }
 function goReprint() { uni.navigateTo({ url: '/pages/reprint/index' }) }
-function goConfirm() { uni.switchTab({ url: '/pages/task/scan' }) }
-function goPhoto() { uni.switchTab({ url: '/pages/task/scan' }) }
+function goConfirm() { uni.navigateTo({ url: '/pages/task/confirm' }) }
+function goPhoto() { uni.navigateTo({ url: '/pages/photo/upload' }) }
 function goLog() { uni.switchTab({ url: '/pages/log/list' }) }
 function goVoice() { uni.navigateTo({ url: '/pages/voice/index' }) }
 function goPatientQuery() { uni.navigateTo({ url: '/pages/patient/query' }) }

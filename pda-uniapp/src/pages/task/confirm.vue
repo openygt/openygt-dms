@@ -1,5 +1,12 @@
 <template>
   <view class="confirm-page">
+    <!-- 条码输入（无任务时显示） -->
+    <view class="barcode-input-area" v-if="!barcode">
+      <text class="barcode-label">请输入任务条码</text>
+      <input class="barcode-input" v-model="barcodeInput" placeholder="扫描或输入条码" @confirm="loadByBarcode" data-testid="input-confirm-barcode" />
+      <button class="ygt-btn-primary barcode-btn" @click="loadByBarcode">加载任务</button>
+    </view>
+
     <!-- 任务信息卡 -->
     <view class="task-info-card">
       <view class="task-row">
@@ -86,6 +93,7 @@ import { get, post } from '../../utils/request.js'
 const taskId = ref('')
 const barcode = ref('')
 const deviceId = ref('')
+const barcodeInput = ref('')
 const currentStep = ref('待泡药')
 const selectedStep = ref('')
 const remark = ref('')
@@ -115,6 +123,12 @@ const currentStatusClass = computed(() => {
   if (current.value.includes('START')) return 'status-running'
   return 'status-pending'
 })
+
+function loadByBarcode() {
+  if (!barcodeInput.value.trim()) { uni.showToast({ title: '请输入条码', icon: 'none' }); return }
+  barcode.value = barcodeInput.value
+  loadTaskProgress()
+}
 
 onLoad((options) => {
   taskId.value = options.taskId || ''
@@ -240,6 +254,25 @@ async function handleConfirm() {
   min-height: 100vh;
   padding: 24rpx;
 }
+
+/* 条码输入区 */
+.barcode-input-area {
+  background: #fff;
+  border-radius: $ygt-radius-lg;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  box-shadow: $ygt-shadow-card;
+  text-align: center;
+}
+.barcode-label {
+  font-size: 28rpx; color: $ygt-gray-500; display: block; margin-bottom: 16rpx;
+}
+.barcode-input {
+  width: 100%; height: 80rpx; border: 2rpx solid $ygt-gray-200;
+  border-radius: $ygt-radius-md; padding: 0 20rpx; font-size: 32rpx;
+  box-sizing: border-box; margin-bottom: 16rpx;
+}
+.barcode-btn { width: 100%; height: 80rpx; line-height: 80rpx; font-size: 30rpx; }
 
 /* 任务信息卡 */
 .task-info-card {

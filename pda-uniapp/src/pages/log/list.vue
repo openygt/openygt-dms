@@ -1,5 +1,14 @@
 <template>
   <view class="container">
+    <!-- 自定义导航栏 -->
+    <view class="nav-bar">
+      <view class="nav-back" @click="goBack" data-testid="btn-log-back">
+        <text class="back-icon">←</text>
+        <text class="back-text">返回</text>
+      </view>
+      <text class="nav-title">操作日志</text>
+      <view class="nav-placeholder"></view>
+    </view>
     <view class="filter-bar">
       <view class="filter-item" :class="{ active: filter === 'all' }" @click="filter = 'all'">
         <text>全部</text>
@@ -67,6 +76,10 @@ onShow(() => {
   loadLogs()
 })
 
+function goBack() {
+  uni.switchTab({ url: '/pages/index/index' })
+}
+
 async function loadLogs() {
   try {
     const res = await get('/log/recent', { limit: 50 })
@@ -84,6 +97,19 @@ async function loadLogs() {
   background: #f5f5f5;
 }
 
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 30rpx;
+  background: #0066CC;
+  color: #fff;
+}
+.nav-back { display: flex; align-items: center; padding: 10rpx 0; }
+.back-icon { font-size: 36rpx; margin-right: 8rpx; }
+.back-text { font-size: 28rpx; }
+.nav-title { font-size: 32rpx; font-weight: 600; }
+.nav-placeholder { width: 80rpx; }
 .filter-bar {
   display: flex;
   background: #fff;
