@@ -12,4 +12,9 @@ public interface EqDevicePairingService {
     void delete(Long id);
     EqDevicePairing getById(Long id);
     List<EqDevicePairing> listAll();
+
+    /**
+     * 根据煎药机设备ID查找配对记录
+     */
+    EqDevicePairing findByDecocterId(Long decoctDeviceId);
 }

@@ -213,12 +213,18 @@ function handleMainAction() {
     return
   }
 
-  // 需要设备绑定 → 跳转设备绑定页
-  if (action.needDevice && !task.value.deviceCode) {
-    uni.navigateTo({
-      url: `/pages/device/bind?taskId=${task.value.taskId}&stepType=${action.stepType}&barcode=${barcode.value}`
-    })
-    return
+  // 需要设备绑定 → 跳转设备绑定页（区分煎药机和包装机）
+  if (action.needDevice) {
+    const hasDevice = action.stepType === 'START_DECOCT' ? task.value.decoctDeviceId :
+                      action.stepType === 'START_PACKAGE' ? task.value.packageDeviceId : null
+    // 包装机与煎药机组队，有煎药机则认为包装机可用
+    const skipBind = action.stepType === 'START_PACKAGE' && task.value.decoctDeviceId
+    if (!hasDevice && !skipBind) {
+      uni.navigateTo({
+        url: `/pages/device/bind?taskId=${task.value.taskId}&stepType=${action.stepType}&barcode=${barcode.value}`
+      })
+      return
+    }
   }
 
   // 需要拍照 → 跳转拍照页（强制模式）
@@ -229,11 +235,17 @@ function handleMainAction() {
     return
   }
 
+  // START_PACKAGE 且无包装机ID → 走后端自动分组解析，不传煎药机ID
+  if (action.stepType === 'START_PACKAGE' && !task.value.packageDeviceId) {
+    confirmStep(action, true)
+    return
+  }
+
   // 普通工序确认 → 弹窗直接确认，不跳转页面
   confirmStep(action)
 }
 
-async function confirmStep(action) {
+async function confirmStep(action, skipDeviceId) {
   const stepLabel = action.text || action.stepType
   const { confirm } = await uni.showModal({
     title: '工序确认',
@@ -244,7 +256,11 @@ async function confirmStep(action) {
 
   try {
     uni.showLoading({ title: '提交中...' })
-    const deviceId = task.value.decoctDeviceId || task.value.packageDeviceId || ''
+    // 按工序类型取对应的设备ID
+    // START_PACKAGE 且 skipDeviceId=true → 不传deviceId，由后端自动分组解析
+    const deviceId = skipDeviceId ? null :
+                     action.stepType === 'START_DECOCT' ? task.value.decoctDeviceId :
+                     action.stepType === 'START_PACKAGE' ? (task.value.packageDeviceId || task.value.decoctDeviceId) : null
     await post('/task/confirm', {
       taskId: task.value.taskId,
       stepType: action.stepType,
