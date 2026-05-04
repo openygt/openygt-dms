@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onShow } from 'vue'
 import { get, post } from '../../utils/request.js'
 import config from '../../utils/config.js'
 import { startHeartbeat } from '../../utils/heartbeat.js'
@@ -65,6 +65,14 @@ const form = reactive({ userCode: '', password: '', macAddress: 'AA:BB:CC:DD:EE:
 
 onMounted(() => {
   checkVersion()
+})
+
+// 如果已登录，直接跳首页（防止浏览器回退到登录页）
+onShow(() => {
+  const token = uni.getStorageSync(config.tokenKey)
+  if (token) {
+    uni.switchTab({ url: '/pages/index/index' })
+  }
 })
 
 async function checkVersion() {

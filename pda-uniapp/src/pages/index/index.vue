@@ -70,7 +70,7 @@
           <view class="recent-info">
             <text class="recent-patient">{{ item.patientName || '未知患者' }}</text>
             <text class="recent-taskid">任务号: {{ item.taskId }}</text>
-            <text class="recent-barcode">处方号: {{ item.barcode }}</text>
+            <text class="recent-barcode">处方号: {{ item.prescriptionNumber || item.barcode }}</text>
           </view>
           <view class="recent-meta">
             <text class="recent-status" :style="{ color: getStatusColor(item.status) }">{{ item.statusName }}</text>

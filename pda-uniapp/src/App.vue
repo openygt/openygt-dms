@@ -2,6 +2,7 @@
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 import { startHeartbeat, stopHeartbeat } from './utils/heartbeat.js'
 import './utils/feedback.js'
+import config from './utils/config.js'
 
 function applyFontSize(size) {
   // #ifdef H5
@@ -31,6 +32,17 @@ onLaunch(() => {
 
 onShow(() => {
   console.log('App Show')
+  // 检查登录状态：非登录页没有 token 时重定向
+  const token = uni.getStorageSync(config.tokenKey)
+  if (!token) {
+    const pages = getCurrentPages()
+    if (pages.length > 0) {
+      const route = pages[pages.length - 1].route || ''
+      if (!route.includes('login')) {
+        uni.reLaunch({ url: '/pages/login/index' })
+      }
+    }
+  }
 })
 
 onHide(() => {
