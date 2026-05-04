@@ -28,24 +28,43 @@ public class TaskController {
         return ApiResponse.success(taskService.queryTasks(status, deviceId, id, prescriptionId, operatorId, startTime, endTime, page, size));
     }
 
-    @PostMapping("/{id}/soak/start")
-    public ApiResponse<Task> startSoak(@PathVariable Long id, @RequestBody SoakStartRequest request) {
-        return ApiResponse.success(taskService.startSoak(id, request.getOperatorId()));
+    public ApiResponse<Task> startSoak(@PathVariable Long id,
+                                       @RequestBody(required = false) SoakStartRequest request,
+                                       @RequestAttribute(value = "userId", required = false) Long userId) {
+        return ApiResponse.success(taskService.startSoak(id, resolveOperatorId(request != null ? request.getOperatorId() : null, userId)));
     }
 
     @PostMapping("/{id}/decoct/start")
-    public ApiResponse<Task> startDecoct(@PathVariable Long id, @RequestBody DecoctStartRequest request) {
-        return ApiResponse.success(taskService.startDecoct(id, request.getDeviceCode(), request.getOperatorId()));
+    public ApiResponse<Task> startDecoct(@PathVariable Long id,
+                                         @RequestBody(required = false) DecoctStartRequest request,
+                                         @RequestAttribute(value = "userId", required = false) Long userId) {
+        DecoctStartRequest actualRequest = request != null ? request : new DecoctStartRequest();
+        return ApiResponse.success(taskService.startDecoct(id, actualRequest.getDeviceCode(), resolveOperatorId(actualRequest.getOperatorId(), userId)));
     }
 
     @PostMapping("/{id}/suspend")
-    public ApiResponse<Task> suspend(@PathVariable Long id, @RequestBody SuspendRequest request) {
-        return ApiResponse.success(taskService.suspendTask(id, request.getOperatorId(), request.getReason(), request.getSuspendType()));
+    public ApiResponse<Task> suspend(@PathVariable Long id,
+                                     @RequestBody(required = false) SuspendRequest request,
+                                     @RequestAttribute(value = "userId", required = false) Long userId) {
+        SuspendRequest actualRequest = request != null ? request : new SuspendRequest();
+        return ApiResponse.success(taskService.suspendTask(id, resolveOperatorId(actualRequest.getOperatorId(), userId), actualRequest.getReason(), actualRequest.getSuspendType()));
     }
 
     @PostMapping("/{id}/resume")
-    public ApiResponse<Task> resume(@PathVariable Long id, @RequestBody ResumeRequest request) {
-        return ApiResponse.success(taskService.resumeTask(id, request.getOperatorId()));
+    public ApiResponse<Task> resume(@PathVariable Long id,
+                                    @RequestBody(required = false) ResumeRequest request,
+                                    @RequestAttribute(value = "userId", required = false) Long userId) {
+        return ApiResponse.success(taskService.resumeTask(id, resolveOperatorId(request != null ? request.getOperatorId() : null, userId)));
+    }
+
+    private String resolveOperatorId(String operatorId, Long userId) {
+        if (operatorId != null && !operatorId.trim().isEmpty()) {
+            return operatorId;
+        }
+        if (userId != null) {
+            return String.valueOf(userId);
+        }
+        return "SYSTEM";
     }
 
     @lombok.Data

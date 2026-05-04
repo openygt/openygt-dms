@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:local": "vite --config vite.config.local.ts",
     "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
     "test:e2e": "playwright test --config tests-e2e/playwright.config.ts"

@@ -13,8 +13,10 @@ public class GanttItemDTO {
     private String deviceName;
     private Long employeeId;
     private String employeeName;
+    private Integer assignType;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
+    private LocalDateTime createdAt;
     private String status;
     private Integer progress;
 }

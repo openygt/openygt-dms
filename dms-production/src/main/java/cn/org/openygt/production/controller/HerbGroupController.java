@@ -31,7 +31,10 @@ public class HerbGroupController {
 
     @PostMapping("/herb-group/{groupId}/confirm")
     public ApiResponse<HerbGroupDTO> confirmHerbGroup(@PathVariable Long groupId,
-                                                       @Validated @RequestBody HerbGroupConfirmRequest request) {
-        return ApiResponse.success(herbGroupService.confirmHerbGroup(groupId, request.getOperatorId(), request.getDeviceId()));
+                                                       @Validated @RequestBody(required = false) HerbGroupConfirmRequest request,
+                                                       @org.springframework.web.bind.annotation.RequestAttribute(value = "userId", required = false) Long userId) {
+        HerbGroupConfirmRequest actualRequest = request != null ? request : new HerbGroupConfirmRequest();
+        Long operatorId = actualRequest.getOperatorId() != null ? actualRequest.getOperatorId() : userId;
+        return ApiResponse.success(herbGroupService.confirmHerbGroup(groupId, operatorId, actualRequest.getDeviceId()));
     }
 }
