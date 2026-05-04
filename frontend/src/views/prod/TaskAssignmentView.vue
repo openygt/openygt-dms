@@ -130,17 +130,17 @@
       <el-form :model="manualForm" label-width="100px">
         <el-form-item label="任务" required>
           <el-select v-model="manualForm.taskId" placeholder="选择待分配任务" style="width: 100%">
-            <el-option v-for="task in pendingTasks" :key="task.id" :label="task.name" :value="task.id" />
+            <el-option v-for="task in availableTasks" :key="task.id" :label="task.name" :value="task.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="员工">
-          <el-select v-model="manualForm.employeeId" clearable placeholder="选择员工" style="width: 100%">
-            <el-option v-for="employee in employees" :key="employee.id" :label="employee.name" :value="employee.id" />
+        <el-form-item label="员工" required>
+          <el-select v-model="manualForm.employeeId" placeholder="选择员工" style="width: 100%">
+            <el-option v-for="employee in availableEmployees" :key="employee.id" :label="employee.name" :value="employee.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="设备">
-          <el-select v-model="manualForm.deviceId" clearable placeholder="选择设备" style="width: 100%">
-            <el-option v-for="device in devices" :key="device.id" :label="device.name" :value="device.id" />
+        <el-form-item label="设备" required>
+          <el-select v-model="manualForm.deviceId" placeholder="选择设备" style="width: 100%">
+            <el-option v-for="device in availableDevices" :key="device.id" :label="device.name" :value="device.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
@@ -186,7 +186,7 @@ import { ElMessage } from 'element-plus'
 import { Edit } from '@element-plus/icons-vue'
 import request from '@/api/request'
 import { getDeviceList } from '@/api/equipment'
-import { getDeviceLoad, getEmployeeLoad, getSchedule, manualAssign, reassign } from '@/api/newModules'
+import { getDeviceLoad, getEmployeeLoad, getSchedule, getOccupiedIds, manualAssign, reassign } from '@/api/newModules'
 
 interface AssignmentView {
   id: number
@@ -219,6 +219,20 @@ const pendingTasks = ref<any[]>([])
 const employees = ref<any[]>([])
 const devices = ref<any[]>([])
 const ganttRows = ref<any[]>([])
+
+const occupiedIds = ref<{ taskIds: number[]; employeeIds: number[]; deviceIds: number[] }>({
+  taskIds: [], employeeIds: [], deviceIds: []
+})
+
+const availableEmployees = computed(() =>
+  employees.value.filter(e => !occupiedIds.value.employeeIds.includes(e.id))
+)
+const availableDevices = computed(() =>
+  devices.value.filter(d => !occupiedIds.value.deviceIds.includes(d.id))
+)
+const availableTasks = computed(() =>
+  pendingTasks.value.filter(t => !occupiedIds.value.taskIds.includes(t.id))
+)
 
 const manualDialogVisible = ref(false)
 const reassignDialogVisible = ref(false)
@@ -274,10 +288,10 @@ function getAssignTypeMeta(assignType: number | null | undefined) {
 }
 
 function getStatusMeta(status: string | number | null | undefined) {
-  if (status === 0 || status === '0') return { label: '待执行', tag: 'info' }
-  if (status === 1 || status === '1') return { label: '执行中', tag: 'primary' }
-  if (status === 2 || status === '2') return { label: '已完成', tag: 'success' }
-  if (status === 3 || status === '3') return { label: '已取消', tag: 'danger' }
+  if (status === 0 || status === '0' || status === 1 || status === '1') return { label: '待执行', tag: 'info' }
+  if (status === 2 || status === '2') return { label: '执行中', tag: 'primary' }
+  if (status === 3 || status === '3') return { label: '已完成', tag: 'success' }
+  if (status === 4 || status === '4') return { label: '已取消', tag: 'danger' }
   return { label: String(status ?? '-'), tag: 'info' }
 }
 
@@ -399,7 +413,12 @@ async function fetchLoadData() {
 async function fetchAssignments() {
   loading.value = true
   try {
-    const res: any = await getSchedule()
+    const params: any = {}
+    if (selectedDate.value) {
+      params.startTime = selectedDate.value + 'T00:00:00'
+      params.endTime = selectedDate.value + 'T23:59:59'
+    }
+    const res: any = await getSchedule(params)
     const list = res.data || []
     assignments.value = list.map((item: any) => {
       const assignType = getAssignTypeMeta(item.assignType)
@@ -414,7 +433,7 @@ async function fetchAssignments() {
         assignTypeTag: assignType.tag,
         statusLabel: status.label,
         statusTag: status.tag,
-        assignedAt: formatDateTime(item.startTime)
+        assignedAt: formatDateTime(item.createdAt || item.startTime)
       }
     })
     buildGanttRows(list)
@@ -427,7 +446,13 @@ async function reloadAll() {
   await Promise.all([fetchLoadData(), fetchAssignments(), loadTaskOptions()])
 }
 
-function openManualDialog() {
+async function openManualDialog() {
+  try {
+    const occRes: any = await getOccupiedIds(selectedDate.value)
+    occupiedIds.value = occRes.data || { taskIds: [], employeeIds: [], deviceIds: [] }
+  } catch {
+    occupiedIds.value = { taskIds: [], employeeIds: [], deviceIds: [] }
+  }
   manualDialogVisible.value = true
   manualForm.taskId = null
   manualForm.employeeId = null
@@ -440,19 +465,28 @@ async function handleManualAssign() {
     ElMessage.warning('请选择任务')
     return
   }
-  if (!manualForm.employeeId && !manualForm.deviceId) {
-    ElMessage.warning('员工和设备至少选择一项')
+  if (!manualForm.employeeId) {
+    ElMessage.warning('请选择员工')
     return
   }
-  await manualAssign({
+  if (!manualForm.deviceId) {
+    ElMessage.warning('请选择设备')
+    return
+  }
+  try {
+    await manualAssign({
     taskId: manualForm.taskId,
     employeeId: manualForm.employeeId,
     deviceId: manualForm.deviceId,
-    reason: manualForm.reason || ''
+    reason: manualForm.reason || '',
+    scheduledDate: selectedDate.value
   })
   ElMessage.success('手动分配成功')
   manualDialogVisible.value = false
   await reloadAll()
+} catch (e: any) {
+  // error already shown by axios interceptor
+}
 }
 
 function openReassignDialog(row: AssignmentView) {

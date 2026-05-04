@@ -50,7 +50,8 @@ request.interceptors.response.use(
       ElMessage.error('登录已过期，请重新登录')
       useUserStore().logout()
     } else {
-      ElMessage.error(err.message || '网络错误')
+      const msg = err.response?.data?.message || err.message || '网络错误'
+      ElMessage.error(msg)
     }
     return Promise.reject(err)
   }
