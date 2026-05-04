@@ -7,10 +7,31 @@ const request = axios.create({
   timeout: 30000
 })
 
+function applyAuthorizationHeader(headers: any, token: string) {
+  if (!headers || !token) return
+  if (typeof headers.set === 'function') {
+    headers.set('Authorization', 'Bearer ' + token)
+    return
+  }
+  headers.Authorization = 'Bearer ' + token
+}
+
+export function syncRequestAuthorization(token?: string) {
+  const auth = token ? 'Bearer ' + token : ''
+  if (auth) {
+    request.defaults.headers.common.Authorization = auth
+  } else {
+    delete request.defaults.headers.common.Authorization
+  }
+}
+
+syncRequestAuthorization(localStorage.getItem('token') || '')
+
 request.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) {
-    config.headers.Authorization = 'Bearer ' + token
+    config.headers = config.headers || {}
+    applyAuthorizationHeader(config.headers, token)
   }
   return config
 })

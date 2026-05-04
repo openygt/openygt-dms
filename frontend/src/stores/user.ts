@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import request from '@/api/request'
+import { syncRequestAuthorization } from '@/api/request'
 import router from '@/router'
 
 export interface MenuItem {
@@ -20,6 +21,7 @@ export const useUserStore = defineStore('user', () => {
 
   // 初始化：若本地有 token，自动恢复用户权限信息（解决刷新后权限丢失）
   if (token.value) {
+    syncRequestAuthorization(token.value)
     fetchUserInfo()
   }
 
@@ -27,6 +29,7 @@ export const useUserStore = defineStore('user', () => {
     const res: any = await request.post('/v1/rbac/auth/login', { username, password })
     token.value = res.data.token
     localStorage.setItem('token', res.data.token)
+    syncRequestAuthorization(res.data.token)
     await fetchUserInfo()
     await fetchMenus()
   }
@@ -117,6 +120,7 @@ export const useUserStore = defineStore('user', () => {
     menus.value = []
     permissions.value = []
     localStorage.removeItem('token')
+    syncRequestAuthorization('')
     router.push('/login')
   }
 

@@ -1,6 +1,7 @@
 package cn.org.openygt.iot.router;
 
 import cn.org.openygt.iot.config.GatewayProperties;
+import cn.org.openygt.iot.gateway.session.GatewayDeviceSessionController;
 import cn.org.openygt.iot.protocol.DeviceMessage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,9 @@ class MessageRouterTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private GatewayDeviceSessionController gatewayDeviceSessionController;
+
     private GatewayProperties properties;
     private MessageRouter router;
 
@@ -34,7 +38,7 @@ class MessageRouterTest {
         properties.setBackendUrl("http://equipment-service");
         properties.getRetry().setMaxAttempts(3);
         properties.getRetry().setBackoffMillis(0L);
-        router = new MessageRouter(restTemplate, properties);
+        router = new MessageRouter(restTemplate, properties, gatewayDeviceSessionController);
     }
 
     @Test
