@@ -80,7 +80,7 @@
     <el-dialog v-model="showRuleDialog" title="时效规则配置" width="600px">
       <el-form :model="ruleForm" label-width="120px">
         <el-form-item label="规则名称">
-          <el-input v-model="ruleForm.name" placeholder="请输入规则名称" />
+          <el-input v-model="ruleForm.ruleName" placeholder="请输入规则名称" />
         </el-form-item>
         <el-form-item label="适用阶段">
           <el-select v-model="ruleForm.stage" placeholder="请选择阶段" style="width: 100%">
@@ -97,16 +97,16 @@
           </el-select>
         </el-form-item>
         <el-form-item label="标准时长(分钟)">
-          <el-input-number v-model="ruleForm.standardMinutes" :min="1" style="width: 100%" />
+          <el-input-number v-model="ruleForm.standardDuration" :min="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="预警提前(分钟)">
-          <el-input-number v-model="ruleForm.warningMinutes" :min="1" style="width: 100%" />
+          <el-input-number v-model="ruleForm.warningThreshold" :min="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="超时阈值(分钟)">
-          <el-input-number v-model="ruleForm.timeoutMinutes" :min="1" style="width: 100%" />
+          <el-input-number v-model="ruleForm.alertThreshold" :min="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="是否启用">
-          <el-switch v-model="ruleForm.enabled" />
+          <el-switch v-model="ruleForm.isDefault" :active-value="1" :inactive-value="0" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -146,12 +146,13 @@ const stat = reactive({ normal: 0, warning: 0, timeout: 0, resolved: 0 })
 
 const showRuleDialog = ref(false)
 const ruleForm = reactive({
-  name: '',
+  ruleCode: '',
+  ruleName: '',
   stage: '',
-  standardMinutes: 30,
-  warningMinutes: 5,
-  timeoutMinutes: 10,
-  enabled: true
+  standardDuration: 30,
+  warningThreshold: 5,
+  alertThreshold: 10,
+  isDefault: 1
 })
 
 function getRemainingClass(row: MonitorItem) {
@@ -211,7 +212,11 @@ function viewDetail(row: MonitorItem) {
 
 async function handleSaveRule() {
   try {
-    await createTimeRule({ ...ruleForm })
+    const payload = { ...ruleForm }
+    if (!payload.ruleCode) {
+      payload.ruleCode = 'RULE_' + Date.now()
+    }
+    await createTimeRule(payload)
     ElMessage.success('规则保存成功')
     showRuleDialog.value = false
     loadData()
