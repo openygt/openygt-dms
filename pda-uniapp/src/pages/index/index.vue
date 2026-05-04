@@ -17,12 +17,12 @@
     <view class="main-scan" @click="goScan" data-testid="btn-scan">
       <view class="scan-circle">
         <text class="scan-icon">📷</text>
-        <text class="scan-label">扫描处方码</text>
+        <text class="scan-label">扫描条码</text>
       </view>
     </view>
 
     <view class="sub-actions">
-      <view class="sub-btn" @click="goScanManual">手动输入</view>
+      <view class="sub-btn" @click="goScanManual">手动输入条码</view>
       <view class="sub-btn primary" @click="goReprint" data-testid="btn-reprint">重打印</view>
     </view>
 
