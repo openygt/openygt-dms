@@ -79,7 +79,7 @@ export function manualAssign(data: any) {
 }
 
 export function reassign(assignmentId: number | string, data: any) {
-  return request.put(`/v1/prod/assignment/${assignmentId}/reassign`, data)
+  return request.post(`/v1/prod/assignment/${assignmentId}/reassign`, data)
 }
 
 export function getSchedule(params?: any) {
@@ -92,6 +92,10 @@ export function getEmployeeLoad(date: string) {
 
 export function getDeviceLoad(date: string) {
   return request.get(`/v1/prod/assignment/device-load`, { params: { date } })
+}
+
+export function getOccupiedIds(date: string) {
+  return request.get(`/v1/prod/assignment/occupied`, { params: { date } })
 }
 
 // ========== 任务回退 ==========

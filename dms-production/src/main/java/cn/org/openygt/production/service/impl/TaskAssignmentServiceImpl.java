@@ -4,7 +4,10 @@ import cn.org.openygt.common.dto.EqDeviceDTO;
 import cn.org.openygt.common.service.EquipmentService;
 import cn.org.openygt.production.dto.DeviceLoadDTO;
 import cn.org.openygt.production.dto.EmployeeLoadDTO;
+import cn.org.openygt.system.entity.SysUser;
+import cn.org.openygt.system.mapper.SysUserMapper;
 import cn.org.openygt.production.dto.GanttItemDTO;
+import cn.org.openygt.production.dto.OccupiedIds;
 import cn.org.openygt.production.entity.EmployeeSkill;
 import cn.org.openygt.production.entity.Task;
 import cn.org.openygt.production.entity.TaskAssignment;
@@ -18,11 +21,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -34,6 +41,7 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
     private final EmployeeSkillMapper employeeSkillMapper;
     private final TaskMapper taskMapper;
     private final EquipmentService equipmentService;
+    private final SysUserMapper sysUserMapper;
 
     @Override
     @Transactional
@@ -46,7 +54,7 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         TaskAssignment assignment = new TaskAssignment();
         assignment.setTaskId(taskId);
         assignment.setPrescriptionId(task.getPrescriptionId());
-        assignment.setStatus(0);
+        assignment.setStatus(1);
         assignment.setCreatedAt(LocalDateTime.now());
         assignment.setUpdatedAt(LocalDateTime.now());
 
@@ -75,11 +83,51 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
 
     @Override
     @Transactional
-    public TaskAssignment manualAssign(Long taskId, Long deviceId, Long employeeId, String reason) {
+    public TaskAssignment manualAssign(Long taskId, Long deviceId, Long employeeId, String reason, LocalDate scheduledDate) {
         Task task = taskMapper.selectById(taskId);
         if (task == null) {
             throw new IllegalArgumentException("任务不存在");
         }
+        LocalDate targetDate = scheduledDate != null ? scheduledDate : LocalDate.now();
+
+        // 去重检查：同一任务不能重复分配
+        Long existCount = assignmentMapper.selectCount(
+                new LambdaQueryWrapper<TaskAssignment>()
+                        .eq(TaskAssignment::getTaskId, taskId)
+                        .in(TaskAssignment::getStatus, 1, 2));
+        if (existCount > 0) {
+            throw new IllegalArgumentException("该任务已有待执行或执行中的分配记录，不能重复分配");
+        }
+
+        LocalDateTime dayStart = targetDate.atStartOfDay();
+        LocalDateTime dayEnd = targetDate.plusDays(1).atStartOfDay();
+
+        // 去重检查：同一天同一员工不能分配多个任务
+        if (employeeId != null) {
+            Long empCount = assignmentMapper.selectCount(
+                    new LambdaQueryWrapper<TaskAssignment>()
+                            .eq(TaskAssignment::getEmployeeId, employeeId)
+                            .apply("COALESCE(scheduled_start_time, created_at) >= {0}", dayStart)
+                            .apply("COALESCE(scheduled_start_time, created_at) < {0}", dayEnd)
+                            .in(TaskAssignment::getStatus, 1, 2));
+            if (empCount > 0) {
+                throw new IllegalArgumentException("该员工在所选日期已有分配任务，请选择其他员工");
+            }
+        }
+
+        // 去重检查：同一天同一设备不能分配多个任务
+        if (deviceId != null) {
+            Long devCount = assignmentMapper.selectCount(
+                    new LambdaQueryWrapper<TaskAssignment>()
+                            .eq(TaskAssignment::getDeviceId, deviceId)
+                            .apply("COALESCE(scheduled_start_time, created_at) >= {0}", dayStart)
+                            .apply("COALESCE(scheduled_start_time, created_at) < {0}", dayEnd)
+                            .in(TaskAssignment::getStatus, 1, 2));
+            if (devCount > 0) {
+                throw new IllegalArgumentException("该设备在所选日期已有分配任务，请选择其他设备");
+            }
+        }
+
         TaskAssignment assignment = new TaskAssignment();
         assignment.setTaskId(taskId);
         assignment.setPrescriptionId(task.getPrescriptionId());
@@ -87,7 +135,9 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         assignment.setEmployeeId(employeeId);
         assignment.setAssignType(2);
         assignment.setAssignReason(reason);
-        assignment.setStatus(0);
+        assignment.setStatus(1);
+        assignment.setScheduledStartTime(targetDate.atStartOfDay());
+        assignment.setScheduledEndTime(targetDate.atStartOfDay().plusHours(8));
         assignment.setCreatedAt(LocalDateTime.now());
         assignment.setUpdatedAt(LocalDateTime.now());
         assignmentMapper.insert(assignment);
@@ -101,6 +151,41 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         if (assignment == null) {
             throw new IllegalArgumentException("分配记录不存在");
         }
+
+        LocalDate targetDate = assignment.getScheduledStartTime() != null
+                ? assignment.getScheduledStartTime().toLocalDate()
+                : assignment.getCreatedAt() != null ? assignment.getCreatedAt().toLocalDate() : LocalDate.now();
+        LocalDateTime dayStart = targetDate.atStartOfDay();
+        LocalDateTime dayEnd = targetDate.plusDays(1).atStartOfDay();
+
+        // 去重检查：同一员工在同一天不能分配多个任务（排除自身）
+        if (newEmployeeId != null) {
+            Long empCount = assignmentMapper.selectCount(
+                    new LambdaQueryWrapper<TaskAssignment>()
+                            .eq(TaskAssignment::getEmployeeId, newEmployeeId)
+                            .ne(TaskAssignment::getId, assignmentId)
+                            .apply("COALESCE(scheduled_start_time, created_at) >= {0}", dayStart)
+                            .apply("COALESCE(scheduled_start_time, created_at) < {0}", dayEnd)
+                            .in(TaskAssignment::getStatus, 1, 2));
+            if (empCount > 0) {
+                throw new IllegalArgumentException("该员工在所选日期已有分配任务");
+            }
+        }
+
+        // 去重检查：同一设备在同一天不能分配多个任务（排除自身）
+        if (newDeviceId != null) {
+            Long devCount = assignmentMapper.selectCount(
+                    new LambdaQueryWrapper<TaskAssignment>()
+                            .eq(TaskAssignment::getDeviceId, newDeviceId)
+                            .ne(TaskAssignment::getId, assignmentId)
+                            .apply("COALESCE(scheduled_start_time, created_at) >= {0}", dayStart)
+                            .apply("COALESCE(scheduled_start_time, created_at) < {0}", dayEnd)
+                            .in(TaskAssignment::getStatus, 1, 2));
+            if (devCount > 0) {
+                throw new IllegalArgumentException("该设备在所选日期已有分配任务");
+            }
+        }
+
         assignment.setDeviceId(newDeviceId);
         assignment.setEmployeeId(newEmployeeId);
         assignment.setAssignReason((assignment.getAssignReason() != null ? assignment.getAssignReason() + "; " : "") + "重新分配: " + reason);
@@ -113,12 +198,24 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
     public List<GanttItemDTO> getSchedule(LocalDateTime startTime, LocalDateTime endTime) {
         LambdaQueryWrapper<TaskAssignment> wrapper = new LambdaQueryWrapper<>();
         if (startTime != null) {
-            wrapper.ge(TaskAssignment::getScheduledStartTime, startTime).or().ge(TaskAssignment::getActualStartTime, startTime);
+            wrapper.and(w -> w.ge(TaskAssignment::getScheduledStartTime, startTime)
+                    .or().ge(TaskAssignment::getActualStartTime, startTime)
+                    .or().ge(TaskAssignment::getCreatedAt, startTime));
         }
         if (endTime != null) {
-            wrapper.le(TaskAssignment::getScheduledEndTime, endTime).or().le(TaskAssignment::getActualEndTime, endTime);
+            wrapper.and(w -> w.le(TaskAssignment::getScheduledEndTime, endTime)
+                    .or().le(TaskAssignment::getActualEndTime, endTime)
+                    .or().le(TaskAssignment::getCreatedAt, endTime));
         }
         List<TaskAssignment> list = assignmentMapper.selectList(wrapper);
+
+        // 收集所有 employeeId 并批量查询姓名
+        java.util.Set<Long> allEmployeeIds = list.stream()
+                .map(TaskAssignment::getEmployeeId)
+                .filter(java.util.Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Long, String> userNameMap = queryEmployeeNames(allEmployeeIds);
+
         List<GanttItemDTO> result = new ArrayList<>();
         for (TaskAssignment a : list) {
             GanttItemDTO dto = new GanttItemDTO();
@@ -127,6 +224,7 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
             dto.setTaskName("任务-" + a.getTaskId());
             dto.setDeviceId(a.getDeviceId());
             dto.setEmployeeId(a.getEmployeeId());
+            dto.setEmployeeName(a.getEmployeeId() != null ? userNameMap.get(a.getEmployeeId()) : null);
             dto.setAssignType(a.getAssignType());
             dto.setCreatedAt(a.getCreatedAt());
             if (a.getDeviceId() != null) {
@@ -146,25 +244,53 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
     }
 
     @Override
-    public List<EmployeeLoadDTO> getEmployeeLoad() {
-        List<TaskAssignment> all = assignmentMapper.selectList(new LambdaQueryWrapper<>());
+    public List<EmployeeLoadDTO> getEmployeeLoad(LocalDate date) {
+        LambdaQueryWrapper<TaskAssignment> wrapper = new LambdaQueryWrapper<>();
+        if (date != null) {
+            wrapper.apply("COALESCE(scheduled_start_time, created_at) BETWEEN {0} AND {1}",
+                    date.atStartOfDay(), date.plusDays(1).atStartOfDay());
+        }
+        List<TaskAssignment> all = assignmentMapper.selectList(wrapper);
         Map<Long, List<TaskAssignment>> grouped = all.stream().filter(a -> a.getEmployeeId() != null)
                 .collect(Collectors.groupingBy(TaskAssignment::getEmployeeId));
+
+        // 查询员工姓名
+        Map<Long, String> userNameMap = queryEmployeeNames(grouped.keySet());
+
         List<EmployeeLoadDTO> result = new ArrayList<>();
         for (Map.Entry<Long, List<TaskAssignment>> entry : grouped.entrySet()) {
             EmployeeLoadDTO dto = new EmployeeLoadDTO();
             dto.setEmployeeId(entry.getKey());
+            dto.setEmployeeName(userNameMap.getOrDefault(entry.getKey(), "员工-" + entry.getKey()));
             dto.setAssignedCount(entry.getValue().size());
-            dto.setCompletedCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && a.getStatus() == 1).count());
-            dto.setPendingCount((int) entry.getValue().stream().filter(a -> a.getStatus() == null || a.getStatus() == 0).count());
+            dto.setCompletedCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && a.getStatus() == 3).count());
+            dto.setPendingCount((int) entry.getValue().stream().filter(a -> a.getStatus() == null || a.getStatus() == 0 || a.getStatus() == 1).count());
             result.add(dto);
         }
         return result;
     }
 
+    /**
+     * 根据员工ID集合查询 sys_user 表，返回 id → realName 映射
+     */
+    private Map<Long, String> queryEmployeeNames(java.util.Set<Long> employeeIds) {
+        if (employeeIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        List<SysUser> users = sysUserMapper.selectBatchIds(employeeIds);
+        return users.stream()
+                .filter(u -> u.getRealName() != null)
+                .collect(Collectors.toMap(SysUser::getId, SysUser::getRealName, (a, b) -> a));
+    }
+
     @Override
-    public List<DeviceLoadDTO> getDeviceLoad() {
-        List<TaskAssignment> all = assignmentMapper.selectList(new LambdaQueryWrapper<>());
+    public List<DeviceLoadDTO> getDeviceLoad(LocalDate date) {
+        LambdaQueryWrapper<TaskAssignment> wrapper = new LambdaQueryWrapper<>();
+        if (date != null) {
+            wrapper.apply("COALESCE(scheduled_start_time, created_at) BETWEEN {0} AND {1}",
+                    date.atStartOfDay(), date.plusDays(1).atStartOfDay());
+        }
+        List<TaskAssignment> all = assignmentMapper.selectList(wrapper);
         Map<Long, List<TaskAssignment>> grouped = all.stream().filter(a -> a.getDeviceId() != null)
                 .collect(Collectors.groupingBy(TaskAssignment::getDeviceId));
         List<DeviceLoadDTO> result = new ArrayList<>();
@@ -187,9 +313,32 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         return result;
     }
 
+    @Override
+    public OccupiedIds getOccupiedIds(LocalDate date) {
+        OccupiedIds occupied = new OccupiedIds();
+
+        // 任务：只要有待执行/执行中的分配，无论日期都视为已占用
+        LambdaQueryWrapper<TaskAssignment> taskWrapper = new LambdaQueryWrapper<>();
+        taskWrapper.in(TaskAssignment::getStatus, 1, 2);
+        List<TaskAssignment> allActive = assignmentMapper.selectList(taskWrapper);
+        occupied.setTaskIds(allActive.stream().map(TaskAssignment::getTaskId).filter(Objects::nonNull).distinct().collect(Collectors.toList()));
+
+        // 员工/设备：按日期筛选，同一天已分配的视为已占用
+        LambdaQueryWrapper<TaskAssignment> dateWrapper = new LambdaQueryWrapper<>();
+        if (date != null) {
+            dateWrapper.apply("COALESCE(scheduled_start_time, created_at) BETWEEN {0} AND {1}",
+                    date.atStartOfDay(), date.plusDays(1).atStartOfDay());
+        }
+        dateWrapper.in(TaskAssignment::getStatus, 1, 2);
+        List<TaskAssignment> dateFiltered = assignmentMapper.selectList(dateWrapper);
+        occupied.setEmployeeIds(dateFiltered.stream().map(TaskAssignment::getEmployeeId).filter(Objects::nonNull).distinct().collect(Collectors.toList()));
+        occupied.setDeviceIds(dateFiltered.stream().map(TaskAssignment::getDeviceId).filter(Objects::nonNull).distinct().collect(Collectors.toList()));
+        return occupied;
+    }
+
     private void assignByLoadBalance(Task task, TaskAssignment assignment) {
         List<TaskAssignment> active = assignmentMapper.selectList(
-                new LambdaQueryWrapper<TaskAssignment>().eq(TaskAssignment::getStatus, 0));
+                new LambdaQueryWrapper<TaskAssignment>().eq(TaskAssignment::getStatus, 1));
         Map<Long, Long> countMap = active.stream().filter(a -> a.getEmployeeId() != null)
                 .collect(Collectors.groupingBy(TaskAssignment::getEmployeeId, Collectors.counting()));
         Long minEmployeeId = countMap.entrySet().stream().min(Map.Entry.comparingByValue())
@@ -228,7 +377,7 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
     }
 
     private Integer calculateProgress(TaskAssignment a) {
-        if (a.getStatus() != null && a.getStatus() == 1) return 100;
+        if (a.getStatus() != null && a.getStatus() == 3) return 100;
         if (a.getActualStartTime() != null && a.getScheduledEndTime() != null) {
             long total = java.time.Duration.between(a.getScheduledStartTime() != null ? a.getScheduledStartTime() : a.getActualStartTime(), a.getScheduledEndTime()).toMinutes();
             long past = java.time.Duration.between(a.getActualStartTime(), LocalDateTime.now()).toMinutes();

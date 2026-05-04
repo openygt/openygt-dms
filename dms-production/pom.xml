@@ -29,6 +29,10 @@
             <artifactId>dms-equipment</artifactId>
         </dependency>
         <dependency>
+            <groupId>cn.org.openygt</groupId>
+            <artifactId>dms-system</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>

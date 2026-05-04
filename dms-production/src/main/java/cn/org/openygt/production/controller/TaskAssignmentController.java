@@ -6,6 +6,7 @@ import cn.org.openygt.production.dto.DeviceLoadDTO;
 import cn.org.openygt.production.dto.EmployeeLoadDTO;
 import cn.org.openygt.production.dto.GanttItemDTO;
 import cn.org.openygt.production.dto.ManualAssignRequest;
+import cn.org.openygt.production.dto.OccupiedIds;
 import cn.org.openygt.production.dto.ReassignRequest;
 import cn.org.openygt.production.entity.TaskAssignment;
 import cn.org.openygt.production.service.TaskAssignmentService;
@@ -14,6 +15,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -33,7 +35,7 @@ public class TaskAssignmentController {
 
     @PostMapping("/manual")
     public ApiResponse<TaskAssignment> manualAssign(@Validated @RequestBody ManualAssignRequest req) {
-        return ApiResponse.success(taskAssignmentService.manualAssign(req.getTaskId(), req.getDeviceId(), req.getEmployeeId(), req.getReason()));
+        return ApiResponse.success(taskAssignmentService.manualAssign(req.getTaskId(), req.getDeviceId(), req.getEmployeeId(), req.getReason(), req.getScheduledDate()));
     }
 
     @PostMapping("/{assignmentId}/reassign")
@@ -49,12 +51,20 @@ public class TaskAssignmentController {
     }
 
     @GetMapping("/employee-load")
-    public ApiResponse<List<EmployeeLoadDTO>> employeeLoad() {
-        return ApiResponse.success(taskAssignmentService.getEmployeeLoad());
+    public ApiResponse<List<EmployeeLoadDTO>> employeeLoad(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ApiResponse.success(taskAssignmentService.getEmployeeLoad(date));
     }
 
     @GetMapping("/device-load")
-    public ApiResponse<List<DeviceLoadDTO>> deviceLoad() {
-        return ApiResponse.success(taskAssignmentService.getDeviceLoad());
+    public ApiResponse<List<DeviceLoadDTO>> deviceLoad(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ApiResponse.success(taskAssignmentService.getDeviceLoad(date));
+    }
+
+    @GetMapping("/occupied")
+    public ApiResponse<OccupiedIds> occupied(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ApiResponse.success(taskAssignmentService.getOccupiedIds(date));
     }
 }
