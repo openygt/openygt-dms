@@ -6,7 +6,7 @@
         <view class="scan-inner">
           <text class="scan-icon">□</text>
           <text class="scan-text">点击扫码</text>
-          <text class="scan-subtext">支持条形码 / 二维码 / 任务编号</text>
+          <text class="scan-subtext">支持处方号或任务号，扫码录入均可</text>
         </view>
       </view>
     </view>
@@ -17,7 +17,7 @@
         <input
           class="scan-input ygt-num"
           v-model="barcode"
-          placeholder="输入条码或任务编号"
+          placeholder="输入号码查询"
           data-testid="input-barcode"
           confirm-type="search"
           focus
