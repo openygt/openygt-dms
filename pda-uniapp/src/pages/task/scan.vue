@@ -55,11 +55,11 @@
       </view>
       <view class="task-card-body">
         <view class="task-card-row">
-          <text class="task-card-key">编号</text>
+          <text class="task-card-key">任务编号</text>
           <text class="task-card-val ygt-num task-num-highlight">{{ taskCard.taskId }}</text>
         </view>
         <view class="task-card-row">
-          <text class="task-card-key">条形码</text>
+          <text class="task-card-key">处方号</text>
           <text class="task-card-val ygt-num">{{ barcode }}</text>
         </view>
         <view class="task-card-row">
