@@ -60,7 +60,7 @@
         </view>
         <view class="task-card-row">
           <text class="task-card-key">处方号</text>
-          <text class="task-card-val ygt-num">{{ barcode }}</text>
+          <text class="task-card-val ygt-num">{{ taskCard.prescriptionNumber || taskCard.barcode }}</text>
         </view>
         <view class="task-card-row">
           <text class="task-card-key">状态</text>
@@ -201,6 +201,8 @@ async function queryTask() {
     // 显示任务卡片
     taskCard.value = {
       taskId: task.taskId || task.id,
+      barcode: task.barcode || barcode.value,
+      prescriptionNumber: task.prescriptionNumber || '',
       status: task.status,
       statusName: task.statusName || task.status,
       nextStep: task.nextStep || ''
