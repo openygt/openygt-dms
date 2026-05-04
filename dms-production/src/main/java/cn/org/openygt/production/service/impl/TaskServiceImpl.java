@@ -23,6 +23,8 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -35,10 +37,13 @@ public class TaskServiceImpl implements TaskService {
     private final StepLogMapper stepLogMapper;
     private final HandoverDetailMapper handoverDetailMapper;
     private final PrescriptionMedicineMapper prescriptionMedicineMapper;
+    private final PrescriptionMapper prescriptionMapper;
 
     private final EquipmentService equipmentService;
     private final PrintService printService;
     private final ConsumeRecordService consumeRecordService;
+
+    private final HrEmployeeMapper hrEmployeeMapper;
 
     // ==================== 状态机核心 ====================
 
@@ -337,7 +342,7 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public IPage<Task> queryTasks(String status, Long deviceId, Long id, Long prescriptionId,
-                                  String operatorId, String startTime, String endTime, int page, int size) {
+                                  String operatorId, String prescriptionNumber, String startTime, String endTime, int page, int size) {
         LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
         if (status != null && !status.isEmpty()) wrapper.eq(Task::getStatus, status);
         if (deviceId != null) {
@@ -345,11 +350,39 @@ public class TaskServiceImpl implements TaskService {
         }
         if (id != null) wrapper.eq(Task::getId, id);
         if (prescriptionId != null) wrapper.eq(Task::getPrescriptionId, prescriptionId);
+        if (prescriptionNumber != null && !prescriptionNumber.isEmpty()) {
+            List<cn.org.openygt.production.entity.Prescription> matched = prescriptionMapper.selectList(
+                    new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<cn.org.openygt.production.entity.Prescription>()
+                            .like(cn.org.openygt.production.entity.Prescription::getPrescriptionNumber, prescriptionNumber));
+            if (!matched.isEmpty()) {
+                wrapper.in(Task::getPrescriptionId, matched.stream().map(cn.org.openygt.production.entity.Prescription::getId).collect(Collectors.toList()));
+            } else {
+                wrapper.eq(Task::getId, -1L); // 无匹配返回空
+            }
+        }
         if (operatorId != null && !operatorId.isEmpty()) wrapper.eq(Task::getOperatorId, operatorId);
         if (startTime != null && !startTime.isEmpty()) wrapper.ge(Task::getCreatedAt, startTime);
         if (endTime != null && !endTime.isEmpty()) wrapper.le(Task::getCreatedAt, endTime);
         wrapper.orderByDesc(Task::getCreatedAt);
-        return taskMapper.selectPage(new Page<>(page, size), wrapper);
+        IPage<Task> result = taskMapper.selectPage(new Page<>(page, size), wrapper);
+        // 批量补充处方号
+        List<Task> tasks = result.getRecords();
+        if (tasks != null && !tasks.isEmpty()) {
+            List<Long> presIds = tasks.stream()
+                    .map(Task::getPrescriptionId)
+                    .filter(java.util.Objects::nonNull)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (!presIds.isEmpty()) {
+                List<cn.org.openygt.production.entity.Prescription> presList = prescriptionMapper.selectBatchIds(presIds);
+                Map<Long, String> presNumMap = presList.stream()
+                        .collect(java.util.HashMap::new,
+                                (map, p) -> map.put(p.getId(), p.getPrescriptionNumber()),
+                                java.util.HashMap::putAll);
+                tasks.forEach(t -> t.setPrescriptionNumber(presNumMap.get(t.getPrescriptionId())));
+            }
+        }
+        return result;
     }
 
     @Override
@@ -490,7 +523,17 @@ public class TaskServiceImpl implements TaskService {
     private void transition(Task task, String newStatus, String operatorId, String remark) {
         String oldStatus = task.getStatus();
         task.setStatus(newStatus);
-        task.setOperatorId(operatorId);
+        if (operatorId != null) {
+            task.setOperatorId(operatorId);
+            try {
+                List<cn.org.openygt.production.entity.HrEmployee> users = hrEmployeeMapper.findByIds(
+                        java.util.Collections.singletonList(Long.valueOf(operatorId)));
+                if (!users.isEmpty()) {
+                    task.setOperatorName(users.get(0).getRealName());
+                }
+            } catch (Exception ignored) {
+            }
+        }
         recordHistory(task.getId(), oldStatus, newStatus, operatorId, remark);
     }
 
@@ -499,13 +542,14 @@ public class TaskServiceImpl implements TaskService {
         history.setTaskId(taskId);
         history.setFromStatus(fromStatus);
         history.setToStatus(toStatus);
-        history.setOperatorId(operatorId);
+        history.setOperatorId(operatorId != null ? operatorId : "SYSTEM");
         history.setOperateTime(LocalDateTime.now());
         history.setRemark(remark);
         historyMapper.insert(history);
     }
 
     private void recordWork(Long taskId, String operatorId, String operatorName, String action, Integer workTime) {
+        if (operatorId == null) return;
         WorkRecord record = new WorkRecord();
         record.setTaskId(taskId);
         record.setOperatorId(operatorId);
@@ -591,7 +635,7 @@ public class TaskServiceImpl implements TaskService {
         step.setTaskId(taskId);
         step.setStepType(stepType);
         step.setDeviceId(deviceId);
-        step.setOperatorId(operatorId);
+        step.setOperatorId(operatorId != null ? operatorId : "SYSTEM");
         step.setParentId(parentId);
         step.setStartedAt(LocalDateTime.now());
         step.setResult("正常");

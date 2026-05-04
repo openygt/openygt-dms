@@ -1,6 +1,7 @@
 <template>
   <div>
     <div class="page-header-title">煎药任务：<span class="page-header-sub">分配给我的任务、状态筛选、扫码接收</span></div>
+    <div style="height: 16px"></div>
     <el-card>
       <template #header>
         <div style="display: flex; align-items: center; justify-content: space-between">
@@ -13,14 +14,20 @@
       </template>
 
       <el-form :inline="true" :model="queryForm" class="query-form">
-        <el-form-item label="任务号"><el-input v-model="queryForm.id" placeholder="任务号" clearable style="width: 120px" /></el-form-item>
-        <el-form-item label="处方号"><el-input v-model="queryForm.prescriptionId" placeholder="处方号" clearable style="width: 120px" /></el-form-item>
+        <el-form-item label="任务号">
+          <el-input v-model="queryForm.id" placeholder="任务号" clearable style="width: 120px" />
+        </el-form-item>
+        <el-form-item label="处方号">
+          <el-input v-model="queryForm.prescriptionNumber" placeholder="处方号" clearable style="width: 180px" />
+        </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryForm.status" placeholder="全部状态" clearable style="width: 120px">
             <el-option v-for="item in kanbanStatuses" :key="item.status" :label="item.label" :value="item.status" />
           </el-select>
         </el-form-item>
-        <el-form-item label="操作人"><el-input v-model="queryForm.operatorId" placeholder="操作人" clearable style="width: 120px" /></el-form-item>
+        <el-form-item label="操作人">
+          <el-input v-model="queryForm.operatorId" placeholder="操作人" clearable style="width: 120px" />
+        </el-form-item>
         <el-form-item label="时间范围">
           <el-date-picker
             v-model="queryForm.dateRange"
@@ -39,19 +46,35 @@
       </el-form>
 
       <template v-if="viewMode === 'list'">
-        <el-table :data="taskList" v-loading="loading" border>
+        <el-table :data="taskList" v-loading="loading" border style="width: 100%">
           <el-table-column prop="id" label="任务号" width="80" />
-          <el-table-column prop="prescriptionId" label="处方号" width="100" />
-          <el-table-column prop="status" label="状态" width="120">
-            <template #default="{ row }"><el-tag :type="statusType(row.status)">{{ row.status }}</el-tag></template>
+          <el-table-column label="处方号" width="150">
+            <template #default="{ row }">
+              {{ row.prescriptionNumber || row.prescriptionId || '-' }}
+            </template>
           </el-table-column>
-          <el-table-column prop="operatorId" label="当前操作人" width="120">
-            <template #default="{ row }">{{ formatOperator(row.operatorId) }}</template>
+          <el-table-column prop="status" label="状态" width="100">
+            <template #default="{ row }">
+              <el-tag :type="statusType(row.status)" effect="dark" disable-transitions>{{ row.status }}</el-tag>
+            </template>
           </el-table-column>
-          <el-table-column prop="updatedAt" label="更新时间">
-            <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
+          <el-table-column prop="currentStep" label="当前步骤" width="100" />
+          <el-table-column label="操作人" width="100">
+            <template #default="{ row }">
+              {{ row.operatorName || row.operatorId || '-' }}
+            </template>
           </el-table-column>
-          <el-table-column prop="decoctDeviceId" label="煎药设备" width="120" />
+          <el-table-column label="异常" width="70" align="center">
+            <template #default="{ row }">
+              <el-tag v-if="row.isException" type="danger" size="small">是</el-tag>
+              <span v-else style="color: var(--el-text-color-placeholder)">否</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="更新时间" width="170">
+            <template #default="{ row }">
+              {{ formatDateTime(row.updatedAt) }}
+            </template>
+          </el-table-column>
           <el-table-column label="操作" width="260" fixed="right">
             <template #default="{ row }">
               <el-button v-if="row.status === '待泡药'" size="small" type="primary" @click="startSoak(row)">开始泡药</el-button>
@@ -86,8 +109,8 @@
                   <span class="kanban-card-id">#{{ task.id }}</span>
                   <el-tag size="small" :type="statusType(task.status)">{{ task.status }}</el-tag>
                 </div>
-                <div class="kanban-card-info">处方: {{ task.prescriptionId || '-' }}</div>
-                <div class="kanban-card-info">操作人: {{ formatOperator(task.operatorId) }}</div>
+                <div class="kanban-card-info">处方: {{ task.prescriptionNumber || task.prescriptionId || '-' }}</div>
+                <div class="kanban-card-info">操作人: {{ task.operatorName || task.operatorId || '-' }}</div>
                 <div class="kanban-card-time">{{ formatDateTime(task.updatedAt) }}</div>
                 <div class="kanban-card-actions">
                   <el-button v-if="task.status === '待泡药'" size="small" type="primary" @click.stop="startSoak(task)">开始泡药</el-button>
@@ -101,12 +124,44 @@
       </template>
     </el-card>
 
-    <el-dialog v-model="detailVisible" title="任务详情" width="600px">
-      <p>任务号：{{ selectedTask?.id }}</p>
-      <p>状态：{{ selectedTask?.status }}</p>
-      <p>处方ID：{{ selectedTask?.prescriptionId }}</p>
-      <p>当前步骤：{{ selectedTask?.currentStep || '-' }}</p>
-      <p>煎药设备：{{ selectedTask?.decoctDeviceId || '-' }}</p>
+    <el-dialog v-model="detailVisible" title="任务详情" width="700px">
+      <template v-if="selectedTask">
+        <el-descriptions :column="2" border size="small">
+          <el-descriptions-item label="任务号" span="1">{{ selectedTask.id }}</el-descriptions-item>
+          <el-descriptions-item label="条码" span="1">{{ selectedTask.barcode || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="状态" span="1">
+            <el-tag :type="statusType(selectedTask.status)" size="small">{{ selectedTask.status }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="当前步骤" span="1">{{ selectedTask.currentStep || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="处方号" span="2">{{ selectedTask.prescriptionNumber || selectedTask.prescriptionId || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="操作人" span="1">{{ selectedTask.operatorName || selectedTask.operatorId || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="煎药设备" span="1">{{ selectedTask.decoctDeviceId || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="包装设备" span="1">{{ selectedTask.packageDeviceId || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="当前温度" span="1">{{ selectedTask.currentTemp != null ? selectedTask.currentTemp + '°C' : '-' }}</el-descriptions-item>
+          <el-descriptions-item label="目标温度" span="1">{{ selectedTask.targetTemp != null ? selectedTask.targetTemp + '°C' : '-' }}</el-descriptions-item>
+          <el-descriptions-item label="泡药时长" span="1">{{ selectedTask.soakDuration != null ? selectedTask.soakDuration + '分钟' : '-' }}</el-descriptions-item>
+          <el-descriptions-item label="异常" span="1">
+            <el-tag v-if="selectedTask.isException" type="danger" size="small">是</el-tag>
+            <span v-else>-</span>
+          </el-descriptions-item>
+          <el-descriptions-item v-if="selectedTask.exceptionReason" label="异常原因" span="2">{{ selectedTask.exceptionReason }}</el-descriptions-item>
+          <el-descriptions-item label="创建时间" span="1">{{ formatDateTime(selectedTask.createdAt) }}</el-descriptions-item>
+          <el-descriptions-item label="更新时间" span="1">{{ formatDateTime(selectedTask.updatedAt) }}</el-descriptions-item>
+          <el-descriptions-item label="泡药开始" span="1">{{ formatDateTime(selectedTask.soakStartTime) }}</el-descriptions-item>
+          <el-descriptions-item label="泡药结束" span="1">{{ formatDateTime(selectedTask.soakEndTime) }}</el-descriptions-item>
+          <el-descriptions-item label="煎药开始" span="1">{{ formatDateTime(selectedTask.decoctStartTime) }}</el-descriptions-item>
+          <el-descriptions-item label="煎药结束" span="1">{{ formatDateTime(selectedTask.decoctEndTime) }}</el-descriptions-item>
+          <el-descriptions-item label="出液开始" span="1">{{ formatDateTime(selectedTask.pourStartTime) }}</el-descriptions-item>
+          <el-descriptions-item label="出液结束" span="1">{{ formatDateTime(selectedTask.pourEndTime) }}</el-descriptions-item>
+          <el-descriptions-item label="包装开始" span="1">{{ formatDateTime(selectedTask.wrapStartTime) }}</el-descriptions-item>
+          <el-descriptions-item label="包装结束" span="1">{{ formatDateTime(selectedTask.wrapEndTime) }}</el-descriptions-item>
+          <el-descriptions-item label="完成时间" span="1">{{ formatDateTime(selectedTask.completeTime) }}</el-descriptions-item>
+          <el-descriptions-item label="交接类型" span="1">{{ selectedTask.handoverType || '-' }}</el-descriptions-item>
+        </el-descriptions>
+      </template>
+      <template #footer>
+        <el-button @click="detailVisible = false">关闭</el-button>
+      </template>
     </el-dialog>
 
     <el-dialog v-model="decoctDialogVisible" title="开始煎药" width="420px">
@@ -132,17 +187,40 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
+import { useUserStore } from '@/stores/user'
 import { getDeviceList } from '@/api/equipment'
 import { startDecoct } from '@/api/newModules'
 
 interface Task {
   id: number
+  barcode: string
   prescriptionId: number
+  prescriptionNumber: string
   status: string
-  operatorId: string
   currentStep: string
+  operatorId: string
+  operatorName: string
+  decoctDeviceId: number
+  packageDeviceId: number
+  currentTemp: number
+  targetTemp: number
+  soakDuration: number
+  isException: number
+  exceptionReason: string
+  createdAt: string
   updatedAt: string
-  decoctDeviceId?: number
+  soakStartTime: string
+  soakEndTime: string
+  decoctStartTime: string
+  decoctEndTime: string
+  pourStartTime: string
+  pourEndTime: string
+  wrapStartTime: string
+  wrapEndTime: string
+  completeTime: string
+  handoverType: string
+  handoverUser: string
+  handoverTime: string
 }
 
 const taskList = ref<Task[]>([])
@@ -157,7 +235,7 @@ const viewMode = ref<'list' | 'kanban'>('list')
 
 const queryForm = ref({
   id: '',
-  prescriptionId: '',
+  prescriptionNumber: '',
   status: '',
   operatorId: '',
   dateRange: null as [string, string] | null
@@ -191,12 +269,6 @@ function statusType(status: string) {
   return map[status] || ''
 }
 
-function formatOperator(op: string) {
-  if (!op) return '-'
-  if (op === 'SYSTEM') return '系统'
-  return op
-}
-
 function formatDateTime(dt: string) {
   if (!dt) return '-'
   const d = new Date(dt)
@@ -221,7 +293,7 @@ async function fetchTasks() {
       size: viewMode.value === 'kanban' ? 500 : pagination.value.size
     }
     if (queryForm.value.id) params.id = queryForm.value.id
-    if (queryForm.value.prescriptionId) params.prescriptionId = queryForm.value.prescriptionId
+    if (queryForm.value.prescriptionNumber) params.prescriptionNumber = queryForm.value.prescriptionNumber
     if (queryForm.value.status) params.status = queryForm.value.status
     if (queryForm.value.operatorId) params.operatorId = queryForm.value.operatorId
     if (queryForm.value.dateRange?.[0]) {
@@ -242,7 +314,13 @@ function handleQuery() {
 }
 
 function handleReset() {
-  queryForm.value = { id: '', prescriptionId: '', status: '', operatorId: '', dateRange: null }
+  queryForm.value = {
+    id: '',
+    prescriptionNumber: '',
+    status: '',
+    operatorId: '',
+    dateRange: null
+  }
   pagination.value.page = 1
   fetchTasks()
 }
@@ -259,9 +337,27 @@ function handlePageChange(val: number) {
 }
 
 async function startSoak(row: Task) {
-  await request.post(`/v1/prod/tasks/${row.id}/soak/start`, {})
-  ElMessage.success('任务已开始泡药')
-  fetchTasks()
+  const userStore = useUserStore()
+  const operatorId = String(userStore.userInfo?.id || '')
+  try {
+    await request.post(`/v1/prod/tasks/${row.id}/soak/start`, { operatorId })
+    ElMessage.success('任务已开始泡药')
+    try {
+      await request.post('/v1/inv/consume/record', {
+        taskId: row.id,
+        operatorId,
+        items: []
+      })
+    } catch (e) {
+      ElMessage.warning('消耗记录未写入（不影响任务推进）')
+    }
+    fetchTasks()
+  } catch (err: any) {
+    const message = err?.message || err?.response?.data?.message || err?.data?.message
+    if (message) {
+      ElMessage.error(message)
+    }
+  }
 }
 
 function openDecoctDialog(row: Task) {

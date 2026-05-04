@@ -62,6 +62,9 @@ public class Task {
     // === 紧急处方/优先级 (V32) ===
     private Integer isEmergency;
     private Integer priority;
+    // === 非持久化字段 ===
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private String prescriptionNumber;
     @TableLogic
     private Integer deleted;
     private LocalDateTime createdAt;

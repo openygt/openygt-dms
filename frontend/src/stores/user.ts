@@ -40,7 +40,7 @@ export const useUserStore = defineStore('user', () => {
       const payload = token.value.split('.')[1]
       const tokenData = payload ? JSON.parse(atob(payload)) : {}
       userInfo.value = {
-        id: tokenData.userId,
+        id: tokenData.userId || tokenData.sub,
         username: tokenData.username || tokenData.sub || '未知用户',
         roles: tokenData.roles || []
       }

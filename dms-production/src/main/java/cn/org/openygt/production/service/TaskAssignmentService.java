@@ -4,6 +4,7 @@ import cn.org.openygt.production.dto.DeviceLoadDTO;
 import cn.org.openygt.production.dto.EmployeeLoadDTO;
 import cn.org.openygt.production.dto.GanttItemDTO;
 import cn.org.openygt.production.dto.OccupiedIds;
+import cn.org.openygt.production.dto.TaskOptionDTO;
 import cn.org.openygt.production.entity.TaskAssignment;
 
 import java.time.LocalDate;
@@ -22,4 +23,7 @@ public interface TaskAssignmentService {
      * 查询指定日期已占用的任务/员工/设备ID列表
      */
     OccupiedIds getOccupiedIds(LocalDate date);
+    List<TaskOptionDTO> getAvailableTasks(LocalDate date);
+    List<EmployeeLoadDTO> getAvailableEmployees(LocalDate date);
+    List<DeviceLoadDTO> getAvailableDevices(LocalDate date);
 }

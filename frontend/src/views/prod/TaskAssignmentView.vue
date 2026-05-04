@@ -475,18 +475,18 @@ async function handleManualAssign() {
   }
   try {
     await manualAssign({
-    taskId: manualForm.taskId,
-    employeeId: manualForm.employeeId,
-    deviceId: manualForm.deviceId,
-    reason: manualForm.reason || '',
-    scheduledDate: selectedDate.value
-  })
-  ElMessage.success('手动分配成功')
-  manualDialogVisible.value = false
-  await reloadAll()
-} catch (e: any) {
-  // error already shown by axios interceptor
-}
+      taskId: manualForm.taskId,
+      employeeId: manualForm.employeeId,
+      deviceId: manualForm.deviceId,
+      reason: manualForm.reason || '',
+      scheduledDate: selectedDate.value
+    })
+    ElMessage.success('手动分配成功')
+    manualDialogVisible.value = false
+    await reloadAll()
+  } catch (e: any) {
+    // error already shown by axios interceptor
+  }
 }
 
 function openReassignDialog(row: AssignmentView) {
