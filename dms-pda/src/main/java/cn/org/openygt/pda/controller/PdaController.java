@@ -134,8 +134,11 @@ public class PdaController {
         pdaGatewaySessionService.register(request.getMacAddress(), device.getDeviceCode(),
                 user.getId(), user.getUsername(), user.getRealName());
 
+        TokenResponse scanTokenResponse = new TokenResponse();
+        scanTokenResponse.setToken(token);
+        scanTokenResponse.setRoles(roles);
         Map<String, Object> result = buildLoginResult(token, user.getId(), user.getUsername(),
-                user.getRealName(), device.getDeviceCode(), record.getId(), null);
+                user.getRealName(), device.getDeviceCode(), record.getId(), scanTokenResponse);
         result.put("deviceId", device.getId());
         result.put("macAddress", normalizeMac(request.getMacAddress()));
 

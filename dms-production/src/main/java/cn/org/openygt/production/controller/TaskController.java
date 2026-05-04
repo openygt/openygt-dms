@@ -1,6 +1,7 @@
 package cn.org.openygt.production.controller;
 
 import cn.org.openygt.common.dto.ApiResponse;
+import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.production.entity.Task;
 import cn.org.openygt.production.service.TaskService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -42,6 +43,15 @@ public class TaskController {
         return ApiResponse.success(taskService.startDecoct(id, actualRequest.getDeviceCode(), resolveOperatorId(actualRequest.getOperatorId(), userId)));
     }
 
+    @PostMapping("/{id}/quality")
+    public ApiResponse<Task> qualityInspect(@PathVariable Long id,
+                                            @RequestBody QualityRequest request,
+                                            @RequestAttribute(value = "userId", required = false) Long userId) {
+        InspectionResultType resultType = InspectionResultType.valueOf(request.getResult());
+        return ApiResponse.success(taskService.qualityInspect(id, resultType,
+                resolveOperatorId(request.getOperatorId(), userId), request.getRemark(), request.getReworkNode()));
+    }
+
     @PostMapping("/{id}/suspend")
     public ApiResponse<Task> suspend(@PathVariable Long id,
                                      @RequestBody(required = false) SuspendRequest request,
@@ -77,6 +87,14 @@ public class TaskController {
     @lombok.Data
     public static class ResumeRequest {
         private String operatorId;
+    }
+
+    @lombok.Data
+    public static class QualityRequest {
+        private String result;
+        private String operatorId;
+        private String remark;
+        private String reworkNode;
     }
 
     @lombok.Data
