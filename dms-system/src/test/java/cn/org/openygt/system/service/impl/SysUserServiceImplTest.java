@@ -2,6 +2,7 @@ package cn.org.openygt.system.service.impl;
 
 import cn.org.openygt.common.dto.LoginRequest;
 import cn.org.openygt.common.dto.TokenResponse;
+import cn.org.openygt.common.util.JwtUtil;
 import cn.org.openygt.system.entity.SysUser;
 import cn.org.openygt.system.mapper.SysUserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -169,6 +170,8 @@ class SysUserServiceImplTest {
 
         when(userMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(user);
         when(passwordEncoder.matches("correct-password", "encoded-pass")).thenReturn(true);
+        when(userMapper.selectRoleCodesByUserId(1L)).thenReturn(java.util.Collections.singletonList("ROLE_ADMIN"));
+        when(userMapper.selectPermissionCodesByUserId(1L)).thenReturn(java.util.Collections.singletonList("ROLE_ADMIN"));
 
         LoginRequest request = new LoginRequest();
         request.setUsername("admin");
@@ -182,6 +185,30 @@ class SysUserServiceImplTest {
         assertEquals("Bearer", result.getTokenType());
         assertEquals(86400L, result.getExpiresIn().longValue());
         assertNotNull(result.getToken());
+    }
+
+    @Test
+    void login_shouldFallbackToLegacyRole_whenUserRoleBindingMissing() {
+        SysUser user = new SysUser();
+        user.setId(2L);
+        user.setUsername("jgy001");
+        user.setPassword("encoded-pass");
+        user.setStatus("ACTIVE");
+        user.setRole("煎药工");
+
+        when(userMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(user);
+        when(passwordEncoder.matches("correct-password", "encoded-pass")).thenReturn(true);
+        when(userMapper.selectRoleCodesByUserId(2L)).thenReturn(java.util.Collections.emptyList());
+        when(userMapper.selectPermissionCodesByUserId(2L)).thenReturn(java.util.Collections.emptyList());
+
+        LoginRequest request = new LoginRequest();
+        request.setUsername("jgy001");
+        request.setPassword("correct-password");
+
+        TokenResponse result = userService.login(request);
+
+        assertEquals(java.util.Collections.singletonList("ROLE_WORKER"), JwtUtil.getRoles(result.getToken()));
+        assertEquals(java.util.Collections.singletonList("ROLE_WORKER"), JwtUtil.getPermissions(result.getToken()));
     }
 
     @Test

@@ -16,4 +16,5 @@ public class SysUser extends BaseEntity {
     private String phone;
     private String barcode;
     private String status;
+    private String role;
 }

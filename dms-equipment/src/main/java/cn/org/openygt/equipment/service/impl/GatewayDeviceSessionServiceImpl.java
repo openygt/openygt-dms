@@ -29,14 +29,11 @@ public class GatewayDeviceSessionServiceImpl implements GatewayDeviceSessionServ
 
     @Override
     public List<Map<String, Object>> listOnlineManagedDevices() {
-        if (gatewayApiKey == null || gatewayApiKey.trim().isEmpty()) {
-            log.warn("未配置 iot.gateway.api-key，无法查询网关在线设备映射");
-            return Collections.emptyList();
-        }
-
         String url = gatewayBaseUrl + "/api/v1/iot/device-sessions/online-managed";
         HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Gateway-Api-Key", gatewayApiKey);
+        if (gatewayApiKey != null && !gatewayApiKey.trim().isEmpty()) {
+            headers.set("X-Gateway-Api-Key", gatewayApiKey);
+        }
         HttpEntity<Void> entity = new HttpEntity<>(headers);
 
         try {
