@@ -13,6 +13,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -127,8 +129,8 @@ public class SysUserServiceImpl implements SysUserService {
         if (!"ACTIVE".equals(user.getStatus())) {
             throw new IllegalStateException("用户已被禁用");
         }
-        List<String> roles = userMapper.selectRoleCodesByUserId(user.getId());
-        List<String> permissions = userMapper.selectPermissionCodesByUserId(user.getId());
+        List<String> roles = resolveRoleCodes(user);
+        List<String> permissions = resolvePermissionCodes(user, roles);
         String token = JwtUtil.generateToken(user.getId(), user.getUsername(), roles, permissions);
         TokenResponse response = new TokenResponse();
         response.setToken(token);
@@ -137,5 +139,44 @@ public class SysUserServiceImpl implements SysUserService {
         response.setUserId(user.getId());
         response.setUsername(user.getUsername());
         return response;
+    }
+
+    private List<String> resolveRoleCodes(SysUser user) {
+        List<String> roleCodes = userMapper.selectRoleCodesByUserId(user.getId());
+        if (roleCodes != null && !roleCodes.isEmpty()) {
+            return roleCodes;
+        }
+
+        String legacyRoleCode = mapLegacyRoleCode(user.getRole());
+        if (legacyRoleCode != null) {
+            return Collections.singletonList(legacyRoleCode);
+        }
+        return Collections.emptyList();
+    }
+
+    private List<String> resolvePermissionCodes(SysUser user, List<String> roleCodes) {
+        List<String> permissions = userMapper.selectPermissionCodesByUserId(user.getId());
+        if (permissions != null && !permissions.isEmpty()) {
+            return permissions;
+        }
+        return roleCodes == null ? Collections.emptyList() : new ArrayList<>(roleCodes);
+    }
+
+    private String mapLegacyRoleCode(String legacyRole) {
+        if (legacyRole == null || legacyRole.trim().isEmpty()) {
+            return null;
+        }
+        switch (legacyRole.trim()) {
+            case "主任":
+                return "ROLE_DIRECTOR";
+            case "班长":
+                return "ROLE_LEADER";
+            case "煎药工":
+                return "ROLE_WORKER";
+            case "质检员":
+                return "ROLE_INSPECTOR";
+            default:
+                return null;
+        }
     }
 }

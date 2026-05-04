@@ -117,8 +117,8 @@ public class PdaController {
         }
 
         // 扫码登录免密码，直接生成 token
-        List<String> roles = Collections.emptyList();
-        List<String> permissions = Collections.emptyList();
+        List<String> roles = resolveUserRoles(user);
+        List<String> permissions = new ArrayList<>(roles);
         String token = cn.org.openygt.common.util.JwtUtil.generateToken(
                 user.getId(), user.getUsername(), roles, permissions);
         EqDeviceDTO device = resolveDeviceByMac(request.getMacAddress());
@@ -162,6 +162,24 @@ public class PdaController {
             result.put("permissions", Collections.emptyList());
         }
         return result;
+    }
+
+    private List<String> resolveUserRoles(SysUser user) {
+        if (user == null || user.getRole() == null || user.getRole().trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        switch (user.getRole().trim()) {
+            case "主任":
+                return Collections.singletonList("ROLE_DIRECTOR");
+            case "班长":
+                return Collections.singletonList("ROLE_LEADER");
+            case "煎药工":
+                return Collections.singletonList("ROLE_WORKER");
+            case "质检员":
+                return Collections.singletonList("ROLE_INSPECTOR");
+            default:
+                return Collections.emptyList();
+        }
     }
 
     @PostMapping("/auth/logout")

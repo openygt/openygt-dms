@@ -17,6 +17,6 @@ public class GatewayWebConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(gatewayAuthInterceptor)
-                .addPathPatterns("/api/v1/iot/command");
+                .addPathPatterns("/api/v1/iot/command", "/api/v1/iot/debug/**");
     }
 }
