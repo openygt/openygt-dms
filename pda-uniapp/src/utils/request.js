@@ -32,12 +32,17 @@ function request(options) {
             reject(new Error(errMsg))
           }
         } else if (res.statusCode === 401) {
-          uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
-          uni.removeStorageSync(config.tokenKey)
-          uni.removeStorageSync(config.userInfoKey)
-          setTimeout(() => {
-            uni.reLaunch({ url: '/pages/login/index' })
-          }, 1500)
+          // 已在登录页则不再重复跳转
+          const pages = getCurrentPages()
+          const isLoginPage = pages.length > 0 && pages[pages.length - 1].route && pages[pages.length - 1].route.includes('login')
+          if (!isLoginPage) {
+            uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
+            uni.removeStorageSync(config.tokenKey)
+            uni.removeStorageSync(config.userInfoKey)
+            setTimeout(() => {
+              uni.reLaunch({ url: '/pages/login/index' })
+            }, 1500)
+          }
           reject(new Error('Unauthorized'))
         } else {
           const errMsg = `HTTP ${res.statusCode}`
@@ -97,10 +102,14 @@ export function upload(url, filePath, formData = {}) {
             reject(new Error('上传响应解析失败'))
           }
         } else if (res.statusCode === 401) {
-          uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
-          uni.removeStorageSync(config.tokenKey)
-          uni.removeStorageSync(config.userInfoKey)
-          setTimeout(() => uni.reLaunch({ url: '/pages/login/index' }), 1500)
+          const pages = getCurrentPages()
+          const isLoginPage = pages.length > 0 && pages[pages.length - 1].route && pages[pages.length - 1].route.includes('login')
+          if (!isLoginPage) {
+            uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
+            uni.removeStorageSync(config.tokenKey)
+            uni.removeStorageSync(config.userInfoKey)
+            setTimeout(() => uni.reLaunch({ url: '/pages/login/index' }), 1500)
+          }
           reject(new Error('Unauthorized'))
         } else {
           reject(new Error(`HTTP ${res.statusCode}`))

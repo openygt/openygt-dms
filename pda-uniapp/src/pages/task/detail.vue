@@ -7,13 +7,9 @@
           <text class="task-status-dot" :style="{ background: statusColor }"></text>
           <text class="task-status-name" data-testid="task-status">{{ task.statusName || task.status }}</text>
         </view>
-        <text class="task-barcode task-num-highlight" data-testid="task-barcode">{{ task.barcode }}</text>
+        <text class="task-barcode task-num-highlight" data-testid="task-barcode">任务号 {{ task.taskId }}</text>
       </view>
       <view class="task-info">
-        <view class="info-row">
-          <text class="info-label">任务号</text>
-          <text class="info-value task-num-highlight">{{ task.barcode }}</text>
-        </view>
         <view class="info-row">
           <text class="info-label">患者</text>
           <text class="info-value">{{ task.patientName || '-' }}</text>
@@ -95,12 +91,13 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
-import { get } from '../../utils/request.js'
+import { onLoad, onShow } from '@dcloudio/uni-app'
+import { get, post } from '../../utils/request.js'
 
 const task = ref({})
 const prescription = ref({})
 const barcode = ref('')
+const loaded = ref(false)
 
 const statusColor = computed(() => {
   const colors = {
@@ -129,7 +126,16 @@ const canAction = computed(() => {
 
 onLoad((options) => {
   barcode.value = options.barcode || ''
-  if (barcode.value) {
+  loaded.value = false
+})
+
+// 每次页面显示时重新加载，确保从子页面返回后数据是最新的
+onShow(() => {
+  if (barcode.value && !loaded.value) {
+    loadTask()
+    loaded.value = true
+  } else if (barcode.value) {
+    // 从设备绑定/工序确认返回后刷新数据
     loadTask()
   }
 })
@@ -223,11 +229,37 @@ function handleMainAction() {
     return
   }
 
-  // 普通工序确认
-  const deviceId = task.value.decoctDeviceId || task.value.packageDeviceId || ''
-  uni.navigateTo({
-    url: `/pages/task/confirm?taskId=${task.value.taskId}&stepType=${action.stepType}&barcode=${barcode.value}&deviceId=${deviceId}`
+  // 普通工序确认 → 弹窗直接确认，不跳转页面
+  confirmStep(action)
+}
+
+async function confirmStep(action) {
+  const stepLabel = action.text || action.stepType
+  const { confirm } = await uni.showModal({
+    title: '工序确认',
+    content: `确认执行「${stepLabel}」？`,
+    confirmText: '确认'
   })
+  if (!confirm) return
+
+  try {
+    uni.showLoading({ title: '提交中...' })
+    const deviceId = task.value.decoctDeviceId || task.value.packageDeviceId || ''
+    await post('/task/confirm', {
+      taskId: task.value.taskId,
+      stepType: action.stepType,
+      deviceId: deviceId || undefined,
+      remark: ''
+    })
+    uni.hideLoading()
+    uni.showToast({ title: '确认成功', icon: 'success' })
+    uni.vibrateShort()
+    // 刷新任务详情
+    loadTask()
+  } catch (e) {
+    uni.hideLoading()
+    uni.showToast({ title: e.message || '确认失败', icon: 'none' })
+  }
 }
 
 function onClickStep(step) {

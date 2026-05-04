@@ -209,10 +209,6 @@ async function queryTask() {
     }
 
     addToHistory(barcode.value, true)
-    // 延迟后自动跳转详情
-    setTimeout(() => {
-      uni.navigateTo({ url: `/pages/task/detail?taskId=${taskCard.value.taskId}&barcode=${barcode.value}` })
-    }, 800)
   } catch (e) {
     uni.hideLoading()
     if (uni.$ygtFeedback) uni.$ygtFeedback.error()

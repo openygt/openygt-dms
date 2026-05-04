@@ -6,10 +6,14 @@
     </view>
 
     <view class="scan-area">
-      <text class="scan-title">请扫描设备条码:</text>
+      <text class="scan-title">扫描设备条码:</text>
       <view class="scan-box" @click="handleScan" data-testid="btn-scan-device">
         <text class="scan-icon">📷</text>
-        <text class="scan-text">{{ deviceCode || '点击扫描设备码' }}</text>
+        <text class="scan-text">{{ deviceCode || '点击扫描' }}</text>
+      </view>
+      <view class="manual-input-row">
+        <text class="manual-label">或手动输入设备编码:</text>
+        <input class="manual-input" v-model="deviceCode" placeholder="输入设备编码" data-testid="input-device-code" confirm-type="done" @confirm="handleBind" />
       </view>
     </view>
 
@@ -112,6 +116,9 @@ function cacheRecentDevice(code, step) {
 .device-item { padding: 24rpx; background: #f5f5f5; border-radius: 12rpx; display: flex; justify-content: space-between; align-items: center; }
 .device-name { font-size: 30rpx; color: #333; }
 .device-code { font-size: 26rpx; color: #999; }
+.manual-input-row { margin-top: 24rpx; padding-top: 24rpx; border-top: 1rpx solid #f0f0f0; }
+.manual-label { font-size: 26rpx; color: #999; display: block; margin-bottom: 12rpx; }
+.manual-input { height: 80rpx; background: #f5f5f5; border-radius: 12rpx; padding: 0 24rpx; font-size: 30rpx; }
 .bind-btn { height: 96rpx; background: #0066CC; color: #fff; font-size: 34rpx; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; }
 .bind-btn[disabled] { background: #99c2e6; }
 </style>
