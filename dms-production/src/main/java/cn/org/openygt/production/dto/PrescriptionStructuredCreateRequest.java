@@ -11,6 +11,8 @@ import java.util.List;
 @Data
 public class PrescriptionStructuredCreateRequest {
 
+    private String prescriptionNumber;
+
     @NotBlank(message = "患者姓名不能为空")
     @Size(max = 100, message = "患者姓名长度不能超过100")
     private String patientName;
