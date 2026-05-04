@@ -46,6 +46,7 @@
 
     <view class="version-info">
       <text>v{{ version }}</text>
+      <text class="mock-badge" v-if="isMockMode">MOCK</text>
     </view>
   </view>
 </template>
@@ -60,10 +61,25 @@ const loading = ref(false)
 const loginType = ref('scan')
 const scanCode = ref('')
 const version = ref('1.0.0')
+const isMockMode = ref(false)
 const form = reactive({ userCode: '', password: '', deviceId: 1, deviceCode: '' })
 
 onMounted(() => {
+  // Mock 模式检测
+  isMockMode.value = uni.getStorageSync('pda_mock_env') === '1'
+  if (isMockMode.value) {
+    form.userCode = 'admin'
+    form.password = 'admin123'
+    form.deviceCode = 'PDA-001'
+  }
+
   checkVersion()
+  // 已登录则直接跳转首页
+  const token = uni.getStorageSync(config.tokenKey)
+  const userInfo = uni.getStorageSync(config.userInfoKey)
+  if (token && userInfo) {
+    uni.switchTab({ url: '/pages/index/index' })
+  }
 })
 
 async function checkVersion() {
@@ -156,6 +172,7 @@ function focusPassword() {
 .input { height: 88rpx; background: #f5f5f5; border-radius: 12rpx; padding: 0 24rpx; font-size: 30rpx; }
 .login-btn { height: 96rpx; background: #0066CC; color: #fff; font-size: 34rpx; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; margin-top: 20rpx; }
 .login-btn[disabled] { background: #99c2e6; }
-.version-info { margin-top: 40rpx; color: rgba(255,255,255,0.6); font-size: 24rpx; }
+.version-info { margin-top: 40rpx; color: rgba(255,255,255,0.6); font-size: 24rpx; display: flex; align-items: center; gap: 16rpx; justify-content: center; }
+.mock-badge { display: inline-block; background: #ff9800; color: #fff; font-size: 20rpx; padding: 4rpx 12rpx; border-radius: 8rpx; font-weight: 600; letter-spacing: 2rpx; }
 .scan-hidden-input { position: absolute; opacity: 0; height: 0; width: 0; pointer-events: none; }
 </style>

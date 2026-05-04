@@ -1,6 +1,7 @@
 <script setup>
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 import { startHeartbeat, stopHeartbeat } from './utils/heartbeat.js'
+import { isMockEnabled } from './utils/config.js'
 
 function applyFontSize(size) {
   // #ifdef H5
@@ -18,6 +19,12 @@ onLaunch(() => {
   const token = uni.getStorageSync('pda_token')
   if (token) {
     startHeartbeat()
+  }
+  // Mock 模式：自动初始化测试环境
+  if (isMockEnabled()) {
+    import('./mock/index.js').then(({ initMockEnvironment }) => {
+      initMockEnvironment()
+    })
   }
   // 初始化字号
   const fontSize = uni.getStorageSync('ygt-font-size') || 'normal'
