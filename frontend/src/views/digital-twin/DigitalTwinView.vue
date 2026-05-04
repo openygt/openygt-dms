@@ -1,5 +1,5 @@
 <template>
-  <div class="digital-twin">
+  <div class="digital-twin" v-loading="pageLoading" element-loading-text="数字孪生初始化中..." element-loading-background="rgba(245,247,250,0.95)">
     <!-- 页面标题栏 -->
     <div class="dt-header">
       <div class="dt-title">
@@ -259,6 +259,7 @@ import EmptyState from '@/components/states/EmptyState.vue'
 const deviceStore = useDeviceStore()
 const { connect, disconnect } = useDeviceWebSocket('default')
 
+const pageLoading = ref(true)
 const loading = ref(false)
 const refreshing = ref(false)
 const activeType = ref(0)
@@ -396,7 +397,9 @@ async function refreshData() {
 }
 
 onMounted(() => {
-  loadDevices()
+  loadDevices().finally(() => {
+    setTimeout(() => { pageLoading.value = false }, 400)
+  })
   connect()
 })
 

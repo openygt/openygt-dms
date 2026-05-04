@@ -8,6 +8,7 @@
       <el-menu
         :default-active="$route.path"
         router
+        unique-opened
         class="sidebar-menu"
         text-color="#F4F4F5"
         active-text-color="#FFFFFF"

@@ -1,5 +1,5 @@
 <template>
-  <div class="device-utilization">
+  <div class="device-utilization" v-loading="pageLoading" element-loading-text="加载中..." element-loading-background="rgba(255,255,255,0.9)">
     <div class="page-header-title">设备效能：<span class="page-header-sub">设备开机率、空闲率、故障率趋势</span></div>
     <div class="page-header">
 
@@ -65,6 +65,7 @@ import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 import { getDeviceUtilizationStats, getDeviceUtilizationTrend } from '@/api/equipment'
 
+const pageLoading = ref(true)
 const loading = ref(false)
 const utilizationList = ref<any[]>([])
 const deviceOptions = ref<string[]>(['DECOCT_001', 'DECOCT_002', 'PACK_001'])
@@ -140,7 +141,9 @@ onMounted(() => {
       trendChart = echarts.init(trendChartRef.value)
       window.addEventListener('resize', () => trendChart?.resize())
     }
-    loadData()
+    loadData().finally(() => {
+      setTimeout(() => { pageLoading.value = false }, 400)
+    })
   })
 })
 
