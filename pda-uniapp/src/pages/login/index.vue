@@ -51,7 +51,8 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onShow } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
+import { onShow } from '@dcloudio/uni-app'
 import { get, post } from '../../utils/request.js'
 import config from '../../utils/config.js'
 import { startHeartbeat } from '../../utils/heartbeat.js'

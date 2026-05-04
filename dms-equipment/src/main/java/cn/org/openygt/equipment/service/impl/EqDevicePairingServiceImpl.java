@@ -57,4 +57,9 @@ public class EqDevicePairingServiceImpl implements EqDevicePairingService {
         wrapper.eq(EqDevicePairing::getStatus, "ACTIVE").orderByDesc(EqDevicePairing::getCreatedAt);
         return pairingMapper.selectList(wrapper);
     }
+
+    @Override
+    public EqDevicePairing findByDecocterId(Long decoctDeviceId) {
+        return pairingMapper.findByDecocterId(decoctDeviceId);
+    }
 }

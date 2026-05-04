@@ -24,7 +24,9 @@ import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.system.entity.SysUser;
 import cn.org.openygt.system.service.SysUserService;
 import cn.org.openygt.common.service.EquipmentService;
+import cn.org.openygt.equipment.entity.EqDevicePairing;
 import cn.org.openygt.equipment.service.DecoctionTraceService;
+import cn.org.openygt.equipment.service.EqDevicePairingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,6 +54,7 @@ public class PdaController {
     private final PrescriptionMedicineMapper prescriptionMedicineMapper;
     private final EquipmentService equipmentService;
     private final DecoctionTraceService decoctionTraceService;
+    private final EqDevicePairingService eqDevicePairingService;
 
     @Value("${app.version:1.0.0}")
     private String appVersion;
@@ -287,8 +290,7 @@ public class PdaController {
                     task = taskService.endPour(taskId, operatorId);
                     break;
                 case "START_PACKAGE":
-                    Long packageDeviceId = request.getDeviceId();
-                    String packageDeviceCode = packageDeviceId != null ? equipmentService.getDeviceCode(packageDeviceId) : null;
+                    String packageDeviceCode = resolvePackageDevice(request.getDeviceId(), taskId);
                     task = taskService.startWrap(taskId, packageDeviceCode, operatorId);
                     break;
                 case "END_PACKAGE":
@@ -646,5 +648,41 @@ public class PdaController {
             case "已报废": return "CANCELLED";
             default: return dbStatus;
         }
+    }
+
+    /**
+     * 解析包装机设备编码：根据设备分组自动匹配包装机
+     */
+    private String resolvePackageDevice(Long deviceId, Long taskId) {
+        // 1. 如果传入了包装机ID，直接使用
+        if (deviceId != null) {
+            EqDeviceDTO device = equipmentService.getDeviceById(deviceId);
+            if (device != null && "2".equals(device.getDeviceType())) {
+                return device.getDeviceCode();
+            }
+        }
+
+        // 2. 从配对表查找：用煎药机ID匹配对应的包装机
+        Long decoctId = deviceId;
+        if (decoctId == null) {
+            Task task = taskService.getById(taskId);
+            if (task != null) {
+                decoctId = task.getDecoctDeviceId();
+            }
+        }
+
+        if (decoctId != null) {
+            EqDevicePairing pairing = eqDevicePairingService.findByDecocterId(decoctId);
+            if (pairing != null && pairing.getPackerId() != null) {
+                return equipmentService.getDeviceCode(pairing.getPackerId());
+            }
+        }
+
+        // 3. 降级：直接使用传入的deviceId
+        if (deviceId != null) {
+            return equipmentService.getDeviceCode(deviceId);
+        }
+
+        return null;
     }
 }
