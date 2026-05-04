@@ -150,9 +150,7 @@
       <el-header class="layout-header">
         <span class="header-title">{{ $route.meta.title || 'OpenYGT' }}</span>
         <div class="header-actions">
-          <el-breadcrumb separator=">">
-            <el-breadcrumb-item :to="{ path: '/prescriptions' }">处方录入</el-breadcrumb-item>
-          </el-breadcrumb>
+          <el-breadcrumb separator=">" />
           <el-divider direction="vertical" />
           <ThemeToggle />
           <el-divider direction="vertical" />

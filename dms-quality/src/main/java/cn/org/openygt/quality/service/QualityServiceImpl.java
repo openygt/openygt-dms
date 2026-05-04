@@ -1,14 +1,17 @@
 package cn.org.openygt.quality.service;
 
 import cn.org.openygt.common.dto.InspectionResult;
+import cn.org.openygt.common.dto.ProdTaskDTO;
 import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.ProductionQueryService;
 import cn.org.openygt.common.service.QualityService;
 import cn.org.openygt.quality.dto.InspectExecuteRequest;
 import cn.org.openygt.quality.entity.Inspection;
 import cn.org.openygt.quality.entity.InspectionItem;
+import cn.org.openygt.quality.entity.RetainSample;
 import cn.org.openygt.quality.mapper.InspectionItemMapper;
 import cn.org.openygt.quality.mapper.InspectionMapper;
+import cn.org.openygt.quality.service.RetainSampleService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ public class QualityServiceImpl implements QualityService {
     private final InspectionMapper inspectionMapper;
     private final InspectionItemMapper inspectionItemMapper;
     private final ProductionQueryService productionQueryService;
+    private final RetainSampleService retainSampleService;
 
     @Override
     @Transactional
@@ -58,6 +62,20 @@ public class QualityServiceImpl implements QualityService {
         ir.setInspectedAt(LocalDateTime.now());
         ir.setIsException(isExceptionResult(result) ? 1 : 0);
         ir.setExceptionReason(isExceptionResult(result) ? remark : null);
+
+        // 质检通过（PASS/CONCESSION）时自动创建留样
+        if (result == InspectionResultType.PASS || result == InspectionResultType.CONCESSION) {
+            try {
+                ProdTaskDTO task = productionQueryService.getTaskById(taskId);
+                if (task != null && task.getPrescriptionId() != null) {
+                    retainSampleService.createSamplesForTask(taskId, task.getPrescriptionId(),
+                            resolveOperatorId(operatorId));
+                    log.info("留样已创建: taskId={}, prescriptionId={}", taskId, task.getPrescriptionId());
+                }
+            } catch (Exception e) {
+                log.error("留样创建失败，不影响质检主流程: taskId={}", taskId, e);
+            }
+        }
 
         log.info("质检完成: taskId={}, result={}, operatorId={}", taskId, result, operatorId);
         return ir;
@@ -196,6 +214,20 @@ public class QualityServiceImpl implements QualityService {
         ir.setIsException(isExceptionResult(result) ? 1 : 0);
         ir.setExceptionReason(isExceptionResult(result) ? remark : null);
 
+        // 质检通过（PASS/CONCESSION）时自动创建留样
+        if (result == InspectionResultType.PASS || result == InspectionResultType.CONCESSION) {
+            try {
+                ProdTaskDTO task = productionQueryService.getTaskById(taskId);
+                if (task != null && task.getPrescriptionId() != null) {
+                    retainSampleService.createSamplesForTask(taskId, task.getPrescriptionId(),
+                            resolveOperatorId(operatorId));
+                    log.info("留样已创建(含明细): taskId={}, prescriptionId={}", taskId, task.getPrescriptionId());
+                }
+            } catch (Exception e) {
+                log.error("留样创建失败，不影响质检主流程: taskId={}", taskId, e);
+            }
+        }
+
         log.info("质检完成(含明细): taskId={}, result={}, operatorId={}, items={}", taskId, result, operatorId,
                 req.getItems() != null ? req.getItems().size() : 0);
         return ir;
@@ -212,5 +244,17 @@ public class QualityServiceImpl implements QualityService {
         return result == InspectionResultType.CONCESSION
                 || result == InspectionResultType.REWORK
                 || result == InspectionResultType.SCRAP;
+    }
+
+    private Long resolveOperatorId(String operatorId) {
+        if (operatorId == null || operatorId.trim().isEmpty()) {
+            return 0L;
+        }
+        try {
+            return Long.valueOf(operatorId.trim());
+        } catch (NumberFormatException e) {
+            log.warn("operatorId 不是有效数字: {}, 使用默认值 0", operatorId);
+            return 0L;
+        }
     }
 }

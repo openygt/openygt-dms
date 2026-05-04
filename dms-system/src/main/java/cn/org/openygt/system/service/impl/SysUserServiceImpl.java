@@ -138,6 +138,7 @@ public class SysUserServiceImpl implements SysUserService {
         response.setExpiresIn(86400L);
         response.setUserId(user.getId());
         response.setUsername(user.getUsername());
+        response.setRoles(roles);
         return response;
     }
 

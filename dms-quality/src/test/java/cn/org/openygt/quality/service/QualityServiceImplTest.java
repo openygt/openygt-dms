@@ -7,6 +7,7 @@ import cn.org.openygt.common.service.ProductionQueryService;
 import cn.org.openygt.quality.entity.Inspection;
 import cn.org.openygt.quality.mapper.InspectionItemMapper;
 import cn.org.openygt.quality.mapper.InspectionMapper;
+import cn.org.openygt.quality.service.RetainSampleService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +39,9 @@ class QualityServiceImplTest {
     @Mock
     private InspectionItemMapper inspectionItemMapper;
 
+    @Mock
+    private RetainSampleService retainSampleService;
+
     private QualityServiceImpl qualityService;
 
     @Captor
@@ -45,7 +49,7 @@ class QualityServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        qualityService = new QualityServiceImpl(inspectionMapper, inspectionItemMapper, productionQueryService);
+        qualityService = new QualityServiceImpl(inspectionMapper, inspectionItemMapper, productionQueryService, retainSampleService);
     }
 
     // ==================== inspect ====================
