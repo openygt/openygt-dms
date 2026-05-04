@@ -253,7 +253,7 @@ public class PdaController {
             @RequestParam(defaultValue = "20") Integer limit) {
         // 查询当前操作人正在处理的任务（排除已完成/已报废）
         List<Task> tasks = taskService.queryTasks(null, null, null, null,
-                String.valueOf(userId), null, null, 1, limit).getRecords().stream()
+                String.valueOf(userId), null, null, null, 1, limit).getRecords().stream()
                 .filter(t -> !"已完成".equals(t.getStatus()) && !"已报废".equals(t.getStatus()))
                 .collect(Collectors.toList());
         List<Map<String, Object>> result = new ArrayList<>();

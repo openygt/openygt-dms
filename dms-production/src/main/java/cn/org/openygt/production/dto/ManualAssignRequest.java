@@ -1,6 +1,7 @@
 package cn.org.openygt.production.dto;
 
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -14,5 +15,6 @@ public class ManualAssignRequest {
     @NotNull(message = "员工ID不能为空")
     private Long employeeId;
     private String reason;
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate scheduledDate;
 }

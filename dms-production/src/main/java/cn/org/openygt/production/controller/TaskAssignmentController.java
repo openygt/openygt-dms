@@ -67,4 +67,22 @@ public class TaskAssignmentController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ApiResponse.success(taskAssignmentService.getOccupiedIds(date));
     }
+
+    @GetMapping("/available-tasks")
+    public ApiResponse<List<cn.org.openygt.production.dto.TaskOptionDTO>> availableTasks(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ApiResponse.success(taskAssignmentService.getAvailableTasks(date));
+    }
+
+    @GetMapping("/available-employees")
+    public ApiResponse<List<EmployeeLoadDTO>> availableEmployees(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ApiResponse.success(taskAssignmentService.getAvailableEmployees(date));
+    }
+
+    @GetMapping("/available-devices")
+    public ApiResponse<List<DeviceLoadDTO>> availableDevices(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ApiResponse.success(taskAssignmentService.getAvailableDevices(date));
+    }
 }

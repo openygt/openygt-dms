@@ -48,11 +48,15 @@ class TaskServiceImplTest {
     @Mock
     private PrescriptionMedicineMapper prescriptionMedicineMapper;
     @Mock
+    private PrescriptionMapper prescriptionMapper;
+    @Mock
     private EquipmentService equipmentService;
     @Mock
     private PrintService printService;
     @Mock
     private ConsumeRecordService consumeRecordService;
+    @Mock
+    private cn.org.openygt.production.mapper.HrEmployeeMapper hrEmployeeMapper;
 
     private TaskServiceImpl taskService;
 
@@ -60,8 +64,8 @@ class TaskServiceImplTest {
     void setUp() {
         taskService = new TaskServiceImpl(
                 taskMapper, historyMapper, workRecordMapper, stepLogMapper,
-                handoverDetailMapper, prescriptionMedicineMapper,
-                equipmentService, printService, consumeRecordService
+                handoverDetailMapper, prescriptionMedicineMapper, prescriptionMapper,
+                equipmentService, printService, consumeRecordService, hrEmployeeMapper
         );
     }
 
@@ -669,7 +673,7 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("queryTasks: 按状态和设备 ID 分页查询")
     void testQueryTasksWithFilters() {
-        taskService.queryTasks("煎药中", 10L, null, null, null, null, null, 1, 20);
+        taskService.queryTasks("煎药中", 10L, null, null, null, null, null, null, 1, 20);
 
         verify(taskMapper).selectPage(any(), any());
     }

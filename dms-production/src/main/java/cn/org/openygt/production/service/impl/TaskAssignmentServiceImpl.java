@@ -8,10 +8,12 @@ import cn.org.openygt.system.entity.SysUser;
 import cn.org.openygt.system.mapper.SysUserMapper;
 import cn.org.openygt.production.dto.GanttItemDTO;
 import cn.org.openygt.production.dto.OccupiedIds;
+import cn.org.openygt.production.dto.TaskOptionDTO;
 import cn.org.openygt.production.entity.EmployeeSkill;
 import cn.org.openygt.production.entity.Task;
 import cn.org.openygt.production.entity.TaskAssignment;
 import cn.org.openygt.production.mapper.EmployeeSkillMapper;
+import cn.org.openygt.production.mapper.HrEmployeeMapper;
 import cn.org.openygt.production.mapper.TaskAssignmentMapper;
 import cn.org.openygt.production.mapper.TaskMapper;
 import cn.org.openygt.production.service.TaskAssignmentService;
@@ -42,6 +44,7 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
     private final TaskMapper taskMapper;
     private final EquipmentService equipmentService;
     private final SysUserMapper sysUserMapper;
+    private final HrEmployeeMapper hrEmployeeMapper;
 
     @Override
     @Transactional
@@ -210,9 +213,9 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         List<TaskAssignment> list = assignmentMapper.selectList(wrapper);
 
         // 收集所有 employeeId 并批量查询姓名
-        java.util.Set<Long> allEmployeeIds = list.stream()
+        Set<Long> allEmployeeIds = list.stream()
                 .map(TaskAssignment::getEmployeeId)
-                .filter(java.util.Objects::nonNull)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         Map<Long, String> userNameMap = queryEmployeeNames(allEmployeeIds);
 
@@ -273,9 +276,9 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
     /**
      * 根据员工ID集合查询 sys_user 表，返回 id → realName 映射
      */
-    private Map<Long, String> queryEmployeeNames(java.util.Set<Long> employeeIds) {
+    private Map<Long, String> queryEmployeeNames(Set<Long> employeeIds) {
         if (employeeIds.isEmpty()) {
-            return java.util.Collections.emptyMap();
+            return Collections.emptyMap();
         }
         List<SysUser> users = sysUserMapper.selectBatchIds(employeeIds);
         return users.stream()
@@ -334,6 +337,32 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         occupied.setEmployeeIds(dateFiltered.stream().map(TaskAssignment::getEmployeeId).filter(Objects::nonNull).distinct().collect(Collectors.toList()));
         occupied.setDeviceIds(dateFiltered.stream().map(TaskAssignment::getDeviceId).filter(Objects::nonNull).distinct().collect(Collectors.toList()));
         return occupied;
+    }
+
+    @Override
+    public List<TaskOptionDTO> getAvailableTasks(LocalDate date) {
+        List<Task> all = taskMapper.selectList(new LambdaQueryWrapper<>());
+        List<Long> assignedTaskIds = assignmentMapper.selectList(new LambdaQueryWrapper<>()).stream()
+                .filter(a -> a.getStatus() == null || a.getStatus() == 0)
+                .map(TaskAssignment::getTaskId).collect(Collectors.toList());
+        return all.stream()
+                .filter(t -> !assignedTaskIds.contains(t.getId()))
+                .map(t -> new TaskOptionDTO(t.getId(), "任务-" + t.getId()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EmployeeLoadDTO> getAvailableEmployees(LocalDate date) {
+        return getEmployeeLoad(date).stream()
+                .filter(e -> e.getAssignedCount() < 10)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<DeviceLoadDTO> getAvailableDevices(LocalDate date) {
+        return getDeviceLoad(date).stream()
+                .filter(d -> d.getRunningCount() == null || d.getRunningCount() < 2)
+                .collect(Collectors.toList());
     }
 
     private void assignByLoadBalance(Task task, TaskAssignment assignment) {
