@@ -2,6 +2,7 @@ import config from './config.js'
 
 /**
  * 统一 HTTP 请求封装
+ * - Mock 模式下直接返回模拟数据
  * - 自动附加 JWT Token
  * - 401 时自动跳转登录页
  * - POST 请求失败时缓存到离线队列
@@ -9,8 +10,16 @@ import config from './config.js'
 
 function request(options) {
   return new Promise((resolve, reject) => {
+    // Mock 模式：拦截请求，返回模拟数据
+    const isMock = typeof uni !== 'undefined' && uni.getStorageSync && uni.getStorageSync('pda_mock_env') === '1'
+    if (isMock) {
+      return import('../mock/index.js').then(({ handleMockRequest }) => {
+        return handleMockRequest(options).then(resolve).catch(reject)
+      })
+    }
+
     const token = uni.getStorageSync(config.tokenKey)
-    
+
     uni.request({
       url: options.url.startsWith('http') ? options.url : config.baseUrl + options.url,
       method: options.method || 'GET',
