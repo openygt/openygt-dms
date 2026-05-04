@@ -21,8 +21,8 @@
       <!-- 测试用隐藏输入：用于 E2E 模拟扫码 -->
       <input type="text" v-model="scanCode" class="scan-hidden-input" data-testid="input-scan-code-hidden" />
       <view class="form-item">
-        <text class="label">设备编码</text>
-        <input class="input" v-model="form.deviceCode" placeholder="请扫描设备码" data-testid="input-scan-device-code" />
+        <text class="label">设备MAC</text>
+        <input class="input" v-model="form.macAddress" placeholder="AA:BB:CC:DD:EE:01" data-testid="input-scan-mac" />
       </view>
       <button class="login-btn" :loading="loading" :disabled="loading || !scanCode" @click="handleScanLogin" data-testid="btn-scan-login">登录</button>
     </view>
@@ -38,8 +38,8 @@
         <input ref="passwordRef" class="input" v-model="form.password" password placeholder="请输入密码" data-testid="input-password" confirm-type="done" @confirm="handleLogin" />
       </view>
       <view class="form-item">
-        <text class="label">设备编码</text>
-        <input class="input" v-model="form.deviceCode" placeholder="请扫描设备码" data-testid="input-device-code" />
+        <text class="label">设备MAC</text>
+        <input class="input" v-model="form.macAddress" placeholder="AA:BB:CC:DD:EE:01" data-testid="input-mac" />
       </view>
       <button class="login-btn" :loading="loading" :disabled="loading" @click="handleLogin" data-testid="btn-login">登录</button>
     </view>
@@ -61,7 +61,7 @@ const loading = ref(false)
 const loginType = ref('scan')
 const scanCode = ref('')
 const version = ref('1.0.1')
-const form = reactive({ userCode: '', password: '', deviceId: 1, deviceCode: '' })
+const form = reactive({ userCode: '', password: '', macAddress: 'AA:BB:CC:DD:EE:01', deviceCode: '' })
 
 onMounted(() => {
   checkVersion()
@@ -84,10 +84,10 @@ function handleScan() {
 
 async function handleScanLogin() {
   if (!scanCode.value) { uni.showToast({ title: '请先扫描员工条码', icon: 'none' }); return }
-  if (!form.deviceCode.trim()) { uni.showToast({ title: '请输入设备编码', icon: 'none' }); return }
+  if (!form.macAddress.trim()) { uni.showToast({ title: '请输入设备MAC', icon: 'none' }); return }
   loading.value = true
   try {
-    const res = await post('/auth/scan-login', { scanCode: scanCode.value, deviceCode: form.deviceCode })
+    const res = await post('/auth/scan-login', { scanCode: scanCode.value, macAddress: form.macAddress })
     doLoginSuccess(res)
   } catch (e) {
     uni.showToast({ title: e.message || '登录失败', icon: 'none' })
@@ -99,10 +99,10 @@ async function handleScanLogin() {
 async function handleLogin() {
   if (!form.userCode.trim()) { uni.showToast({ title: '请输入工号', icon: 'none' }); return }
   if (!form.password) { uni.showToast({ title: '请输入密码', icon: 'none' }); return }
-  if (!form.deviceCode.trim()) { uni.showToast({ title: '请输入设备编码', icon: 'none' }); return }
+  if (!form.macAddress.trim()) { uni.showToast({ title: '请输入设备MAC', icon: 'none' }); return }
   loading.value = true
   try {
-    const res = await post('/auth/login', { userCode: form.userCode, password: form.password, deviceId: form.deviceId, deviceCode: form.deviceCode })
+    const res = await post('/auth/login', { userCode: form.userCode, password: form.password, macAddress: form.macAddress })
     doLoginSuccess(res)
   } catch (e) {
     uni.showToast({ title: e.message || '登录失败', icon: 'none' })
