@@ -64,13 +64,13 @@
     <view class="recent-section" v-if="recentTasks.length > 0">
       <view class="section-header">
         <text class="section-title">正在处理</text>
-        <text class="section-more" @click="goLog">查看更多</text>
       </view>
       <view class="recent-list">
         <view class="recent-item" v-for="item in recentTasks" :key="item.taskId" @click="goTaskDetail(item.barcode)" data-testid="recent-task-item">
           <view class="recent-info">
             <text class="recent-patient">{{ item.patientName || '未知患者' }}</text>
-            <text class="recent-barcode">条码: {{ item.barcode }}</text>
+            <text class="recent-taskid">任务号: {{ item.taskId }}</text>
+            <text class="recent-barcode">处方号: {{ item.barcode }}</text>
           </view>
           <view class="recent-meta">
             <text class="recent-status" :style="{ color: getStatusColor(item.status) }">{{ item.statusName }}</text>
@@ -203,7 +203,8 @@ async function doSync() {
 .recent-item { display: flex; justify-content: space-between; align-items: center; padding: 24rpx 30rpx; border-bottom: 1rpx solid #f0f0f0; }
 .recent-item:last-child { border-bottom: none; }
 .recent-patient { font-size: 30rpx; color: #333; font-weight: 500; display: block; }
-.recent-barcode { font-size: 24rpx; color: #999; margin-top: 6rpx; display: block; }
+.recent-taskid { font-size: 24rpx; color: #666; margin-top: 4rpx; display: block; }
+.recent-barcode { font-size: 24rpx; color: #999; margin-top: 4rpx; display: block; }
 .recent-meta { text-align: right; }
 .recent-status { font-size: 26rpx; font-weight: 500; display: block; }
 .recent-time { font-size: 22rpx; color: #bbb; margin-top: 6rpx; display: block; }
