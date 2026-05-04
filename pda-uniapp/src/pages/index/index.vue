@@ -60,10 +60,10 @@
       </view>
     </view>
 
-    <!-- 最近处理 -->
+    <!-- 正在处理 -->
     <view class="recent-section" v-if="recentTasks.length > 0">
       <view class="section-header">
-        <text class="section-title">最近处理</text>
+        <text class="section-title">正在处理</text>
         <text class="section-more" @click="goLog">查看更多</text>
       </view>
       <view class="recent-list">
@@ -79,7 +79,7 @@
         </view>
       </view>
     </view>
-    <ygt-empty v-else text="暂无最近处理任务" />
+    <ygt-empty v-else text="暂无正在处理的任务" />
   </view>
 </template>
 
