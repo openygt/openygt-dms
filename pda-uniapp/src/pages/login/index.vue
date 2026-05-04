@@ -62,9 +62,11 @@ const loading = ref(false)
 const loginType = ref('scan')
 const scanCode = ref('')
 const version = ref('1.0.1')
-const form = reactive({ userCode: '', password: '', macAddress: 'AA:BB:CC:DD:EE:01', deviceCode: '' })
+const form = reactive({ userCode: '', password: '', macAddress: '' })
+const MAC_CACHE_KEY = 'pda_mac_address'
 
 onMounted(() => {
+  restoreMacAddress()
   checkVersion()
 })
 
@@ -85,6 +87,17 @@ async function checkVersion() {
   }
 }
 
+function restoreMacAddress() {
+  const cachedMacAddress = uni.getStorageSync(MAC_CACHE_KEY)
+  if (cachedMacAddress) {
+    form.macAddress = normalizeMac(cachedMacAddress)
+  }
+}
+
+function normalizeMac(value) {
+  return (value || '').trim().toUpperCase()
+}
+
 function handleScan() {
   startScan({ onlyFromCamera: true, scanType: ['qrCode', 'barCode'] }).then(code => {
     scanCode.value = code
@@ -93,10 +106,11 @@ function handleScan() {
 
 async function handleScanLogin() {
   if (!scanCode.value) { uni.showToast({ title: '请先扫描员工条码', icon: 'none' }); return }
-  if (!form.macAddress.trim()) { uni.showToast({ title: '请输入设备MAC', icon: 'none' }); return }
+  const macAddress = normalizeMac(form.macAddress)
+  if (!macAddress) { uni.showToast({ title: '请输入设备MAC', icon: 'none' }); return }
   loading.value = true
   try {
-    const res = await post('/auth/scan-login', { scanCode: scanCode.value, macAddress: form.macAddress })
+    const res = await post('/auth/scan-login', { scanCode: scanCode.value, macAddress })
     doLoginSuccess(res)
   } catch (e) {
     uni.showToast({ title: e.message || '登录失败', icon: 'none' })
@@ -108,10 +122,11 @@ async function handleScanLogin() {
 async function handleLogin() {
   if (!form.userCode.trim()) { uni.showToast({ title: '请输入工号', icon: 'none' }); return }
   if (!form.password) { uni.showToast({ title: '请输入密码', icon: 'none' }); return }
-  if (!form.macAddress.trim()) { uni.showToast({ title: '请输入设备MAC', icon: 'none' }); return }
+  const macAddress = normalizeMac(form.macAddress)
+  if (!macAddress) { uni.showToast({ title: '请输入设备MAC', icon: 'none' }); return }
   loading.value = true
   try {
-    const res = await post('/auth/login', { userCode: form.userCode, password: form.password, macAddress: form.macAddress })
+    const res = await post('/auth/login', { userCode: form.userCode, password: form.password, macAddress })
     doLoginSuccess(res)
   } catch (e) {
     uni.showToast({ title: e.message || '登录失败', icon: 'none' })
@@ -121,7 +136,9 @@ async function handleLogin() {
 }
 
 function doLoginSuccess(res) {
+  const macAddress = normalizeMac(res.macAddress || form.macAddress)
   uni.setStorageSync(config.tokenKey, res.token)
+  uni.setStorageSync(MAC_CACHE_KEY, macAddress)
   const userInfo = {
     userId: res.userId,
     userCode: res.userCode,
