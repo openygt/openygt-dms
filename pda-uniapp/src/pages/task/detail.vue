@@ -11,11 +11,15 @@
       </view>
       <view class="task-info">
         <view class="info-row">
+          <text class="info-label">任务号</text>
+          <text class="info-value task-num-highlight">{{ task.barcode }}</text>
+        </view>
+        <view class="info-row">
           <text class="info-label">患者</text>
           <text class="info-value">{{ task.patientName || '-' }}</text>
         </view>
         <view class="info-row">
-          <text class="info-label">处方</text>
+          <text class="info-label">处方号</text>
           <text class="info-value">{{ task.prescriptionNumber || '-' }}</text>
         </view>
         <view class="info-row">
@@ -29,42 +33,6 @@
         <view class="info-row" v-if="task.deviceName">
           <text class="info-label">设备</text>
           <text class="info-value">{{ task.deviceName }}</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 煎药流程进度 -->
-    <view class="progress-section">
-      <text class="section-title">煎药流程进度</text>
-      <view class="progress-steps">
-        <view
-          class="step-node"
-          v-for="(step, idx) in decoctionSteps"
-          :key="step.key"
-          :class="{
-            'step-done': step.status === 'done',
-            'step-current': step.status === 'current',
-            'step-pending': step.status === 'pending'
-          }"
-        >
-          <!-- 连接线 -->
-          <view class="step-connector" v-if="idx > 0">
-            <view class="connector-line" :class="{ 'line-active': step.status !== 'pending' }"></view>
-          </view>
-
-          <view class="step-marker">
-            <view class="step-circle">
-              <text class="step-check" v-if="step.status === 'done'">✓</text>
-              <text class="step-num" v-else>{{ idx + 1 }}</text>
-            </view>
-          </view>
-
-          <view class="step-body">
-            <text class="step-name">{{ step.name }}</text>
-            <text class="step-plan-time" v-if="step.planTime">计划: {{ step.planTime }}</text>
-            <text class="step-actual-time" v-if="step.actualTime">实际: {{ step.actualTime }}</text>
-            <text class="step-hint" v-if="step.status === 'current'">进行中</text>
-          </view>
         </view>
       </view>
     </view>
@@ -157,42 +125,6 @@ const mainActionText = computed(() => {
 
 const canAction = computed(() => {
   return task.value.nextAction != null && task.value.status !== 'COMPLETED' && task.value.status !== 'CANCELLED'
-})
-
-// 煎药流程步骤：泡药→头煎→二煎→合并→过滤→包装
-const decoctionSteps = computed(() => {
-  const stepDefs = [
-    { key: 'SOAK', name: '泡药' },
-    { key: 'FIRST_DECOCT', name: '头煎' },
-    { key: 'SECOND_DECOCT', name: '二煎' },
-    { key: 'MERGE', name: '合并' },
-    { key: 'FILTER', name: '过滤' },
-    { key: 'PACKAGE', name: '包装' }
-  ]
-  const steps = task.value.decoctionSteps || task.value.steps || []
-  let currentFound = false
-  return stepDefs.map(def => {
-    const s = steps.find(x => x.key === def.key || x.stepType === def.key || x.label === def.name)
-    let status = 'pending'
-    if (s) {
-      if (s.completed === true || s.status === 'done') {
-        status = 'done'
-      } else if (s.current === true || s.status === 'current') {
-        status = 'current'
-        currentFound = true
-      } else if (!currentFound) {
-        status = 'done'
-      }
-    } else if (!currentFound && task.value.status === 'COMPLETED') {
-      status = 'done'
-    }
-    return {
-      ...def,
-      status,
-      planTime: s ? (s.planTime || s.planTimeStr) : '',
-      actualTime: s ? (s.actualTime || s.actualTimeStr || s.time) : ''
-    }
-  })
 })
 
 onLoad((options) => {
