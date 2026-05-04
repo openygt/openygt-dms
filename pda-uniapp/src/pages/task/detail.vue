@@ -211,13 +211,21 @@ async function loadTask() {
     if (res.prescription) {
       prescription.value = res.prescription
     } else if (res.medicines && res.medicines.length > 0) {
-      // 构造默认不分组的药材清单，用于兼容旧数据
+      // 按煎法分组
+      const groupMap = {}
+      res.medicines.forEach(m => {
+        const method = m.decoctionMethod || 'NORMAL'
+        if (!groupMap[method]) {
+          groupMap[method] = {
+            type: method,
+            name: getGroupName(method),
+            medicines: []
+          }
+        }
+        groupMap[method].medicines.push(m)
+      })
       prescription.value = {
-        groups: [{
-          type: 'NORMAL',
-          name: '群煎组',
-          medicines: res.medicines
-        }]
+        groups: Object.values(groupMap)
       }
     }
   } catch (e) {
@@ -229,13 +237,30 @@ async function loadTask() {
 
 function getGroupClass(type) {
   const map = {
-    PRE_DECOCT: 'group-red',
+    PRE_DECOCT: 'group-red', DECOCT_FIRST: 'group-red',
     NORMAL: 'group-blue',
-    POST_DECOCT: 'group-green',
-    WRAP: 'group-orange',
-    DISSOLVE: 'group-purple'
+    POST_DECOCT: 'group-green', ADD_LATE: 'group-green',
+    WRAP: 'group-orange', WRAP_DECOCT: 'group-orange',
+    SEPARATE_DECOCT: 'group-purple',
+    DISSOLVE: 'group-purple',
+    INFUSE: 'group-orange',
+    DECOCT_AS_WATER: 'group-red'
   }
   return map[type] || 'group-blue'
+}
+
+function getGroupName(method) {
+  const map = {
+    NORMAL: '群煎组',
+    DECOCT_FIRST: '先煎',
+    ADD_LATE: '后下',
+    WRAP_DECOCT: '包煎',
+    SEPARATE_DECOCT: '另煎',
+    DISSOLVE: '溶化',
+    INFUSE: '冲服',
+    DECOCT_AS_WATER: '煎汤代水'
+  }
+  return map[method] || '其他'
 }
 
 function handleMainAction() {
