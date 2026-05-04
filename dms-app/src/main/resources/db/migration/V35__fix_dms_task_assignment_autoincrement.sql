@@ -1,0 +1,2 @@
+ALTER TABLE dms_task_assignment MODIFY id BIGINT AUTO_INCREMENT;
+

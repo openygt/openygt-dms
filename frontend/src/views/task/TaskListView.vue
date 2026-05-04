@@ -12,33 +12,15 @@
         </div>
       </template>
 
-      <!-- 查询表单 -->
       <el-form :inline="true" :model="queryForm" class="query-form">
-        <el-form-item label="任务号">
-          <el-input v-model="queryForm.id" placeholder="任务号" clearable style="width: 120px" />
-        </el-form-item>
-        <el-form-item label="处方号">
-          <el-input v-model="queryForm.prescriptionId" placeholder="处方号" clearable style="width: 120px" />
-        </el-form-item>
+        <el-form-item label="任务号"><el-input v-model="queryForm.id" placeholder="任务号" clearable style="width: 120px" /></el-form-item>
+        <el-form-item label="处方号"><el-input v-model="queryForm.prescriptionId" placeholder="处方号" clearable style="width: 120px" /></el-form-item>
         <el-form-item label="状态">
           <el-select v-model="queryForm.status" placeholder="全部状态" clearable style="width: 120px">
-            <el-option label="待泡药" value="待泡药" />
-            <el-option label="泡药中" value="泡药中" />
-            <el-option label="待煎药" value="待煎药" />
-            <el-option label="煎药中" value="煎药中" />
-            <el-option label="待出液" value="待出液" />
-            <el-option label="出液中" value="出液中" />
-            <el-option label="待包装" value="待包装" />
-            <el-option label="包装中" value="包装中" />
-            <el-option label="待贴标" value="待贴标" />
-            <el-option label="待质检" value="待质检" />
-            <el-option label="待交接" value="待交接" />
-            <el-option label="已完成" value="已完成" />
+            <el-option v-for="item in kanbanStatuses" :key="item.status" :label="item.label" :value="item.status" />
           </el-select>
         </el-form-item>
-        <el-form-item label="操作人">
-          <el-input v-model="queryForm.operatorId" placeholder="操作人" clearable style="width: 120px" />
-        </el-form-item>
+        <el-form-item label="操作人"><el-input v-model="queryForm.operatorId" placeholder="操作人" clearable style="width: 120px" /></el-form-item>
         <el-form-item label="时间范围">
           <el-date-picker
             v-model="queryForm.dateRange"
@@ -56,29 +38,24 @@
         </el-form-item>
       </el-form>
 
-      <!-- 列表视图 -->
       <template v-if="viewMode === 'list'">
         <el-table :data="taskList" v-loading="loading" border>
           <el-table-column prop="id" label="任务号" width="80" />
           <el-table-column prop="prescriptionId" label="处方号" width="100" />
           <el-table-column prop="status" label="状态" width="120">
-            <template #default="{ row }">
-              <el-tag :type="statusType(row.status)">{{ row.status }}</el-tag>
-            </template>
+            <template #default="{ row }"><el-tag :type="statusType(row.status)">{{ row.status }}</el-tag></template>
           </el-table-column>
           <el-table-column prop="operatorId" label="当前操作人" width="120">
-            <template #default="{ row }">
-              {{ formatOperator(row.operatorId) }}
-            </template>
+            <template #default="{ row }">{{ formatOperator(row.operatorId) }}</template>
           </el-table-column>
           <el-table-column prop="updatedAt" label="更新时间">
-            <template #default="{ row }">
-              {{ formatDateTime(row.updatedAt) }}
-            </template>
+            <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
           </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column prop="decoctDeviceId" label="煎药设备" width="120" />
+          <el-table-column label="操作" width="260" fixed="right">
             <template #default="{ row }">
               <el-button v-if="row.status === '待泡药'" size="small" type="primary" @click="startSoak(row)">开始泡药</el-button>
+              <el-button v-if="row.status === '待煎药'" size="small" type="warning" @click="openDecoctDialog(row)">开始煎药</el-button>
               <el-button size="small" @click="viewDetail(row)">详情</el-button>
             </template>
           </el-table-column>
@@ -96,7 +73,6 @@
         />
       </template>
 
-      <!-- 看板视图 -->
       <template v-else>
         <div v-loading="loading" class="kanban-board">
           <div v-for="col in kanbanColumns" :key="col.status" class="kanban-column">
@@ -115,6 +91,7 @@
                 <div class="kanban-card-time">{{ formatDateTime(task.updatedAt) }}</div>
                 <div class="kanban-card-actions">
                   <el-button v-if="task.status === '待泡药'" size="small" type="primary" @click.stop="startSoak(task)">开始泡药</el-button>
+                  <el-button v-if="task.status === '待煎药'" size="small" type="warning" @click.stop="openDecoctDialog(task)">开始煎药</el-button>
                 </div>
               </div>
               <el-empty v-if="col.tasks.length === 0" description="无任务" :image-size="60" />
@@ -129,14 +106,34 @@
       <p>状态：{{ selectedTask?.status }}</p>
       <p>处方ID：{{ selectedTask?.prescriptionId }}</p>
       <p>当前步骤：{{ selectedTask?.currentStep || '-' }}</p>
+      <p>煎药设备：{{ selectedTask?.decoctDeviceId || '-' }}</p>
+    </el-dialog>
+
+    <el-dialog v-model="decoctDialogVisible" title="开始煎药" width="420px">
+      <el-form label-width="100px">
+        <el-form-item label="任务号">
+          <span>{{ currentDecoctTask?.id }}</span>
+        </el-form-item>
+        <el-form-item label="设备编码" required>
+          <el-select v-model="decoctDeviceCode" filterable clearable placeholder="选择煎药设备" style="width: 100%">
+            <el-option v-for="device in decoctDevices" :key="device.id" :label="device.label" :value="device.code" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="decoctDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleStartDecoct">确认</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
+import { getDeviceList } from '@/api/equipment'
+import { startDecoct } from '@/api/newModules'
 
 interface Task {
   id: number
@@ -145,12 +142,17 @@ interface Task {
   operatorId: string
   currentStep: string
   updatedAt: string
+  decoctDeviceId?: number
 }
 
 const taskList = ref<Task[]>([])
 const loading = ref(false)
 const detailVisible = ref(false)
+const decoctDialogVisible = ref(false)
 const selectedTask = ref<Task | null>(null)
+const currentDecoctTask = ref<Task | null>(null)
+const decoctDeviceCode = ref('')
+const decoctDevices = ref<any[]>([])
 const viewMode = ref<'list' | 'kanban'>('list')
 
 const queryForm = ref({
@@ -161,11 +163,7 @@ const queryForm = ref({
   dateRange: null as [string, string] | null
 })
 
-const pagination = ref({
-  page: 1,
-  size: 100,
-  total: 0
-})
+const pagination = ref({ page: 1, size: 100, total: 0 })
 
 const kanbanStatuses = [
   { status: '待泡药', label: '待泡药' },
@@ -182,19 +180,13 @@ const kanbanStatuses = [
   { status: '已完成', label: '已完成' }
 ]
 
-const kanbanColumns = computed(() => {
-  return kanbanStatuses.map(col => ({
-    ...col,
-    tasks: taskList.value.filter(t => t.status === col.status)
-  }))
-})
+const kanbanColumns = computed(() => kanbanStatuses.map(col => ({ ...col, tasks: taskList.value.filter(t => t.status === col.status) })))
 
 function statusType(status: string) {
   const map: Record<string, string> = {
-    '待泡药': '', '泡药中': 'warning', '待煎药': 'info',
-    '煎药中': 'danger', '待出液': 'info', '出液中': 'warning',
-    '待包装': 'info', '包装中': 'warning', '待贴标': 'success',
-    '待质检': 'primary', '待交接': 'success', '已完成': 'success'
+    '待泡药': '', '泡药中': 'warning', '待煎药': 'info', '煎药中': 'danger',
+    '待出液': 'info', '出液中': 'warning', '待包装': 'info', '包装中': 'warning',
+    '待贴标': 'success', '待质检': 'primary', '待交接': 'success', '已完成': 'success'
   }
   return map[status] || ''
 }
@@ -208,11 +200,17 @@ function formatOperator(op: string) {
 function formatDateTime(dt: string) {
   if (!dt) return '-'
   const d = new Date(dt)
-  if (isNaN(d.getTime())) return dt
-  return d.toLocaleString('zh-CN', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
-  })
+  if (Number.isNaN(d.getTime())) return dt
+  return d.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+}
+
+async function fetchDevices() {
+  const res: any = await getDeviceList({ page: 1, size: 200, deviceType: 1 })
+  decoctDevices.value = (res.data?.records || []).map((item: any) => ({
+    id: item.id,
+    code: item.deviceCode,
+    label: `${item.name || item.deviceCode} (${item.deviceCode})`
+  }))
 }
 
 async function fetchTasks() {
@@ -226,9 +224,9 @@ async function fetchTasks() {
     if (queryForm.value.prescriptionId) params.prescriptionId = queryForm.value.prescriptionId
     if (queryForm.value.status) params.status = queryForm.value.status
     if (queryForm.value.operatorId) params.operatorId = queryForm.value.operatorId
-    if (queryForm.value.dateRange && queryForm.value.dateRange[0]) {
-      params.startTime = queryForm.value.dateRange[0] + ' 00:00:00'
-      params.endTime = queryForm.value.dateRange[1] + ' 23:59:59'
+    if (queryForm.value.dateRange?.[0]) {
+      params.startTime = `${queryForm.value.dateRange[0]} 00:00:00`
+      params.endTime = `${queryForm.value.dateRange[1]} 23:59:59`
     }
     const res: any = await request.get('/v1/prod/tasks', { params })
     taskList.value = res.data?.records || []
@@ -244,13 +242,7 @@ function handleQuery() {
 }
 
 function handleReset() {
-  queryForm.value = {
-    id: '',
-    prescriptionId: '',
-    status: '',
-    operatorId: '',
-    dateRange: null
-  }
+  queryForm.value = { id: '', prescriptionId: '', status: '', operatorId: '', dateRange: null }
   pagination.value.page = 1
   fetchTasks()
 }
@@ -267,21 +259,33 @@ function handlePageChange(val: number) {
 }
 
 async function startSoak(row: Task) {
+  await request.post(`/v1/prod/tasks/${row.id}/soak/start`, {})
+  ElMessage.success('任务已开始泡药')
+  fetchTasks()
+}
+
+function openDecoctDialog(row: Task) {
+  currentDecoctTask.value = row
+  decoctDeviceCode.value = ''
+  decoctDialogVisible.value = true
+}
+
+async function handleStartDecoct() {
+  if (!currentDecoctTask.value) return
+  if (!decoctDeviceCode.value) {
+    ElMessage.warning('请选择煎药设备')
+    return
+  }
   try {
-    await request.post(`/v1/prod/tasks/${row.id}/soak/start`)
-    ElMessage.success('任务已开始泡药')
-    try {
-      await request.post('/v1/inv/consume/record', {
-        taskId: row.id,
-        operatorId: 'current_user',
-        items: []
-      })
-    } catch (e) {
-      ElMessage.warning('消耗记录未写入（不影响任务推进）')
-    }
+    await startDecoct(currentDecoctTask.value.id, { deviceCode: decoctDeviceCode.value })
+    ElMessage.success('任务已开始煎药')
+    decoctDialogVisible.value = false
     fetchTasks()
-  } catch (e) {
-    ElMessage.error('任务推进失败')
+  } catch (err: any) {
+    const message = err?.message || err?.response?.data?.message || err?.data?.message
+    if (message) {
+      ElMessage.error(message)
+    }
   }
 }
 
@@ -290,21 +294,15 @@ function viewDetail(row: Task) {
   detailVisible.value = true
 }
 
-onMounted(fetchTasks)
+onMounted(async () => {
+  await fetchDevices()
+  await fetchTasks()
+})
 </script>
 
 <style scoped>
-.query-form {
-  margin-bottom: 16px;
-}
-
-.kanban-board {
-  display: flex;
-  gap: 12px;
-  overflow-x: auto;
-  padding-bottom: 8px;
-}
-
+.query-form { margin-bottom: 16px; }
+.kanban-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
 .kanban-column {
   flex: 0 0 220px;
   min-width: 220px;
@@ -315,7 +313,6 @@ onMounted(fetchTasks)
   border-radius: 8px;
   border: 1px solid var(--el-border-color-lighter);
 }
-
 .kanban-header {
   display: flex;
   align-items: center;
@@ -327,13 +324,7 @@ onMounted(fetchTasks)
   background: var(--el-bg-color);
   border-radius: 8px 8px 0 0;
 }
-
-.kanban-body {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px;
-}
-
+.kanban-body { flex: 1; overflow-y: auto; padding: 8px; }
 .kanban-card {
   background: var(--el-bg-color);
   border: 1px solid var(--el-border-color-lighter);
@@ -341,39 +332,15 @@ onMounted(fetchTasks)
   padding: 10px;
   margin-bottom: 8px;
   cursor: pointer;
-  transition: box-shadow 0.2s;
 }
-
-.kanban-card:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
 .kanban-card-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 6px;
 }
-
-.kanban-card-id {
-  font-weight: 600;
-  font-size: 13px;
-  color: var(--el-color-primary);
-}
-
-.kanban-card-info {
-  font-size: 12px;
-  color: var(--el-text-color-regular);
-  margin-bottom: 2px;
-}
-
-.kanban-card-time {
-  font-size: 11px;
-  color: var(--el-text-color-secondary);
-  margin-top: 4px;
-}
-
-.kanban-card-actions {
-  margin-top: 6px;
-}
+.kanban-card-id { font-weight: 600; font-size: 13px; color: var(--el-color-primary); }
+.kanban-card-info { font-size: 12px; color: var(--el-text-color-regular); margin-bottom: 2px; }
+.kanban-card-time { font-size: 11px; color: var(--el-text-color-secondary); margin-top: 4px; }
+.kanban-card-actions { margin-top: 6px; }
 </style>

@@ -40,7 +40,10 @@ public class VoiceServiceImpl implements VoiceService {
     @Override
     public VoiceSetting getSetting(String deviceId) {
         if (deviceId == null || deviceId.isEmpty()) {
-            return null;
+            return voiceSettingMapper.selectOne(
+                    new LambdaQueryWrapper<VoiceSetting>()
+                            .orderByDesc(VoiceSetting::getUpdatedAt)
+                            .last("LIMIT 1"));
         }
         return voiceSettingMapper.selectOne(
                 new LambdaQueryWrapper<VoiceSetting>().eq(VoiceSetting::getDeviceId, deviceId)
@@ -50,6 +53,27 @@ public class VoiceServiceImpl implements VoiceService {
     @Override
     @Transactional
     public VoiceSetting saveSetting(VoiceSetting setting) {
+        normalizeSetting(setting);
+        if (setting.getId() != null) {
+            return updateSetting(setting.getId(), setting);
+        }
+        VoiceSetting existing = null;
+        if (setting.getDeviceId() != null) {
+            existing = voiceSettingMapper.selectOne(
+                    new LambdaQueryWrapper<VoiceSetting>()
+                            .eq(VoiceSetting::getDeviceId, setting.getDeviceId())
+                            .last("LIMIT 1"));
+        } else {
+            existing = voiceSettingMapper.selectOne(
+                    new LambdaQueryWrapper<VoiceSetting>()
+                            .isNull(VoiceSetting::getDeviceId)
+                            .orderByDesc(VoiceSetting::getUpdatedAt)
+                            .last("LIMIT 1"));
+        }
+        if (existing != null) {
+            setting.setId(existing.getId());
+            return updateSetting(existing.getId(), setting);
+        }
         setting.setCreatedAt(LocalDateTime.now());
         setting.setUpdatedAt(LocalDateTime.now());
         voiceSettingMapper.insert(setting);
@@ -63,7 +87,18 @@ public class VoiceServiceImpl implements VoiceService {
         if (existing == null) {
             throw new IllegalArgumentException("设置不存在");
         }
+        normalizeSetting(setting);
+        if (setting.getDeviceId() == null) setting.setDeviceId(existing.getDeviceId());
+        if (setting.getUserId() == null) setting.setUserId(existing.getUserId());
+        if (setting.getSpeechRate() == null) setting.setSpeechRate(existing.getSpeechRate());
+        if (setting.getVolume() == null) setting.setVolume(existing.getVolume());
+        if (setting.getVoiceType() == null) setting.setVoiceType(existing.getVoiceType());
+        if (setting.getEnableVoice() == null) setting.setEnableVoice(existing.getEnableVoice());
+        if (setting.getQuietStart() == null) setting.setQuietStart(existing.getQuietStart());
+        if (setting.getQuietEnd() == null) setting.setQuietEnd(existing.getQuietEnd());
+        if (setting.getRepeatCount() == null) setting.setRepeatCount(existing.getRepeatCount());
         setting.setId(id);
+        setting.setCreatedAt(existing.getCreatedAt());
         setting.setUpdatedAt(LocalDateTime.now());
         voiceSettingMapper.updateById(setting);
         return voiceSettingMapper.selectById(id);
@@ -78,5 +113,17 @@ public class VoiceServiceImpl implements VoiceService {
     @Override
     public List<VoiceSetting> listSettings() {
         return voiceSettingMapper.selectList(new LambdaQueryWrapper<VoiceSetting>().orderByDesc(VoiceSetting::getCreatedAt));
+    }
+
+    private void normalizeSetting(VoiceSetting setting) {
+        if (setting == null) {
+            return;
+        }
+        if (setting.getDeviceId() != null && setting.getDeviceId().trim().isEmpty()) {
+            setting.setDeviceId(null);
+        }
+        if (setting.getVoiceType() != null && !setting.getVoiceType().trim().isEmpty()) {
+            setting.setVoiceType(setting.getVoiceType().trim().toLowerCase());
+        }
     }
 }

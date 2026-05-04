@@ -14,8 +14,12 @@ export function getHerbGroups(prescriptionId: number | string) {
   return request.get(`/v1/prod/prescription/${prescriptionId}/herb-groups`)
 }
 
-export function confirmHerbGroup(groupId: number | string) {
-  return request.post(`/v1/prod/herb-group/${groupId}/confirm`)
+export function confirmHerbGroup(groupId: number | string, data?: any) {
+  return request.post(`/v1/prod/herb-group/${groupId}/confirm`, data)
+}
+
+export function getTimeRules() {
+  return request.get('/v1/prod/monitor/time-rule')
 }
 
 // ========== 时效预警 ==========
@@ -32,7 +36,7 @@ export function createTimeRule(data: any) {
 }
 
 export function updateTimeRule(id: number | string, data: any) {
-  return request.put(`/v1/prod/monitor/time-rule/${id}`, data)
+  return request.post('/v1/prod/monitor/time-rule', { ...data, id })
 }
 
 export function getActiveAlerts() {
@@ -143,7 +147,14 @@ export function getVoiceSettings() {
 }
 
 export function updateVoiceSettings(data: any) {
+  if (data?.id) {
+    return request.put(`/v1/prod/voice/settings/${data.id}`, data)
+  }
   return request.post('/v1/prod/voice/settings', data)
+}
+
+export function startDecoct(taskId: number | string, data: { deviceCode?: string; operatorId?: string }) {
+  return request.post(`/v1/prod/tasks/${taskId}/decoct/start`, data)
 }
 
 export function deleteVoiceSetting(id: number | string) {

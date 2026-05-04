@@ -58,8 +58,10 @@ public class TimeMonitorController {
 
     @PostMapping("/monitor/alert/{alertId}/resolve")
     public ApiResponse<AlertLog> resolveAlert(@PathVariable Long alertId,
-                                               @RequestParam Long resolvedBy) {
-        return ApiResponse.success(timeMonitorService.resolveAlert(alertId, resolvedBy));
+                                               @RequestParam(required = false) Long resolvedBy,
+                                               @org.springframework.web.bind.annotation.RequestAttribute(value = "userId", required = false) Long userId) {
+        Long actualResolvedBy = resolvedBy != null ? resolvedBy : userId;
+        return ApiResponse.success(timeMonitorService.resolveAlert(alertId, actualResolvedBy));
     }
 
     @GetMapping("/monitor/alert/statistics")

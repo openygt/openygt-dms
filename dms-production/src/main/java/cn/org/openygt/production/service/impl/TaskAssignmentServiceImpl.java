@@ -127,6 +127,8 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
             dto.setTaskName("任务-" + a.getTaskId());
             dto.setDeviceId(a.getDeviceId());
             dto.setEmployeeId(a.getEmployeeId());
+            dto.setAssignType(a.getAssignType());
+            dto.setCreatedAt(a.getCreatedAt());
             if (a.getDeviceId() != null) {
                 try {
                     EqDeviceDTO dev = equipmentService.getDeviceById(a.getDeviceId());
