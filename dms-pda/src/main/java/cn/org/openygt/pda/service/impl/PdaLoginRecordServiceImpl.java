@@ -24,6 +24,13 @@ public class PdaLoginRecordServiceImpl extends ServiceImpl<PdaLoginRecordMapper,
             logout(existing.getId());
         }
 
+        if (deviceCode != null && !deviceCode.trim().isEmpty()) {
+            PdaLoginRecord existingByDevice = baseMapper.selectLatestOnlineByDeviceCode(deviceCode);
+            if (existingByDevice != null && !existingByDevice.getUserId().equals(userId)) {
+                logout(existingByDevice.getId());
+            }
+        }
+
         PdaLoginRecord record = new PdaLoginRecord();
         record.setUserId(userId);
         record.setUserCode(userCode);

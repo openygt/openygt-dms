@@ -19,6 +19,7 @@ import cn.org.openygt.production.mapper.PrescriptionMapper;
 import cn.org.openygt.production.mapper.PrescriptionMedicineMapper;
 import cn.org.openygt.production.service.TaskService;
 import cn.org.openygt.rbac.annotation.RequiresPermissions;
+import cn.org.openygt.equipment.service.EqDeviceOperatorService;
 import cn.org.openygt.system.entity.SysUser;
 import cn.org.openygt.system.service.SysUserService;
 import cn.org.openygt.common.service.EquipmentService;
@@ -49,6 +50,7 @@ public class PdaController {
     private final PrescriptionMedicineMapper prescriptionMedicineMapper;
     private final EquipmentService equipmentService;
     private final DecoctionTraceService decoctionTraceService;
+    private final EqDeviceOperatorService deviceOperatorService;
 
     @Value("${app.version:1.0.0}")
     private String appVersion;
@@ -76,6 +78,8 @@ public class PdaController {
         PdaLoginRecord record = loginRecordService.login(
                 userId, request.getUserCode(), request.getDeviceId(),
                 request.getDeviceCode(), httpRequest.getRemoteAddr());
+        syncDeviceOperatorOnLogin(request.getDeviceCode(), userId,
+                user != null ? user.getRealName() : request.getUserCode());
 
         Map<String, Object> result = buildLoginResult(token, userId, request.getUserCode(),
                 user != null ? user.getRealName() : request.getUserCode(),
@@ -109,6 +113,7 @@ public class PdaController {
         PdaLoginRecord record = loginRecordService.login(
                 user.getId(), user.getUsername(), null,
                 request.getDeviceCode(), httpRequest.getRemoteAddr());
+        syncDeviceOperatorOnLogin(request.getDeviceCode(), user.getId(), user.getRealName());
 
         Map<String, Object> result = buildLoginResult(token, user.getId(), user.getUsername(),
                 user.getRealName(), request.getDeviceCode(), record.getId(), null);
@@ -141,7 +146,11 @@ public class PdaController {
     @PostMapping("/auth/logout")
     @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
     public ApiResponse<Boolean> logout(@RequestAttribute("userId") Long userId) {
+        PdaLoginRecord existing = loginRecordService.getLatestOnlineByUserId(userId);
         boolean success = loginRecordService.logoutByUserId(userId);
+        if (success && existing != null) {
+            syncDeviceOperatorOnLogout(existing.getDeviceCode());
+        }
         return ApiResponse.success(success);
     }
 
@@ -466,6 +475,20 @@ public class PdaController {
         result.put("nextAction", buildNextAction(task.getStatus()));
 
         return result;
+    }
+
+    private void syncDeviceOperatorOnLogin(String deviceCode, Long userId, String userName) {
+        if (deviceCode == null || deviceCode.trim().isEmpty() || userId == null) {
+            return;
+        }
+        deviceOperatorService.shiftHandover(deviceCode, userId, userName);
+    }
+
+    private void syncDeviceOperatorOnLogout(String deviceCode) {
+        if (deviceCode == null || deviceCode.trim().isEmpty()) {
+            return;
+        }
+        deviceOperatorService.endShift(deviceCode);
     }
 
     private String getPatientName(Task task) {

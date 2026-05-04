@@ -78,6 +78,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
         // 创建处方头
         Prescription prescription = new Prescription();
+        prescription.setPrescriptionNumber(request.getPrescriptionNumber());
         prescription.setPatientName(request.getPatientName());
         prescription.setHospitalId(request.getHospitalId());
         prescription.setPatientType(request.getPatientType());
@@ -90,6 +91,11 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         prescription.setBagCapacity(request.getBagCapacity());
         prescription.setUsageMethod(request.getUsageMethod());
         prescription.setRemark(request.getRemark());
+        // 从药材明细拼接药品清单，避免数据库 NOT NULL 约束报错
+        String medicineList = request.getMedicineItems().stream()
+                .map(item -> item.getMedicineName() + item.getDosage() + (item.getUnit() != null ? item.getUnit() : "g"))
+                .collect(Collectors.joining(";"));
+        prescription.setMedicineList(medicineList);
         prescription.setReceiveTime(new Date());
         prescription.setReceiveStatus("PENDING");
         prescriptionMapper.insert(prescription);
@@ -292,6 +298,11 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         prescription.setUsageMethod(req.getUsageMethod());
         prescription.setRemark(req.getRemark());
         prescription.setPrescriptionNumber(push.getPrescriptionNo());
+        // 从药材明细拼接药品清单，避免数据库 NOT NULL 约束报错
+        String medicineList = req.getMedicineItems().stream()
+                .map(item -> item.getMedicineName() + item.getDosage() + (item.getUnit() != null ? item.getUnit() : "g"))
+                .collect(Collectors.joining(";"));
+        prescription.setMedicineList(medicineList);
         prescription.setReceiveTime(new Date());
         prescription.setReceiveStatus("PENDING");
 
