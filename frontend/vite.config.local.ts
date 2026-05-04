@@ -25,13 +25,13 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5176,
+    port: 5171,
     host: '0.0.0.0',
     allowedHosts: true,
     historyApiFallback: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8083',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         rewrite: (path) => path
       }
