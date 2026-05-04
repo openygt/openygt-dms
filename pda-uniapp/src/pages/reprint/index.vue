@@ -6,9 +6,9 @@
       <text class="nav-placeholder"></text>
     </view>
     <view class="scan-area">
-      <text class="label">扫描处方码或输入条码:</text>
+      <text class="label">扫码或输入号码:</text>
       <view class="input-row">
-        <input class="barcode-input" v-model="barcode" placeholder="请输入条码" data-testid="reprint-barcode" />
+        <input class="barcode-input" v-model="barcode" placeholder="输入号码查询" data-testid="reprint-barcode" />
         <view class="scan-btn" @click="handleScan" data-testid="btn-reprint-scan">📷</view>
       </view>
       <button class="query-btn" @click="queryTask" data-testid="btn-reprint-query">查询</button>
