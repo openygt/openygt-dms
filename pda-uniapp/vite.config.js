@@ -5,7 +5,7 @@ import path from 'path'
 export default defineConfig({
   plugins: [uni()],
   server: {
-    port: 5173,
+    port: 5172,
     host: '0.0.0.0',
     proxy: {
       '/api': {

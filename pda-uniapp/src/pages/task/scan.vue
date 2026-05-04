@@ -6,7 +6,7 @@
         <view class="scan-inner">
           <text class="scan-icon">□</text>
           <text class="scan-text">点击扫码</text>
-          <text class="scan-subtext">支持条形码 / 二维码</text>
+          <text class="scan-subtext">支持条形码 / 二维码 / 任务编号</text>
         </view>
       </view>
     </view>
@@ -17,7 +17,7 @@
         <input
           class="scan-input ygt-num"
           v-model="barcode"
-          placeholder="请输入任务编号"
+          placeholder="输入条码或任务编号"
           data-testid="input-barcode"
           confirm-type="search"
           focus
@@ -57,6 +57,10 @@
         <view class="task-card-row">
           <text class="task-card-key">编号</text>
           <text class="task-card-val ygt-num task-num-highlight">{{ taskCard.taskId }}</text>
+        </view>
+        <view class="task-card-row">
+          <text class="task-card-key">条形码</text>
+          <text class="task-card-val ygt-num">{{ barcode }}</text>
         </view>
         <view class="task-card-row">
           <text class="task-card-key">状态</text>
