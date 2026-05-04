@@ -72,7 +72,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import request from '@/api/request'
 import { ElMessage } from 'element-plus'
 
 const list = ref([])
@@ -98,8 +98,8 @@ const statusText = (status: number) => {
 const fetchList = async () => {
   loading.value = true
   try {
-    const res = await axios.get('/api/v1/prod/exception-order/list', { params: query.value })
-    list.value = res.data.data?.list || []
+    const res = await request.get('/v1/prod/exception-order/list', { params: query.value })
+    list.value = res.data.data?.records || []
   } catch (e) {
     ElMessage.error('获取列表失败')
   } finally {
@@ -115,7 +115,7 @@ const handleHandle = (row: any) => {
 
 const submitHandle = async () => {
   try {
-    await axios.post(`/api/v1/prod/exception-order/${currentRow.value.id}/handle`, {
+    await request.post(`/v1/prod/exception-order/${currentRow.value.id}/handle`, {
       handlerId: 1,
       handleResult: handleForm.value.handleResult
     })
@@ -129,7 +129,7 @@ const submitHandle = async () => {
 
 const handleEscalate = async (row: any) => {
   try {
-    await axios.post(`/api/v1/prod/exception-order/${row.id}/escalate`, { escalationReason: '需要上级支援' })
+    await request.post(`/v1/prod/exception-order/${row.id}/escalate`, { escalationReason: '需要上级支援' })
     ElMessage.success('升级成功')
     fetchList()
   } catch (e) {

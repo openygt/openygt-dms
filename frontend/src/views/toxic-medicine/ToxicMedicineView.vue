@@ -73,7 +73,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import request from '@/api/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const list = ref([])
@@ -91,8 +91,8 @@ const toxicityLevelText = (level: number) => {
 const fetchList = async () => {
   loading.value = true
   try {
-    const res = await axios.get('/api/v1/base/toxic-medicine')
-    list.value = res.data.data?.list || []
+    const res = await request.get('/v1/base/toxic-medicine')
+    list.value = res.data.data?.records || []
   } catch (e) {
     ElMessage.error('获取列表失败')
   } finally {
@@ -117,9 +117,9 @@ const handleEdit = (row: any) => {
 const handleSubmit = async () => {
   try {
     if (isEdit.value) {
-      await axios.put(`/api/v1/base/toxic-medicine/${form.value.id}`, form.value)
+      await request.put(`/v1/base/toxic-medicine/${form.value.id}`, form.value)
     } else {
-      await axios.post('/api/v1/base/toxic-medicine', form.value)
+      await request.post('/v1/base/toxic-medicine', form.value)
     }
     ElMessage.success('保存成功')
     dialogVisible.value = false
@@ -132,7 +132,7 @@ const handleSubmit = async () => {
 const handleDelete = async (row: any) => {
   try {
     await ElMessageBox.confirm('确认删除该毒性药材记录？', '提示', { type: 'warning' })
-    await axios.delete(`/api/v1/base/toxic-medicine/${row.id}`)
+    await request.delete(`/v1/base/toxic-medicine/${row.id}`)
     ElMessage.success('删除成功')
     fetchList()
   } catch (e) {
