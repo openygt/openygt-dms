@@ -241,6 +241,13 @@ public class PdaController {
             item.put("statusName", task.getStatus());
             item.put("patientName", getPatientName(task));
             item.put("updatedAt", task.getUpdatedAt() != null ? task.getUpdatedAt().toString() : task.getCreatedAt().toString());
+            // 补充处方号
+            if (task.getPrescriptionId() != null) {
+                Prescription prescription = prescriptionMapper.selectById(task.getPrescriptionId());
+                if (prescription != null) {
+                    item.put("prescriptionNumber", prescription.getPrescriptionNumber());
+                }
+            }
             result.add(item);
         }
         return ApiResponse.success(result);

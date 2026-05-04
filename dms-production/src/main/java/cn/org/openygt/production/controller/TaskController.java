@@ -28,6 +28,16 @@ public class TaskController {
         return ApiResponse.success(taskService.queryTasks(status, deviceId, id, prescriptionId, operatorId, startTime, endTime, page, size));
     }
 
+    @PostMapping("/{id}/soak/start")
+    public ApiResponse<Task> startSoak(@PathVariable Long id, @RequestBody SoakStartRequest request) {
+        return ApiResponse.success(taskService.startSoak(id, request.getOperatorId()));
+    }
+
+    @PostMapping("/{id}/decoct/start")
+    public ApiResponse<Task> startDecoct(@PathVariable Long id, @RequestBody DecoctStartRequest request) {
+        return ApiResponse.success(taskService.startDecoct(id, request.getDeviceCode(), request.getOperatorId()));
+    }
+
     @PostMapping("/{id}/suspend")
     public ApiResponse<Task> suspend(@PathVariable Long id, @RequestBody SuspendRequest request) {
         return ApiResponse.success(taskService.suspendTask(id, request.getOperatorId(), request.getReason(), request.getSuspendType()));
@@ -47,6 +57,17 @@ public class TaskController {
 
     @lombok.Data
     public static class ResumeRequest {
+        private String operatorId;
+    }
+
+    @lombok.Data
+    public static class SoakStartRequest {
+        private String operatorId;
+    }
+
+    @lombok.Data
+    public static class DecoctStartRequest {
+        private String deviceCode;
         private String operatorId;
     }
 }
