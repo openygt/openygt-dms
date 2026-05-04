@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import request from '@/api/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const list = ref([])
@@ -53,8 +53,8 @@ const statusText = (status: number) => {
 const fetchList = async () => {
   loading.value = true
   try {
-    const res = await axios.get('/api/v1/qt/retain-sample/list')
-    list.value = res.data.data?.list || []
+    const res = await request.get('/v1/qt/retain-sample/list')
+    list.value = res.data.data?.records || []
   } catch (e) {
     ElMessage.error('获取列表失败')
   } finally {
@@ -65,8 +65,8 @@ const fetchList = async () => {
 const fetchExpiring = async () => {
   loading.value = true
   try {
-    const res = await axios.get('/api/v1/qt/retain-sample/expiring', { params: { withinHours: 2 } })
-    list.value = res.data.data || []
+    const res = await request.get('/v1/qt/retain-sample/expiring', { params: { withinHours: 2 } })
+    list.value = res.data.data?.records || []
   } catch (e) {
     ElMessage.error('获取预警失败')
   } finally {
@@ -77,7 +77,7 @@ const fetchExpiring = async () => {
 const handleDestroy = async (row: any) => {
   try {
     await ElMessageBox.confirm('确认销毁该留样？', '提示', { type: 'warning' })
-    await axios.post(`/api/v1/qt/retain-sample/${row.id}/destroy`, { destroyBy: 1, remark: '到期销毁' })
+    await request.post(`/v1/qt/retain-sample/${row.id}/destroy`, { destroyBy: 1, remark: '到期销毁' })
     ElMessage.success('销毁成功')
     fetchList()
   } catch (e) {

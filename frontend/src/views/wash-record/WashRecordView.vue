@@ -34,7 +34,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import request from '@/api/request'
 import { ElMessage } from 'element-plus'
 
 const list = ref([])
@@ -43,8 +43,8 @@ const loading = ref(false)
 const fetchList = async () => {
   loading.value = true
   try {
-    const res = await axios.get('/api/v1/eq/wash/list')
-    list.value = res.data.data?.list || []
+    const res = await request.get('/v1/eq/wash/list')
+    list.value = res.data.data?.records || []
   } catch (e) {
     ElMessage.error('获取列表失败')
   } finally {

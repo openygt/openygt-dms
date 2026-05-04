@@ -82,7 +82,7 @@ async function handleSearch() {
       status: searchForm.status || undefined,
       deviceCode: searchForm.deviceCode || undefined
     })
-    tableData.value = res.data || []
+    tableData.value = res.data.data || []
   } catch (e) {
     // handled by interceptor
   } finally {
