@@ -1,5 +1,22 @@
 <template>
   <view class="container">
+    <!-- 首次引导 -->
+    <view class="guide-overlay" v-if="showGuide">
+      <view class="guide-card">
+        <text class="guide-icon">🔊</text>
+        <text class="guide-title">语音播报</text>
+        <text class="guide-desc">开启后，工序完成、异常等情况将自动语音提醒，帮助您及时了解任务进展。</text>
+        <view class="guide-options">
+          <view class="guide-option" @click="dismissGuide(false)">
+            <text class="guide-opt-label">暂不开启</text>
+          </view>
+          <view class="guide-option guide-option-primary" @click="dismissGuide(true)">
+            <text class="guide-opt-label">立即开启</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <!-- 语音总开关 -->
     <view class="switch-card">
       <view class="switch-row">
@@ -7,6 +24,15 @@
         <switch :checked="voiceEnabled" @change="onToggleVoice" color="#0066CC" />
       </view>
       <text class="switch-hint">开启后，工序完成、异常等情况将自动语音提醒</text>
+    </view>
+
+    <!-- 仅异常播报 -->
+    <view class="switch-card" v-if="voiceEnabled">
+      <view class="switch-row">
+        <text class="switch-label">仅异常播报</text>
+        <switch :checked="alarmOnly" @change="onToggleAlarmOnly" color="#ff9800" />
+      </view>
+      <text class="switch-hint">开启后，仅在出现异常或警告时进行语音提醒，正常流程不播报</text>
     </view>
 
     <!-- 语音设置 -->
@@ -118,6 +144,8 @@
 import { ref, onMounted } from 'vue'
 
 const voiceEnabled = ref(false)
+const alarmOnly = ref(false)
+const showGuide = ref(false)
 const rateValue = ref(1.0)
 const volumeValue = ref(1.0)
 const pitchValue = ref(1.0)
@@ -130,17 +158,40 @@ const logs = ref([])
 // 从本地存储读取配置
 onMounted(() => {
   voiceEnabled.value = uni.getStorageSync('pda_voice_enabled') === '1'
+  alarmOnly.value = uni.getStorageSync('pda_voice_alarm_only') === '1'
   rateValue.value = parseFloat(uni.getStorageSync('pda_voice_rate') || '1')
   volumeValue.value = parseFloat(uni.getStorageSync('pda_voice_volume') || '1')
   pitchValue.value = parseFloat(uni.getStorageSync('pda_voice_pitch') || '1')
   selectedVoiceURI.value = uni.getStorageSync('pda_voice_uri') || ''
   logs.value = uni.getStorageSync('pda_voice_logs') || []
 
+  // 首次使用引导
+  const guideDismissed = uni.getStorageSync('pda_voice_guide_dismissed')
+  if (!guideDismissed) {
+    showGuide.value = true
+  }
+
   // H5 环境加载语音列表
   // #ifdef H5
   loadVoices()
   // #endif
 })
+
+function dismissGuide(enable) {
+  showGuide.value = false
+  uni.setStorageSync('pda_voice_guide_dismissed', '1')
+  if (enable) {
+    voiceEnabled.value = true
+    uni.setStorageSync('pda_voice_enabled', '1')
+    addLog('语音播报已开启（首次引导）', 'info')
+  }
+}
+
+function onToggleAlarmOnly(e) {
+  alarmOnly.value = e.detail.value
+  uni.setStorageSync('pda_voice_alarm_only', alarmOnly.value ? '1' : '0')
+  addLog(alarmOnly.value ? '已切换为仅异常播报模式' : '已切换为全部播报模式', 'info')
+}
 
 function loadVoices() {
   if (typeof window === 'undefined' || !window.speechSynthesis) return
@@ -245,6 +296,66 @@ function clearLogs() {
 
 <style scoped>
 .container { padding: 20rpx; padding-bottom: 40rpx; }
+
+/* 首次引导遮罩 */
+.guide-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.guide-card {
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 48rpx 40rpx;
+  margin: 0 40rpx;
+  text-align: center;
+}
+.guide-icon {
+  font-size: 80rpx;
+  margin-bottom: 20rpx;
+  display: block;
+}
+.guide-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16rpx;
+  display: block;
+}
+.guide-desc {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 40rpx;
+  display: block;
+}
+.guide-options {
+  display: flex;
+  gap: 20rpx;
+}
+.guide-option {
+  flex: 1;
+  padding: 24rpx 0;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+  color: #666;
+  background: #f5f5f5;
+}
+.guide-option-primary {
+  background: #0066CC;
+  color: #fff;
+}
+.guide-opt-label {
+  display: block;
+  text-align: center;
+}
 .switch-card {
   background: #fff;
   border-radius: 16rpx;

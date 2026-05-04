@@ -32,6 +32,7 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { post } from '../../utils/request.js'
+import { startScan } from '../../utils/scan.js'
 
 const taskId = ref('')
 const taskBarcode = ref('')
@@ -61,12 +62,9 @@ function loadRecentDevices() {
 }
 
 function handleScan() {
-  uni.scanCode({
-    onlyFromCamera: true,
-    scanType: ['qrCode', 'barCode'],
-    success: (res) => { deviceCode.value = res.result; uni.vibrateShort() },
-    fail: () => { uni.showToast({ title: '扫码失败', icon: 'none' }) }
-  })
+  startScan({ onlyFromCamera: true, scanType: ['qrCode', 'barCode'] }).then(code => {
+    deviceCode.value = code
+  }).catch(() => {})
 }
 
 function selectDevice(dev) { deviceCode.value = dev.deviceCode }

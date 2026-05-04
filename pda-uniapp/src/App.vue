@@ -1,6 +1,7 @@
 <script setup>
 import { onLaunch, onShow, onHide } from '@dcloudio/uni-app'
 import { startHeartbeat, stopHeartbeat } from './utils/heartbeat.js'
+import './utils/feedback.js'
 
 function applyFontSize(size) {
   // #ifdef H5

@@ -39,7 +39,9 @@
 
 <script setup>
 import { ref } from 'vue'
+import { onLoad } from '@dcloudio/uni-app'
 import { get, post } from '../../utils/request.js'
+import { startScan } from '../../utils/scan.js'
 
 const barcode = ref('')
 const task = ref({})
@@ -47,12 +49,18 @@ const printType = ref('LABEL')
 const printCount = ref(1)
 const loading = ref(false)
 
+onLoad((options) => {
+  if (options.barcode) {
+    barcode.value = options.barcode
+    queryTask()
+  }
+})
+
 function handleScan() {
-  uni.scanCode({
-    onlyFromCamera: true, scanType: ['qrCode', 'barCode'],
-    success: (res) => { barcode.value = res.result; uni.vibrateShort(); queryTask() },
-    fail: () => { uni.showToast({ title: '扫码失败', icon: 'none' }) }
-  })
+  startScan({ onlyFromCamera: true, scanType: ['qrCode', 'barCode'] }).then(code => {
+    barcode.value = code
+    queryTask()
+  }).catch(() => {})
 }
 
 async function queryTask() {

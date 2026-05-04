@@ -143,6 +143,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { get, post } from '../../utils/request.js'
+import { startScan } from '../../utils/scan.js'
 
 const mode = ref('list')
 const shelfKeyword = ref('')
@@ -187,21 +188,15 @@ function viewShelfDetail(shelf) {
 }
 
 function scanBag(type) {
-  uni.scanCode({
-    onlyFromCamera: true,
-    scanType: ['qrCode', 'barCode'],
-    success: (res) => {
-      if (type === 'in') {
-        inBarcode.value = res.result
-        queryBagInfo()
-      } else {
-        outBarcode.value = res.result
-        queryOutBagInfo()
-      }
-      uni.vibrateShort()
-    },
-    fail: () => { uni.showToast({ title: '扫码失败', icon: 'none' }) }
-  })
+  startScan({ onlyFromCamera: true, scanType: ['qrCode', 'barCode'] }).then(code => {
+    if (type === 'in') {
+      inBarcode.value = code
+      queryBagInfo()
+    } else {
+      outBarcode.value = code
+      queryOutBagInfo()
+    }
+  }).catch(() => {})
 }
 
 async function queryBagInfo() {

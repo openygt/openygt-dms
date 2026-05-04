@@ -51,7 +51,7 @@
 import { ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import config from '../../utils/config.js'
-import { post } from '../../utils/request.js'
+import { post, upload } from '../../utils/request.js'
 import { addPhotoToQueue } from '../../utils/storage.js'
 
 const taskId = ref('')
@@ -108,21 +108,33 @@ async function handleUpload() {
   loading.value = true
   try {
     for (const photo of photos.value) {
-      const uploadRes = await uploadFile(photo.path)
+      // 第一步：上传文件到服务器，获取可访问 URL
+      const uploadRes = await upload('/file/upload', photo.path, {
+        taskId: taskId.value,
+        photoType: selectedType.value,
+        remark: remark.value
+      })
+      // 第二步：保存照片元数据
       await post('/photo/upload', {
         taskId: taskId.value,
         photoUrl: uploadRes.url,
         photoType: selectedType.value,
-        fileSize: photo.size,
+        fileSize: uploadRes.size || photo.size,
         remark: remark.value
       })
     }
     uni.showToast({ title: isForceMode.value ? '留档提交成功' : '上传成功', icon: 'success' })
     setTimeout(() => { uni.navigateBack() }, 800)
   } catch (e) {
-    // 离线缓存
+    // 网络失败时缓存到离线队列（含文件路径，以便后续同步时上传）
     for (const photo of photos.value) {
-      addPhotoToQueue({ taskId: taskId.value, path: photo.path, photoType: selectedType.value, remark: remark.value })
+      addPhotoToQueue({
+        taskId: taskId.value,
+        path: photo.path,
+        photoType: selectedType.value,
+        fileSize: photo.size,
+        remark: remark.value
+      })
     }
     uni.showToast({ title: '已缓存到本地，稍后同步', icon: 'none' })
   } finally { loading.value = false }
@@ -142,9 +154,8 @@ function handleSkip() {
   }
 }
 
-function uploadFile(filePath) {
-  return new Promise((resolve) => setTimeout(() => resolve({ url: filePath }), 500))
-}
+// 不再使用占位的 uploadFile，由 upload() 函数实现真实文件上传
+
 </script>
 
 <style scoped>

@@ -1,6 +1,6 @@
 import config from './config.js'
 import { getQueue, setQueue, removeFromQueue, updateQueueItem, getPhotoQueue, setPhotoQueue, removePhotoFromQueue } from './storage.js'
-import { post } from './request.js'
+import { post, upload } from './request.js'
 
 /**
  * 离线数据同步管理
@@ -65,19 +65,26 @@ async function syncOperations() {
 
 /**
  * 同步照片队列
+ * 先上传文件到服务器，再保存元数据
  */
 async function syncPhotos() {
   const queue = getPhotoQueue()
   if (queue.length === 0) return
-  
+
   for (const item of queue) {
     try {
+      // 上传文件
+      const uploadRes = await upload('/file/upload', item.path, {
+        taskId: item.taskId,
+        photoType: item.photoType || 'REVIEW',
+        remark: item.remark || ''
+      })
+      // 保存元数据
       await post('/photo/upload', {
         taskId: item.taskId,
-        prescriptionId: item.prescriptionId,
-        photoUrl: item.photoUrl,
-        photoType: item.photoType,
-        fileSize: item.fileSize,
+        photoUrl: uploadRes.url,
+        photoType: item.photoType || 'REVIEW',
+        fileSize: uploadRes.size || 0,
         remark: item.remark
       })
       removePhotoFromQueue(item.id)
@@ -87,6 +94,8 @@ async function syncPhotos() {
       if (item.retryCount >= 3) {
         console.warn('Photo failed after 3 retries, removed:', item.id)
         removePhotoFromQueue(item.id)
+      } else {
+        console.warn('Photo sync failed, retry count:', item.retryCount, item.id)
       }
     }
   }

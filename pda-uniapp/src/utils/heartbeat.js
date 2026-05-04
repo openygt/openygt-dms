@@ -26,6 +26,8 @@ export function startHeartbeat() {
     if (!isRunning) return
     try {
       await post('/heartbeat', {})
+      // 心跳成功时触发离线数据同步
+      import('./sync.js').then(({ syncAll }) => syncAll())
       console.log('Heartbeat sent')
     } catch (e) {
       // 心跳失败不阻断，由后端超时检测
