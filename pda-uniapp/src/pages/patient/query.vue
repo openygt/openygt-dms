@@ -152,6 +152,7 @@
 <script setup>
 import { ref } from 'vue'
 import { get, post } from '../../utils/request.js'
+import { startScan } from '../../utils/scan.js'
 
 const queryMode = ref('scan')
 const barcode = ref('')
@@ -174,16 +175,10 @@ function getStatusColor(status) {
 }
 
 function handleScan() {
-  uni.scanCode({
-    onlyFromCamera: true,
-    scanType: ['qrCode', 'barCode'],
-    success: (res) => {
-      barcode.value = res.result
-      uni.vibrateShort()
-      doQuery()
-    },
-    fail: () => { uni.showToast({ title: '扫码失败', icon: 'none' }) }
-  })
+  startScan({ onlyFromCamera: true, scanType: ['qrCode', 'barCode'] }).then(code => {
+    barcode.value = code
+    doQuery()
+  }).catch(() => {})
 }
 
 async function doQuery() {

@@ -7,7 +7,7 @@
           <text class="task-status-dot" :style="{ background: statusColor }"></text>
           <text class="task-status-name" data-testid="task-status">{{ task.statusName || task.status }}</text>
         </view>
-        <text class="task-barcode" data-testid="task-barcode">{{ task.barcode }}</text>
+        <text class="task-barcode task-num-highlight" data-testid="task-barcode">{{ task.barcode }}</text>
       </view>
       <view class="task-info">
         <view class="info-row">
@@ -119,6 +119,7 @@
         <button class="sub-btn" @click="goPhoto" data-testid="btn-go-photo">拍照留档</button>
         <button class="sub-btn" @click="goTemperature" data-testid="btn-go-temp">温度曲线</button>
         <button class="sub-btn" @click="goLog" data-testid="btn-go-log">操作日志</button>
+        <button class="sub-btn" @click="goReprint" data-testid="btn-reprint">重打印</button>
       </view>
     </view>
   </view>
@@ -288,6 +289,9 @@ function goTemperature() {
 function goLog() {
   uni.switchTab({ url: '/pages/log/list' })
 }
+function goReprint() {
+  uni.navigateTo({ url: `/pages/reprint/index?barcode=${barcode.value}` })
+}
 </script>
 
 <style scoped>
@@ -298,6 +302,14 @@ function goLog() {
 .task-status-dot { width: 16rpx; height: 16rpx; border-radius: 50%; margin-right: 12rpx; }
 .task-status-name { font-size: 32rpx; font-weight: 600; color: #333; }
 .task-barcode { font-size: 26rpx; color: #999; }
+.task-num-highlight {
+  display: inline-block;
+  background: #0066CC;
+  color: #fff;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 26rpx;
+}
 .task-info { border-top: 1rpx solid #f0f0f0; padding-top: 20rpx; }
 .info-row { display: flex; justify-content: space-between; padding: 12rpx 0; }
 .info-label { font-size: 28rpx; color: #666; }

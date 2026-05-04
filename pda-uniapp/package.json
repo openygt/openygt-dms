@@ -1,6 +1,6 @@
 {
   "name": "pda-uniapp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "scripts": {
     "dev:h5": "uni",
     "build:h5": "uni build",

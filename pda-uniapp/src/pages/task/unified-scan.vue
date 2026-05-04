@@ -29,21 +29,17 @@
 
 <script setup>
 import { ref } from 'vue'
+import { post } from '../../utils/request.js'
+import { startScan } from '../../utils/scan.js'
 
 const barcode = ref('')
 const result = ref(null)
 
 const doScan = () => {
-  uni.scanCode({
-    scanType: ['barCode', 'qrCode'],
-    success: (res) => {
-      barcode.value = res.result
-      handleScan()
-    },
-    fail: () => {
-      uni.showToast({ title: '扫码失败', icon: 'none' })
-    }
-  })
+  startScan({ scanType: ['barCode', 'qrCode'] }).then(code => {
+    barcode.value = code
+    handleScan()
+  }).catch(() => {})
 }
 
 const handleScan = async () => {
@@ -52,17 +48,15 @@ const handleScan = async () => {
     return
   }
   try {
-    const res = await uni.request({
-      url: `${getApp().globalData.baseUrl}/pda/scan`,
-      method: 'POST',
-      data: { barcode: barcode.value, operatorId: uni.getStorageSync('operatorId') || 1 }
+    const userInfo = uni.getStorageSync('pda_user_info')
+    const operatorId = userInfo?.userId || 1
+    const res = await post('/scan', {
+      barcode: barcode.value,
+      operatorId
     })
-    result.value = res.data.data
-    if (res.data.code !== 200) {
-      uni.showToast({ title: res.data.message || '请求失败', icon: 'none' })
-    }
+    result.value = res
   } catch (e) {
-    uni.showToast({ title: '网络错误', icon: 'none' })
+    uni.showToast({ title: e.message || '请求失败', icon: 'none' })
   }
 }
 </script>

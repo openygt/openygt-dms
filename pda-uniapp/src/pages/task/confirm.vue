@@ -78,7 +78,7 @@
         @click="handleConfirm"
         data-testid="btn-confirm-step"
       >
-        <text v-if="!loading">确认工序</text>
+        <text v-if="!loading">{{ confirmBtnText }}</text>
         <text v-else>提交中...</text>
       </button>
     </view>
@@ -115,6 +115,11 @@ const steps = ref([
 const selectedLabel = computed(() => {
   const s = steps.value.find(s => s.value === selectedStep.value)
   return s ? s.label : ''
+})
+
+const confirmBtnText = computed(() => {
+  if (!barcode.value) return '请先扫码加载任务'
+  return '确认工序'
 })
 
 const currentStatusClass = computed(() => {
@@ -505,5 +510,9 @@ async function handleConfirm() {
 .submit-btn[disabled] {
   background: $ygt-gray-300;
   color: $ygt-gray-500;
+}
+
+.submit-btn[disabled] .no-task-hint {
+  color: $ygt-warning;
 }
 </style>

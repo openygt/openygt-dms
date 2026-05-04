@@ -90,7 +90,7 @@
     </view>
 
     <view class="version">
-      <text>OpenYGT PDA v1.0.0</text>
+      <text>OpenYGT PDA v1.0.1</text>
     </view>
   </view>
 </template>

@@ -69,4 +69,49 @@ function request(options) {
 export const get = (url, params = {}) => request({ url, method: 'GET', data: params })
 export const post = (url, data = {}) => request({ url, method: 'POST', data })
 
+/**
+ * 上传文件（multipart/form-data）
+ */
+export function upload(url, filePath, formData = {}) {
+  return new Promise((resolve, reject) => {
+    const token = uni.getStorageSync(config.tokenKey)
+    const uploadUrl = url.startsWith('http') ? url : config.baseUrl + url
+    uni.uploadFile({
+      url: uploadUrl,
+      filePath,
+      name: 'file',
+      formData,
+      header: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          try {
+            const data = JSON.parse(res.data)
+            if (data.code === 200) {
+              resolve(data.data)
+            } else {
+              reject(new Error(data.message || '上传失败'))
+            }
+          } catch (e) {
+            reject(new Error('上传响应解析失败'))
+          }
+        } else if (res.statusCode === 401) {
+          uni.showToast({ title: '登录已过期，请重新登录', icon: 'none' })
+          uni.removeStorageSync(config.tokenKey)
+          uni.removeStorageSync(config.userInfoKey)
+          setTimeout(() => uni.reLaunch({ url: '/pages/login/index' }), 1500)
+          reject(new Error('Unauthorized'))
+        } else {
+          reject(new Error(`HTTP ${res.statusCode}`))
+        }
+      },
+      fail: (err) => {
+        uni.showToast({ title: '网络异常，文件上传失败', icon: 'none' })
+        reject(err)
+      }
+    })
+  })
+}
+
 export default request

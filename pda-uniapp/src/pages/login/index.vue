@@ -55,11 +55,12 @@ import { ref, reactive, onMounted } from 'vue'
 import { get, post } from '../../utils/request.js'
 import config from '../../utils/config.js'
 import { startHeartbeat } from '../../utils/heartbeat.js'
+import { startScan } from '../../utils/scan.js'
 
 const loading = ref(false)
 const loginType = ref('scan')
 const scanCode = ref('')
-const version = ref('1.0.0')
+const version = ref('1.0.1')
 const form = reactive({ userCode: '', password: '', deviceId: 1, deviceCode: '' })
 
 onMounted(() => {
@@ -69,24 +70,16 @@ onMounted(() => {
 async function checkVersion() {
   try {
     const res = await get('/config/version')
-    version.value = res.version || '1.0.0'
+    version.value = res.version || '1.0.1'
   } catch (e) {
     console.log('版本检查失败', e)
   }
 }
 
 function handleScan() {
-  uni.scanCode({
-    onlyFromCamera: true,
-    scanType: ['qrCode', 'barCode'],
-    success: (res) => {
-      scanCode.value = res.result
-      uni.vibrateShort()
-    },
-    fail: () => {
-      uni.showToast({ title: '扫码失败', icon: 'none' })
-    }
-  })
+  startScan({ onlyFromCamera: true, scanType: ['qrCode', 'barCode'] }).then(code => {
+    scanCode.value = code
+  }).catch(() => {})
 }
 
 async function handleScanLogin() {
@@ -121,6 +114,7 @@ async function handleLogin() {
 function doLoginSuccess(res) {
   uni.setStorageSync(config.tokenKey, res.token)
   const userInfo = {
+    userId: res.userId,
     userCode: res.userCode,
     userName: res.userName || res.userCode,
     deviceCode: res.deviceCode,
