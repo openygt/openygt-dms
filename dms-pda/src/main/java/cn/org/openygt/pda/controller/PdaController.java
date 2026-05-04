@@ -8,9 +8,11 @@ import cn.org.openygt.pda.dto.*;
 import cn.org.openygt.pda.entity.PdaLoginRecord;
 import cn.org.openygt.pda.entity.PdaOperationLog;
 import cn.org.openygt.pda.entity.PdaReviewPhoto;
+import cn.org.openygt.pda.service.PdaGatewaySessionService;
 import cn.org.openygt.pda.service.PdaLoginRecordService;
 import cn.org.openygt.pda.service.PdaOperationLogService;
 import cn.org.openygt.pda.service.PdaReviewPhotoService;
+import cn.org.openygt.common.dto.EqDeviceDTO;
 import cn.org.openygt.production.entity.Prescription;
 import cn.org.openygt.production.entity.PrescriptionMedicine;
 import cn.org.openygt.production.entity.StepLog;
@@ -19,7 +21,6 @@ import cn.org.openygt.production.mapper.PrescriptionMapper;
 import cn.org.openygt.production.mapper.PrescriptionMedicineMapper;
 import cn.org.openygt.production.service.TaskService;
 import cn.org.openygt.rbac.annotation.RequiresPermissions;
-import cn.org.openygt.equipment.service.EqDeviceOperatorService;
 import cn.org.openygt.system.entity.SysUser;
 import cn.org.openygt.system.service.SysUserService;
 import cn.org.openygt.common.service.EquipmentService;
@@ -46,11 +47,11 @@ public class PdaController {
     private final PdaOperationLogService operationLogService;
     private final TaskService taskService;
     private final SysUserService sysUserService;
+    private final PdaGatewaySessionService pdaGatewaySessionService;
     private final PrescriptionMapper prescriptionMapper;
     private final PrescriptionMedicineMapper prescriptionMedicineMapper;
     private final EquipmentService equipmentService;
     private final DecoctionTraceService decoctionTraceService;
-    private final EqDeviceOperatorService deviceOperatorService;
 
     @Value("${app.version:1.0.0}")
     private String appVersion;
@@ -74,19 +75,27 @@ public class PdaController {
         Long userId = tokenResponse.getUserId();
         String token = tokenResponse.getToken();
         SysUser user = sysUserService.getByUsername(request.getUserCode());
+        EqDeviceDTO device = resolveDeviceByMac(request.getMacAddress());
+        if (device == null) {
+            return ApiResponse.error(400, "未找到对应PDA设备，请先配置设备通信ID为MAC地址");
+        }
+        unregisterGatewaySessionIfNeeded(loginRecordService.getLatestOnlineByUserId(userId));
+        unregisterGatewaySessionIfNeeded(loginRecordService.getLatestOnlineByDeviceCode(device.getDeviceCode()));
 
         PdaLoginRecord record = loginRecordService.login(
-                userId, request.getUserCode(), request.getDeviceId(),
-                request.getDeviceCode(), httpRequest.getRemoteAddr());
-        syncDeviceOperatorOnLogin(request.getDeviceCode(), userId,
-                user != null ? user.getRealName() : request.getUserCode());
+                userId, request.getUserCode(), device.getId(),
+                device.getDeviceCode(), httpRequest.getRemoteAddr());
+        pdaGatewaySessionService.register(request.getMacAddress(), device.getDeviceCode(),
+                userId, request.getUserCode(), user != null ? user.getRealName() : request.getUserCode());
 
         Map<String, Object> result = buildLoginResult(token, userId, request.getUserCode(),
                 user != null ? user.getRealName() : request.getUserCode(),
-                request.getDeviceCode(), record.getId(), tokenResponse);
+                device.getDeviceCode(), record.getId(), tokenResponse);
+        result.put("deviceId", device.getId());
+        result.put("macAddress", normalizeMac(request.getMacAddress()));
 
-        operationLogService.logOperation(userId, request.getUserCode(), request.getDeviceId(),
-                request.getDeviceCode(), null, "LOGIN", "PDA账号登录",
+        operationLogService.logOperation(userId, request.getUserCode(), device.getId(),
+                device.getDeviceCode(), null, "LOGIN", "PDA账号登录",
                 "SUCCESS", "/api/v1/pda/auth/login", "POST",
                 httpRequest.getRemoteAddr(), null);
 
@@ -109,17 +118,26 @@ public class PdaController {
         List<String> permissions = Collections.emptyList();
         String token = cn.org.openygt.common.util.JwtUtil.generateToken(
                 user.getId(), user.getUsername(), roles, permissions);
+        EqDeviceDTO device = resolveDeviceByMac(request.getMacAddress());
+        if (device == null) {
+            return ApiResponse.error(400, "未找到对应PDA设备，请先配置设备通信ID为MAC地址");
+        }
+        unregisterGatewaySessionIfNeeded(loginRecordService.getLatestOnlineByUserId(user.getId()));
+        unregisterGatewaySessionIfNeeded(loginRecordService.getLatestOnlineByDeviceCode(device.getDeviceCode()));
 
         PdaLoginRecord record = loginRecordService.login(
-                user.getId(), user.getUsername(), null,
-                request.getDeviceCode(), httpRequest.getRemoteAddr());
-        syncDeviceOperatorOnLogin(request.getDeviceCode(), user.getId(), user.getRealName());
+                user.getId(), user.getUsername(), device.getId(),
+                device.getDeviceCode(), httpRequest.getRemoteAddr());
+        pdaGatewaySessionService.register(request.getMacAddress(), device.getDeviceCode(),
+                user.getId(), user.getUsername(), user.getRealName());
 
         Map<String, Object> result = buildLoginResult(token, user.getId(), user.getUsername(),
-                user.getRealName(), request.getDeviceCode(), record.getId(), null);
+                user.getRealName(), device.getDeviceCode(), record.getId(), null);
+        result.put("deviceId", device.getId());
+        result.put("macAddress", normalizeMac(request.getMacAddress()));
 
-        operationLogService.logOperation(user.getId(), user.getUsername(), null,
-                request.getDeviceCode(), null, "LOGIN", "PDA扫码登录",
+        operationLogService.logOperation(user.getId(), user.getUsername(), device.getId(),
+                device.getDeviceCode(), null, "LOGIN", "PDA扫码登录",
                 "SUCCESS", "/api/v1/pda/auth/scan-login", "POST",
                 httpRequest.getRemoteAddr(), null);
 
@@ -146,10 +164,10 @@ public class PdaController {
     @PostMapping("/auth/logout")
     @RequiresPermissions({"ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
     public ApiResponse<Boolean> logout(@RequestAttribute("userId") Long userId) {
-        PdaLoginRecord existing = loginRecordService.getLatestOnlineByUserId(userId);
+        PdaLoginRecord record = loginRecordService.getLatestOnlineByUserId(userId);
         boolean success = loginRecordService.logoutByUserId(userId);
-        if (success && existing != null) {
-            syncDeviceOperatorOnLogout(existing.getDeviceCode());
+        if (success && record != null) {
+            unregisterGatewaySessionIfNeeded(record);
         }
         return ApiResponse.success(success);
     }
@@ -477,20 +495,24 @@ public class PdaController {
         return result;
     }
 
-    private void syncDeviceOperatorOnLogin(String deviceCode, Long userId, String userName) {
-        if (deviceCode == null || deviceCode.trim().isEmpty() || userId == null) {
-            return;
-        }
-        deviceOperatorService.shiftHandover(deviceCode, userId, userName);
+    private EqDeviceDTO resolveDeviceByMac(String macAddress) {
+        return equipmentService.getDeviceByCommunicationId(normalizeMac(macAddress));
     }
 
-    private void syncDeviceOperatorOnLogout(String deviceCode) {
-        if (deviceCode == null || deviceCode.trim().isEmpty()) {
-            return;
-        }
-        deviceOperatorService.endShift(deviceCode);
+    private String normalizeMac(String macAddress) {
+        return macAddress == null ? null : macAddress.trim().toUpperCase();
     }
 
+    private void unregisterGatewaySessionIfNeeded(PdaLoginRecord record) {
+        if (record == null || record.getDeviceCode() == null || record.getDeviceCode().trim().isEmpty()) {
+            return;
+        }
+        EqDeviceDTO device = equipmentService.getDeviceByCode(record.getDeviceCode());
+        if (device == null || device.getCommunicationId() == null || device.getCommunicationId().trim().isEmpty()) {
+            return;
+        }
+        pdaGatewaySessionService.unregister(device.getCommunicationId());
+    }
     private String getPatientName(Task task) {
         if (task.getPrescriptionId() != null) {
             Prescription p = prescriptionMapper.selectById(task.getPrescriptionId());

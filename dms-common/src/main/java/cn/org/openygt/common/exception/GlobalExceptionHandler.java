@@ -60,6 +60,12 @@ public class GlobalExceptionHandler {
         return ApiResponse.error(404, e.getMessage());
     }
 
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<?> handleTypeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException e) {
+        return ApiResponse.error(400, "参数类型错误: " + e.getName() + " 的值 " + e.getValue() + " 不是有效的 " + e.getRequiredType().getSimpleName());
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<?> handleGeneric(Exception e) {

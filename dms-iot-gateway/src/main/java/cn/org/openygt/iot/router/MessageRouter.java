@@ -1,6 +1,7 @@
 package cn.org.openygt.iot.router;
 
 import cn.org.openygt.iot.config.GatewayProperties;
+import cn.org.openygt.iot.gateway.session.GatewayDeviceSessionController;
 import cn.org.openygt.iot.protocol.DeviceMessage;
 import cn.org.openygt.iot.protocol.MessageType;
 import org.springframework.http.HttpEntity;
@@ -25,10 +26,14 @@ public class MessageRouter {
 
     private final RestTemplate restTemplate;
     private final GatewayProperties properties;
+    private final GatewayDeviceSessionController gatewayDeviceSessionController;
 
-    public MessageRouter(RestTemplate restTemplate, GatewayProperties properties) {
+    public MessageRouter(RestTemplate restTemplate,
+                         GatewayProperties properties,
+                         GatewayDeviceSessionController gatewayDeviceSessionController) {
         this.restTemplate = restTemplate;
         this.properties = properties;
+        this.gatewayDeviceSessionController = gatewayDeviceSessionController;
     }
 
     /**
@@ -40,45 +45,52 @@ public class MessageRouter {
             return;
         }
 
+        boolean accepted;
         switch (MessageType.from(message.getMessageType())) {
             case TELEMETRY:
-                handleTelemetry(message);
+                accepted = handleTelemetry(message);
                 break;
             case STATUS:
-                handleStatus(message);
+                accepted = handleStatus(message);
                 break;
             case ALARM:
-                handleAlarm(message);
+                accepted = handleAlarm(message);
                 break;
             case COMMAND_ACK:
-                handleCommandAck(message);
+                accepted = handleCommandAck(message);
                 break;
             default:
                 log.warn("未知消息类型: {}", message.getMessageType());
+                accepted = false;
+        }
+
+        if (accepted) {
+            gatewayDeviceSessionController.touchOnlineDevice(
+                    message.getDeviceCode(), message.getProtocolType(), message.getSourceIp());
         }
     }
 
-    private void handleTelemetry(DeviceMessage message) {
+    private boolean handleTelemetry(DeviceMessage message) {
         log.info("[TELEMETRY] device={}, payload={}", message.getDeviceCode(), message.getPayload());
-        postToEquipment(message);
+        return postToEquipment(message);
     }
 
-    private void handleStatus(DeviceMessage message) {
+    private boolean handleStatus(DeviceMessage message) {
         log.info("[STATUS] device={}, payload={}", message.getDeviceCode(), message.getPayload());
-        postToEquipment(message);
+        return postToEquipment(message);
     }
 
-    private void handleAlarm(DeviceMessage message) {
+    private boolean handleAlarm(DeviceMessage message) {
         log.warn("[ALARM] device={}, payload={}", message.getDeviceCode(), message.getPayload());
-        postToEquipment(message);
+        return postToEquipment(message);
     }
 
-    private void handleCommandAck(DeviceMessage message) {
+    private boolean handleCommandAck(DeviceMessage message) {
         log.info("[ACK] device={}, payload={}", message.getDeviceCode(), message.getPayload());
-        postToEquipment(message);
+        return postToEquipment(message);
     }
 
-    private void postToEquipment(DeviceMessage message) {
+    private boolean postToEquipment(DeviceMessage message) {
         String url = properties.getBackendUrl() + "/api/v1/eq/gateway/report";
         Map<String, Object> request = new HashMap<>();
         request.put("protocolType", message.getProtocolType());
@@ -120,7 +132,7 @@ public class MessageRouter {
                     log.info("消息回写成功: device={}, type={}, attempt={}/{}",
                             message.getDeviceCode(), message.getMessageType(), attempt, maxAttempts);
                 }
-                return;
+                return true;
             } catch (Exception e) {
                 lastError = e;
                 if (attempt < maxAttempts) {
@@ -133,6 +145,7 @@ public class MessageRouter {
 
         log.error("消息回写 dms-equipment 失败，已达到最大重试次数: device={}, type={}, url={}",
                 message.getDeviceCode(), message.getMessageType(), url, lastError);
+        return false;
     }
 
     private void sleepQuietly(long backoffMillis) {

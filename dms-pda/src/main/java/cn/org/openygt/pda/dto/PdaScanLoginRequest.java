@@ -10,5 +10,6 @@ public class PdaScanLoginRequest {
     @NotBlank(message = "扫码条码不能为空")
     private String scanCode;
 
-    private String deviceCode;
+    @NotBlank(message = "设备MAC不能为空")
+    private String macAddress;
 }

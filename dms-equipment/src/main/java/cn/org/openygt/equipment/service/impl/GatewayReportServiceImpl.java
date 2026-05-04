@@ -60,22 +60,7 @@ public class GatewayReportServiceImpl implements GatewayReportService {
         if (device != null) {
             return device;
         }
-
-        EqDevice created = new EqDevice();
-        created.setTenantId(defaultString(request.getTenantId(), "default"));
-        created.setDeviceCode(request.getDeviceCode());
-        created.setName(request.getDeviceCode());
-        created.setProtocolType(request.getProtocolType());
-        created.setDeviceType(resolveDeviceType(request));
-        created.setManufacturer(resolveManufacturer(request.getProtocolType()));
-        created.setStatus("IDLE");
-        created.setDetailStatus("IDLE");
-        created.setEnabled(1);
-        created.setCurrentTemp(request.getCurrentTemp());
-        created.setCreatedAt(LocalDateTime.now());
-        created.setUpdatedAt(LocalDateTime.now());
-        deviceMapper.insert(created);
-        return created;
+        throw new IllegalArgumentException("设备未登记，不允许接入生产链路: " + request.getDeviceCode());
     }
 
     private void handleCommandAck(EqDevice device, GatewayDeviceReportRequest request, LocalDateTime reportedAt) {

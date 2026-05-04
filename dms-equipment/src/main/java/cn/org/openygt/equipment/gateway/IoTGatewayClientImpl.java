@@ -23,6 +23,9 @@ public class IoTGatewayClientImpl implements IoTGatewayClient {
     @Value("${iot.gateway.base-url:http://localhost:8090}")
     private String gatewayBaseUrl;
 
+    @Value("${iot.gateway.api-key:}")
+    private String gatewayApiKey;
+
     @Override
     public boolean sendCommand(String deviceCode, String protocolType, String commandType, Map<String, Object> params) {
         String url = gatewayBaseUrl + "/api/v1/iot/command";
@@ -35,6 +38,9 @@ public class IoTGatewayClientImpl implements IoTGatewayClient {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        if (gatewayApiKey != null && !gatewayApiKey.trim().isEmpty()) {
+            headers.set("X-Gateway-Api-Key", gatewayApiKey);
+        }
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(request, headers);
 
         try {
