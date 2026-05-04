@@ -11,7 +11,7 @@
           <el-radio-button value="exceptions">异常处方({{ exceptionCount }})</el-radio-button>
         </el-radio-group>
         <div v-if="activeTab === 'list'">
-          <el-button type="primary" @click="openCreateDialog">新增处方</el-button>
+          <el-button type="primary" @click="openCreateDialog()">新增处方</el-button>
           <el-button @click="importDialogVisible = true">CSV导入</el-button>
           <el-button @click="ocrDialogVisible = true">OCR识别</el-button>
         </div>
@@ -678,6 +678,10 @@ function formatTime(dt: string) {
 async function openCreateDialog(row?: any) {
   if (row) {
     // 编辑模式：先加载详情（列表数据不含药材明细）
+    if (!row.id) {
+      ElMessage.error('处方ID无效，无法编辑')
+      return
+    }
     const detailRes: any = await getPrescriptionDetail(row.id)
     const detail = detailRes.data
     form.id = detail.id
@@ -858,6 +862,10 @@ async function handleOcrConfirm() {
 // ==================== 异常处方处理 ====================
 
 async function resolveException(row: any) {
+  if (!row.id) {
+    ElMessage.error('处方ID无效，无法纠正')
+    return
+  }
   try {
     await ElMessageBox.confirm(`确认纠正异常处方 #${row.id}？将在当前数据基础上修正`, '提示')
     // 加载完整数据
@@ -908,6 +916,10 @@ async function resolveException(row: any) {
 // ==================== 详情 ====================
 
 async function viewDetail(row: any) {
+  if (!row.id) {
+    ElMessage.error('处方ID无效，无法查看详情')
+    return
+  }
   detailVisible.value = true
   detailLoading.value = true
   showRawData.value = false

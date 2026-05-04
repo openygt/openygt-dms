@@ -18,6 +18,8 @@ public interface EquipmentService {
 
     EqDeviceDTO getDeviceByCode(String deviceCode);
 
+    EqDeviceDTO getDeviceByCommunicationId(String communicationId);
+
     EqDeviceDTO getDeviceById(Long deviceId);
 
     EqDeviceDTO getOrCreateDevice(String deviceCode, int defaultType);

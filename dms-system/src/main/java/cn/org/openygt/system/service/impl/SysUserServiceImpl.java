@@ -111,7 +111,13 @@ public class SysUserServiceImpl implements SysUserService {
 
     @Override
     public TokenResponse login(LoginRequest request) {
-        SysUser user = getByUsername(request.getUsername());
+        if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("用户名不能为空");
+        }
+        if (request.getPassword() == null || request.getPassword().isEmpty()) {
+            throw new IllegalArgumentException("密码不能为空");
+        }
+        SysUser user = getByUsername(request.getUsername().trim());
         if (user == null) {
             throw new IllegalArgumentException("用户名或密码错误");
         }

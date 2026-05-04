@@ -3,6 +3,7 @@ package cn.org.openygt.iot.gateway;
 import cn.org.openygt.iot.adapter.AdapterRegistry;
 import cn.org.openygt.iot.adapter.AdapterStatus;
 import cn.org.openygt.iot.adapter.DeviceAdapter;
+import cn.org.openygt.iot.gateway.session.GatewayDeviceSessionController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,9 +20,12 @@ import java.util.Map;
 public class GatewayHealthController {
 
     private final AdapterRegistry registry;
+    private final GatewayDeviceSessionController gatewayDeviceSessionController;
 
-    public GatewayHealthController(AdapterRegistry registry) {
+    public GatewayHealthController(AdapterRegistry registry,
+                                   GatewayDeviceSessionController gatewayDeviceSessionController) {
         this.registry = registry;
+        this.gatewayDeviceSessionController = gatewayDeviceSessionController;
     }
 
     @GetMapping("/health")
@@ -29,6 +33,8 @@ public class GatewayHealthController {
         Map<String, Object> result = new HashMap<>();
         result.put("status", "UP");
         result.put("adapters", registry.getAllAdapters().size());
+        result.put("onlineDevices", gatewayDeviceSessionController.getOnlineDeviceCount());
+        result.put("matchedUsers", gatewayDeviceSessionController.getMatchedSessionCount());
         return ResponseEntity.ok(result);
     }
 

@@ -68,6 +68,14 @@ public class EquipmentServiceImpl implements EquipmentService {
     }
 
     @Override
+    public EqDeviceDTO getDeviceByCommunicationId(String communicationId) {
+        if (communicationId == null || communicationId.trim().isEmpty()) {
+            return null;
+        }
+        return toDTO(deviceMapper.findByCommunicationId(communicationId.trim().toUpperCase()));
+    }
+
+    @Override
     public EqDeviceDTO getDeviceById(Long deviceId) {
         return toDTO(deviceMapper.selectById(deviceId));
     }
@@ -353,6 +361,7 @@ public class EquipmentServiceImpl implements EquipmentService {
         dto.setFaultCode(entity.getFaultCode());
         dto.setAutoLevel(entity.getAutoLevel());
         dto.setProtocolType(entity.getProtocolType());
+        dto.setCommunicationId(entity.getCommunicationId());
         dto.setAlarmHighTemp(entity.getAlarmMaxTemp());
         dto.setAlarmLowTemp(entity.getAlarmMinTemp());
         dto.setLastHeartbeat(entity.getLastHeartbeat());

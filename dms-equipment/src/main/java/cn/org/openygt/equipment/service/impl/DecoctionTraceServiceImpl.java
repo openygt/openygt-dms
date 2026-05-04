@@ -82,7 +82,14 @@ public class DecoctionTraceServiceImpl implements DecoctionTraceService {
         }
 
         String operatorName = data.get("operatorName") != null ? data.get("operatorName").toString() : null;
-        LocalDateTime eventTime = data.get("eventTime") != null ? LocalDateTime.parse(data.get("eventTime").toString()) : LocalDateTime.now();
+        LocalDateTime eventTime = LocalDateTime.now();
+        if (data.get("eventTime") != null) {
+            try {
+                eventTime = LocalDateTime.parse(data.get("eventTime").toString());
+            } catch (Exception e) {
+                log.warn("非法的eventTime格式: {}, 使用当前时间", data.get("eventTime"));
+            }
+        }
 
         switch (stepCode) {
             case "RECEIVE":

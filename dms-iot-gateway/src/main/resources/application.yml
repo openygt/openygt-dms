@@ -15,6 +15,8 @@ iot:
       backoff-millis: ${IOT_GATEWAY_RETRY_BACKOFF_MS:1000}
     lifecycle:
       auto-start-adapters: ${IOT_GATEWAY_AUTO_START_ADAPTERS:true}
+    device-session:
+      offline-timeout-seconds: ${IOT_GATEWAY_DEVICE_SESSION_OFFLINE_TIMEOUT_SECONDS:120}
     http:
       connect-timeout-millis: ${IOT_GATEWAY_HTTP_CONNECT_TIMEOUT_MS:3000}
       read-timeout-millis: ${IOT_GATEWAY_HTTP_READ_TIMEOUT_MS:5000}

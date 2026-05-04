@@ -1,5 +1,7 @@
 package cn.org.openygt.inventory.service.impl;
 
+import java.math.BigDecimal;
+
 import cn.org.openygt.inventory.dto.ConsumeRecordDTO;
 import cn.org.openygt.inventory.dto.ConsumeItemRequest;
 import cn.org.openygt.inventory.dto.ConsumeRecordRequest;
@@ -50,7 +52,7 @@ public class ConsumeRecordServiceImpl implements ConsumeRecordService {
                 stockLog.setMedicineCode(item.getMedicineCode());
                 stockLog.setMedicineName(item.getMedicineName());
                 stockLog.setChangeType("CONSUME");
-                stockLog.setChangeQuantity(item.getQuantity());
+                stockLog.setChangeQuantity(item.getQuantity() != null ? item.getQuantity() : BigDecimal.ZERO);
                 stockLog.setOperatorId(request.getOperatorId());
                 stockLog.setRemark(item.getRemark());
                 stockLog.setTenantId("default");

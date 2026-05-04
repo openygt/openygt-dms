@@ -187,7 +187,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 PrescriptionMedicineItemRequest med = new PrescriptionMedicineItemRequest();
                 med.setMedicineName(getField(fields, colIndex, "药材名称", "药品名称", "medicine_name", "medicinename"));
                 String dosageStr = getField(fields, colIndex, "用量", "剂量", "dosage", "dose");
-                med.setDosage(dosageStr != null ? new BigDecimal(dosageStr.trim()) : BigDecimal.ZERO);
+                med.setDosage(parseBigDecimal(dosageStr, BigDecimal.ZERO));
                 med.setUnit(getField(fields, colIndex, "单位", "unit"));
                 med.setMedUsage(getField(fields, colIndex, "用法", "med_usage", "medusage"));
                 med.setSortOrder(sort++);
@@ -355,7 +355,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         for (OcrPrescriptionRequest.OcrMedicineItem ocrItem : request.getItems()) {
             PrescriptionMedicineItemRequest item = new PrescriptionMedicineItemRequest();
             item.setMedicineName(ocrItem.getMedicineName());
-            item.setDosage(ocrItem.getDosage() != null ? new BigDecimal(ocrItem.getDosage()) : BigDecimal.ZERO);
+            item.setDosage(parseBigDecimal(ocrItem.getDosage(), BigDecimal.ZERO));
             item.setUnit(ocrItem.getUnit());
             item.setMedUsage(ocrItem.getMedUsage());
             item.setSortOrder(sort++);
@@ -648,6 +648,17 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         if (allPending) return "待处理";
         if (allCompleted) return "处理完毕";
         return "处理中";
+    }
+
+    private BigDecimal parseBigDecimal(String value, BigDecimal defaultValue) {
+        if (value == null || value.trim().isEmpty()) {
+            return defaultValue;
+        }
+        try {
+            return new BigDecimal(value.trim());
+        } catch (NumberFormatException e) {
+            return defaultValue;
+        }
     }
 
     private String generateTaskNo() {

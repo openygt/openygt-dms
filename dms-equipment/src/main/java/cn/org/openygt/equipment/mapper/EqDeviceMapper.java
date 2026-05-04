@@ -17,6 +17,9 @@ public interface EqDeviceMapper extends BaseMapper<EqDevice> {
     @Select("SELECT * FROM eq_device WHERE device_code = #{deviceCode} AND deleted = 0")
     EqDevice findByDeviceCode(@Param("deviceCode") String deviceCode);
 
+    @Select("SELECT * FROM eq_device WHERE communication_id = #{communicationId} AND deleted = 0 LIMIT 1")
+    EqDevice findByCommunicationId(@Param("communicationId") String communicationId);
+
     /**
      * 悲观锁查询设备（必须在 @Transactional 内调用）。
      */

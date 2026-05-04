@@ -71,6 +71,9 @@ public class WaterFormulaServiceImpl implements WaterFormulaService {
         try {
             Expression exp = parser.parseExpression(formula.getExpression().replace(".", "_"));
             Double result = exp.getValue(context, Double.class);
+            if (result == null) {
+                throw new IllegalArgumentException("公式计算结果为空");
+            }
             BigDecimal bd = BigDecimal.valueOf(result);
 
             Map<String, Object> r = new HashMap<>();

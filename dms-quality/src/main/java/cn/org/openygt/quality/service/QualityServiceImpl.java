@@ -138,7 +138,16 @@ public class QualityServiceImpl implements QualityService {
     @Transactional
     public InspectionResult inspectWithItems(InspectExecuteRequest req) {
         Long taskId = req.getTaskId();
-        InspectionResultType result = InspectionResultType.valueOf(req.getOverallResult());
+        String overallResult = req.getOverallResult();
+        if (overallResult == null || overallResult.trim().isEmpty()) {
+            throw new IllegalArgumentException("质检结果不能为空");
+        }
+        InspectionResultType result;
+        try {
+            result = InspectionResultType.valueOf(overallResult.trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("无效的质检结果: " + overallResult);
+        }
         String operatorId = req.getOperatorId();
         String remark = req.getRemark();
         String reworkNode = req.getReworkNode();

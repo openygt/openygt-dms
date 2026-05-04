@@ -43,7 +43,7 @@ public class DeviceUtilizationServiceImpl implements DeviceUtilizationService {
 
         for (DeviceUtilization u : data) {
             Map<String, Object> item = new HashMap<>();
-            item.put("date", u.getStatDate().toString());
+            item.put("date", u.getStatDate() != null ? u.getStatDate().toString() : "");
             item.put("utilization", u.getUtilizationRate() != null ? u.getUtilizationRate() : BigDecimal.ZERO);
             result.add(item);
         }

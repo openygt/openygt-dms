@@ -23,6 +23,7 @@ public class EqDeviceDTO implements Serializable {
     private String autoLevel;
     private String location;
     private String protocolType;
+    private String communicationId;
     private String vendor;
     private BigDecimal alarmHighTemp;
     private BigDecimal alarmLowTemp;

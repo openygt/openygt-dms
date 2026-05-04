@@ -14,6 +14,7 @@ public class GatewayProperties {
     private final Retry retry = new Retry();
     private final Http http = new Http();
     private final Lifecycle lifecycle = new Lifecycle();
+    private final DeviceSession deviceSession = new DeviceSession();
 
     @Data
     public static class Retry {
@@ -30,5 +31,10 @@ public class GatewayProperties {
     @Data
     public static class Lifecycle {
         private boolean autoStartAdapters = true;
+    }
+
+    @Data
+    public static class DeviceSession {
+        private long offlineTimeoutSeconds = 120L;
     }
 }
