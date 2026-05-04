@@ -482,6 +482,7 @@ public class PdaController {
                     med.put("name", m.getMedicineName());
                     med.put("dosage", m.getDosage());
                     med.put("unit", m.getUnit());
+                    med.put("decoctionMethod", m.getDecoctionMethod());
                     return med;
                 }).collect(Collectors.toList()));
             }
