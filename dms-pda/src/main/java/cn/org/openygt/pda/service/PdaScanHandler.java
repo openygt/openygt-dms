@@ -59,8 +59,7 @@ public class PdaScanHandler {
                 taskService.startPour(task.getId(), String.valueOf(operatorId));
                 return PdaScanResult.success("出液已开始", task);
             case WAIT_WRAP:
-                taskService.startWrap(task.getId(), null, String.valueOf(operatorId));
-                return PdaScanResult.success("包装已开始", task);
+                return PdaScanResult.prompt("待包装，请先扫码绑定包装设备", task, "wrap-device");
             case WAIT_QC:
                 return PdaScanResult.prompt("请录入质检结果", task, "qc-form");
             case STORED:
