@@ -241,7 +241,7 @@ public class PdaController {
         String prescriptionNo = prescription != null ? prescription.getPrescriptionNumber() : null;
         Map<String, Object> curveData = new HashMap<>();
         if (prescriptionNo != null) {
-            curveData = decoctionTraceService.getTemperatureCurve(prescriptionNo, "1min");
+            curveData = decoctionTraceService.getTemperatureCurve(prescriptionNo);
         }
         return ApiResponse.success(curveData);
     }

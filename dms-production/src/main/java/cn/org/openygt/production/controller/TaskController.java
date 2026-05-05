@@ -2,12 +2,16 @@ package cn.org.openygt.production.controller;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.common.enums.InspectionResultType;
+import cn.org.openygt.production.entity.Prescription;
 import cn.org.openygt.production.entity.Task;
+import cn.org.openygt.production.mapper.PrescriptionMapper;
 import cn.org.openygt.production.service.TaskService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -16,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class TaskController {
 
     private final TaskService taskService;
+    private final PrescriptionMapper prescriptionMapper;
 
     @GetMapping
     public ApiResponse<IPage<Task>> list(
@@ -32,6 +37,26 @@ public class TaskController {
             @RequestParam(defaultValue = "20") int size) {
         return ApiResponse.success(taskService.queryTasks(status, deviceId, id, prescriptionId, operatorId, operatorKeyword,
                 prescriptionNumber, startTime, endTime, page, size));
+    }
+
+    @GetMapping("/barcode/{barcode}")
+    public ApiResponse<Map<String, Object>> getByBarcode(@PathVariable String barcode) {
+        Task task = taskService.getByBarcode(barcode);
+        if (task == null) {
+            return ApiResponse.error(404, "任务不存在: " + barcode);
+        }
+        Map<String, Object> result = new java.util.HashMap<>();
+        result.put("id", task.getId());
+        result.put("barcode", task.getBarcode());
+        result.put("status", task.getStatus());
+        result.put("prescriptionId", task.getPrescriptionId());
+        String prescriptionNo = task.getPrescriptionNumber();
+        if (prescriptionNo == null && task.getPrescriptionId() != null) {
+            Prescription prescription = prescriptionMapper.selectById(task.getPrescriptionId());
+            prescriptionNo = prescription != null ? prescription.getPrescriptionNumber() : null;
+        }
+        result.put("prescriptionNumber", prescriptionNo);
+        return ApiResponse.success(result);
     }
 
     @PostMapping("/{id}/soak/start")

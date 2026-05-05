@@ -195,7 +195,7 @@ public class DecoctionTraceServiceImpl implements DecoctionTraceService {
     }
 
     @Override
-    public Map<String, Object> getTemperatureCurve(String prescriptionNo, String granularity) {
+    public Map<String, Object> getTemperatureCurve(String prescriptionNo) {
         DecoctionTrace trace = traceMapper.findByPrescriptionNo(prescriptionNo);
         if (trace == null || trace.getTempCurveData() == null) {
             Map<String, Object> r = new HashMap<>();
