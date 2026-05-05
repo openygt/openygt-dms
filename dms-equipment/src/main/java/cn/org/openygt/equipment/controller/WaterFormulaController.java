@@ -7,6 +7,8 @@ import cn.org.openygt.equipment.service.WaterFormulaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 import java.util.List;
 import java.util.Map;
 
@@ -23,12 +25,12 @@ public class WaterFormulaController {
     }
 
     @PostMapping
-    public ApiResponse<WaterFormula> createFormula(@RequestBody WaterFormula formula) {
+    public ApiResponse<WaterFormula> createFormula(@RequestBody @Valid WaterFormula formula) {
         return ApiResponse.success(waterFormulaService.createFormula(formula));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<WaterFormula> updateFormula(@PathVariable Long id, @RequestBody WaterFormula formula) {
+    public ApiResponse<WaterFormula> updateFormula(@PathVariable Long id, @RequestBody @Valid WaterFormula formula) {
         return ApiResponse.success(waterFormulaService.updateFormula(id, formula));
     }
 

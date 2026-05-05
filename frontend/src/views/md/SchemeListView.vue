@@ -53,7 +53,7 @@
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑方案' : '新增方案'" width="600px">
-      <el-form :model="form" label-width="140px">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="140px">
         <el-form-item label="方案名称" required>
           <el-input v-model="form.schemeName" />
         </el-form-item>
@@ -108,9 +108,18 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="温度范围">
-          <el-input v-model="form.tempRange" placeholder="如 100-105°C" />
-        </el-form-item>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="低温阈值(°C)">
+              <el-input-number v-model="form.alarmLowTemp" :min="0" :precision="1" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="高温阈值(°C)">
+              <el-input-number v-model="form.alarmHighTemp" :min="0" :precision="1" style="width: 100%" />
+            </el-form-item>
+          </el-col>
+        </el-row>
         <el-form-item label="状态">
           <el-radio-group v-model="form.status">
             <el-radio :label="1">启用</el-radio>
@@ -147,6 +156,8 @@ interface Scheme {
   tempRiseRate: number
   isDefault: number
   tempRange: string
+  alarmLowTemp: number
+  alarmHighTemp: number
   status: number
   remark: string
 }
@@ -155,8 +166,18 @@ const list = ref<Scheme[]>([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const search = ref({ name: '' })
-const form = ref<Partial<Scheme>>({ status: 1, isDefault: 0 })
+const form = ref<Partial<Scheme>>({ status: 1, isDefault: 0, alarmLowTemp: undefined, alarmHighTemp: undefined })
+const formRef = ref<any>(null)
 const pagination = ref({ page: 1, size: 10, total: 0 })
+
+const formRules = {
+  schemeName: [{ required: true, message: '方案名称不能为空', trigger: 'blur' }],
+  schemeCode: [{ required: true, message: '方案编码不能为空', trigger: 'blur' }],
+  schemeType: [{ required: true, message: '煎煮类型不能为空', trigger: 'change' }],
+  firstDecoctTime: [{ required: true, message: '一煎时长不能为空', trigger: 'change' }],
+  secondDecoctTime: [{ required: true, message: '二煎时长不能为空', trigger: 'change' }],
+  status: [{ required: true, message: '状态不能为空', trigger: 'change' }],
+}
 
 async function fetchData() {
   loading.value = true
@@ -186,18 +207,25 @@ function handlePageChange(val: number) {
 }
 
 function openDialog(row?: Scheme) {
-  form.value = row ? { ...row } : { status: 1, isDefault: 0 }
+  if (row) {
+    form.value = { ...row }
+  } else {
+    form.value = { status: 1, isDefault: 0, alarmLowTemp: undefined, alarmHighTemp: undefined }
+  }
   dialogVisible.value = true
 }
 
 async function handleSave() {
+  if (!formRef.value) return
+  await formRef.value.validate()
   try {
+    const totalHeatingTime = (form.value.firstDecoctTime || 0) + (form.value.secondDecoctTime || 0)
     const payload = {
       name: form.value.schemeName,
       code: form.value.schemeCode,
       description: form.value.remark,
       preHeatingTime: form.value.soakTime,
-      heatingTime: form.value.firstDecoctTime,
+      heatingTime: totalHeatingTime > 0 ? totalHeatingTime : undefined,
       firstDecoctTime: form.value.firstDecoctTime,
       secondDecoctTime: form.value.secondDecoctTime,
       soakTime: form.value.soakTime,
@@ -206,6 +234,9 @@ async function handleSave() {
       lateAddRemindTime: form.value.lateAddRemindTime,
       tempRiseRate: form.value.tempRiseRate,
       isDefault: form.value.isDefault,
+      alarmLowTemp: form.value.alarmLowTemp,
+      alarmHighTemp: form.value.alarmHighTemp,
+      status: form.value.status,
     }
     if (form.value.id) {
       await updateScheme(form.value.id, payload)

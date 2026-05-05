@@ -3,7 +3,7 @@
     <div class="page-header-title">告警配置：<span class="page-header-sub">告警阈值、通知方式、升级策略</span></div>
     <div class="page-header">
 
-      <el-button type="primary" @click="showDialog = true">新增配置</el-button>
+      <el-button type="primary" @click="handleAdd">新增配置</el-button>
     </div>
 
     <el-card>
@@ -34,7 +34,7 @@
     </el-card>
 
     <el-dialog v-model="showDialog" :title="isEdit ? '编辑告警配置' : '新增告警配置'" width="600px">
-      <el-form :model="form" label-width="120px">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="120px">
         <el-form-item label="告警类型">
           <el-select v-model="form.alarmType">
             <el-option label="温度超限" value="TEMP_HIGH" />
@@ -93,6 +93,14 @@ const form = reactive({
   notifyType: ''
 })
 
+const formRef = ref<any>(null)
+const formRules = {
+  alarmType: [{ required: true, message: '告警类型不能为空', trigger: 'change' }],
+  alarmLevel: [{ required: true, message: '告警级别不能为空', trigger: 'change' }],
+  thresholdValue: [{ required: true, message: '阈值不能为空', trigger: 'change' }],
+  enabled: [{ required: true, message: '启用状态不能为空', trigger: 'change' }],
+}
+
 async function loadConfigs() {
   loading.value = true
   try {
@@ -103,6 +111,17 @@ async function loadConfigs() {
   } finally {
     loading.value = false
   }
+}
+
+function handleAdd() {
+  isEdit.value = false
+  currentId.value = null
+  form.alarmType = 'TEMP_HIGH'
+  form.alarmLevel = 'WARNING'
+  form.thresholdValue = 110
+  form.durationSeconds = 10
+  notifyTypes.value = []
+  showDialog.value = true
 }
 
 function handleEdit(row: any) {
@@ -127,6 +146,8 @@ async function handleEnableChange(row: any, enabled: boolean) {
 }
 
 async function handleSave() {
+  if (!formRef.value) return
+  await formRef.value.validate()
   try {
     const data = { ...form, notifyType: notifyTypes.value.join(',') }
     if (isEdit.value) {
