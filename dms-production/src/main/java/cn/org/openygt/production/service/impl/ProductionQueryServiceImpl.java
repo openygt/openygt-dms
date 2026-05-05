@@ -7,6 +7,8 @@ import cn.org.openygt.common.service.ProductionQueryService;
 import cn.org.openygt.production.entity.Prescription;
 import cn.org.openygt.production.entity.Task;
 import cn.org.openygt.production.entity.TaskStatusHistory;
+import cn.org.openygt.equipment.entity.DeviceUtilization;
+import cn.org.openygt.equipment.mapper.DeviceUtilizationMapper;
 import cn.org.openygt.production.mapper.PrescriptionMapper;
 import cn.org.openygt.production.mapper.TaskMapper;
 import cn.org.openygt.production.mapper.TaskStatusHistoryMapper;
@@ -32,6 +34,7 @@ public class ProductionQueryServiceImpl implements ProductionQueryService {
     private final TaskMapper taskMapper;
     private final TaskStatusHistoryMapper historyMapper;
     private final PrescriptionMapper prescriptionMapper;
+    private final DeviceUtilizationMapper deviceUtilizationMapper;
 
     @Override
     public ProdTaskDTO getTaskById(Long taskId) {
@@ -77,8 +80,11 @@ public class ProductionQueryServiceImpl implements ProductionQueryService {
             dto.setTaskCount(toInt(row.get("totalTasks")));
             dto.setCompletedCount(toInt(row.get("completedTasks")));
             dto.setDoseCount(toInt(row.getOrDefault("doseCount", 0)));
-            dto.setAvgDuration(0.0);
-            dto.setDeviceUtilization(0.0);
+            Double avgMinutes = toDouble(row.get("avgDurationMinutes"));
+            dto.setAvgDuration(avgMinutes != null ? avgMinutes / 60.0 : 0.0);
+            // 查询当天平均设备利用率（所有设备的平均值）
+            Double avgUtilization = getAvgDeviceUtilization(statDate);
+            dto.setDeviceUtilization(avgUtilization != null ? avgUtilization : 0.0);
             result.add(dto);
         }
         return result;
@@ -101,6 +107,28 @@ public class ProductionQueryServiceImpl implements ProductionQueryService {
             return Integer.valueOf(obj.toString());
         } catch (NumberFormatException e) {
             return 0;
+        }
+    }
+
+    private Double getAvgDeviceUtilization(LocalDate date) {
+        List<DeviceUtilization> list = deviceUtilizationMapper.findByDate(date);
+        if (list == null || list.isEmpty()) {
+            return null;
+        }
+        double sum = 0;
+        for (DeviceUtilization u : list) {
+            sum += (u.getUtilizationRate() != null ? u.getUtilizationRate().doubleValue() : 0);
+        }
+        return sum / list.size() / 100.0; // 转为 0-1 小数
+    }
+
+    private Double toDouble(Object obj) {
+        if (obj == null) return null;
+        if (obj instanceof Number) return ((Number) obj).doubleValue();
+        try {
+            return Double.valueOf(obj.toString());
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 
