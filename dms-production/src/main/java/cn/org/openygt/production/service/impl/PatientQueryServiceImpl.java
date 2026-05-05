@@ -40,9 +40,22 @@ public class PatientQueryServiceImpl implements PatientQueryService {
     private final TaskStatusHistoryMapper historyMapper;
 
     @Override
-    public PatientToken queryByCode(String token) {
-        return patientTokenMapper.selectOne(
-                new LambdaQueryWrapper<PatientToken>().eq(PatientToken::getToken, token));
+    public PatientToken queryByCode(String code) {
+        // 1. 先按取药码/查询令牌查
+        PatientToken result = patientTokenMapper.selectOne(
+                new LambdaQueryWrapper<PatientToken>().eq(PatientToken::getToken, code));
+        if (result != null) {
+            return result;
+        }
+        // 2. 再按处方号反查 PatientToken
+        Prescription prescription = prescriptionMapper.selectOne(
+                new LambdaQueryWrapper<Prescription>().eq(Prescription::getPrescriptionNumber, code).last("LIMIT 1"));
+        if (prescription != null) {
+            return patientTokenMapper.selectOne(
+                    new LambdaQueryWrapper<PatientToken>().eq(PatientToken::getPrescriptionId, prescription.getId()));
+        }
+        // 3. 最后按药袋条码反查（通过 ShelfRecord 找 prescriptionId）
+        return null;
     }
 
     @Override

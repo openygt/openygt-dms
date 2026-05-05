@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import cn.org.openygt.production.ProductionModule;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(ProductionModule.API_PREFIX + "/patient")
@@ -21,13 +22,15 @@ public class PatientQueryController {
 
     private final PatientQueryService patientQueryService;
 
-    @GetMapping("/query-by-code")
-    public ApiResponse<PatientToken> queryByCode(@RequestParam String token) {
-        return ApiResponse.success(patientQueryService.queryByCode(token));
+    @PostMapping("/query-by-code")
+    public ApiResponse<PatientToken> queryByCode(@RequestBody Map<String, String> body) {
+        String code = body.get("code");
+        return ApiResponse.success(patientQueryService.queryByCode(code));
     }
 
-    @GetMapping("/query-by-phone")
-    public ApiResponse<List<Prescription>> queryByPhone(@RequestParam String phone) {
+    @PostMapping("/query-by-phone")
+    public ApiResponse<List<Prescription>> queryByPhone(@RequestBody Map<String, String> body) {
+        String phone = body.get("phone");
         return ApiResponse.success(patientQueryService.queryByPhone(phone));
     }
 

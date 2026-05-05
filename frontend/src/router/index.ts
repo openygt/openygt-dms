@@ -41,6 +41,7 @@ const router = createRouter({
         { path: 'base/department', name: 'DepartmentManage', component: () => import('@/views/base/DepartmentManageView.vue'), meta: { title: '科室管理' } },
         { path: 'base/doctor', name: 'DoctorManage', component: () => import('@/views/base/DoctorManageView.vue'), meta: { title: '医师管理' } },
         { path: 'base/medicine', name: 'MedicineCatalog', component: () => import('@/views/base/MedicineCatalogView.vue'), meta: { title: '药材管理' } },
+        { path: 'base/finished-shelf', name: 'FinishedShelfManage', component: () => import('@/views/base/FinishedShelfManageView.vue'), meta: { title: '成品货架管理', perm: 'md:shelf:view' } },
         { path: 'users', name: 'Users', component: () => import('@/views/system/UserListView.vue'), meta: { title: '人员管理', perm: 'sys:user:list' } },
         { path: 'sys/users', name: 'SysUsers', component: () => import('@/views/system/UserListView.vue'), meta: { title: '用户管理', perm: 'sys:user:list' } },
         { path: 'roles', name: 'Roles', component: () => import('@/views/system/RoleListView.vue'), meta: { title: '权限管理', perm: 'sys:role:list' } },

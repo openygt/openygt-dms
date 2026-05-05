@@ -48,7 +48,7 @@
       <template #header>
         <span>合格率趋势</span>
       </template>
-      <div class="chart-container" />
+      <div ref="chartRef" class="chart-container" />
     </el-card>
 
     <el-card class="table-card" shadow="never">
@@ -71,7 +71,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ElMessage } from 'element-plus'
+import * as echarts from 'echarts'
 import { getQcRateTrend, getQcRateReason, getQcRateSummary } from '@/api/report'
 
 interface TrendItem {
@@ -91,12 +93,40 @@ const searchForm = reactive({
   groupBy: 'day'
 })
 const dateRange = ref<[string, string] | null>(null)
+const chartRef = ref<HTMLDivElement | null>(null)
+let chartInstance: echarts.ECharts | null = null
 const trendData = ref<TrendItem[]>([])
 const reasonData = ref<ReasonItem[]>([])
 const summary = reactive({
   total: 0,
   passCount: 0
 })
+
+function renderChart() {
+  if (!chartRef.value) return
+  if (!chartInstance) {
+    chartInstance = echarts.init(chartRef.value)
+  }
+  const data = trendData.value
+  chartInstance.setOption({
+    tooltip: { trigger: 'axis' },
+    xAxis: {
+      type: 'category',
+      data: data.map(d => d.period),
+      axisLabel: { rotate: data.length > 10 ? 45 : 0 }
+    },
+    yAxis: [
+      { type: 'value', name: '数量', minInterval: 1 },
+      { type: 'value', name: '合格率%', max: 100, axisLabel: { formatter: '{value}%' } }
+    ],
+    series: [
+      { name: '总数', type: 'bar', data: data.map(d => d.total) },
+      { name: '合格数', type: 'bar', data: data.map(d => d.passCount) },
+      { name: '合格率', type: 'line', yAxisIndex: 1, data: data.map(d => d.total > 0 ? Math.round(d.passCount / d.total * 10000) / 100 : 0) }
+    ],
+    legend: { data: ['总数', '合格数', '合格率'], bottom: 0 }
+  }, true)
+}
 
 async function handleSearch() {
   const params = {
@@ -107,8 +137,10 @@ async function handleSearch() {
   try {
     const trendRes: any = await getQcRateTrend(params)
     trendData.value = trendRes.data || []
-  } catch (e) {
+    nextTick(renderChart)
+  } catch (e: any) {
     trendData.value = []
+    ElMessage.error(e?.response?.data?.message || '趋势数据加载失败')
   }
   try {
     const reasonRes: any = await getQcRateReason({
@@ -116,8 +148,9 @@ async function handleSearch() {
       dateEnd: params.dateEnd
     })
     reasonData.value = reasonRes.data || []
-  } catch (e) {
+  } catch (e: any) {
     reasonData.value = []
+    ElMessage.error(e?.response?.data?.message || '原因分布加载失败')
   }
   try {
     const summaryRes: any = await getQcRateSummary({
@@ -125,11 +158,12 @@ async function handleSearch() {
       dateEnd: params.dateEnd
     })
     const s = summaryRes.data || {}
-    summary.total = s.total || 0
+    summary.total = s.totalCount || 0
     summary.passCount = s.passCount || 0
-  } catch (e) {
+  } catch (e: any) {
     summary.total = 0
     summary.passCount = 0
+    ElMessage.error(e?.response?.data?.message || '汇总数据加载失败')
   }
 }
 

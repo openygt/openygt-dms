@@ -14,10 +14,8 @@
       <el-table :data="list" v-loading="loading">
         <el-table-column prop="sampleNo" label="留样编号" width="150" />
         <el-table-column prop="taskId" label="关联任务" width="100" />
-        <el-table-column prop="sampleType" label="类型" width="100">
-          <template #default="{row}">
-            {{ sampleTypeText(row.sampleType) }}
-          </template>
+        <el-table-column label="留样类型" width="100">
+          <template #default>7天留样</template>
         </el-table-column>
         <el-table-column label="留样时间" width="160">
           <template #default="{row}">
@@ -57,19 +55,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import request from '@/api/request'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const currentUserId = computed(() => userStore.userInfo?.id || 0)
 
 const list = ref([])
 const loading = ref(false)
 const mode = ref<'list' | 'expiring'>('list')
 const pagination = ref({ page: 1, size: 20, total: 0 })
 
-const sampleTypeText = (type: number) => {
-  const map: Record<number, string> = { 1: '质检样', 2: '24h留样', 3: '72h留样' }
-  return map[type] || '未知'
-}
 const formatDateTime = (dt: string) => {
   if (!dt) return '-'
   const d = new Date(dt)
@@ -117,7 +115,7 @@ const fetchExpiring = async () => {
 const handleDestroy = async (row: any) => {
   try {
     await ElMessageBox.confirm('确认销毁该留样？', '提示', { type: 'warning' })
-    await request.post(`/v1/qt/retain-sample/${row.id}/destroy`, { destroyBy: 1, remark: '到期销毁' })
+    await request.post(`/v1/qt/retain-sample/${row.id}/destroy`, { destroyBy: currentUserId.value, remark: '到期销毁' })
     ElMessage.success('销毁成功')
     fetchList()
   } catch (e) {

@@ -40,4 +40,7 @@ public interface EqDeviceMapper extends BaseMapper<EqDevice> {
      */
     @Select("SELECT * FROM eq_device WHERE deleted = 0 AND status != 'OFFLINE' AND status != 'MAINTENANCE'")
     List<EqDevice> findAllActive();
+
+    @Select("SELECT device_code, id FROM eq_device WHERE deleted = 0")
+    List<EqDevice> findAllDeviceCodes();
 }
