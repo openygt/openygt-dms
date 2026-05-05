@@ -9,21 +9,16 @@ import java.time.LocalDateTime;
 public class SchemeResponse {
 
     private Long id;
-    private String name;
     private String schemeName;
-    private String code;
     private String schemeCode;
     private Integer schemeType;
     private Integer decoctTimes;
     private Integer pressure;
     private BigDecimal upperWater;
-    private Integer heatingTime;
     private Integer decoctTime;
-    private Integer preHeatingTime;
     private Integer soakTime;
     private Integer postHeatingTime;
     private String tempRange;
-    private String description;
     private String remark;
     private Integer status;
     private LocalDateTime createdAt;
@@ -38,6 +33,12 @@ public class SchemeResponse {
     private BigDecimal tempRiseRate;
     private Integer isDefault;
 
+    /** 高温报警阈值（℃） */
+    private BigDecimal alarmHighTemp;
+
+    /** 低温报警阈值（℃） */
+    private BigDecimal alarmLowTemp;
+
     public Long getId() {
         return id;
     }
@@ -46,28 +47,12 @@ public class SchemeResponse {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getSchemeName() {
         return schemeName;
     }
 
     public void setSchemeName(String schemeName) {
         this.schemeName = schemeName;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public void setCode(String code) {
-        this.code = code;
     }
 
     public String getSchemeCode() {
@@ -110,28 +95,12 @@ public class SchemeResponse {
         this.upperWater = upperWater;
     }
 
-    public Integer getHeatingTime() {
-        return heatingTime;
-    }
-
-    public void setHeatingTime(Integer heatingTime) {
-        this.heatingTime = heatingTime;
-    }
-
     public Integer getDecoctTime() {
         return decoctTime;
     }
 
     public void setDecoctTime(Integer decoctTime) {
         this.decoctTime = decoctTime;
-    }
-
-    public Integer getPreHeatingTime() {
-        return preHeatingTime;
-    }
-
-    public void setPreHeatingTime(Integer preHeatingTime) {
-        this.preHeatingTime = preHeatingTime;
     }
 
     public Integer getSoakTime() {
@@ -156,14 +125,6 @@ public class SchemeResponse {
 
     public void setTempRange(String tempRange) {
         this.tempRange = tempRange;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public String getRemark() {
@@ -252,5 +213,21 @@ public class SchemeResponse {
 
     public void setIsDefault(Integer isDefault) {
         this.isDefault = isDefault;
+    }
+
+    public BigDecimal getAlarmHighTemp() {
+        return alarmHighTemp;
+    }
+
+    public void setAlarmHighTemp(BigDecimal alarmHighTemp) {
+        this.alarmHighTemp = alarmHighTemp;
+    }
+
+    public BigDecimal getAlarmLowTemp() {
+        return alarmLowTemp;
+    }
+
+    public void setAlarmLowTemp(BigDecimal alarmLowTemp) {
+        this.alarmLowTemp = alarmLowTemp;
     }
 }

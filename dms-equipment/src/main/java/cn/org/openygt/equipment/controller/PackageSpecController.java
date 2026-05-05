@@ -8,6 +8,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 /**
  * 包装规格管理接口。
  */
@@ -32,12 +34,12 @@ public class PackageSpecController {
     }
 
     @PostMapping
-    public ApiResponse<PackageSpec> create(@RequestBody PackageSpec packageSpec) {
+    public ApiResponse<PackageSpec> create(@RequestBody @Valid PackageSpec packageSpec) {
         return ApiResponse.success(packageSpecService.create(packageSpec));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<PackageSpec> update(@PathVariable Long id, @RequestBody PackageSpec packageSpec) {
+    public ApiResponse<PackageSpec> update(@PathVariable Long id, @RequestBody @Valid PackageSpec packageSpec) {
         return ApiResponse.success(packageSpecService.update(id, packageSpec));
     }
 

@@ -7,6 +7,8 @@ import cn.org.openygt.equipment.service.AlarmConfigService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+
 import java.util.List;
 
 @RestController
@@ -22,12 +24,12 @@ public class AlarmConfigController {
     }
 
     @PostMapping
-    public ApiResponse<AlarmConfig> createConfig(@RequestBody AlarmConfig config) {
+    public ApiResponse<AlarmConfig> createConfig(@RequestBody @Valid AlarmConfig config) {
         return ApiResponse.success(alarmConfigService.createConfig(config));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<AlarmConfig> updateConfig(@PathVariable Long id, @RequestBody AlarmConfig config) {
+    public ApiResponse<AlarmConfig> updateConfig(@PathVariable Long id, @RequestBody @Valid AlarmConfig config) {
         return ApiResponse.success(alarmConfigService.updateConfig(id, config));
     }
 
