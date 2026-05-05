@@ -69,6 +69,18 @@ public class TaskController {
         return ApiResponse.success(taskService.resumeTask(id, resolveOperatorId(request != null ? request.getOperatorId() : null, userId)));
     }
 
+    @PostMapping("/{id}/assign-operator")
+    public ApiResponse<Task> assignOperator(@PathVariable Long id,
+                                            @RequestBody AssignOperatorRequest request,
+                                            @RequestAttribute(value = "userId", required = false) Long userId) {
+        if (request == null || request.getOperatorId() == null || request.getOperatorId().trim().isEmpty()) {
+            throw new IllegalArgumentException("operatorId 不能为空");
+        }
+        String acting = resolveOperatorId(null, userId);
+        return ApiResponse.success(taskService.assignOperator(
+                id, request.getOperatorId().trim(), request.getOperatorName(), acting));
+    }
+
     private String resolveOperatorId(String operatorId, Long userId) {
         if (operatorId != null && !operatorId.trim().isEmpty()) {
             return operatorId;
@@ -108,5 +120,13 @@ public class TaskController {
     public static class DecoctStartRequest {
         private String deviceCode;
         private String operatorId;
+    }
+
+    @lombok.Data
+    public static class AssignOperatorRequest {
+        /** 新操作人 ID（通常与系统用户 id 一致） */
+        private String operatorId;
+        /** 可选，展示名 */
+        private String operatorName;
     }
 }

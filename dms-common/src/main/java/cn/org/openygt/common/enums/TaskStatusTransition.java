@@ -46,7 +46,7 @@ public class TaskStatusTransition {
     private static final Set<String> RUNNING_STATES = Collections.unmodifiableSet(
         new HashSet<>(Arrays.asList(
             "待泡药", "泡药中", "待煎药", "煎药中", "待出液", "出液中",
-            "待包装", "包装中", "待质检", "已暂存", "待交接"
+            "待包装", "包装中", "待贴标", "待质检", "已暂存", "待交接"
         ))
     );
 
