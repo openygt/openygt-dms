@@ -5,6 +5,9 @@
     <el-card class="search-card" shadow="never">
       <div class="toolbar">
         <div class="toolbar-left">
+          <el-button type="primary" @click="openAutoDialog">
+            <el-icon><TrendCharts /></el-icon> 自动排程
+          </el-button>
           <el-button type="success" @click="openManualDialog">
             <el-icon><Edit /></el-icon> 手动分配
           </el-button>
@@ -126,6 +129,28 @@
       </el-table>
     </el-card>
 
+    <el-dialog v-model="autoDialogVisible" title="自动排程" width="520px">
+      <el-form :model="autoForm" label-width="100px">
+        <el-form-item label="任务" required>
+          <el-select v-model="autoForm.taskId" placeholder="选择待分配任务" style="width: 100%">
+            <el-option v-for="task in availableTasks" :key="task.id" :label="task.name" :value="task.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="分配策略" required>
+          <el-select v-model="autoForm.strategy" placeholder="选择分配策略" style="width: 100%">
+            <el-option label="负载均衡" value="LOAD_BALANCE" />
+            <el-option label="技能匹配" value="SKILL" />
+            <el-option label="紧急优先" value="URGENCY" />
+            <el-option label="相似处方" value="SIMILARITY" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="autoDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleAutoAssign">确认排程</el-button>
+      </template>
+    </el-dialog>
+
     <el-dialog v-model="manualDialogVisible" title="手动分配任务" width="520px">
       <el-form :model="manualForm" label-width="100px">
         <el-form-item label="任务" required>
@@ -183,10 +208,10 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Edit } from '@element-plus/icons-vue'
+import { Edit, TrendCharts } from '@element-plus/icons-vue'
 import request from '@/api/request'
 import { getDeviceList } from '@/api/equipment'
-import { getDeviceLoad, getEmployeeLoad, getSchedule, getOccupiedIds, manualAssign, reassign } from '@/api/newModules'
+import { getDeviceLoad, getEmployeeLoad, getSchedule, getOccupiedIds, autoAssign, manualAssign, reassign } from '@/api/newModules'
 
 interface AssignmentView {
   id: number
@@ -236,6 +261,7 @@ const availableTasks = computed(() =>
 
 const manualDialogVisible = ref(false)
 const reassignDialogVisible = ref(false)
+const autoDialogVisible = ref(false)
 const currentAssignment = ref<AssignmentView | null>(null)
 
 const manualForm = reactive({
@@ -249,6 +275,11 @@ const reassignForm = reactive({
   newEmployeeId: null as number | null,
   newDeviceId: null as number | null,
   reason: ''
+})
+
+const autoForm = reactive({
+  taskId: null as number | null,
+  strategy: 'LOAD_BALANCE'
 })
 
 const loadColor = [
@@ -444,6 +475,29 @@ async function fetchAssignments() {
 
 async function reloadAll() {
   await Promise.all([fetchLoadData(), fetchAssignments(), loadTaskOptions()])
+}
+
+async function openAutoDialog() {
+  try {
+    const occRes: any = await getOccupiedIds(selectedDate.value)
+    occupiedIds.value = occRes.data || { taskIds: [], employeeIds: [], deviceIds: [] }
+  } catch {
+    occupiedIds.value = { taskIds: [], employeeIds: [], deviceIds: [] }
+  }
+  autoForm.taskId = null
+  autoForm.strategy = 'LOAD_BALANCE'
+  autoDialogVisible.value = true
+}
+
+async function handleAutoAssign() {
+  if (!autoForm.taskId) {
+    ElMessage.warning('请选择任务')
+    return
+  }
+  await autoAssign({ taskId: autoForm.taskId, strategy: autoForm.strategy })
+  ElMessage.success('自动排程成功')
+  autoDialogVisible.value = false
+  await reloadAll()
 }
 
 async function openManualDialog() {

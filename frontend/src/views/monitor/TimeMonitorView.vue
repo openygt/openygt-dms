@@ -9,6 +9,33 @@
       <el-col :span="6"><el-card class="stat-card stat-resolved" shadow="hover"><div class="stat-value">{{ stat.resolved }}</div><div class="stat-label">已处理</div></el-card></el-col>
     </el-row>
 
+    <!-- 监控明细 -->
+    <el-card class="table-card" shadow="never">
+      <template #header>
+        <div class="table-header">
+          <span>监控明细</span>
+        </div>
+      </template>
+      <el-table :data="monitorItems" stripe>
+        <el-table-column prop="taskId" label="任务ID" width="100" />
+        <el-table-column label="阶段" width="100">
+          <template #default="{ row }">{{ stageLabel(row.stage) }}</template>
+        </el-table-column>
+        <el-table-column label="计划时间" min-width="240">
+          <template #default="{ row }">
+            {{ formatDateTime(row.plannedStart) }} ~ {{ formatDateTime(row.plannedEnd) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="remainingSeconds" label="剩余(秒)" width="100" />
+        <el-table-column label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="monitorStatusTag(row.status)">{{ monitorStatusLabel(row.status) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="warningCount" label="预警次数" width="100" />
+      </el-table>
+    </el-card>
+
     <el-card class="table-card" shadow="never">
       <template #header>
         <div class="table-header">
@@ -99,6 +126,7 @@ import { createTimeRule, getActiveAlerts, getAlertStatistics, getTimeMonitorDash
 const loading = ref(false)
 const tableData = ref<any[]>([])
 const ruleList = ref<any[]>([])
+const monitorItems = ref<any[]>([])
 const stat = reactive({ normal: 0, warning: 0, timeout: 0, resolved: 0 })
 const showRuleDialog = ref(false)
 
@@ -127,9 +155,25 @@ function stageLabel(stage?: string) {
     SOAK: '泡药',
     FIRST_DECOCTION: '头煎',
     SECOND_DECOCTION: '二煎',
-    PACKING: '包装'
+    PACKING: '包装',
+    DECOCT: '煎药'
   }
   return map[stage || ''] || stage || '-'
+}
+
+function monitorStatusLabel(status?: number) {
+  if (status == null) return '未知'
+  if (status === 0) return '正常'
+  if (status === 1) return '预警'
+  if (status === 2) return '运行中'
+  return '超时'
+}
+
+function monitorStatusTag(status?: number) {
+  if (status == null) return 'info'
+  if (status === 0) return 'success'
+  if (status === 1) return 'warning'
+  return 'danger'
 }
 
 function openRuleDialog(rule?: any) {
@@ -159,6 +203,7 @@ async function loadData() {
     ])
 
     const dashboard = dashboardRes.data || {}
+    monitorItems.value = dashboard.items || []
     const alerts = alertsRes.data?.records || []
     const statsData = statsRes.data || {}
     ruleList.value = (rulesRes.data || []).map((rule: any) => ({
@@ -217,7 +262,10 @@ async function handleSaveRule() {
   await loadData()
 }
 
-onMounted(loadData)
+onMounted(() => {
+  loadData()
+  setInterval(() => loadData(), 30000)
+})
 </script>
 
 <style scoped lang="scss">
