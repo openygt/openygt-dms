@@ -21,4 +21,7 @@ public interface EqDeviceStatusMapper extends BaseMapper<EqDeviceStatus> {
 
     @Select("SELECT * FROM eq_device_status WHERE snapshot_time >= #{startTime} AND snapshot_time <= #{endTime} ORDER BY device_code, snapshot_time ASC")
     List<EqDeviceStatus> findAllByTimeRange(@Param("startTime") String startTime, @Param("endTime") String endTime);
+
+    @Select("SELECT * FROM eq_device_status WHERE device_code = #{deviceCode} AND snapshot_time < #{beforeTime} ORDER BY snapshot_time DESC LIMIT 1")
+    EqDeviceStatus findLatestBeforeTime(@Param("deviceCode") String deviceCode, @Param("beforeTime") String beforeTime);
 }
