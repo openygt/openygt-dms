@@ -3,10 +3,10 @@
     <div class="page-header-title">时效监控：<span class="page-header-sub">各设备倒计时、超时预警、时效达成率</span></div>
 
     <el-row :gutter="16" class="stat-row">
-      <el-col :span="6"><el-card class="stat-card stat-normal" shadow="hover"><div class="stat-value">{{ stat.normal }}</div><div class="stat-label">正常</div></el-card></el-col>
-      <el-col :span="6"><el-card class="stat-card stat-warning" shadow="hover"><div class="stat-value">{{ stat.warning }}</div><div class="stat-label">预警</div></el-card></el-col>
-      <el-col :span="6"><el-card class="stat-card stat-timeout" shadow="hover"><div class="stat-value">{{ stat.timeout }}</div><div class="stat-label">超时</div></el-card></el-col>
-      <el-col :span="6"><el-card class="stat-card stat-resolved" shadow="hover"><div class="stat-value">{{ stat.resolved }}</div><div class="stat-label">已处理</div></el-card></el-col>
+      <el-col :span="6"><el-card class="stat-card stat-normal" shadow="hover"><div class="stat-value">{{ stat.normal }}</div><div class="stat-label">正常任务</div></el-card></el-col>
+      <el-col :span="6"><el-card class="stat-card stat-warning" shadow="hover"><div class="stat-value">{{ stat.warning }}</div><div class="stat-label">预警任务</div></el-card></el-col>
+      <el-col :span="6"><el-card class="stat-card stat-timeout" shadow="hover"><div class="stat-value">{{ stat.timeout }}</div><div class="stat-label">超时任务</div></el-card></el-col>
+      <el-col :span="6"><el-card class="stat-card stat-resolved" shadow="hover"><div class="stat-value">{{ stat.resolved }}</div><div class="stat-label">已处理预警</div></el-card></el-col>
     </el-row>
 
     <!-- 监控明细 -->
@@ -21,7 +21,7 @@
         <el-table-column label="阶段" width="100">
           <template #default="{ row }">{{ stageLabel(row.stage) }}</template>
         </el-table-column>
-        <el-table-column label="计划时间" min-width="240">
+        <el-table-column label="执行时间" min-width="240">
           <template #default="{ row }">
             {{ formatDateTime(row.plannedStart) }} ~ {{ formatDateTime(row.plannedEnd) }}
           </template>
@@ -58,10 +58,9 @@
             <el-tag :type="row.statusTag">{{ row.statusLabel }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="100" fixed="right">
           <template #default="{ row }">
             <el-button v-if="!row.resolved" link type="primary" @click="handleResolve(row)">处理</el-button>
-            <el-button link type="primary" @click="openRuleDialog(row.rule)">编辑规则</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -71,8 +70,8 @@
         <el-table :data="ruleList" size="small" border>
           <el-table-column prop="ruleCode" label="规则编码" width="140" />
           <el-table-column prop="ruleName" label="规则名称" min-width="160" />
-          <el-table-column prop="stage" label="阶段" width="160" />
-          <el-table-column prop="prescriptionType" label="处方类型" width="120" />
+          <el-table-column prop="stageLabel" label="阶段" width="160" />
+          <el-table-column prop="prescriptionTypeLabel" label="处方类型" width="120" />
           <el-table-column prop="standardDuration" label="标准时长" width="110" />
           <el-table-column prop="warningThreshold" label="预警阈值" width="110" />
           <el-table-column prop="alertThreshold" label="超时阈值" width="110" />
@@ -91,24 +90,24 @@
         <el-form-item label="规则名称"><el-input v-model="ruleForm.ruleName" placeholder="请输入规则名称" /></el-form-item>
         <el-form-item label="处方类型">
           <el-select v-model="ruleForm.prescriptionType" style="width: 100%">
-            <el-option label="普通" value="NORMAL" />
-            <el-option label="急诊" value="EMERGENCY" />
-            <el-option label="滋补" value="TONIC" />
+            <el-option v-for="item in prescriptionTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="适用阶段">
           <el-select v-model="ruleForm.stage" style="width: 100%">
-            <el-option label="泡药" value="SOAK" />
-            <el-option label="头煎" value="FIRST_DECOCTION" />
-            <el-option label="二煎" value="SECOND_DECOCTION" />
-            <el-option label="包装" value="PACKING" />
+            <el-option v-for="item in stageOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item label="标准时长(分钟)"><el-input-number v-model="ruleForm.standardDuration" :min="1" style="width: 100%" /></el-form-item>
         <el-form-item label="预警阈值(分钟)"><el-input-number v-model="ruleForm.warningThreshold" :min="0" style="width: 100%" /></el-form-item>
         <el-form-item label="超时阈值(分钟)"><el-input-number v-model="ruleForm.alertThreshold" :min="0" style="width: 100%" /></el-form-item>
         <el-form-item label="严重阈值(分钟)"><el-input-number v-model="ruleForm.criticalThreshold" :min="0" style="width: 100%" /></el-form-item>
-        <el-form-item label="默认规则"><el-switch v-model="ruleForm.isDefault" :active-value="1" :inactive-value="0" /></el-form-item>
+        <el-form-item label="默认规则">
+          <div class="default-rule-row">
+            <el-switch v-model="ruleForm.isDefault" :active-value="1" :inactive-value="0" />
+            <span class="default-rule-tip">同一处方类型 + 同一阶段下，仅允许一条默认规则，未命中专属规则时兜底使用。</span>
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showRuleDialog = false">取消</el-button>
@@ -129,6 +128,20 @@ const ruleList = ref<any[]>([])
 const monitorItems = ref<any[]>([])
 const stat = reactive({ normal: 0, warning: 0, timeout: 0, resolved: 0 })
 const showRuleDialog = ref(false)
+
+const prescriptionTypeOptions = [
+  { label: '普通', value: 'NORMAL' },
+  { label: '普通急诊', value: 'EMERGENCY' },
+  { label: '危重急诊', value: 'CRITICAL_EMERGENCY' }
+]
+
+const stageOptions = [
+  { label: '泡药', value: 'SOAK' },
+  { label: '一煎', value: 'FIRST_DECOCTION' },
+  { label: '二煎', value: 'SECOND_DECOCTION' },
+  { label: '煎药', value: 'DECOCT' },
+  { label: '包装', value: 'WRAP' }
+]
 
 const ruleForm = reactive({
   id: null as number | null,
@@ -153,27 +166,40 @@ function formatDateTime(value?: string) {
 function stageLabel(stage?: string) {
   const map: Record<string, string> = {
     SOAK: '泡药',
-    FIRST_DECOCTION: '头煎',
+    FIRST_DECOCTION: '一煎',
     SECOND_DECOCTION: '二煎',
     PACKING: '包装',
+    WRAP: '包装',
     DECOCT: '煎药'
   }
   return map[stage || ''] || stage || '-'
 }
 
+function prescriptionTypeLabel(type?: string) {
+  const map: Record<string, string> = {
+    NORMAL: '普通',
+    EMERGENCY: '普通急诊',
+    CRITICAL_EMERGENCY: '危重急诊'
+  }
+  return map[type || ''] || type || '-'
+}
+
 function monitorStatusLabel(status?: number) {
   if (status == null) return '未知'
-  if (status === 0) return '正常'
-  if (status === 1) return '预警'
+  if (status === 1) return '计划中'
   if (status === 2) return '运行中'
-  return '超时'
+  if (status === 3) return '已超时'
+  if (status === 4) return '已完成'
+  return `状态${status}`
 }
 
 function monitorStatusTag(status?: number) {
   if (status == null) return 'info'
-  if (status === 0) return 'success'
-  if (status === 1) return 'warning'
-  return 'danger'
+  if (status === 1) return 'info'
+  if (status === 2) return 'success'
+  if (status === 3) return 'danger'
+  if (status === 4) return ''
+  return 'info'
 }
 
 function openRuleDialog(rule?: any) {
@@ -208,20 +234,20 @@ async function loadData() {
     const statsData = statsRes.data || {}
     ruleList.value = (rulesRes.data || []).map((rule: any) => ({
       ...rule,
-      stage: stageLabel(rule.stage)
+      stageLabel: stageLabel(rule.stage),
+      prescriptionTypeLabel: prescriptionTypeLabel(rule.prescriptionType)
     }))
 
     tableData.value = alerts.map((item: any) => ({
       id: item.id,
       taskId: item.taskId || '-',
-      stageName: item.alertType || '-',
-      alertType: item.alertType || '-',
+      stageName: stageLabel(item.stage),
+      alertType: alertTypeLabel(item.alertType),
       alertContent: item.alertContent || '-',
       createdAt: formatDateTime(item.createdAt),
       resolved: Number(item.isResolved || 0) === 1,
       statusLabel: Number(item.isResolved || 0) === 1 ? '已处理' : '待处理',
-      statusTag: Number(item.isResolved || 0) === 1 ? 'success' : 'warning',
-      rule: null
+      statusTag: Number(item.isResolved || 0) === 1 ? 'success' : 'warning'
     }))
 
     stat.normal = dashboard.onTimeTasks || 0
@@ -240,6 +266,19 @@ async function handleResolve(row: any) {
 }
 
 async function handleSaveRule() {
+  if (!ruleForm.ruleName.trim()) {
+    ElMessage.warning('请输入规则名称')
+    return
+  }
+  if (ruleForm.alertThreshold < ruleForm.warningThreshold) {
+    ElMessage.warning('超时阈值不能小于预警阈值')
+    return
+  }
+  if (ruleForm.criticalThreshold < ruleForm.alertThreshold) {
+    ElMessage.warning('严重阈值不能小于超时阈值')
+    return
+  }
+
   const payload = {
     ruleCode: ruleForm.ruleCode || `${ruleForm.prescriptionType}_${ruleForm.stage}`,
     ruleName: ruleForm.ruleName,
@@ -260,6 +299,14 @@ async function handleSaveRule() {
   ElMessage.success('规则保存成功')
   showRuleDialog.value = false
   await loadData()
+}
+
+function alertTypeLabel(type?: string) {
+  const map: Record<string, string> = {
+    TIMEOUT: '超时',
+    APPROACHING: '即将超时'
+  }
+  return map[type || ''] || type || '-'
 }
 
 onMounted(() => {
@@ -283,4 +330,6 @@ onMounted(() => {
 .table-actions { display: flex; gap: 12px; }
 .rule-list { margin-top: 16px; }
 .rule-title { margin-bottom: 8px; font-weight: 600; }
+.default-rule-row { display: flex; align-items: center; gap: 12px; }
+.default-rule-tip { color: var(--el-text-color-secondary); line-height: 1.4; }
 </style>

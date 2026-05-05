@@ -168,6 +168,9 @@ public class SysUserServiceImpl implements SysUserService {
             return null;
         }
         switch (legacyRole.trim()) {
+            case "管理员":
+            case "系统管理员":
+                return "ROLE_ADMIN";
             case "主任":
                 return "ROLE_DIRECTOR";
             case "班长":

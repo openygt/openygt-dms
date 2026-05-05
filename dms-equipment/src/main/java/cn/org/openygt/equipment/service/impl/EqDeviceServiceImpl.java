@@ -72,11 +72,21 @@ public class EqDeviceServiceImpl implements EqDeviceService {
             wrapper.eq(EqDevice::getDeviceType, deviceType);
         }
         if (status != null && !status.isEmpty()) {
-            wrapper.eq(EqDevice::getStatus, status);
+            // 与 startDecoct 一致，兼容 idle / IDLE / 空闲 / 空状态 等现场数据
+            if ("idle".equalsIgnoreCase(status.trim())) {
+                wrapper.and(w -> w.isNull(EqDevice::getStatus)
+                        .or().eq(EqDevice::getStatus, "")
+                        .or().apply("LOWER(TRIM(status)) = {0}", "idle")
+                        .or().eq(EqDevice::getStatus, "空闲"));
+            } else {
+                wrapper.apply("LOWER(TRIM(status)) = {0}", status.toLowerCase());
+            }
         }
-        // 数据权限：只查看当前操作人负责的设备
+        // 数据权限：本人负责的设备，或未分配操作人的设备（否则空闲煎药机常因 current_operator_id 为空而不可见）
         if (currentOperatorId != null) {
-            wrapper.eq(EqDevice::getCurrentOperatorId, currentOperatorId);
+            wrapper.and(w -> w.eq(EqDevice::getCurrentOperatorId, currentOperatorId)
+                    .or()
+                    .isNull(EqDevice::getCurrentOperatorId));
         }
         wrapper.orderByDesc(EqDevice::getCreatedAt);
         return deviceMapper.selectPage(new Page<>(page, size), wrapper);

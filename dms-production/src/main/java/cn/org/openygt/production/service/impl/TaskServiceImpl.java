@@ -342,7 +342,8 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public IPage<Task> queryTasks(String status, Long deviceId, Long id, Long prescriptionId,
-                                  String operatorId, String prescriptionNumber, String startTime, String endTime, int page, int size) {
+                                  String operatorId, String operatorKeyword, String prescriptionNumber,
+                                  String startTime, String endTime, int page, int size) {
         LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
         if (status != null && !status.isEmpty()) wrapper.eq(Task::getStatus, status);
         if (deviceId != null) {
@@ -360,7 +361,13 @@ public class TaskServiceImpl implements TaskService {
                 wrapper.eq(Task::getId, -1L); // 无匹配返回空
             }
         }
-        if (operatorId != null && !operatorId.isEmpty()) wrapper.eq(Task::getOperatorId, operatorId);
+        if (operatorId != null && !operatorId.isEmpty()) {
+            wrapper.eq(Task::getOperatorId, operatorId);
+        } else if (operatorKeyword != null && !operatorKeyword.trim().isEmpty()) {
+            String k = operatorKeyword.trim();
+            wrapper.and(w -> w.like(Task::getOperatorName, k)
+                    .or().eq(Task::getOperatorId, k));
+        }
         if (startTime != null && !startTime.isEmpty()) wrapper.ge(Task::getCreatedAt, startTime);
         if (endTime != null && !endTime.isEmpty()) wrapper.le(Task::getCreatedAt, endTime);
         wrapper.orderByDesc(Task::getCreatedAt);
