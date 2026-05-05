@@ -27,7 +27,6 @@
             <el-option label="待处理" value="PENDING" />
             <el-option label="处理中" value="PROCESSING" />
             <el-option label="已解决" value="RESOLVED" />
-            <el-option label="已忽略" value="IGNORED" />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -73,7 +72,6 @@
             <el-tag v-if="row.handleStatus === 'PENDING'" type="danger">待处理</el-tag>
             <el-tag v-else-if="row.handleStatus === 'PROCESSING'" type="warning">处理中</el-tag>
             <el-tag v-else-if="row.handleStatus === 'RESOLVED'" type="success">已解决</el-tag>
-            <el-tag v-else-if="row.handleStatus === 'IGNORED'" type="info">已忽略</el-tag>
             <span v-else>{{ row.handleStatus }}</span>
           </template>
         </el-table-column>
@@ -111,9 +109,9 @@
         <el-descriptions-item label="异常编号">{{ detail.exceptionNo }}</el-descriptions-item>
         <el-descriptions-item label="患者姓名">{{ detail.patientName }}</el-descriptions-item>
         <el-descriptions-item label="处方编号">{{ detail.prescriptionNo }}</el-descriptions-item>
-        <el-descriptions-item label="异常类型">{{ detail.exceptionType }}</el-descriptions-item>
-        <el-descriptions-item label="异常等级">{{ detail.exceptionLevel }}</el-descriptions-item>
-        <el-descriptions-item label="处理状态">{{ detail.handleStatus }}</el-descriptions-item>
+        <el-descriptions-item label="异常类型">{{ exceptionTypeText(detail.exceptionType) }}</el-descriptions-item>
+        <el-descriptions-item label="异常等级">{{ exceptionLevelText(detail.exceptionLevel) }}</el-descriptions-item>
+        <el-descriptions-item label="处理状态">{{ handleStatusText(detail.handleStatus) }}</el-descriptions-item>
         <el-descriptions-item label="异常描述">{{ detail.description }}</el-descriptions-item>
         <el-descriptions-item label="处理结果">{{ detail.handleResult || '-' }}</el-descriptions-item>
         <el-descriptions-item label="发生时间">{{ detail.createdAt }}</el-descriptions-item>
@@ -189,11 +187,10 @@ async function loadStats() {
     })
     const data = res.data || {}
     const byType = data.byType || []
-    const byMonth = data.byMonth || []
+    const byStatus = data.byStatus || []
     statTotal.value = byType.reduce((sum: number, item: any) => sum + (item.value || 0), 0)
-    // pending/resolved are approximated from stats if available; fallback to table counts
-    statPending.value = tableData.value.filter((r) => r.handleStatus === 'PENDING').length
-    statResolved.value = tableData.value.filter((r) => r.handleStatus === 'RESOLVED').length
+    statPending.value = byStatus.find((item: any) => item.name === 'PENDING')?.value || 0
+    statResolved.value = byStatus.find((item: any) => item.name === 'RESOLVED')?.value || 0
   } catch (e) {
     statTotal.value = pagination.total
     statPending.value = tableData.value.filter((r) => r.handleStatus === 'PENDING').length
@@ -209,6 +206,21 @@ async function handleRowClick(row: ExceptionRecord) {
   } catch (e) {
     detail.value = null
   }
+}
+
+function exceptionTypeText(type: string) {
+  const map: Record<string, string> = { DEVICE: '设备异常', PROCESS: '工艺异常', MATERIAL: '物料异常', ENVIRONMENT: '环境异常' }
+  return map[type] || type
+}
+
+function exceptionLevelText(level: string) {
+  const map: Record<string, string> = { HIGH: '高', MEDIUM: '中', LOW: '低' }
+  return map[level] || level
+}
+
+function handleStatusText(status: string) {
+  const map: Record<string, string> = { PENDING: '待处理', PROCESSING: '处理中', RESOLVED: '已解决' }
+  return map[status] || status
 }
 
 onMounted(() => {
