@@ -1,6 +1,7 @@
 package cn.org.openygt.common.exception;
 
 import cn.org.openygt.common.dto.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  *
  * <p>统一捕获各类异常，转换为标准 ApiResponse 格式返回。</p>
  */
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -69,7 +71,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<?> handleGeneric(Exception e) {
-        e.printStackTrace();
-        return ApiResponse.error(500, "服务器内部错误: " + e.getClass().getSimpleName());
+        log.error("未处理异常: {} — {}", e.getClass().getName(), e.getMessage(), e);
+        String detail = e.getMessage() != null && !e.getMessage().isEmpty()
+                ? e.getClass().getSimpleName() + ": " + e.getMessage()
+                : e.getClass().getSimpleName();
+        return ApiResponse.error(500, "服务器内部错误: " + detail);
     }
 }

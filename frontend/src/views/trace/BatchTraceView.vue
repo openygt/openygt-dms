@@ -36,12 +36,12 @@
           <el-table-column prop="decoctDeviceCode" label="煎药设备" min-width="120" />
           <el-table-column prop="status" label="状态" min-width="100">
             <template #default="{ row }">
-              <el-tag v-if="row.status === 'COMPLETED'" type="success">已完成</el-tag>
-              <el-tag v-else-if="row.status === 'PROCESSING'" type="warning">进行中</el-tag>
-              <el-tag v-else type="info">{{ row.status }}</el-tag>
+              <el-tag :type="statusTagType(row.status)">{{ statusText(row.status) }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="completeTime" label="完成时间" min-width="160" />
+          <el-table-column prop="completeTime" label="完成时间" min-width="160">
+            <template #default="{ row }">{{ formatTime(row.completeTime) }}</template>
+          </el-table-column>
         </el-table>
         <div class="pagination-wrapper">
           <el-pagination
@@ -72,13 +72,14 @@
               class="trace-item"
               shadow="hover"
             >
-              <div class="trace-title">{{ trace.stepName || trace.nodeName }}</div>
+              <div class="trace-title">{{ trace.prescriptionNo }} — {{ trace.patientName }}</div>
               <div class="trace-info">
-                <span>设备：{{ trace.deviceCode || '-' }}</span>
-                <span>时间：{{ trace.eventTime || trace.createTime || '-' }}</span>
+                <span>状态：{{ statusText(trace.status) }}</span>
+                <span>设备：{{ trace.decoctDeviceCode || '-' }}</span>
               </div>
               <div class="trace-info">
-                <span>操作人：{{ trace.operatorName || '-' }}</span>
+                <span>接方：{{ formatTime(trace.receiveTime) }}</span>
+                <span>完成：{{ formatTime(trace.completeTime) }}</span>
               </div>
             </el-card>
           </div>
@@ -196,6 +197,44 @@ async function fetchBatchNos(queryString: string, cb: (data: any[]) => void) {
   } catch (e) {
     cb([])
   }
+}
+
+function statusTagType(status: string) {
+  switch (status) {
+    case 'COMPLETED': return 'success'
+    case 'RECEIVED': return ''
+    case 'AUDIT_PASS': return ''
+    case 'DISPENSED': return ''
+    case 'REVIEWED': return ''
+    case 'SOAKING': return 'warning'
+    case 'FIRST_DECOCTING': return 'primary'
+    case 'SECOND_DECOCTING': return 'primary'
+    case 'PACKAGING': return 'primary'
+    case 'ABNORMAL': return 'danger'
+    default: return 'info'
+  }
+}
+
+function statusText(status: string) {
+  const map: Record<string, string> = {
+    PENDING: '待处理',
+    RECEIVED: '已接方',
+    AUDIT_PASS: '审方通过',
+    DISPENSED: '调剂完成',
+    REVIEWED: '复核通过',
+    SOAKING: '浸泡中',
+    FIRST_DECOCTING: '一煎中',
+    SECOND_DECOCTING: '二煎中',
+    PACKAGING: '包装中',
+    COMPLETED: '已完成',
+    ABNORMAL: '异常'
+  }
+  return map[status] || status
+}
+
+function formatTime(time: string | null | undefined) {
+  if (!time) return '--'
+  return time.replace('T', ' ').substring(0, 19)
 }
 
 onMounted(() => {

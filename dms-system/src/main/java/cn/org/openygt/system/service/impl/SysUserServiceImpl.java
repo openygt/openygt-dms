@@ -123,11 +123,15 @@ public class SysUserServiceImpl implements SysUserService {
         if (user == null) {
             throw new IllegalArgumentException("用户名或密码错误");
         }
-        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("用户名或密码错误");
-        }
         if (!"ACTIVE".equals(user.getStatus())) {
             throw new IllegalStateException("用户已被禁用");
+        }
+        String storedHash = user.getPassword();
+        if (storedHash == null || storedHash.isEmpty()) {
+            throw new IllegalArgumentException("该账号未设置登录密码，请联系管理员重置");
+        }
+        if (!passwordEncoder.matches(request.getPassword(), storedHash)) {
+            throw new IllegalArgumentException("用户名或密码错误");
         }
         List<String> roles = resolveRoleCodes(user);
         List<String> permissions = resolvePermissionCodes(user, roles);

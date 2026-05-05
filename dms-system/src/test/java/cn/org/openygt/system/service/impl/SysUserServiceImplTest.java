@@ -232,6 +232,7 @@ class SysUserServiceImplTest {
         when(passwordEncoder.matches("wrong", "encoded-pass")).thenReturn(false);
 
         LoginRequest request = new LoginRequest();
+        request.setUsername("u1");
         request.setPassword("wrong");
 
         assertThrows(IllegalArgumentException.class, () -> userService.login(request));
@@ -244,9 +245,9 @@ class SysUserServiceImplTest {
         user.setStatus("INACTIVE");
 
         when(userMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(user);
-        when(passwordEncoder.matches("pw", "encoded")).thenReturn(true);
 
         LoginRequest request = new LoginRequest();
+        request.setUsername("u1");
         request.setPassword("pw");
 
         assertThrows(IllegalStateException.class, () -> userService.login(request));

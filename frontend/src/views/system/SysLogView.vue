@@ -16,11 +16,12 @@
       </el-form>
       <el-table :data="list" v-loading="loading" border>
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="operation" label="操作" />
-        <el-table-column prop="operator" label="操作人" />
-        <el-table-column prop="ip" label="IP" />
-        <el-table-column prop="duration" label="耗时(ms)" width="120" />
-        <el-table-column prop="createdAt" label="时间" />
+        <el-table-column prop="action" label="操作" min-width="160" />
+        <el-table-column prop="module" label="操作对象" min-width="120" />
+        <el-table-column prop="userId" label="操作人" min-width="100" />
+        <el-table-column prop="ipAddress" label="IP" min-width="140" />
+        <el-table-column prop="detail" label="详情" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="createdAt" label="时间" min-width="160" />
       </el-table>
       <el-empty v-if="!loading && list.length === 0" description="暂无日志" />
     </el-card>
@@ -33,10 +34,11 @@ import request from '@/api/request'
 
 interface SysLog {
   id: number
-  operation: string
-  operator: string
-  ip: string
-  duration: number
+  action: string
+  module: string
+  userId: string
+  ipAddress: string
+  detail: string
   createdAt: string
 }
 
