@@ -21,9 +21,7 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="medicineCode" label="编码" width="120" />
         <el-table-column prop="medicineName" label="名称" />
-        <el-table-column prop="aliases" label="别名" />
         <el-table-column prop="hisCode" label="HIS编码" width="120" />
-        <el-table-column prop="nationalCode" label="国标编码" width="120" />
         <el-table-column prop="spec" label="规格" width="100" />
         <el-table-column prop="unit" label="单位" width="80" />
         <el-table-column prop="stockWarning" label="库存预警" width="100" />
@@ -64,22 +62,22 @@
         <el-form-item label="别名">
           <el-input v-model="form.aliases" />
         </el-form-item>
-        <el-form-item label="HIS编码">
+        <el-form-item label="HIS编码" required>
           <el-input v-model="form.hisCode" />
         </el-form-item>
         <el-form-item label="国标编码">
           <el-input v-model="form.nationalCode" />
         </el-form-item>
-        <el-form-item label="规格">
+        <el-form-item label="规格" required>
           <el-input v-model="form.spec" />
         </el-form-item>
-        <el-form-item label="单位">
+        <el-form-item label="单位" required>
           <el-input v-model="form.unit" />
         </el-form-item>
         <el-form-item label="库存预警">
           <el-input v-model.number="form.stockWarning" type="number" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="状态" required>
           <el-radio-group v-model="form.status">
             <el-radio :label="1">启用</el-radio>
             <el-radio :label="0">禁用</el-radio>
@@ -167,7 +165,9 @@ async function handleSave() {
     }
     dialogVisible.value = false
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || e?.message || '保存失败')
+  }
 }
 
 async function handleDelete(row: Medicine) {
@@ -176,7 +176,11 @@ async function handleDelete(row: Medicine) {
     await deleteMedicine(row.id)
     ElMessage.success('删除成功')
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e?.response?.data?.message || e?.message || '删除失败')
+    }
+  }
 }
 
 onMounted(fetchData)
