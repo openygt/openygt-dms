@@ -39,17 +39,9 @@
             <span v-else>{{ row.deliveryType }}</span>
           </template>
         </el-table-column>
+        <el-table-column prop="bagCount" label="袋数" min-width="80" />
         <el-table-column prop="receiverName" label="接收人" min-width="100" />
         <el-table-column prop="receiverPhone" label="联系电话" min-width="120" />
-        <el-table-column prop="bagCount" label="袋数" min-width="80" />
-        <el-table-column prop="status" label="状态" min-width="100">
-          <template #default="{ row }">
-            <el-tag v-if="row.status === 'PENDING'" type="warning">待交付</el-tag>
-            <el-tag v-else-if="row.status === 'DELIVERED'" type="success">已交付</el-tag>
-            <span v-else>{{ row.status }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="deliveredAt" label="交付时间" min-width="160" />
         <el-table-column label="操作" min-width="200" fixed="right">
           <template #default="{ row }">
             <el-button v-if="row.status === 'PENDING'" link type="primary" @click="openConfirmDialog(row)">确认交付</el-button>
@@ -116,11 +108,11 @@
 
     <!-- 确认交付弹窗 -->
     <el-dialog v-model="confirmVisible" title="确认交付" width="400px">
-      <el-form :model="confirmForm" label-width="80px">
+      <el-form ref="confirmFormRef" :model="confirmForm" :rules="confirmRules" label-width="80px">
         <el-form-item label="处方号">
           <span>{{ confirmForm.prescriptionNo }}</span>
         </el-form-item>
-        <el-form-item label="接收人" required>
+        <el-form-item label="接收人" prop="receiverName">
           <el-input v-model="confirmForm.receiverName" placeholder="请输入接收人姓名" />
         </el-form-item>
         <el-form-item label="联系电话">
@@ -141,6 +133,7 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useUserStore } from '@/stores/user'
 import {
   getDeliveryRecordList,
   createDeliveryRecord,
@@ -148,6 +141,8 @@ import {
   deleteDeliveryRecord,
   confirmDelivery
 } from '@/api/delivery'
+
+const userStore = useUserStore()
 
 interface DeliveryRecord {
   id: number
@@ -189,6 +184,7 @@ const rules = {
 }
 
 const confirmVisible = ref(false)
+const confirmFormRef = ref<any>(null)
 const confirmForm = reactive({
   id: 0,
   prescriptionNo: '',
@@ -196,6 +192,9 @@ const confirmForm = reactive({
   receiverPhone: '',
   remark: ''
 })
+const confirmRules = {
+  receiverName: [{ required: true, message: '请输入接收人姓名', trigger: 'blur' }]
+}
 
 async function handleSearch() {
   loading.value = true
@@ -210,8 +209,9 @@ async function handleSearch() {
     const data = res.data || {}
     tableData.value = data.records || []
     pagination.total = data.total || 0
-  } catch (e) {
-    // handled by interceptor
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '查询失败'
+    ElMessage.error(msg)
   } finally {
     loading.value = false
   }
@@ -235,7 +235,10 @@ async function handleSave() {
     }
     dialogVisible.value = false
     handleSearch()
-  } catch (e) {}
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '操作失败'
+    ElMessage.error(msg)
+  }
 }
 
 async function handleDelete(row: DeliveryRecord) {
@@ -244,7 +247,10 @@ async function handleDelete(row: DeliveryRecord) {
     await deleteDeliveryRecord(row.id)
     ElMessage.success('删除成功')
     handleSearch()
-  } catch (e) {}
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '操作失败'
+    if (msg !== '取消') ElMessage.error(msg)
+  }
 }
 
 function openConfirmDialog(row: DeliveryRecord) {
@@ -257,13 +263,11 @@ function openConfirmDialog(row: DeliveryRecord) {
 }
 
 async function handleConfirm() {
-  if (!confirmForm.receiverName) {
-    ElMessage.warning('请输入接收人姓名')
-    return
-  }
+  const valid = await confirmFormRef.value?.validate().catch(() => false)
+  if (!valid) return
   try {
     await confirmDelivery(confirmForm.id, {
-      operatorId: 'admin',
+      operatorId: userStore.userInfo?.username || 'admin',
       receiverName: confirmForm.receiverName,
       receiverPhone: confirmForm.receiverPhone,
       remark: confirmForm.remark
@@ -271,7 +275,10 @@ async function handleConfirm() {
     ElMessage.success('交付确认成功')
     confirmVisible.value = false
     handleSearch()
-  } catch (e) {}
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '确认失败'
+    ElMessage.error(msg)
+  }
 }
 
 handleSearch()
