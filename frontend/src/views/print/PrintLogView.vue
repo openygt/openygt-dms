@@ -6,7 +6,7 @@
         <el-form-item label="打印状态">
           <el-select v-model="searchForm.status" clearable placeholder="全部" style="width: 140px" @change="handleSearch">
             <el-option label="待打印" value="PENDING" />
-            <el-option label="已打印" value="PRINTED" />
+            <el-option label="已打印" value="COMPLETED" />
             <el-option label="失败" value="FAILED" />
           </el-select>
         </el-form-item>
@@ -28,7 +28,7 @@
         <el-table-column prop="status" label="任务状态" min-width="100">
           <template #default="{ row }">
             <el-tag v-if="row.status === 'PENDING'" type="warning">待打印</el-tag>
-            <el-tag v-else-if="row.status === 'PRINTED'" type="success">已打印</el-tag>
+            <el-tag v-else-if="row.status === 'COMPLETED'" type="success">已打印</el-tag>
             <el-tag v-else-if="row.status === 'FAILED'" type="danger">失败</el-tag>
             <span v-else>{{ row.status }}</span>
           </template>
@@ -52,6 +52,7 @@
 
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
+import { ElMessage } from 'element-plus'
 import { getPrintLogList } from '@/api/printLog'
 
 interface PrintLog {
@@ -82,7 +83,7 @@ async function handleSearch() {
       status: searchForm.status || undefined,
       deviceCode: searchForm.deviceCode || undefined
     })
-    tableData.value = res.data.data || []
+    tableData.value = res.data || []
   } catch (e) {
     // handled by interceptor
   } finally {
