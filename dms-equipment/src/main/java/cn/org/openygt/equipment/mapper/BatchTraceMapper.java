@@ -13,7 +13,7 @@ public interface BatchTraceMapper {
     @Select("<script>"
             + "SELECT * FROM decoction_trace WHERE deleted = 0"
             + "<if test='batchNo != null and batchNo !=\"\"'> AND batch_no LIKE CONCAT('%',#{batchNo},'%')</if>"
-            + "<if test='prescriptionNo != null and prescriptionNo !=\"\"'> OR prescription_no LIKE CONCAT('%',#{prescriptionNo},'%')</if>"
+            + "<if test='prescriptionNo != null and prescriptionNo !=\"\"'> AND prescription_no LIKE CONCAT('%',#{prescriptionNo},'%')</if>"
             + " ORDER BY created_at DESC LIMIT #{offset},#{size}"
             + "</script>")
     List<DecoctionTrace> search(@Param("batchNo") String batchNo, @Param("prescriptionNo") String prescriptionNo,
@@ -22,7 +22,7 @@ public interface BatchTraceMapper {
     @Select("<script>"
             + "SELECT COUNT(*) FROM decoction_trace WHERE deleted = 0"
             + "<if test='batchNo != null and batchNo !=\"\"'> AND batch_no LIKE CONCAT('%',#{batchNo},'%')</if>"
-            + "<if test='prescriptionNo != null and prescriptionNo !=\"\"'> OR prescription_no LIKE CONCAT('%',#{prescriptionNo},'%')</if>"
+            + "<if test='prescriptionNo != null and prescriptionNo !=\"\"'> AND prescription_no LIKE CONCAT('%',#{prescriptionNo},'%')</if>"
             + "</script>")
     long searchCount(@Param("batchNo") String batchNo, @Param("prescriptionNo") String prescriptionNo);
 

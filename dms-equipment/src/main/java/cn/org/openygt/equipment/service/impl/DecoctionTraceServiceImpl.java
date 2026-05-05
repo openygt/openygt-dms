@@ -56,16 +56,30 @@ public class DecoctionTraceServiceImpl implements DecoctionTraceService {
             wrapper.eq("status", status);
         }
         if (startTime != null && !startTime.isEmpty()) {
-            wrapper.ge("created_at", startTime);
+            wrapper.ge("created_at", normalizeRangeStart(startTime));
         }
         if (endTime != null && !endTime.isEmpty()) {
-            wrapper.le("created_at", endTime);
+            // 仅传 YYYY-MM-DD 时含结束日当天全天，避免 le(created_at, '2026-06-05') 被解析为 00:00:00 导致当天数据被滤掉
+            wrapper.le("created_at", normalizeRangeEnd(endTime));
         }
         if (deviceCode != null && !deviceCode.isEmpty()) {
             wrapper.eq("decoct_device_code", deviceCode);
         }
-        wrapper.orderByDesc("created_at");
+        // 默认全量分页：按接方时间优先、否则创建时间，倒序
+        wrapper.last("ORDER BY COALESCE(receive_time, created_at) DESC, id DESC");
         return traceMapper.selectPage(new Page<>(page, size), wrapper);
+    }
+
+    /** 日期区间起点：纯日期则当日 00:00:00。 */
+    private static String normalizeRangeStart(String time) {
+        String t = time.trim();
+        return t.length() == 10 ? t + " 00:00:00" : t;
+    }
+
+    /** 日期区间终点：纯日期则当日 23:59:59。 */
+    private static String normalizeRangeEnd(String time) {
+        String t = time.trim();
+        return t.length() == 10 ? t + " 23:59:59" : t;
     }
 
     @Override

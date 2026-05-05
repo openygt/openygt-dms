@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class DecoctionTrace extends BaseEntity {
 
     private String prescriptionNo;
+    private String batchNo;
     private String patientName;
     private String patientPhone;
     private Long taskId;
