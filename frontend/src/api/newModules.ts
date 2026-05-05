@@ -27,6 +27,10 @@ export function getTimeMonitorDashboard() {
   return request.get('/v1/prod/monitor/time-monitor/dashboard')
 }
 
+export function getTimeMonitorList(params?: { category?: string; page?: number; size?: number }) {
+  return request.get('/v1/prod/monitor/time-monitor/list', { params })
+}
+
 export function getTimeMonitor(taskId: number | string) {
   return request.get(`/v1/prod/monitor/time-monitor/${taskId}`)
 }
