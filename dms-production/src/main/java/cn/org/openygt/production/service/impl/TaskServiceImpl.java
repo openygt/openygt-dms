@@ -702,4 +702,38 @@ public class TaskServiceImpl implements TaskService {
         taskMapper.updateById(task);
         return task;
     }
+
+    @Override
+    @Transactional
+    public Task assignOperator(Long taskId, String newOperatorId, String newOperatorName, String actingOperatorId) {
+        if (newOperatorId == null || newOperatorId.trim().isEmpty()) {
+            throw new IllegalArgumentException("操作人不能为空");
+        }
+        Task task = taskMapper.selectByIdForUpdate(taskId);
+        if (task == null) {
+            throw new IllegalArgumentException("任务不存在");
+        }
+        String st = task.getStatus();
+        if ("已完成".equals(st) || "已报废".equals(st)) {
+            throw new IllegalStateException("已完成或已报废任务不能改派操作人");
+        }
+        String oldOp = task.getOperatorId();
+        task.setOperatorId(newOperatorId.trim());
+        if (newOperatorName != null && !newOperatorName.trim().isEmpty()) {
+            task.setOperatorName(newOperatorName.trim());
+        } else {
+            try {
+                List<HrEmployee> users = hrEmployeeMapper.findByIds(
+                        java.util.Collections.singletonList(Long.valueOf(newOperatorId.trim())));
+                if (!users.isEmpty()) {
+                    task.setOperatorName(users.get(0).getRealName());
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        taskMapper.updateById(task);
+        String remark = "改派操作人: " + (oldOp != null ? oldOp : "-") + " → " + newOperatorId.trim();
+        recordHistory(taskId, st, st, actingOperatorId != null ? actingOperatorId : "SYSTEM", remark);
+        return task;
+    }
 }

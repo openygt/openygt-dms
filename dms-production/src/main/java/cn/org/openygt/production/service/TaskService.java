@@ -46,4 +46,7 @@ public interface TaskService {
     // V30 新增：挂起/恢复
     Task suspendTask(Long taskId, String operatorId, String reason, Integer suspendType);
     Task resumeTask(Long taskId, String operatorId);
+
+    /** 煎药作业：改派任务操作人（不推进状态机） */
+    Task assignOperator(Long taskId, String newOperatorId, String newOperatorName, String actingOperatorId);
 }

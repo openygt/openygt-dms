@@ -122,6 +122,8 @@ class TaskStatusTransitionTest {
                 TaskStatusTransition.validateSuspend("煎药中"));
         assertDoesNotThrow(() ->
                 TaskStatusTransition.validateSuspend("已暂存"));
+        assertDoesNotThrow(() ->
+                TaskStatusTransition.validateSuspend("待贴标"));
     }
 
     @Test
