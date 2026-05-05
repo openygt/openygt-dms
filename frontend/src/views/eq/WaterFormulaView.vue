@@ -3,7 +3,7 @@
     <div class="page-header-title">加水公式：<span class="page-header-sub">按方剂类型/付数/药材计算加水量</span></div>
     <div class="page-header">
 
-      <el-button type="primary" @click="showDialog = true">新增公式</el-button>
+      <el-button type="primary" @click="handleAdd">新增公式</el-button>
     </div>
 
     <el-card>
@@ -30,7 +30,7 @@
 
     <!-- 新增/编辑弹窗 -->
     <el-dialog v-model="showDialog" :title="isEdit ? '编辑公式' : '新增公式'" width="600px">
-      <el-form :model="form" label-width="100px">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-form-item label="公式编码">
           <el-input v-model="form.formulaCode" :disabled="isEdit" />
         </el-form-item>
@@ -96,6 +96,14 @@ const form = reactive({
   isDefault: false
 })
 
+const formRef = ref<any>(null)
+const formRules = {
+  formulaCode: [{ required: true, message: '公式编码不能为空', trigger: 'blur' }],
+  formulaName: [{ required: true, message: '公式名称不能为空', trigger: 'blur' }],
+  expression: [{ required: true, message: '表达式不能为空', trigger: 'blur' }],
+  isDefault: [{ required: true, message: '是否默认不能为空', trigger: 'change' }],
+}
+
 const testVars = reactive({ volume: 200, dose: 7 })
 const testResult = ref<any>(null)
 
@@ -114,6 +122,17 @@ async function loadFormulas() {
   } finally {
     loading.value = false
   }
+}
+
+function handleAdd() {
+  isEdit.value = false
+  currentId.value = null
+  form.formulaCode = ''
+  form.formulaName = ''
+  form.expression = ''
+  form.expressionDesc = ''
+  form.isDefault = false
+  showDialog.value = true
 }
 
 function handleEdit(row: any) {
@@ -146,6 +165,8 @@ async function runTest() {
 }
 
 async function handleSave() {
+  if (!formRef.value) return
+  await formRef.value.validate()
   try {
     if (isEdit.value) {
       await updateWaterFormula(currentId.value!, { ...form })
