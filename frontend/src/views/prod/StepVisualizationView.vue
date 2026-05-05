@@ -91,7 +91,15 @@ const stepList = ref<StepItem[]>([
   { code: 'DELIVER', name: '交付', status: 'PENDING' }
 ])
 
-const currentStatus = ref('NORMAL')
+const currentStatus = computed(() => {
+  const hasException = stepList.value.some(s => s.status === 'EXCEPTION')
+  if (hasException) return 'EXCEPTION'
+  const hasProcessing = stepList.value.some(s => s.status === 'PROCESSING')
+  if (hasProcessing) return 'NORMAL'
+  const allCompleted = stepList.value.every(s => s.status === 'COMPLETED')
+  if (allCompleted) return 'COMPLETED'
+  return 'NORMAL'
+})
 const selectedStep = ref<StepItem | null>(null)
 
 const currentStepIndex = computed(() => {

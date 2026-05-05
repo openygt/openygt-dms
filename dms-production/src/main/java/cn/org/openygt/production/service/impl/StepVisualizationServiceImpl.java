@@ -16,10 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,6 +28,7 @@ public class StepVisualizationServiceImpl implements StepVisualizationService {
     private final StepLogMapper stepLogMapper;
     private final WorkRecordMapper workRecordMapper;
 
+    /** 展示步骤定义（前端展示用，顺序固定） */
     private static final Map<String, String> STEP_DEFINITIONS = new LinkedHashMap<>();
     static {
         STEP_DEFINITIONS.put("RECEIVE", "接收");
@@ -42,6 +40,28 @@ public class StepVisualizationServiceImpl implements StepVisualizationService {
         STEP_DEFINITIONS.put("WRAP", "包装");
         STEP_DEFINITIONS.put("QC", "质检");
         STEP_DEFINITIONS.put("DELIVER", "交付");
+    }
+
+    /**
+     * 展示码 → 写库码映射。
+     * 状态机实际写入 StepLog / WorkRecord 的 stepType / action 与展示码不完全一致，
+     * 查询时需先做映射，否则步骤明细和工时记录会系统性为空。
+     */
+    private static final Map<String, String> DISPLAY_TO_LOG_CODE = new HashMap<>();
+    static {
+        DISPLAY_TO_LOG_CODE.put("SOAK", "SOAK");
+        DISPLAY_TO_LOG_CODE.put("FIRST_DECOCTION", "DECOCT");
+        DISPLAY_TO_LOG_CODE.put("SECOND_DECOCTION", "DECOCT");
+        DISPLAY_TO_LOG_CODE.put("POUR", "POUR");
+        DISPLAY_TO_LOG_CODE.put("WRAP", "WRAP");
+        DISPLAY_TO_LOG_CODE.put("QC", "INSPECT");
+        DISPLAY_TO_LOG_CODE.put("DELIVER", "HANDOVER");
+        // RECEIVE / ADJUST 无写库记录，保持虚拟
+    }
+
+    /** 将展示码转换为写库码；无映射时返回自身（兼容直接以写库码查询的场景） */
+    private String toLogCode(String displayCode) {
+        return DISPLAY_TO_LOG_CODE.getOrDefault(displayCode, displayCode);
     }
 
     @Override
@@ -62,7 +82,8 @@ public class StepVisualizationServiceImpl implements StepVisualizationService {
         for (Map.Entry<String, String> entry : STEP_DEFINITIONS.entrySet()) {
             String stepCode = entry.getKey();
             String stepName = entry.getValue();
-            List<StepLog> logs = logMap.getOrDefault(stepCode, java.util.Collections.emptyList());
+            String logCode = toLogCode(stepCode);
+            List<StepLog> logs = logMap.getOrDefault(logCode, java.util.Collections.emptyList());
 
             StepInfoDTO dto = new StepInfoDTO();
             dto.setStepCode(stepCode);
@@ -93,9 +114,11 @@ public class StepVisualizationServiceImpl implements StepVisualizationService {
             throw new IllegalArgumentException("任务不存在");
         }
 
+        String logCode = toLogCode(stepCode);
+
         LambdaQueryWrapper<StepLog> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(StepLog::getTaskId, taskId)
-                .eq(StepLog::getStepType, stepCode)
+                .eq(StepLog::getStepType, logCode)
                 .orderByDesc(StepLog::getStartedAt)
                 .last("LIMIT 1");
         StepLog stepLog = stepLogMapper.selectOne(wrapper);
@@ -130,7 +153,7 @@ public class StepVisualizationServiceImpl implements StepVisualizationService {
 
         LambdaQueryWrapper<WorkRecord> workWrapper = new LambdaQueryWrapper<>();
         workWrapper.eq(WorkRecord::getTaskId, taskId)
-                .eq(WorkRecord::getAction, stepCode)
+                .eq(WorkRecord::getAction, logCode)
                 .orderByDesc(WorkRecord::getCreatedAt);
         List<WorkRecord> workRecords = workRecordMapper.selectList(workWrapper);
         dto.setWorkRecords(workRecords.stream().map(w -> {
