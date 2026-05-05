@@ -27,6 +27,11 @@ public interface TaskService {
 
     Task confirmLabel(Long taskId, String operatorId);
     Task qualityInspect(Long taskId, InspectionResultType result, String operatorId, String remark, String reworkNode);
+
+    /**
+     * 详细质检（含检查项明细）：后端原子接口，统一完成 任务推进 + 台账写入 + 留样创建。
+     */
+    Task qualityInspectWithItems(Long taskId, InspectionResultType result, String operatorId, String remark, String reworkNode, List<cn.org.openygt.common.dto.InspectionItemDTO> items);
     Task handover(Long taskId, Integer bagCount, String handoverType, String handoverUser, String remark, Boolean isFinal);
 
     StepLog pauseStep(Long stepLogId, String reason);
