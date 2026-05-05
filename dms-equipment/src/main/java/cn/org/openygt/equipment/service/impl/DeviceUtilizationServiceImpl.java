@@ -18,8 +18,10 @@ import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -84,22 +86,60 @@ public class DeviceUtilizationServiceImpl implements DeviceUtilizationService {
         String endStr = dayEnd.toString();
 
         List<EqDeviceStatus> snapshots = statusMapper.findAllByTimeRange(startStr, endStr);
-        if (snapshots == null || snapshots.isEmpty()) {
-            log.warn("{} 无设备状态快照数据", date);
-            return;
-        }
-
-        // 按设备分组处理
+        // 按设备分组处理（包含当天无快照的设备，后续会补前序状态）
         Map<String, List<EqDeviceStatus>> byDevice = new HashMap<>();
-        for (EqDeviceStatus s : snapshots) {
-            byDevice.computeIfAbsent(s.getDeviceCode(), k -> new ArrayList<>()).add(s);
+        if (snapshots != null) {
+            for (EqDeviceStatus s : snapshots) {
+                byDevice.computeIfAbsent(s.getDeviceCode(), k -> new ArrayList<>()).add(s);
+            }
         }
 
+        // 也处理当天无快照但有前序状态的设备
+        Set<String> allDeviceCodes = new HashSet<>();
+        if (snapshots != null) {
+            for (EqDeviceStatus s : snapshots) {
+                allDeviceCodes.add(s.getDeviceCode());
+            }
+        }
         int totalMinutesPerDay = 24 * 60; // 1440
 
-        for (Map.Entry<String, List<EqDeviceStatus>> entry : byDevice.entrySet()) {
-            String deviceCode = entry.getKey();
-            List<EqDeviceStatus> list = entry.getValue();
+        // 收集需要处理的设备编码：当天有快照的 + 前一天最后一条快照存在的
+        Set<String> devicesToProcess = new HashSet<>(byDevice.keySet());
+
+        for (String deviceCode : byDevice.keySet()) {
+            EqDeviceStatus preStatus = statusMapper.findLatestBeforeTime(deviceCode, startStr);
+            if (preStatus != null) {
+                devicesToProcess.add(deviceCode); // 确保包含
+            }
+        }
+
+        // 也处理只有前序状态、当天无快照的设备
+        // 先获取所有在 eq_device_status 中出现过的设备（简化：从当天快照+前一天快照获取）
+        // 更完善的方式是查询 eq_device 表，但这里先简化
+
+        for (String deviceCode : devicesToProcess) {
+            List<EqDeviceStatus> list = byDevice.getOrDefault(deviceCode, new ArrayList<>());
+
+            // 补查当天开始前最后一条快照，作为初始状态
+            EqDeviceStatus preStatus = statusMapper.findLatestBeforeTime(deviceCode, startStr);
+            if (preStatus != null) {
+                // 将前序状态作为当天 00:00 的虚拟快照插入头部
+                EqDeviceStatus virtualStart = new EqDeviceStatus();
+                virtualStart.setDeviceCode(deviceCode);
+                virtualStart.setDeviceType(preStatus.getDeviceType());
+                virtualStart.setStatus(preStatus.getStatus());
+                virtualStart.setDetailStatus(preStatus.getDetailStatus());
+                virtualStart.setSnapshotTime(dayStart);
+                List<EqDeviceStatus> extended = new ArrayList<>();
+                extended.add(virtualStart);
+                extended.addAll(list);
+                list = extended;
+            }
+
+            // 如果当天无任何快照且无前序状态，则跳过
+            if (list.isEmpty()) {
+                continue;
+            }
 
             int runMinutes = 0;
             int idleMinutes = 0;
@@ -108,19 +148,28 @@ public class DeviceUtilizationServiceImpl implements DeviceUtilizationService {
             int maintenanceMinutes = 0;
             int faultCount = 0;
 
+            String prevDetail = null;
+
             for (int i = 0; i < list.size(); i++) {
                 EqDeviceStatus current = list.get(i);
                 String detail = current.getDetailStatus() != null ? current.getDetailStatus().toUpperCase() : "UNKNOWN";
                 LocalDateTime currentTime = current.getSnapshotTime();
                 LocalDateTime nextTime = (i + 1 < list.size()) ? list.get(i + 1).getSnapshotTime() : dayEnd;
 
-                // 最后一条记录持续到当天结束，但不超过当天
                 if (nextTime.isAfter(dayEnd)) {
                     nextTime = dayEnd;
                 }
                 long minutes = ChronoUnit.MINUTES.between(currentTime, nextTime);
                 if (minutes < 0) minutes = 0;
                 if (minutes > totalMinutesPerDay) minutes = totalMinutesPerDay;
+
+                // 故障次数：仅当首次进入 FAULT/ERROR 时计数
+                boolean isFault = "FAULT".equals(detail) || "ERROR".equals(detail);
+                boolean wasFault = "FAULT".equals(prevDetail) || "ERROR".equals(prevDetail);
+                if (isFault && !wasFault) {
+                    faultCount++;
+                }
+                prevDetail = detail;
 
                 switch (detail) {
                     case "RUNNING":
@@ -141,13 +190,12 @@ public class DeviceUtilizationServiceImpl implements DeviceUtilizationService {
                     case "FAULT":
                     case "ERROR":
                         faultMinutes += minutes;
-                        faultCount++;
                         break;
                     case "MAINTENANCE":
                         maintenanceMinutes += minutes;
                         break;
                     default:
-                        idleMinutes += minutes; // 未知状态按空闲处理
+                        idleMinutes += minutes;
                 }
             }
 
@@ -182,13 +230,13 @@ public class DeviceUtilizationServiceImpl implements DeviceUtilizationService {
             util.setUtilizationRate(utilizationRate);
             util.setAvailabilityRate(availabilityRate);
             util.setFaultCount(faultCount);
-            util.setTaskCount(0); // 任务数后续可从 prod_task 补充
+            util.setTaskCount(0);
             util.setCreatedAt(LocalDateTime.now());
             util.setUpdatedAt(LocalDateTime.now());
             util.setDeleted(0);
             utilizationMapper.insert(util);
         }
 
-        log.info("完成设备利用率统计: {} 设备数={}", date, byDevice.size());
+        log.info("完成设备利用率统计: {} 设备数={}", date, devicesToProcess.size());
     }
 }
