@@ -22,12 +22,14 @@ public class TaskController {
             @RequestParam(required = false) Long id,
             @RequestParam(required = false) Long prescriptionId,
             @RequestParam(required = false) String operatorId,
+            @RequestParam(required = false) String operatorKeyword,
             @RequestParam(required = false) String prescriptionNumber,
             @RequestParam(required = false) String startTime,
             @RequestParam(required = false) String endTime,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(taskService.queryTasks(status, deviceId, id, prescriptionId, operatorId, prescriptionNumber, startTime, endTime, page, size));
+        return ApiResponse.success(taskService.queryTasks(status, deviceId, id, prescriptionId, operatorId, operatorKeyword,
+                prescriptionNumber, startTime, endTime, page, size));
     }
 
     @PostMapping("/{id}/soak/start")

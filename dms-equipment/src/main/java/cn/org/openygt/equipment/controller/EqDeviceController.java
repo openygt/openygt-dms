@@ -75,12 +75,30 @@ public class EqDeviceController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
             HttpServletRequest request) {
-        // 数据权限：如果只有 eq:device:list:mine 权限，则只查看自己负责的设备
+        // 数据权限：eq:device:list / 管理类角色 / prod:task:manage → 全量；否则按本人+未分配设备缩小（见 Service）
         @SuppressWarnings("unchecked")
         List<String> permissions = (List<String>) request.getAttribute("permissions");
+        @SuppressWarnings("unchecked")
+        List<String> roles = (List<String>) request.getAttribute("roles");
         Long currentUserId = null;
-        if (permissions != null && permissions.contains("eq:device:list:mine") && !permissions.contains("eq:device:list")) {
-            currentUserId = (Long) request.getAttribute("userId");
+        String username = (String) request.getAttribute("username");
+        boolean superUser = username != null && "admin".equalsIgnoreCase(username.trim());
+        boolean fullList = permissions != null && permissions.contains("eq:device:list");
+        boolean taskManage = permissions != null && permissions.contains("prod:task:manage");
+        // 与前端 JWT 解析一致：ROLE_* 可能落在 roles 或 permissions；部分环境仅用户名可判管理员
+        boolean adminLike = roles != null
+                && (roles.contains("ROLE_ADMIN") || roles.contains("ROLE_DIRECTOR") || roles.contains("ROLE_LEADER"));
+        if (!adminLike && permissions != null) {
+            adminLike = permissions.contains("ROLE_ADMIN") || permissions.contains("ROLE_DIRECTOR")
+                    || permissions.contains("ROLE_LEADER");
+        }
+        boolean widen = fullList || adminLike || taskManage || superUser;
+        if (!widen) {
+            boolean minePerm = permissions != null && permissions.contains("eq:device:list:mine");
+            boolean worker = roles != null && roles.contains("ROLE_WORKER");
+            if (minePerm || worker) {
+                currentUserId = (Long) request.getAttribute("userId");
+            }
         }
         return ApiResponse.success(deviceService.list(keyword, deviceType, status, currentUserId, page, size));
     }

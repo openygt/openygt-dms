@@ -1,6 +1,8 @@
 <template>
   <div>
-    <div class="page-header-title">煎药任务：<span class="page-header-sub">分配给我的任务、状态筛选、扫码接收</span></div>
+    <div class="page-header-title">
+      煎药任务：<span class="page-header-sub">{{ taskPageSubtitle }}</span>
+    </div>
     <div style="height: 16px"></div>
     <el-card>
       <template #header>
@@ -27,15 +29,15 @@
         </el-form-item>
         <el-form-item label="操作人">
           <el-input
-            v-model="queryForm.operatorId"
-            placeholder="用户ID"
+            v-model="queryForm.operatorKeyword"
+            placeholder="姓名或用户ID"
             clearable
-            style="width: 120px"
+            style="width: 140px"
             :disabled="onlyMine"
           />
         </el-form-item>
         <el-form-item label="">
-          <el-checkbox v-model="onlyMine">仅我的任务</el-checkbox>
+          <el-checkbox v-model="onlyMine" :disabled="!hasTaskManage">仅我的任务</el-checkbox>
         </el-form-item>
         <el-form-item label="时间范围">
           <el-date-picker
@@ -57,9 +59,9 @@
       <template v-if="viewMode === 'list'">
         <el-table :data="taskList" v-loading="loading" border style="width: 100%">
           <el-table-column prop="id" label="任务号" width="80" />
-          <el-table-column label="处方号" width="150">
+          <el-table-column label="处方号" width="160">
             <template #default="{ row }">
-              {{ row.prescriptionNumber || row.prescriptionId || '-' }}
+              {{ formatPrescriptionNo(row) }}
             </template>
           </el-table-column>
           <el-table-column prop="status" label="状态" width="100">
@@ -67,17 +69,20 @@
               <el-tag :type="statusType(row.status)" effect="dark" disable-transitions>{{ row.status }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="当前步骤" width="110">
-            <template #default="{ row }">
-              {{ formatCurrentStep(row.currentStep) }}
-            </template>
-          </el-table-column>
           <el-table-column label="操作人" width="100">
             <template #default="{ row }">
               {{ row.operatorName || row.operatorId || '-' }}
             </template>
           </el-table-column>
-          <el-table-column label="异常" width="70" align="center">
+          <el-table-column width="78" align="center">
+            <template #header>
+              <el-tooltip
+                content="由质检不通过、报废、设备告警等业务将任务标为异常（is_exception）；详情见异常原因"
+                placement="top"
+              >
+                <span class="col-hint">异常</span>
+              </el-tooltip>
+            </template>
             <template #default="{ row }">
               <el-tag v-if="row.isException" type="danger" size="small">是</el-tag>
               <span v-else style="color: var(--el-text-color-placeholder)">否</span>
@@ -90,8 +95,8 @@
           </el-table-column>
           <el-table-column label="操作" width="360" fixed="right">
             <template #default="{ row }">
-              <el-button v-if="row.status === '待泡药'" size="small" type="primary" @click="startSoak(row)">开始泡药</el-button>
-              <el-button v-if="row.status === '待煎药'" size="small" type="warning" @click="openDecoctDialog(row)">开始煎药</el-button>
+              <el-button v-if="hasTaskManage && row.status === '待泡药'" size="small" type="primary" @click="startSoak(row)">开始泡药</el-button>
+              <el-button v-if="hasTaskManage && row.status === '待煎药'" size="small" type="warning" @click="openDecoctDialog(row)">开始煎药</el-button>
               <el-button size="small" @click="viewDetail(row)">详情</el-button>
               <el-dropdown trigger="click" @command="(c: string) => handleRowCommand(c, row)">
                 <el-button size="small">
@@ -101,10 +106,10 @@
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="trace">流程跟踪</el-dropdown-item>
-                    <el-dropdown-item command="herb">分组投料</el-dropdown-item>
-                    <el-dropdown-item v-if="canSuspend(row)" command="suspend">挂起</el-dropdown-item>
-                    <el-dropdown-item v-if="row.status === '已挂起'" command="resume">恢复</el-dropdown-item>
-                    <el-dropdown-item command="assign">改派操作人</el-dropdown-item>
+                    <el-dropdown-item v-if="hasTaskManage" command="herb">分组投料</el-dropdown-item>
+                    <el-dropdown-item v-if="hasTaskManage && canSuspend(row)" command="suspend">挂起</el-dropdown-item>
+                    <el-dropdown-item v-if="hasTaskManage && row.status === '已挂起'" command="resume">恢复</el-dropdown-item>
+                    <el-dropdown-item v-if="hasTaskManage" command="assign">改派操作人</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
@@ -137,22 +142,21 @@
                   <span class="kanban-card-id">#{{ task.id }}</span>
                   <el-tag size="small" :type="statusType(task.status)">{{ task.status }}</el-tag>
                 </div>
-                <div class="kanban-card-info">处方: {{ task.prescriptionNumber || task.prescriptionId || '-' }}</div>
-                <div class="kanban-card-info">步骤: {{ formatCurrentStep(task.currentStep) }}</div>
+                <div class="kanban-card-info">处方: {{ formatPrescriptionNo(task) }}</div>
                 <div class="kanban-card-info">操作人: {{ task.operatorName || task.operatorId || '-' }}</div>
                 <div class="kanban-card-time">{{ formatDateTime(task.updatedAt) }}</div>
                 <div class="kanban-card-actions">
-                  <el-button v-if="task.status === '待泡药'" size="small" type="primary" @click.stop="startSoak(task)">开始泡药</el-button>
-                  <el-button v-if="task.status === '待煎药'" size="small" type="warning" @click.stop="openDecoctDialog(task)">开始煎药</el-button>
+                  <el-button v-if="hasTaskManage && task.status === '待泡药'" size="small" type="primary" @click.stop="startSoak(task)">开始泡药</el-button>
+                  <el-button v-if="hasTaskManage && task.status === '待煎药'" size="small" type="warning" @click.stop="openDecoctDialog(task)">开始煎药</el-button>
                   <el-dropdown trigger="click" @command="(c: string) => handleRowCommand(c, task)">
                     <el-button size="small" @click.stop>更多</el-button>
                     <template #dropdown>
                       <el-dropdown-menu>
                         <el-dropdown-item command="trace">流程跟踪</el-dropdown-item>
-                        <el-dropdown-item command="herb">分组投料</el-dropdown-item>
-                        <el-dropdown-item v-if="canSuspend(task)" command="suspend">挂起</el-dropdown-item>
-                        <el-dropdown-item v-if="task.status === '已挂起'" command="resume">恢复</el-dropdown-item>
-                        <el-dropdown-item command="assign">改派</el-dropdown-item>
+                        <el-dropdown-item v-if="hasTaskManage" command="herb">分组投料</el-dropdown-item>
+                        <el-dropdown-item v-if="hasTaskManage && canSuspend(task)" command="suspend">挂起</el-dropdown-item>
+                        <el-dropdown-item v-if="hasTaskManage && task.status === '已挂起'" command="resume">恢复</el-dropdown-item>
+                        <el-dropdown-item v-if="hasTaskManage" command="assign">改派</el-dropdown-item>
                       </el-dropdown-menu>
                     </template>
                   </el-dropdown>
@@ -173,8 +177,7 @@
           <el-descriptions-item label="状态" span="1">
             <el-tag :type="statusType(selectedTask.status)" size="small">{{ selectedTask.status }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="当前步骤" span="1">{{ formatCurrentStep(selectedTask.currentStep) }}</el-descriptions-item>
-          <el-descriptions-item label="处方号" span="2">{{ selectedTask.prescriptionNumber || selectedTask.prescriptionId || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="处方号" span="2">{{ formatPrescriptionNo(selectedTask) }}</el-descriptions-item>
           <el-descriptions-item label="操作人" span="1">{{ selectedTask.operatorName || selectedTask.operatorId || '-' }}</el-descriptions-item>
           <el-descriptions-item label="煎药设备" span="1">{{ selectedTask.decoctDeviceId || '-' }}</el-descriptions-item>
           <el-descriptions-item label="包装设备" span="1">{{ selectedTask.packageDeviceId || '-' }}</el-descriptions-item>
@@ -202,19 +205,45 @@
       </template>
       <template #footer>
         <el-button v-if="selectedTask" type="primary" link @click="goStepTrace(selectedTask)">流程跟踪</el-button>
-        <el-button v-if="selectedTask" type="primary" link @click="goHerbGroup(selectedTask)">分组投料</el-button>
+        <el-button v-if="hasTaskManage && selectedTask" type="primary" link @click="goHerbGroup(selectedTask)">分组投料</el-button>
         <el-button @click="detailVisible = false">关闭</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="decoctDialogVisible" title="开始煎药" width="420px">
+    <el-dialog v-model="decoctDialogVisible" title="开始煎药" :width="hasTaskManage ? '520px' : '420px'">
       <el-form label-width="100px">
         <el-form-item label="任务号">
           <span>{{ currentDecoctTask?.id }}</span>
         </el-form-item>
-        <el-form-item label="设备编码" required>
-          <el-select v-model="decoctDeviceCode" filterable clearable placeholder="选择煎药设备" style="width: 100%">
-            <el-option v-for="device in decoctDevices" :key="device.id" :label="device.label" :value="device.code" />
+        <el-form-item v-if="hasTaskManage" label="空闲设备组">
+          <div v-if="decoctIdleGroupTags.length" class="decoct-group-tags">
+            <el-tag v-for="g in decoctIdleGroupTags" :key="g.id" size="small" class="decoct-group-tag">
+              {{ g.label }}
+            </el-tag>
+          </div>
+          <span v-else class="text-muted">暂无状态为 IDLE（或空）的设备组</span>
+        </el-form-item>
+        <el-form-item label="煎药设备" required>
+          <el-select
+            v-model="decoctDeviceCode"
+            filterable
+            clearable
+            :placeholder="decoctDeviceSelectPlaceholder"
+            style="width: 100%"
+          >
+            <template v-if="decoctDeviceSelectGroups">
+              <el-option-group v-for="grp in decoctDeviceSelectGroups" :key="grp.label" :label="grp.label">
+                <el-option
+                  v-for="device in grp.devices"
+                  :key="device.id"
+                  :label="device.label"
+                  :value="device.code"
+                />
+              </el-option-group>
+            </template>
+            <template v-else>
+              <el-option v-for="device in decoctDevices" :key="device.id" :label="device.label" :value="device.code" />
+            </template>
           </el-select>
         </el-form-item>
       </el-form>
@@ -261,13 +290,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 import request from '@/api/request'
 import { useUserStore } from '@/stores/user'
-import { getDeviceList } from '@/api/equipment'
+import { getDeviceGroupsAll, getDeviceList } from '@/api/equipment'
 import { startDecoct } from '@/api/newModules'
 
 interface Task {
@@ -305,6 +334,55 @@ interface Task {
 const router = useRouter()
 const userStore = useUserStore()
 
+/** 管理员/主任/班组长：默认看全部任务；操作工等：默认「仅我的任务」 */
+function usesOnlyMineDefault(): boolean {
+  const roles: string[] = userStore.userInfo?.roles || []
+  const perms: string[] = userStore.permissions || []
+  const fullAccessRoles = ['ROLE_ADMIN', 'ROLE_DIRECTOR', 'ROLE_LEADER']
+  const byRole = roles.some((r) => fullAccessRoles.includes(r))
+  const byPerm = fullAccessRoles.some((r) => perms.includes(r))
+  const adminName = String(userStore.userInfo?.username || '').toLowerCase() === 'admin'
+  return !(byRole || byPerm || adminName)
+}
+
+/** 任务管理权限：管理员/主任/班组长或显式 prod:task:manage（与设备 eq:device:list 无关） */
+const hasTaskManage = computed(() => {
+  const roles: string[] = userStore.userInfo?.roles || []
+  const perms: string[] = userStore.permissions || []
+  const fullAccessRoles = ['ROLE_ADMIN', 'ROLE_DIRECTOR', 'ROLE_LEADER']
+  const byRole = roles.some((r) => fullAccessRoles.includes(r))
+  const byPerm = fullAccessRoles.some((r) => perms.includes(r))
+  const adminName = String(userStore.userInfo?.username || '').toLowerCase() === 'admin'
+  if (byRole || byPerm || adminName) return true
+  return perms.includes('prod:task:manage')
+})
+
+const taskPageSubtitle = computed(() =>
+  hasTaskManage.value
+    ? '状态与处方筛选；有任务管理权限时可查全部任务并操作；可勾选「仅我的任务」只看本人'
+    : 'Web 端仅可查看本人任务、详情与流程跟踪；泡药/煎药等操作请在车间终端或 PDA 执行'
+)
+
+function isDeviceGroupIdleStatus(s: unknown): boolean {
+  if (s == null || String(s).trim() === '') return true
+  return String(s).trim().toUpperCase() === 'IDLE'
+}
+
+function isDeviceRecordIdle(item: any): boolean {
+  const s = item?.status
+  if (s == null || String(s).trim() === '') return false
+  return String(s).trim().toLowerCase() === 'idle'
+}
+
+/** 兜底拉全量时再筛：未维护状态视为空闲；兼容中文「空闲」等现场写法 */
+function isDeviceRecordIdleLoose(item: any): boolean {
+  const raw = item?.status
+  if (raw == null || String(raw).trim() === '') return true
+  const t = String(raw).trim()
+  if (/空闲|待机|待命/i.test(t)) return true
+  return t.toLowerCase() === 'idle'
+}
+
 const taskList = ref<Task[]>([])
 const loading = ref(false)
 const detailVisible = ref(false)
@@ -318,16 +396,25 @@ const assignTargetTask = ref<Task | null>(null)
 const suspendReason = ref('')
 const assignUserId = ref<number | null>(null)
 const decoctDeviceCode = ref('')
-const decoctDevices = ref<any[]>([])
+const decoctDevices = ref<{ id: number; code: string; label: string; groupId?: number; groupName?: string }[]>([])
+const decoctIdleGroupTags = ref<{ id: number; label: string }[]>([])
 const userOptions = ref<{ id: number; name: string }[]>([])
 const viewMode = ref<'list' | 'kanban'>('list')
-const onlyMine = ref(true)
+const onlyMine = ref(usesOnlyMineDefault())
+
+watch(
+  hasTaskManage,
+  (ok) => {
+    if (!ok) onlyMine.value = true
+  },
+  { immediate: true }
+)
 
 const queryForm = ref({
   id: '',
   prescriptionNumber: '',
   status: '',
-  operatorId: '',
+  operatorKeyword: '',
   dateRange: null as [string, string] | null
 })
 
@@ -338,28 +425,6 @@ const SUSPENDABLE_STATUSES = new Set([
   '待泡药', '泡药中', '待煎药', '煎药中', '待出液', '出液中',
   '待包装', '包装中', '待贴标', '待质检', '已暂存', '待交接'
 ])
-
-const STEP_LABEL_ZH: Record<string, string> = {
-  RECEIVE: '处方接收',
-  ADJUST: '调配',
-  DISPENSE: '调剂',
-  SOAK: '泡药',
-  DECOCT: '煎药',
-  DECOCT_FIRST: '头煎',
-  FIRST_DECOCTION: '一煎',
-  DECOCT_SECOND: '二煎',
-  SECOND_DECOCTION: '二煎',
-  POUR: '出液',
-  MERGE: '合并',
-  FILTER: '过滤',
-  WRAP: '包装',
-  PACKAGE: '包装',
-  LABEL: '贴标',
-  QC: '质检',
-  INSPECT: '质检',
-  SHIP: '发货',
-  DELIVER: '交付'
-}
 
 const kanbanStatuses = [
   { status: '待泡药', label: '待泡药' },
@@ -378,11 +443,35 @@ const kanbanStatuses = [
 
 const kanbanColumns = computed(() => kanbanStatuses.map(col => ({ ...col, tasks: taskList.value.filter(t => t.status === col.status) })))
 
-function formatCurrentStep(code: string | undefined | null) {
-  if (code == null || String(code).trim() === '') return '-'
-  const u = String(code).trim()
-  const key = u.toUpperCase()
-  return STEP_LABEL_ZH[key] || STEP_LABEL_ZH[u] || u
+const decoctDeviceSelectPlaceholder = computed(() =>
+  hasTaskManage.value ? '全局空闲煎药设备（按设备组分组）' : '仅显示空闲(IDLE)煎药设备'
+)
+
+/** 任务管理权限：下拉按设备组分组；否则扁平列表 */
+const decoctDeviceSelectGroups = computed(() => {
+  if (!hasTaskManage.value) return null
+  const by = new Map<string, typeof decoctDevices.value>()
+  for (const d of decoctDevices.value) {
+    const k = d.groupName || '未分组'
+    if (!by.has(k)) by.set(k, [])
+    by.get(k)!.push(d)
+  }
+  return [...by.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0], 'zh-CN'))
+    .map(([label, devices]) => ({
+      label,
+      devices: [...devices].sort((x, y) => (x.code || '').localeCompare(y.code || '', 'zh-CN'))
+    }))
+})
+
+/** 避免处方号列显示成与任务号相同的处方ID，造成误解 */
+function formatPrescriptionNo(row: Task) {
+  const num = row.prescriptionNumber?.trim()
+  if (num) return num
+  const pid = row.prescriptionId
+  if (pid == null) return '-'
+  if (Number(pid) === Number(row.id)) return '—'
+  return `内部#${pid}`
 }
 
 function canSuspend(row: Task) {
@@ -407,21 +496,84 @@ function formatDateTime(dt: string) {
 }
 
 function effectiveOperatorId(): string | undefined {
-  if (onlyMine.value) {
+  if (!hasTaskManage.value) {
     const id = userStore.userInfo?.id
     return id != null ? String(id) : undefined
   }
-  const manual = queryForm.value.operatorId?.trim()
-  return manual || undefined
+  if (!onlyMine.value) return undefined
+  const id = userStore.userInfo?.id
+  return id != null ? String(id) : undefined
 }
 
-async function fetchDevices() {
-  const res: any = await getDeviceList({ page: 1, size: 200, deviceType: 1 })
-  decoctDevices.value = (res.data?.records || []).map((item: any) => ({
-    id: item.id,
-    code: item.deviceCode,
-    label: `${item.name || item.deviceCode} (${item.deviceCode})`
-  }))
+/** 开始煎药：只拉取空闲煎药设备；有任务管理权限时拉全量分页并展示设备组 */
+async function fetchDecoctDevicesIdle() {
+  decoctIdleGroupTags.value = []
+  const pageSize = hasTaskManage.value ? 1000 : 200
+  let res: any = await getDeviceList({ page: 1, size: pageSize, deviceType: 1, status: 'IDLE' })
+  let records: any[] = res.data?.records || []
+  // 兜底：首查为空时再拉煎药机全状态，在前端筛出 IDLE（避免库状态写法异常或接口过滤不一致）
+  if (records.length === 0) {
+    res = await getDeviceList({ page: 1, size: pageSize, deviceType: 1 })
+    const all = res.data?.records || []
+    records = all.filter(isDeviceRecordIdleLoose)
+    if (records.length > 0) {
+      ElMessage.info('已在全部煎药机中筛出空闲(IDLE)设备')
+    }
+  }
+  // 仍无数据：可能 device_type 未标成 1，管理端再拉全类型设备中的空闲项
+  if (records.length === 0 && hasTaskManage.value) {
+    res = await getDeviceList({ page: 1, size: pageSize })
+    const all = res.data?.records || []
+    records = all.filter(isDeviceRecordIdleLoose)
+    if (records.length > 0) {
+      ElMessage.warning('未找到 device_type=1 的空闲煎药机，已列出全部类型中的空闲设备，请在设备管理核对类型')
+    }
+  }
+
+  let groupMap: Record<number, string> = {}
+  if (hasTaskManage.value) {
+    try {
+      const gres: any = await getDeviceGroupsAll()
+      const groups: any[] = gres.data || []
+      for (const g of groups) {
+        if (g?.id != null) {
+          groupMap[g.id] = String(g.groupName || g.groupCode || `组#${g.id}`)
+        }
+      }
+      decoctIdleGroupTags.value = groups
+        .filter((g) => isDeviceGroupIdleStatus(g?.status))
+        .map((g) => ({
+          id: g.id,
+          label: `${g.groupName || g.groupCode || `组#${g.id}`}${g.groupCode && g.groupName ? ` (${g.groupCode})` : ''}`
+        }))
+    } catch {
+      decoctIdleGroupTags.value = []
+    }
+  }
+
+  decoctDevices.value = records.map((item: any) => {
+    const gid = item.groupId as number | undefined
+    const gname = gid != null ? groupMap[gid] : undefined
+    const typeTag = item.deviceType != null && item.deviceType !== 1 ? `[类型${item.deviceType}] ` : ''
+    const base = `${typeTag}${item.name || item.deviceCode} (${item.deviceCode})`
+    const label = base
+    return {
+      id: item.id,
+      code: item.deviceCode,
+      label,
+      groupId: gid,
+      groupName: gname
+    }
+  })
+
+  if (hasTaskManage.value) {
+    decoctDevices.value.sort((a, b) => {
+      const ga = a.groupName || '\uFFFF'
+      const gb = b.groupName || '\uFFFF'
+      if (ga !== gb) return ga.localeCompare(gb, 'zh-CN')
+      return (a.code || '').localeCompare(b.code || '', 'zh-CN')
+    })
+  }
 }
 
 async function fetchUserOptions() {
@@ -448,6 +600,9 @@ async function fetchTasks() {
     if (queryForm.value.status) params.status = queryForm.value.status
     const op = effectiveOperatorId()
     if (op) params.operatorId = op
+    else if (queryForm.value.operatorKeyword?.trim()) {
+      params.operatorKeyword = queryForm.value.operatorKeyword.trim()
+    }
     if (queryForm.value.dateRange?.[0]) {
       params.startTime = `${queryForm.value.dateRange[0]} 00:00:00`
       params.endTime = `${queryForm.value.dateRange[1]} 23:59:59`
@@ -466,12 +621,12 @@ function handleQuery() {
 }
 
 function handleReset() {
-  onlyMine.value = true
+  onlyMine.value = hasTaskManage.value ? usesOnlyMineDefault() : true
   queryForm.value = {
     id: '',
     prescriptionNumber: '',
     status: '',
-    operatorId: '',
+    operatorKeyword: '',
     dateRange: null
   }
   pagination.value.page = 1
@@ -504,6 +659,10 @@ function goHerbGroup(row: Task) {
 }
 
 function handleRowCommand(cmd: string, row: Task) {
+  if (!hasTaskManage.value && ['herb', 'suspend', 'resume', 'assign'].includes(cmd)) {
+    ElMessage.warning('无任务管理权限，无法在 Web 端执行该操作')
+    return
+  }
   if (cmd === 'trace') goStepTrace(row)
   else if (cmd === 'herb') goHerbGroup(row)
   else if (cmd === 'suspend') openSuspend(row)
@@ -587,6 +746,10 @@ async function confirmAssign() {
 }
 
 async function startSoak(row: Task) {
+  if (!hasTaskManage.value) {
+    ElMessage.warning('无任务管理权限，无法在 Web 端开始泡药')
+    return
+  }
   const operatorId = String(userStore.userInfo?.id || '')
   try {
     await request.post(`/v1/prod/tasks/${row.id}/soak/start`, { operatorId })
@@ -609,13 +772,27 @@ async function startSoak(row: Task) {
   }
 }
 
-function openDecoctDialog(row: Task) {
+async function openDecoctDialog(row: Task) {
+  if (!hasTaskManage.value) {
+    ElMessage.warning('无任务管理权限，无法在 Web 端开始煎药')
+    return
+  }
   currentDecoctTask.value = row
   decoctDeviceCode.value = ''
+  await fetchDecoctDevicesIdle()
+  if (!decoctDevices.value.length) {
+    ElMessage.warning(
+      '未查到空闲煎药机（需 device_type=1 且状态 IDLE）。请核对设备是否占用、类型是否正确；有任务管理权限时应能看到全局空闲设备。'
+    )
+  }
   decoctDialogVisible.value = true
 }
 
 async function handleStartDecoct() {
+  if (!hasTaskManage.value) {
+    ElMessage.warning('无任务管理权限，无法在 Web 端开始煎药')
+    return
+  }
   if (!currentDecoctTask.value) return
   if (!decoctDeviceCode.value) {
     ElMessage.warning('请选择煎药设备')
@@ -644,13 +821,16 @@ function viewDetail(row: Task) {
 }
 
 onMounted(async () => {
-  await fetchDevices()
   await fetchUserOptions()
   await fetchTasks()
 })
 </script>
 
 <style scoped>
+.decoct-group-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.decoct-group-tag { margin: 0; }
+.text-muted { color: var(--el-text-color-secondary); font-size: 13px; }
+.col-hint { cursor: help; border-bottom: 1px dashed var(--el-text-color-secondary); }
 .query-form { margin-bottom: 16px; }
 .kanban-board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
 .kanban-column {
