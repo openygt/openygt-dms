@@ -87,7 +87,7 @@ export const useUserStore = defineStore('user', () => {
       'inv:storage:view', 'prod:dispatch:view', 'prod:progress:view',
       'trace:rx:view', 'trace:batch:view', 'trace:exc:view', 'sys:log:view',
       'md:scheme:view', 'eq:water:view', 'md:package:view', 'eq:alarm:view',
-      'md:hospital:view', 'md:dept:view', 'md:doctor:view', 'md:herb:view',
+      'md:hospital:view', 'md:dept:view', 'md:doctor:view', 'md:herb:view', 'md:shelf:view',
       'sys:user:view', 'sys:barcode:view',
       'prt:label:view', 'prt:printer:view', 'prt:log:view',
       'sys:user:create', 'sys:user:delete', 'sys:role:assign',
