@@ -81,7 +81,7 @@ export const useUserStore = defineStore('user', () => {
       'eq:device:monitor', 'prod:progress:view'
     ]
     const leaderPerms = [
-      'ops:dashboard:view', 'prod:assignment:view', 'prod:monitor:view',
+      'ops:dashboard:view', 'prod:record:view', 'prod:monitor:view',
       'eq:alarm:view', 'eq:device:monitor', 'ops:capacity:view', 'eq:device:efficiency',
       'prod:task:view', 'prod:trace:view', 'prod:dosing:view', 'prod:voice:view',
       'qt:inspect:view', 'prod:rework:view', 'eq:temp:view', 'qt:yield:view',
