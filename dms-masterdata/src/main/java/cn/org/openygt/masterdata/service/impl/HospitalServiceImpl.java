@@ -21,6 +21,12 @@ public class HospitalServiceImpl implements HospitalService {
     @Override
     @Transactional
     public Hospital create(Hospital hospital) {
+        // 校验编码唯一性
+        LambdaQueryWrapper<Hospital> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Hospital::getCode, hospital.getCode());
+        if (hospitalMapper.selectCount(wrapper) > 0) {
+            throw new IllegalArgumentException("医院编码已存在: " + hospital.getCode());
+        }
         hospitalMapper.insert(hospital);
         return hospital;
     }
@@ -31,6 +37,14 @@ public class HospitalServiceImpl implements HospitalService {
         Hospital existing = hospitalMapper.selectById(id);
         if (existing == null) {
             throw new IllegalArgumentException("医院不存在: " + id);
+        }
+        // 校验编码唯一性（排除自身）
+        if (hospital.getCode() != null && !hospital.getCode().equals(existing.getCode())) {
+            LambdaQueryWrapper<Hospital> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(Hospital::getCode, hospital.getCode()).ne(Hospital::getId, id);
+            if (hospitalMapper.selectCount(wrapper) > 0) {
+                throw new IllegalArgumentException("医院编码已存在: " + hospital.getCode());
+            }
         }
         hospital.setId(id);
         hospitalMapper.updateById(hospital);
@@ -50,7 +64,7 @@ public class HospitalServiceImpl implements HospitalService {
     public IPage<Hospital> list(String keyword, int page, int size) {
         LambdaQueryWrapper<Hospital> wrapper = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
-            wrapper.like(Hospital::getName, keyword);
+            wrapper.and(w -> w.like(Hospital::getName, keyword).or().like(Hospital::getCode, keyword));
         }
         wrapper.orderByDesc(Hospital::getCreatedAt);
         return hospitalMapper.selectPage(new Page<>(page, size), wrapper);
@@ -63,6 +77,8 @@ public class HospitalServiceImpl implements HospitalService {
         if (existing == null) {
             throw new IllegalArgumentException("医院不存在: " + id);
         }
-        hospitalMapper.deleteById(id);
+        // 禁用优先，避免物理删除造成孤儿数据
+        existing.setStatus(0);
+        hospitalMapper.updateById(existing);
     }
 }
