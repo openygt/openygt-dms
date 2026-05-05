@@ -23,7 +23,7 @@
             <div class="step-icon" :class="getStepIconClass(step, index)">
               <el-icon v-if="step.status === 'COMPLETED'" :size="20"><Check /></el-icon>
               <el-icon v-else-if="step.status === 'EXCEPTION'" :size="20"><Close /></el-icon>
-              <el-icon v-else-if="step.status === 'RUNNING'" class="is-loading" :size="20"><Loading /></el-icon>
+              <el-icon v-else-if="step.status === 'PROCESSING'" class="is-loading" :size="20"><Loading /></el-icon>
               <span v-else class="step-number">{{ index + 1 }}</span>
             </div>
           </template>
@@ -40,36 +40,18 @@
       </template>
       <el-descriptions :column="3" border>
         <el-descriptions-item label="步骤编码">{{ selectedStep.code }}</el-descriptions-item>
-        <el-descriptions-item label="计划开始">{{ selectedStep.planStartTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="计划结束">{{ selectedStep.planEndTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="实际开始">{{ selectedStep.actualStartTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="实际结束">{{ selectedStep.actualEndTime || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="负责人">{{ selectedStep.operatorName || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="设备">{{ selectedStep.deviceName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="开始时间">{{ formatDateTime(selectedStep.startTime) }}</el-descriptions-item>
+        <el-descriptions-item label="结束时间">{{ formatDateTime(selectedStep.endTime) }}</el-descriptions-item>
+        <el-descriptions-item label="持续时长">{{ formatDuration(selectedStep.durationMinutes) }}</el-descriptions-item>
+        <el-descriptions-item label="负责人">{{ selectedStep.operatorName || selectedStep.operatorId || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="结果">{{ selectedStep.result || '-' }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag v-if="selectedStep.status === 'COMPLETED'" type="success">已完成</el-tag>
-          <el-tag v-else-if="selectedStep.status === 'RUNNING'" type="primary">进行中</el-tag>
+          <el-tag v-else-if="selectedStep.status === 'PROCESSING'" type="primary">进行中</el-tag>
           <el-tag v-else-if="selectedStep.status === 'EXCEPTION'" type="danger">异常</el-tag>
           <el-tag v-else type="info">未开始</el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="温度">{{ selectedStep.temperature ? selectedStep.temperature + '°C' : '-' }}</el-descriptions-item>
       </el-descriptions>
-
-      <div v-if="tempCurveData.length" class="chart-section">
-        <div class="chart-title">温度曲线</div>
-        <div class="temp-curve">
-          <div
-            v-for="(item, idx) in tempCurveData"
-            :key="idx"
-            class="temp-bar"
-            :style="{ height: item.value + '%', background: getTempColor(item.value) }"
-            :title="`${item.time}: ${item.value}°C`"
-          />
-        </div>
-        <div class="temp-labels">
-          <span v-for="(item, idx) in tempCurveData" :key="idx" class="temp-label">{{ item.time }}</span>
-        </div>
-      </div>
     </el-card>
   </div>
 </template>
@@ -84,38 +66,36 @@ import { getTaskSteps, getStepDetail } from '@/api/newModules'
 interface StepItem {
   code: string
   name: string
-  status: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'EXCEPTION'
-  planStartTime?: string
-  planEndTime?: string
-  actualStartTime?: string
-  actualEndTime?: string
+  status: 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'EXCEPTION'
+  startTime?: string
+  endTime?: string
+  operatorId?: string
   operatorName?: string
-  deviceName?: string
-  temperature?: number
+  durationMinutes?: number
+  result?: string
 }
 
 const route = useRoute()
 const taskId = computed(() => route.query.taskId as string || '')
 
+// 步骤定义以服务端字典为唯一事实来源
 const stepList = ref<StepItem[]>([
-  { code: 'RECEIVE', name: '处方接收', status: 'PENDING' },
-  { code: 'DISPENSE', name: '调剂', status: 'PENDING' },
+  { code: 'RECEIVE', name: '接收', status: 'PENDING' },
+  { code: 'ADJUST', name: '调配', status: 'PENDING' },
   { code: 'SOAK', name: '泡药', status: 'PENDING' },
-  { code: 'DECOCT_FIRST', name: '头煎', status: 'PENDING' },
-  { code: 'DECOCT_SECOND', name: '二煎', status: 'PENDING' },
-  { code: 'MERGE', name: '合并', status: 'PENDING' },
-  { code: 'FILTER', name: '过滤', status: 'PENDING' },
-  { code: 'PACKAGE', name: '包装', status: 'PENDING' },
+  { code: 'FIRST_DECOCTION', name: '一煎', status: 'PENDING' },
+  { code: 'SECOND_DECOCTION', name: '二煎', status: 'PENDING' },
+  { code: 'POUR', name: '出液', status: 'PENDING' },
+  { code: 'WRAP', name: '包装', status: 'PENDING' },
   { code: 'QC', name: '质检', status: 'PENDING' },
-  { code: 'SHIP', name: '发货', status: 'PENDING' }
+  { code: 'DELIVER', name: '交付', status: 'PENDING' }
 ])
 
 const currentStatus = ref('NORMAL')
 const selectedStep = ref<StepItem | null>(null)
-const tempCurveData = ref<{ time: string; value: number }[]>([])
 
 const currentStepIndex = computed(() => {
-  const idx = stepList.value.findIndex(s => s.status === 'RUNNING')
+  const idx = stepList.value.findIndex(s => s.status === 'PROCESSING')
   if (idx >= 0) return idx
   const lastCompleted = stepList.value.map((s, i) => s.status === 'COMPLETED' ? i : -1).filter(i => i >= 0)
   return lastCompleted.length ? lastCompleted[lastCompleted.length - 1] + 1 : 0
@@ -124,7 +104,7 @@ const currentStepIndex = computed(() => {
 function getStepStatus(step: StepItem, index: number): string {
   if (step.status === 'EXCEPTION') return 'error'
   if (step.status === 'COMPLETED') return 'success'
-  if (step.status === 'RUNNING') return 'process'
+  if (step.status === 'PROCESSING') return 'process'
   if (index < currentStepIndex.value) return 'success'
   return 'wait'
 }
@@ -133,15 +113,24 @@ function getStepIconClass(step: StepItem, index: number) {
   return {
     'icon-completed': step.status === 'COMPLETED',
     'icon-exception': step.status === 'EXCEPTION',
-    'icon-running': step.status === 'RUNNING',
+    'icon-running': step.status === 'PROCESSING',
     'icon-pending': step.status === 'PENDING' && index >= currentStepIndex.value
   }
 }
 
-function getTempColor(value: number) {
-  if (value >= 100) return '#f56c6c'
-  if (value >= 80) return '#e6a23c'
-  return '#67c23a'
+function formatDateTime(dt: string | undefined) {
+  if (!dt) return '-'
+  const d = new Date(dt)
+  if (isNaN(d.getTime())) return dt
+  return d.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
+}
+
+function formatDuration(minutes: number | undefined) {
+  if (minutes == null || minutes <= 0) return '-'
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (h > 0) return `${h}小时${m}分`
+  return `${m}分`
 }
 
 async function handleStepClick(step: StepItem) {
@@ -149,20 +138,17 @@ async function handleStepClick(step: StepItem) {
   try {
     const res: any = await getStepDetail(taskId.value, step.code)
     const detail = res.data || {}
-    selectedStep.value = { ...step, ...detail }
-    tempCurveData.value = detail.temperatureCurve || [
-      { time: '08:00', value: 25 },
-      { time: '08:15', value: 45 },
-      { time: '08:30', value: 78 },
-      { time: '08:45', value: 95 },
-      { time: '09:00', value: 100 },
-      { time: '09:15', value: 98 },
-      { time: '09:30', value: 85 },
-      { time: '09:45', value: 60 }
-    ]
+    selectedStep.value = {
+      ...step,
+      startTime: detail.startTime,
+      endTime: detail.endTime,
+      operatorId: detail.operatorId,
+      operatorName: detail.operatorName,
+      durationMinutes: detail.durationMinutes,
+      result: detail.result
+    }
   } catch (e) {
     selectedStep.value = step
-    tempCurveData.value = []
   }
 }
 
@@ -170,15 +156,25 @@ async function loadTaskSteps() {
   if (!taskId.value) return
   try {
     const res: any = await getTaskSteps(taskId.value)
-    const data = res.data || {}
-    if (data.steps && data.steps.length) {
-      const map = new Map(data.steps.map((s: StepItem) => [s.code, s]))
-      stepList.value = stepList.value.map(s => ({
-        ...s,
-        ...(map.get(s.code) || {})
-      }))
+    const steps = Array.isArray(res.data) ? res.data : []
+    if (steps.length) {
+      const map = new Map(steps.map((s: any) => [s.stepCode, s]))
+      stepList.value = stepList.value.map(s => {
+        const backend: any = map.get(s.code)
+        if (!backend) return s
+        return {
+          ...s,
+          name: backend.stepName || s.name,
+          status: backend.status || s.status,
+          startTime: backend.startTime,
+          endTime: backend.endTime,
+          operatorId: backend.operatorId,
+          operatorName: backend.operatorName,
+          durationMinutes: backend.durationMinutes,
+          result: backend.result
+        }
+      })
     }
-    currentStatus.value = data.status || 'NORMAL'
   } catch (e) {
     ElMessage.error('加载步骤数据失败')
   }
@@ -250,45 +246,6 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   font-weight: 500;
-}
-
-.chart-section {
-  margin-top: 16px;
-}
-
-.chart-title {
-  font-weight: 500;
-  margin-bottom: 12px;
-}
-
-.temp-curve {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  height: 160px;
-  padding: 12px;
-  background: var(--ygt-bg-surface);
-  border-radius: var(--ygt-radius-md);
-}
-
-.temp-bar {
-  flex: 1;
-  min-width: 20px;
-  border-radius: 4px 4px 0 0;
-  transition: height 0.6s ease;
-}
-
-.temp-labels {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-}
-
-.temp-label {
-  flex: 1;
-  text-align: center;
-  font-size: 12px;
-  color: var(--ygt-text-secondary);
 }
 
 @keyframes pulse {
