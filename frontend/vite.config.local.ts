@@ -25,12 +25,12 @@ export default defineConfig({
     }
   },
   server: {
-    port: 5171,
+    port: 5172,
     host: '0.0.0.0',
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:9091',
+        target: 'http://127.0.0.1:9092',
         changeOrigin: true,
         rewrite: (path) => path
       }

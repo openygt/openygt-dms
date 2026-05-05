@@ -223,6 +223,7 @@
           </div>
           <span v-else class="text-muted">暂无状态为 IDLE（或空）的设备组</span>
         </el-form-item>
+
         <el-form-item label="煎药设备" required>
           <el-select
             v-model="decoctDeviceCode"
@@ -244,7 +245,13 @@
             <template v-else>
               <el-option v-for="device in decoctDevices" :key="device.id" :label="device.label" :value="device.code" />
             </template>
+
           </el-select>
+        </el-form-item>
+        <el-form-item v-if="hasTaskManage">
+          <div class="text-muted">
+            优先从全局空闲煎药机中选择；若当前无空闲设备但需要联调，可直接输入测试设备编码提交。
+          </div>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -398,6 +405,7 @@ const assignUserId = ref<number | null>(null)
 const decoctDeviceCode = ref('')
 const decoctDevices = ref<{ id: number; code: string; label: string; groupId?: number; groupName?: string }[]>([])
 const decoctIdleGroupTags = ref<{ id: number; label: string }[]>([])
+
 const userOptions = ref<{ id: number; name: string }[]>([])
 const viewMode = ref<'list' | 'kanban'>('list')
 const onlyMine = ref(usesOnlyMineDefault())
@@ -464,6 +472,7 @@ const decoctDeviceSelectGroups = computed(() => {
     }))
 })
 
+
 /** 避免处方号列显示成与任务号相同的处方ID，造成误解 */
 function formatPrescriptionNo(row: Task) {
   const num = row.prescriptionNumber?.trim()
@@ -508,6 +517,7 @@ function effectiveOperatorId(): string | undefined {
 /** 开始煎药：只拉取空闲煎药设备；有任务管理权限时拉全量分页并展示设备组 */
 async function fetchDecoctDevicesIdle() {
   decoctIdleGroupTags.value = []
+
   const pageSize = hasTaskManage.value ? 1000 : 200
   let res: any = await getDeviceList({ page: 1, size: pageSize, deviceType: 1, status: 'IDLE' })
   let records: any[] = res.data?.records || []
@@ -549,6 +559,7 @@ async function fetchDecoctDevicesIdle() {
     } catch {
       decoctIdleGroupTags.value = []
     }
+
   }
 
   decoctDevices.value = records.map((item: any) => {
@@ -556,6 +567,7 @@ async function fetchDecoctDevicesIdle() {
     const gname = gid != null ? groupMap[gid] : undefined
     const typeTag = item.deviceType != null && item.deviceType !== 1 ? `[类型${item.deviceType}] ` : ''
     const base = `${typeTag}${item.name || item.deviceCode} (${item.deviceCode})`
+
     const label = base
     return {
       id: item.id,
@@ -571,6 +583,7 @@ async function fetchDecoctDevicesIdle() {
       const ga = a.groupName || '\uFFFF'
       const gb = b.groupName || '\uFFFF'
       if (ga !== gb) return ga.localeCompare(gb, 'zh-CN')
+
       return (a.code || '').localeCompare(b.code || '', 'zh-CN')
     })
   }
@@ -794,14 +807,15 @@ async function handleStartDecoct() {
     return
   }
   if (!currentDecoctTask.value) return
-  if (!decoctDeviceCode.value) {
+  const deviceCode = decoctDeviceCode.value.trim()
+  if (!deviceCode) {
     ElMessage.warning('请选择煎药设备')
     return
   }
   const operatorId = String(userStore.userInfo?.id || '')
   try {
     await startDecoct(currentDecoctTask.value.id, {
-      deviceCode: decoctDeviceCode.value,
+      deviceCode,
       operatorId: operatorId || undefined
     })
     ElMessage.success('任务已开始煎药')
@@ -829,6 +843,7 @@ onMounted(async () => {
 <style scoped>
 .decoct-group-tags { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .decoct-group-tag { margin: 0; }
+
 .text-muted { color: var(--el-text-color-secondary); font-size: 13px; }
 .col-hint { cursor: help; border-bottom: 1px dashed var(--el-text-color-secondary); }
 .query-form { margin-bottom: 16px; }
