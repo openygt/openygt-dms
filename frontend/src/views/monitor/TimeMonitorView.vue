@@ -3,25 +3,50 @@
     <div class="page-header-title">时效监控：<span class="page-header-sub">各设备倒计时、超时预警、时效达成率</span></div>
 
     <el-row :gutter="16" class="stat-row">
-      <el-col :span="6"><el-card class="stat-card stat-normal" shadow="hover"><div class="stat-value">{{ stat.normal }}</div><div class="stat-label">正常任务</div></el-card></el-col>
-      <el-col :span="6"><el-card class="stat-card stat-warning" shadow="hover"><div class="stat-value">{{ stat.warning }}</div><div class="stat-label">预警任务</div></el-card></el-col>
-      <el-col :span="6"><el-card class="stat-card stat-timeout" shadow="hover"><div class="stat-value">{{ stat.timeout }}</div><div class="stat-label">超时任务</div></el-card></el-col>
-      <el-col :span="6"><el-card class="stat-card stat-resolved" shadow="hover"><div class="stat-value">{{ stat.resolved }}</div><div class="stat-label">已处理预警</div></el-card></el-col>
+      <el-col :span="6">
+        <el-card class="stat-card stat-normal" shadow="hover" :class="{ active: currentCategory === 'normal' }" @click="switchCategory('normal')">
+          <div class="stat-value">{{ stat.normal }}</div>
+          <div class="stat-label">正常任务</div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="stat-card stat-warning" shadow="hover" :class="{ active: currentCategory === 'warning' }" @click="switchCategory('warning')">
+          <div class="stat-value">{{ stat.warning }}</div>
+          <div class="stat-label">预警任务</div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="stat-card stat-timeout" shadow="hover" :class="{ active: currentCategory === 'timeout' }" @click="switchCategory('timeout')">
+          <div class="stat-value">{{ stat.timeout }}</div>
+          <div class="stat-label">超时任务</div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card class="stat-card stat-resolved" shadow="hover" :class="{ active: currentCategory === 'resolved' }" @click="switchCategory('resolved')">
+          <div class="stat-value">{{ stat.resolved }}</div>
+          <div class="stat-label">已处理预警</div>
+        </el-card>
+      </el-col>
     </el-row>
 
     <!-- 监控明细 -->
     <el-card class="table-card" shadow="never">
       <template #header>
         <div class="table-header">
-          <span>监控明细</span>
+          <span>{{ categoryTitle }}</span>
+          <div class="table-actions">
+            <el-button v-if="currentCategory !== 'all'" @click="switchCategory('all')">查看全部</el-button>
+            <el-button type="primary" @click="openRuleDialog()">新增规则</el-button>
+            <el-button @click="loadData">刷新</el-button>
+          </div>
         </div>
       </template>
-      <el-table :data="monitorItems" stripe>
+      <el-table v-loading="loading" :data="monitorItems" stripe>
         <el-table-column prop="taskId" label="任务ID" width="100" />
         <el-table-column label="阶段" width="100">
           <template #default="{ row }">{{ stageLabel(row.stage) }}</template>
         </el-table-column>
-        <el-table-column label="执行时间" min-width="240">
+        <el-table-column label="计划时间" min-width="240">
           <template #default="{ row }">
             {{ formatDateTime(row.plannedStart) }} ~ {{ formatDateTime(row.plannedEnd) }}
           </template>
@@ -34,16 +59,22 @@
         </el-table-column>
         <el-table-column prop="warningCount" label="预警次数" width="100" />
       </el-table>
+      <el-pagination
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.size"
+        :page-sizes="[10, 20, 50, 100]"
+        layout="total, sizes, prev, pager, next, jumper"
+        :total="pagination.total"
+        @size-change="handleSizeChange"
+        @current-change="handlePageChange"
+        style="margin-top: 16px; justify-content: flex-end;"
+      />
     </el-card>
 
     <el-card class="table-card" shadow="never">
       <template #header>
         <div class="table-header">
-          <span>时效规则与预警</span>
-          <div class="table-actions">
-            <el-button type="primary" @click="openRuleDialog()">新增规则</el-button>
-            <el-button @click="loadData">刷新</el-button>
-          </div>
+          <span>活动预警</span>
         </div>
       </template>
 
@@ -118,9 +149,9 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { createTimeRule, getActiveAlerts, getAlertStatistics, getTimeMonitorDashboard, getTimeRules, resolveAlert, updateTimeRule } from '@/api/newModules'
+import { createTimeRule, getActiveAlerts, getTimeMonitorDashboard, getTimeMonitorList, getTimeRules, resolveAlert, updateTimeRule } from '@/api/newModules'
 
 const loading = ref(false)
 const tableData = ref<any[]>([])
@@ -128,6 +159,20 @@ const ruleList = ref<any[]>([])
 const monitorItems = ref<any[]>([])
 const stat = reactive({ normal: 0, warning: 0, timeout: 0, resolved: 0 })
 const showRuleDialog = ref(false)
+const currentCategory = ref('all')
+
+const pagination = ref({ page: 1, size: 20, total: 0 })
+
+const categoryTitle = computed(() => {
+  const map: Record<string, string> = {
+    all: '监控明细（全部）',
+    normal: '监控明细（正常任务）',
+    warning: '监控明细（预警任务）',
+    timeout: '监控明细（超时任务）',
+    resolved: '监控明细（已处理预警）'
+  }
+  return map[currentCategory.value] || '监控明细'
+})
 
 const prescriptionTypeOptions = [
   { label: '普通', value: 'NORMAL' },
@@ -195,10 +240,10 @@ function monitorStatusLabel(status?: number) {
 
 function monitorStatusTag(status?: number) {
   if (status == null) return 'info'
-  if (status === 1) return 'info'
-  if (status === 2) return 'success'
+  if (status === 1) return 'success'
+  if (status === 2) return 'warning'
   if (status === 3) return 'danger'
-  if (status === 4) return ''
+  if (status === 4) return 'info'
   return 'info'
 }
 
@@ -218,25 +263,47 @@ function openRuleDialog(rule?: any) {
   showRuleDialog.value = true
 }
 
+function switchCategory(category: string) {
+  currentCategory.value = category
+  pagination.value.page = 1
+  loadData()
+}
+
+function handleSizeChange(val: number) {
+  pagination.value.size = val
+  pagination.value.page = 1
+  loadData()
+}
+
+function handlePageChange(val: number) {
+  pagination.value.page = val
+  loadData()
+}
+
 async function loadData() {
   loading.value = true
   try {
-    const [dashboardRes, alertsRes, rulesRes, statsRes]: any = await Promise.all([
+    const [dashboardRes, alertsRes, rulesRes, listRes]: any = await Promise.all([
       getTimeMonitorDashboard(),
       getActiveAlerts(),
       getTimeRules(),
-      getAlertStatistics()
+      getTimeMonitorList({
+        category: currentCategory.value,
+        page: pagination.value.page,
+        size: pagination.value.size
+      })
     ])
 
     const dashboard = dashboardRes.data || {}
-    monitorItems.value = dashboard.items || []
     const alerts = alertsRes.data?.records || []
-    const statsData = statsRes.data || {}
-    ruleList.value = (rulesRes.data || []).map((rule: any) => ({
-      ...rule,
-      stageLabel: stageLabel(rule.stage),
-      prescriptionTypeLabel: prescriptionTypeLabel(rule.prescriptionType)
-    }))
+
+    stat.normal = dashboard.onTimeTasks || 0
+    stat.warning = dashboard.warningTasks || 0
+    stat.timeout = dashboard.alertTasks || 0
+    stat.resolved = dashboard.resolvedTasks || 0
+
+    monitorItems.value = listRes.data?.records || []
+    pagination.value.total = listRes.data?.total || 0
 
     tableData.value = alerts.map((item: any) => ({
       id: item.id,
@@ -250,10 +317,13 @@ async function loadData() {
       statusTag: Number(item.isResolved || 0) === 1 ? 'success' : 'warning'
     }))
 
-    stat.normal = dashboard.onTimeTasks || 0
-    stat.warning = dashboard.warningTasks || 0
-    stat.timeout = dashboard.alertTasks || 0
-    stat.resolved = statsData.resolvedAlerts || 0
+    ruleList.value = (rulesRes.data || []).map((rule: any) => ({
+      ...rule,
+      stageLabel: stageLabel(rule.stage),
+      prescriptionTypeLabel: prescriptionTypeLabel(rule.prescriptionType)
+    }))
+  } catch (err: any) {
+    ElMessage.error(err?.message || '数据加载失败，请稍后重试')
   } finally {
     loading.value = false
   }
@@ -309,16 +379,27 @@ function alertTypeLabel(type?: string) {
   return map[type || ''] || type || '-'
 }
 
+let refreshTimer: ReturnType<typeof setInterval> | null = null
+
 onMounted(() => {
   loadData()
-  setInterval(() => loadData(), 30000)
+  refreshTimer = setInterval(() => loadData(), 30000)
+})
+
+onUnmounted(() => {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
+  }
 })
 </script>
 
 <style scoped lang="scss">
 .page-container { padding: var(--ygt-space-4); }
 .stat-row { margin-top: 16px; }
-.stat-card { text-align: center; border-left: 4px solid transparent; }
+.stat-card { text-align: center; border-left: 4px solid transparent; cursor: pointer; transition: all 0.2s; }
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card.active { box-shadow: 0 0 0 2px var(--el-color-primary); }
 .stat-normal { border-left-color: #67c23a; }
 .stat-warning { border-left-color: #e6a23c; }
 .stat-timeout { border-left-color: #f56c6c; }
