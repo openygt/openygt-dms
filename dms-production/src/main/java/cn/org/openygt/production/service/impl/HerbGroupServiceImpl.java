@@ -7,6 +7,7 @@ import cn.org.openygt.production.mapper.HerbGroupRuleMapper;
 import cn.org.openygt.production.mapper.PrescriptionHerbGroupMapper;
 import cn.org.openygt.production.service.HerbGroupService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -67,16 +68,22 @@ public class HerbGroupServiceImpl implements HerbGroupService {
         if (group == null) {
             throw new IllegalArgumentException("药材分组不存在");
         }
-        if (group.getProcessStatus() != null && group.getProcessStatus() == 1) {
+
+        // 条件更新：仅当 process_status != 1 时才更新，防止并发重复确认
+        LambdaUpdateWrapper<PrescriptionHerbGroup> updateWrapper = new LambdaUpdateWrapper<>();
+        updateWrapper.eq(PrescriptionHerbGroup::getId, groupId)
+                .ne(PrescriptionHerbGroup::getProcessStatus, 1)
+                .set(PrescriptionHerbGroup::getProcessStatus, 1)
+                .set(PrescriptionHerbGroup::getProcessTime, LocalDateTime.now())
+                .set(PrescriptionHerbGroup::getOperatorId, operatorId)
+                .set(PrescriptionHerbGroup::getDeviceId, deviceId);
+        int updated = prescriptionHerbGroupMapper.update(null, updateWrapper);
+        if (updated == 0) {
             throw new IllegalStateException("该分组已确认投料");
         }
 
-        group.setProcessStatus(1);
-        group.setProcessTime(LocalDateTime.now());
-        group.setOperatorId(operatorId);
-        group.setDeviceId(deviceId);
-        prescriptionHerbGroupMapper.updateById(group);
-
+        // 刷新实体状态用于返回
+        group = prescriptionHerbGroupMapper.selectById(groupId);
         HerbGroupRule rule = herbGroupRuleMapper.selectOne(
                 new LambdaQueryWrapper<HerbGroupRule>()
                         .eq(HerbGroupRule::getGroupCode, group.getGroupCode())

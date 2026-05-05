@@ -3,6 +3,7 @@ package cn.org.openygt.production.controller;
 import cn.org.openygt.production.ProductionModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.production.dto.HerbGroupConfirmRequest;
 import cn.org.openygt.production.dto.HerbGroupDTO;
 import cn.org.openygt.production.service.HerbGroupService;
@@ -25,16 +26,19 @@ public class HerbGroupController {
     private final HerbGroupService herbGroupService;
 
     @GetMapping("/prescription/{prescriptionId}/herb-groups")
+    @RequiresPermissions("prod:dosing:view")
     public ApiResponse<List<HerbGroupDTO>> getHerbGroups(@PathVariable Long prescriptionId) {
         return ApiResponse.success(herbGroupService.getHerbGroupsByPrescription(prescriptionId));
     }
 
     @PostMapping("/herb-group/{groupId}/confirm")
+    @RequiresPermissions("prod:dosing:confirm")
     public ApiResponse<HerbGroupDTO> confirmHerbGroup(@PathVariable Long groupId,
-                                                       @Validated @RequestBody(required = false) HerbGroupConfirmRequest request,
+                                                       @RequestBody(required = false) HerbGroupConfirmRequest request,
                                                        @org.springframework.web.bind.annotation.RequestAttribute(value = "userId", required = false) Long userId) {
         HerbGroupConfirmRequest actualRequest = request != null ? request : new HerbGroupConfirmRequest();
-        Long operatorId = actualRequest.getOperatorId() != null ? actualRequest.getOperatorId() : userId;
+        // 写操作优先以登录态 userId 为准，防止请求体伪造 operatorId
+        Long operatorId = userId != null ? userId : actualRequest.getOperatorId();
         return ApiResponse.success(herbGroupService.confirmHerbGroup(groupId, operatorId, actualRequest.getDeviceId()));
     }
 }

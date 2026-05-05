@@ -111,7 +111,7 @@ function normalizeGroup(item: any): HerbGroupItem {
 async function loadPrescriptionInfo() {
   if (!prescriptionId.value) return
   try {
-    const res: any = await request.get(`/v1/md/prescriptions/${prescriptionId.value}`)
+    const res: any = await request.get(`/v1/prod/prescriptions/${prescriptionId.value}`)
     const data = res.data || {}
     prescriptionInfo.value = {
       patientName: data.patientName,
