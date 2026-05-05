@@ -61,18 +61,34 @@ public class DecoctSchemeController {
     private SchemeResponse toResponse(DecoctScheme entity) {
         if (entity == null) return null;
         SchemeResponse resp = new SchemeResponse();
-        BeanUtils.copyProperties(entity, resp);
         resp.setSchemeName(entity.getName());
         resp.setSchemeCode(entity.getCode());
         resp.setDecoctTime(entity.getHeatingTime());
         resp.setSoakTime(entity.getPreHeatingTime());
+        resp.setSchemeType(entity.getSchemeType());
+        resp.setDecoctTimes(entity.getDecoctTimes());
+        resp.setPressure(entity.getPressure());
+        resp.setUpperWater(entity.getUpperWater());
+        resp.setPostHeatingTime(entity.getPostHeatingTime());
+        resp.setRemark(entity.getDescription());
+        resp.setFirstDecoctTime(entity.getFirstDecoctTime());
+        resp.setSecondDecoctTime(entity.getSecondDecoctTime());
+        resp.setDrainTime(entity.getDrainTime());
+        resp.setPackageTime(entity.getPackageTime());
+        resp.setLateAddRemindTime(entity.getLateAddRemindTime());
+        resp.setTempRiseRate(entity.getTempRiseRate());
+        resp.setIsDefault(entity.getIsDefault());
+        resp.setAlarmHighTemp(entity.getAlarmHighTemp());
+        resp.setAlarmLowTemp(entity.getAlarmLowTemp());
         if (entity.getAlarmLowTemp() != null && entity.getAlarmHighTemp() != null) {
             resp.setTempRange(entity.getAlarmLowTemp() + "~" + entity.getAlarmHighTemp() + "°C");
         } else {
             resp.setTempRange("-");
         }
-        resp.setRemark(entity.getDescription());
-        resp.setStatus(1);
+        resp.setStatus(entity.getStatus() != null ? entity.getStatus() : 1);
+        resp.setCreatedAt(entity.getCreatedAt());
+        resp.setUpdatedAt(entity.getUpdatedAt());
+        resp.setId(entity.getId());
         return resp;
     }
 }

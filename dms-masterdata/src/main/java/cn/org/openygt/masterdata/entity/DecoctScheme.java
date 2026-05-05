@@ -48,6 +48,9 @@ public class DecoctScheme extends BaseEntity {
     /** 是否默认方案 */
     private Integer isDefault;
 
+    /** 状态: 1启用 0禁用 */
+    private Integer status;
+
     public String getCode() {
         return code;
     }
@@ -206,5 +209,13 @@ public class DecoctScheme extends BaseEntity {
 
     public void setIsDefault(Integer isDefault) {
         this.isDefault = isDefault;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 }
