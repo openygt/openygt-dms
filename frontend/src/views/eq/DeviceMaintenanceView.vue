@@ -70,7 +70,7 @@
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑维保记录' : '新增维保记录'" width="500px">
-      <el-form :model="form" label-width="100px">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-form-item label="设备ID">
           <el-input v-model="form.deviceId" placeholder="设备ID" />
         </el-form-item>
@@ -116,6 +116,14 @@ const dialogVisible = ref(false)
 const search = reactive({ deviceId: '', maintenanceType: '', status: null as number | null })
 const pagination = reactive({ page: 1, size: 20, total: 0 })
 const form = reactive<any>({ id: null, deviceId: '', maintenanceType: '', content: '', maintenanceDate: '', nextDate: '', status: 0 })
+const formRef = ref<any>(null)
+const formRules = {
+  deviceId: [{ required: true, message: '设备ID不能为空', trigger: 'blur' }],
+  maintenanceType: [{ required: true, message: '维保类型不能为空', trigger: 'change' }],
+  content: [{ required: true, message: '维保内容不能为空', trigger: 'blur' }],
+  maintenanceDate: [{ required: true, message: '维保日期不能为空', trigger: 'change' }],
+  status: [{ required: true, message: '状态不能为空', trigger: 'change' }],
+}
 
 async function loadData() {
   loading.value = true
@@ -151,6 +159,8 @@ function openDialog(row?: any) {
 }
 
 async function saveData() {
+  if (!formRef.value) return
+  await formRef.value.validate()
   try {
     if (form.id) {
       await request.put(`/v1/eq/device-maintenances/${form.id}`, form)

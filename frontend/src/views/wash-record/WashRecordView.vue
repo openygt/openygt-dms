@@ -44,7 +44,7 @@ const fetchList = async () => {
   loading.value = true
   try {
     const res = await request.get('/v1/eq/wash/list')
-    list.value = res.data.data?.records || []
+    list.value = res.data?.records || []
   } catch (e) {
     ElMessage.error('获取列表失败')
   } finally {
