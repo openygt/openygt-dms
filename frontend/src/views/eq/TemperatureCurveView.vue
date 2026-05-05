@@ -22,7 +22,7 @@
           <div class="stat-tags">
             <el-tag v-if="curveData.maxTemp" type="danger">最高温 {{ curveData.maxTemp }}°C</el-tag>
             <el-tag v-if="curveData.avgTemp" type="warning">平均温 {{ curveData.avgTemp }}°C</el-tag>
-            <el-tag v-if="curveData.duration" type="success">时长 {{ curveData.duration }}min</el-tag>
+
           </div>
         </div>
       </template>
@@ -36,7 +36,6 @@
 <script setup lang="ts">
 import { ref, reactive, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
-import request from '@/api/request'
 import { getTraceTemperatureCurve } from '@/api/equipment'
 
 const searchForm = reactive({
@@ -55,16 +54,27 @@ async function queryCurve() {
   try {
     let prescriptionNo = searchForm.prescriptionNo
     if (!prescriptionNo && searchForm.barcode) {
-      // 先通过 PDA 接口查询任务获取处方号
-      const taskRes: any = await request.get(`/v1/pda/task/${searchForm.barcode}`)
-      const task = taskRes.data
-      prescriptionNo = task?.prescriptionNumber || ''
+      // 通过 PC 只读接口查询任务获取处方号
+      const taskRes: any = await import('@/api/request').then(m => m.default.get(`/v1/prod/tasks/barcode/${searchForm.barcode}`))
+      prescriptionNo = taskRes.data?.prescriptionNumber || ''
     }
     if (!prescriptionNo) {
       return
     }
-    const res: any = await getTraceTemperatureCurve(prescriptionNo, '1min')
-    curveData.value = res.data
+    const res: any = await getTraceTemperatureCurve(prescriptionNo)
+    const result = res.data || {}
+    curveData.value = {
+      maxTemp: result.maxTemp,
+      avgTemp: result.avgTemp
+    }
+    // 解析温曲点位数据：支持 JSON 字符串和数组两种形态
+    let points: any[] = []
+    if (result.data && typeof result.data === 'string') {
+      try { points = JSON.parse(result.data) } catch (e) { points = [] }
+    } else if (Array.isArray(result.data)) {
+      points = result.data
+    }
+    curveData.value.points = points
     nextTick(() => renderChart())
   } catch (e) {
     console.error(e)
@@ -79,8 +89,8 @@ function renderChart() {
   chartInstance = echarts.init(chartRef.value)
 
   const points = curveData.value.points || []
-  const times = points.map((p: any) => p.time)
-  const temps = points.map((p: any) => p.temperature)
+  const times = points.map((p: any) => p.time || p.timestamp)
+  const temps = points.map((p: any) => p.temperature || p.value || p.temp)
 
   const option: echarts.EChartsOption = {
     tooltip: {

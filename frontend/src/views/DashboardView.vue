@@ -199,7 +199,7 @@ const quickActions = computed(() => {
     { label: '设备管理', path: '/devices', icon: 'Cpu', bg: 'var(--ygt-success)', perm: 'eq:device:list' },
     { label: '打印管理', path: '/print-center', icon: 'Printer', bg: 'var(--ygt-warning)', perm: 'prt:queue:view' },
     { label: '产能报表', path: '/capacity', icon: 'TrendCharts', bg: 'var(--ygt-info)', perm: 'ops:capacity:view' },
-    { label: '温度曲线', path: '/temperature-curve', icon: 'Odometer', bg: '#e91e63', perm: 'eq:device:monitor' },
+    { label: '温度曲线', path: '/temperature-curve', icon: 'Odometer', bg: '#e91e63', perm: 'eq:temp:view' },
   ]
   return actions.filter(a => userStore.hasPermission(a.perm))
 })

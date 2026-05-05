@@ -5,6 +5,7 @@ import cn.org.openygt.equipment.EquipmentModule;
 import cn.org.openygt.equipment.entity.DecoctionTrace;
 import cn.org.openygt.equipment.entity.DecoctionTraceEvent;
 import cn.org.openygt.equipment.service.DecoctionTraceService;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -48,10 +49,9 @@ public class DecoctionTraceController {
     }
 
     @GetMapping("/{prescriptionNo}/temperature-curve")
-    public ApiResponse<Map<String, Object>> getTemperatureCurve(
-            @PathVariable String prescriptionNo,
-            @RequestParam(defaultValue = "1min") String granularity) {
-        return ApiResponse.success(traceService.getTemperatureCurve(prescriptionNo, granularity));
+    @RequiresPermissions({"eq:temp:view", "ROLE_WORKER", "ROLE_LEADER", "ROLE_INSPECTOR", "ROLE_DIRECTOR", "ROLE_ADMIN"})
+    public ApiResponse<Map<String, Object>> getTemperatureCurve(@PathVariable String prescriptionNo) {
+        return ApiResponse.success(traceService.getTemperatureCurve(prescriptionNo));
     }
 
     @PutMapping("/{prescriptionNo}/step/{stepCode}")

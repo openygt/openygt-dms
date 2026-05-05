@@ -66,7 +66,7 @@ const router = createRouter({
         { path: 'herb-group', name: 'HerbGroup', component: () => import('@/views/prod/HerbGroupView.vue'), meta: { title: '分组投料' } },
         { path: 'time-monitor', name: 'TimeMonitor', component: () => import('@/views/monitor/TimeMonitorView.vue'), meta: { title: '时效监控' } },
         { path: 'emergency', name: 'EmergencyPrescription', component: () => import('@/views/prod/EmergencyPrescriptionView.vue'), meta: { title: '急诊快速通道' } },
-        { path: 'temperature-curve', name: 'TemperatureCurve', component: () => import('@/views/eq/TemperatureCurveView.vue'), meta: { title: '温曲查询', perm: 'eq:device:monitor' } },
+        { path: 'temperature-curve', name: 'TemperatureCurve', component: () => import('@/views/eq/TemperatureCurveView.vue'), meta: { title: '温曲查询', perm: 'eq:temp:view' } },
         { path: 'digital-twin', name: 'DigitalTwin', component: () => import('@/views/digital-twin/DigitalTwinView.vue'), meta: { title: '数字孪生', perm: 'eq:device:monitor' } },
         { path: 'toxic-medicine', name: 'ToxicMedicine', component: () => import('@/views/toxic-medicine/ToxicMedicineView.vue'), meta: { title: '毒性药材管理', perm: 'base:toxic:manage' } },
         { path: 'exception-order', name: 'ExceptionOrder', component: () => import('@/views/exception-order/ExceptionOrderView.vue'), meta: { title: '异常工单', perm: 'prod:exception:manage' } },
@@ -88,11 +88,10 @@ router.beforeEach(async (to, from, next) => {
     next('/login')
     return
   }
-  // 开发环境跳过权限检查（数字孪生演示用）
-  // if (to.meta.perm && !userStore.hasPermission(to.meta.perm as string)) {
-  //   next('/dashboard')
-  //   return
-  // }
+  if (to.meta.perm && !userStore.hasPermission(to.meta.perm as string)) {
+    next('/dashboard')
+    return
+  }
   next()
 })
 
