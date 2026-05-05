@@ -14,6 +14,8 @@ public interface TimeMonitorService {
 
     TimeMonitorDashboardDTO getDashboard();
 
+    com.baomidou.mybatisplus.core.metadata.IPage<TimeMonitorDashboardDTO.TimeMonitorItemDTO> listMonitorsByCategory(String category, int page, int size);
+
     List<TimeMonitor> getTaskMonitors(Long taskId);
 
     TimeRule saveTimeRule(TimeRuleRequest request);
