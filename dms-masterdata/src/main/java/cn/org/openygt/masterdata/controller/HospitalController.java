@@ -5,8 +5,12 @@ import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.masterdata.dto.HospitalResponse;
 import cn.org.openygt.masterdata.entity.Hospital;
 import cn.org.openygt.masterdata.service.HospitalService;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(MasterdataModule.API_PREFIX + "/hospitals")
@@ -42,6 +46,12 @@ public class HospitalController {
         // 使用 MyBatis-Plus 的 convert 方法转换记录类型
         IPage<HospitalResponse> respPage = entityPage.convert(this::toResponse);
         return ApiResponse.success(respPage);
+    }
+
+    @GetMapping("/all")
+    public ApiResponse<List<HospitalResponse>> all() {
+        IPage<Hospital> entityPage = hospitalService.list(null, 1, 9999);
+        return ApiResponse.success(entityPage.getRecords().stream().map(this::toResponse).collect(Collectors.toList()));
     }
 
     @DeleteMapping("/{id}")
