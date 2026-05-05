@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Select;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface DeviceUtilizationMapper extends BaseMapper<DeviceUtilization> {
@@ -18,6 +19,13 @@ public interface DeviceUtilizationMapper extends BaseMapper<DeviceUtilization> {
     @Select("SELECT * FROM device_utilization WHERE stat_date = #{date} AND deleted = 0")
     List<DeviceUtilization> findByDate(@Param("date") LocalDate date);
 
-    @Select("SELECT device_code, AVG(utilization_rate) as avg_utilization FROM device_utilization WHERE stat_date BETWEEN #{start} AND #{end} AND deleted = 0 GROUP BY device_code")
+    @Select("SELECT device_code, AVG(utilization_rate) as utilization_rate FROM device_utilization WHERE stat_date BETWEEN #{start} AND #{end} AND deleted = 0 GROUP BY device_code")
     List<DeviceUtilization> aggregateByDevice(@Param("start") LocalDate start, @Param("end") LocalDate end);
+
+    @Select("SELECT d.device_code, COUNT(*) as task_count " +
+            "FROM eq_device d " +
+            "LEFT JOIN prod_task t ON (t.decoct_device_id = d.id OR t.package_device_id = d.id) " +
+            "WHERE d.deleted = 0 AND DATE(t.complete_time) = #{date} AND t.deleted = 0 " +
+            "GROUP BY d.device_code")
+    List<Map<String, Object>> selectTaskCountByDevice(@Param("date") String date);
 }

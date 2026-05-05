@@ -2,14 +2,12 @@
   <div class="device-utilization" v-loading="pageLoading" element-loading-text="加载中..." element-loading-background="rgba(255,255,255,0.9)">
     <div class="page-header-title">设备效能：<span class="page-header-sub">设备开机率、空闲率、故障率趋势</span></div>
     <div class="page-header">
-
-      <el-button type="primary" @click="exportData">导出</el-button>
     </div>
 
     <el-card class="filter-card">
       <el-form :inline="true">
         <el-form-item label="设备">
-          <el-select v-model="filter.deviceCode" placeholder="全部设备" clearable>
+          <el-select v-model="filter.deviceCode" placeholder="请选择" clearable style="width: 220px">
             <el-option v-for="d in deviceOptions" :key="d" :label="d" :value="d" />
           </el-select>
         </el-form-item>
@@ -63,12 +61,12 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
-import { getDeviceUtilizationStats, getDeviceUtilizationTrend } from '@/api/equipment'
+import { getDeviceList, getDeviceUtilizationStats, getDeviceUtilizationTrend } from '@/api/equipment'
 
 const pageLoading = ref(true)
 const loading = ref(false)
 const utilizationList = ref<any[]>([])
-const deviceOptions = ref<string[]>(['DECOCT_001', 'DECOCT_002', 'PACK_001'])
+const deviceOptions = ref<string[]>([])
 const trendChartRef = ref<HTMLElement>()
 let trendChart: echarts.ECharts | null = null
 
@@ -135,13 +133,23 @@ function exportData() {
   ElMessage.success('导出功能开发中')
 }
 
+async function loadDeviceOptions() {
+  try {
+    const res: any = await getDeviceList({ page: 1, size: 999 })
+    const devices = res.data?.records || res.data || []
+    deviceOptions.value = devices.map((d: any) => d.deviceCode).filter(Boolean)
+  } catch (err) {
+    // 静默失败，保留空列表
+  }
+}
+
 onMounted(() => {
   nextTick(() => {
     if (trendChartRef.value) {
       trendChart = echarts.init(trendChartRef.value)
       window.addEventListener('resize', () => trendChart?.resize())
     }
-    loadData().finally(() => {
+    Promise.all([loadDeviceOptions(), loadData()]).finally(() => {
       setTimeout(() => { pageLoading.value = false }, 400)
     })
   })

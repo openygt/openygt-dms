@@ -74,6 +74,7 @@ public class TimeMonitorAlertScheduler {
                     // 告警：通知主任
                     sendAlert(monitor, 3, "告警", "时效超时已达到告警阈值，请班组长/主任关注！");
                     monitor.setAlertLevel(3);
+                    monitor.setStatus(3); // 标记为已超时
                 } else if (minutesOverdue >= 0 && currentLevel < 2) {
                     // 超时：通知班组长
                     sendAlert(monitor, 2, "超时", "任务已超时，请尽快处理！");
@@ -83,6 +84,9 @@ public class TimeMonitorAlertScheduler {
                     // 预警：提前5分钟通知操作员
                     sendAlert(monitor, 1, "预警", "任务即将超时，还剩" + Math.abs(minutesOverdue) + "分钟！");
                     monitor.setAlertLevel(1);
+                    if (monitor.getStatus() != null && monitor.getStatus() == 1) {
+                        monitor.setStatus(2);
+                    }
                 }
 
                 // 更新告警次数和时间
@@ -111,7 +115,7 @@ public class TimeMonitorAlertScheduler {
         alert.setTaskId(monitor.getTaskId());
         alert.setStage(monitor.getStage());
         alert.setAlertLevel(level);
-        alert.setAlertType("TIMEOUT");
+        alert.setAlertType(level == 1 ? "APPROACHING" : "TIMEOUT");
         alert.setAlertContent(content);
         alert.setIsResolved(0);
         alert.setCreatedAt(LocalDateTime.now());

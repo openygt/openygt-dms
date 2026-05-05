@@ -1,5 +1,6 @@
 package cn.org.openygt.common.service;
 
+import cn.org.openygt.common.dto.InspectionItemDTO;
 import cn.org.openygt.common.dto.InspectionResult;
 import cn.org.openygt.common.dto.InspectionSummaryDTO;
 import cn.org.openygt.common.dto.InspectionTrendDTO;
@@ -16,6 +17,11 @@ import java.util.List;
 public interface QualityService {
 
     InspectionResult inspect(Long taskId, InspectionResultType result, String operatorId, String remark, String reworkNode);
+
+    /**
+     * 带检查项明细的质检执行（供生产模块原子调用）。
+     */
+    InspectionResult inspectWithItems(Long taskId, InspectionResultType result, String operatorId, String remark, String reworkNode, List<InspectionItemDTO> items);
 
     InspectionResult getInspectionByTaskId(Long taskId);
 

@@ -73,17 +73,24 @@
       </template>
       <el-table :data="tableData" v-loading="loading" border @row-click="selectShelfRow">
         <el-table-column prop="code" label="货架编码" min-width="120" />
-        <el-table-column prop="zone" label="区域" width="80" />
+        <el-table-column prop="name" label="货架名称" min-width="120" />
         <el-table-column prop="rowNo" label="排号" width="80" />
         <el-table-column prop="layer" label="层号" width="80" />
-        <el-table-column prop="capacity" label="容量" width="90" />
+        <el-table-column prop="capacity" label="容量(袋)" width="100" />
         <el-table-column prop="current" label="当前数量" width="100" />
+        <el-table-column prop="type" label="类型" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="row.type === 'NORMAL'">常温</el-tag>
+            <el-tag v-else-if="row.type === 'COLD'" type="info">冷藏</el-tag>
+            <el-tag v-else-if="row.type === 'EXPRESS'" type="warning">快递专区</el-tag>
+            <span v-else>{{ row.type || '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.status)">{{ statusText(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" min-width="160" />
       </el-table>
       <div class="pagination-wrapper">
         <el-pagination
@@ -198,16 +205,11 @@ async function handleSearch() {
     const res = await getShelfList({ ...searchForm, page: pagination.page, size: pagination.size }) as any
     tableData.value = res.data?.list || []
     pagination.total = res.data?.total || 0
-  } catch {
-    tableData.value = [
-      { code: 'A-01-01', zone: 'A', rowNo: '01', layer: '01', capacity: 20, current: 12, status: 'IN_USE', updateTime: '2024-05-01 10:00' },
-      { code: 'A-01-02', zone: 'A', rowNo: '01', layer: '02', capacity: 20, current: 20, status: 'FULL', updateTime: '2024-05-01 09:30' },
-      { code: 'A-02-01', zone: 'A', rowNo: '02', layer: '01', capacity: 20, current: 0, status: 'FREE', updateTime: '2024-05-01 08:00' },
-      { code: 'B-01-01', zone: 'B', rowNo: '01', layer: '01', capacity: 15, current: 5, status: 'IN_USE', updateTime: '2024-05-01 11:00' },
-      { code: 'B-01-02', zone: 'B', rowNo: '01', layer: '02', capacity: 15, current: 0, status: 'FREE', updateTime: '2024-05-01 08:00' },
-      { code: 'C-01-01', zone: 'C', rowNo: '01', layer: '01', capacity: 10, current: 0, status: 'DISABLED', updateTime: '2024-04-30 18:00' }
-    ]
-    pagination.total = 6
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '查询失败'
+    ElMessage.error(msg)
+    tableData.value = []
+    pagination.total = 0
   } finally {
     loading.value = false
   }

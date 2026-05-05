@@ -3,7 +3,6 @@ package cn.org.openygt.production.dto;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 public class TimeMonitorDashboardDTO {
@@ -11,7 +10,7 @@ public class TimeMonitorDashboardDTO {
     private Integer onTimeTasks;
     private Integer warningTasks;
     private Integer alertTasks;
-    private List<TimeMonitorItemDTO> items;
+    private Integer resolvedTasks;
 
     @Data
     public static class TimeMonitorItemDTO {
@@ -25,6 +24,7 @@ public class TimeMonitorDashboardDTO {
         private LocalDateTime actualEnd;
         private Integer remainingSeconds;
         private Integer status;
+        private Integer alertLevel;
         private Integer warningCount;
     }
 }

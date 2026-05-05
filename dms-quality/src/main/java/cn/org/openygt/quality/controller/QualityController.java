@@ -2,6 +2,8 @@ package cn.org.openygt.quality.controller;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.common.dto.InspectionResult;
+import cn.org.openygt.common.dto.InspectionSummaryDTO;
+import cn.org.openygt.common.dto.InspectionTrendDTO;
 import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.QualityService;
 import cn.org.openygt.quality.dto.InspectExecuteRequest;
@@ -14,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotNull;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -33,15 +36,9 @@ public class QualityController {
     private final QualityServiceImpl qualityServiceImpl;
 
     /**
-     * 执行质检。
-     *
-     * @param taskId     任务 ID
-     * @param result     质检结果枚举
-     * @param operatorId 操作人
-     * @param remark     备注
-     * @param reworkNode 返工节点（REWORK时必填）
-     * @return 质检结果
+     * 执行质检（旧版，已废弃）。请使用生产模块的 POST /v1/prod/tasks/{id}/quality。
      */
+    @Deprecated
     @PostMapping("/inspect")
     public ApiResponse<InspectionResult> inspect(
             @RequestParam @NotNull Long taskId,
@@ -77,11 +74,42 @@ public class QualityController {
     }
 
     /**
-     * 带检查项明细的质检执行（Phase 5.5）。
+     * 带检查项明细的质检执行（Phase 5.5，内部补录用）。
+     * 正常流程请使用生产模块的 POST /v1/prod/tasks/{id}/quality-detail。
      */
     @PostMapping("/inspect/detail")
     public ApiResponse<InspectionResult> inspectWithItems(@Validated @RequestBody InspectExecuteRequest req) {
         return ApiResponse.success(qualityServiceImpl.inspectWithItems(req));
+    }
+
+    /**
+     * 质检统计汇总。
+     */
+    @GetMapping("/report/summary")
+    public ApiResponse<InspectionSummaryDTO> summary(
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime) {
+        LocalDateTime from = parseDateTime(startTime);
+        LocalDateTime to = parseDateTime(endTime);
+        return ApiResponse.success(qualityServiceImpl.getInspectionSummary(from, to));
+    }
+
+    /**
+     * 质检趋势统计。
+     */
+    @GetMapping("/report/trend")
+    public ApiResponse<List<InspectionTrendDTO>> trend(
+            @RequestParam(required = false, defaultValue = "day") String groupBy) {
+        return ApiResponse.success(qualityServiceImpl.getInspectionTrend(groupBy));
+    }
+
+    private LocalDateTime parseDateTime(String s) {
+        if (s == null || s.trim().isEmpty()) return null;
+        try {
+            return LocalDateTime.parse(s.replace(" ", "T"));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
