@@ -108,7 +108,11 @@ export function rollbackTask(taskId: number | string, data: any) {
 }
 
 export function approveRollback(rollbackId: number | string, data: any) {
-  return request.put(`/v1/prod/rollback/${rollbackId}/approve`, data)
+  return request.post(`/v1/prod/rollback/${rollbackId}/approve`, data)
+}
+
+export function getRollbackReasons() {
+  return request.get('/v1/prod/rollback/reasons')
 }
 
 export function getRollbackList(params?: any) {
