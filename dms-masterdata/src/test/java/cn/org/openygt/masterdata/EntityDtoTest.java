@@ -119,25 +119,25 @@ class EntityDtoTest {
     void schemeResponse_shouldSupportAllFields() {
         SchemeResponse r = new SchemeResponse();
         r.setId(1L);
-        r.setName("响应");
+        r.setSchemeName("响应");
         r.setSchemeType(1);
         r.setDecoctTimes(2);
         r.setPressure(1);
         r.setUpperWater(new BigDecimal("5.0"));
-        r.setHeatingTime(20);
-        r.setPreHeatingTime(2);
+        r.setDecoctTime(20);
+        r.setSoakTime(2);
         r.setPostHeatingTime(5);
-        r.setDescription("响应描述");
+        r.setRemark("响应描述");
         LocalDateTime now = LocalDateTime.now();
         r.setCreatedAt(now);
         r.setUpdatedAt(now);
 
         assertEquals(1L, r.getId().longValue());
-        assertEquals("响应", r.getName());
+        assertEquals("响应", r.getSchemeName());
         assertEquals(1, r.getSchemeType().intValue());
         assertEquals(2, r.getDecoctTimes().intValue());
         assertEquals(1, r.getPressure().intValue());
-        assertEquals(20, r.getHeatingTime().intValue());
+        assertEquals(20, r.getDecoctTime().intValue());
         assertEquals(now, r.getCreatedAt());
         assertNotNull(r.toString());
         assertNotNull(r.hashCode());
