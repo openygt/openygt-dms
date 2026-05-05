@@ -134,14 +134,14 @@
           <span>{{ detailInspectForm.taskId }}</span>
         </el-form-item>
         <el-form-item label="总体结果">
-          <el-radio-group v-model="detailInspectForm.overallResult">
+          <el-radio-group v-model="detailInspectForm.result">
             <el-radio label="PASS">通过</el-radio>
             <el-radio label="CONCESSION">不通过</el-radio>
             <el-radio label="REWORK">返工</el-radio>
             <el-radio label="SCRAP">报废</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item v-if="detailInspectForm.overallResult === 'REWORK'" label="返工节点" required>
+        <el-form-item v-if="detailInspectForm.result === 'REWORK'" label="返工节点" required>
           <el-select v-model="detailInspectForm.reworkNode" placeholder="请选择返工节点" style="width: 100%">
             <el-option label="待泡药" value="待泡药" />
             <el-option label="待煎药" value="待煎药" />
@@ -233,7 +233,7 @@ const reworkNodes = ref<{ label: string; value: string }[]>([])
 const detailInspectVisible = ref(false)
 const detailInspectForm = ref({
   taskId: 0,
-  overallResult: 'PASS',
+  result: 'PASS',
   reworkNode: '',
   remark: '',
   items: [] as { itemCode: string; itemName: string; result: string; actualValue: string; remark: string }[]
@@ -421,7 +421,7 @@ async function handleReworkSubmit() {
 function openDetailInspectDialog(row: Task) {
   detailInspectForm.value = {
     taskId: row.id,
-    overallResult: 'PASS',
+    result: 'PASS',
     reworkNode: '',
     remark: '',
     items: JSON.parse(JSON.stringify(defaultInspectItems))
@@ -432,7 +432,7 @@ function openDetailInspectDialog(row: Task) {
 // 提交详细质检
 async function handleDetailInspectSubmit() {
   const form = detailInspectForm.value
-  if (form.overallResult === 'REWORK' && !form.reworkNode) {
+  if (form.result === 'REWORK' && !form.reworkNode) {
     ElMessage.warning('请选择返工节点')
     return
   }
@@ -440,7 +440,7 @@ async function handleDetailInspectSubmit() {
     const req = {
       taskId: form.taskId,
       operatorId: currentOperatorId.value,
-      overallResult: form.overallResult,
+      result: form.result,
       remark: form.remark,
       reworkNode: form.reworkNode,
       items: form.items
