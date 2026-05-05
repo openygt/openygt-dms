@@ -32,14 +32,18 @@
             <span>生产指挥</span>
           </template>
           <el-menu-item v-if="userStore.hasPermission('ops:dashboard:view')" index="/dashboard">生产看板</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('prod:assignment:view')" index="/task-assignment">排产调度</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:record:view')" index="/task-assignment">生产记录</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('prod:monitor:view')" index="/time-monitor">时效监控</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:alarm:view')" index="/alarms">告警管理</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:device:monitor')" index="/device-monitor">设备监控</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:alarm:view')" index="/alarms">告警管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:device:emergency')" index="/device-command">远程急停</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('ops:capacity:view')" index="/capacity">产能统计</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:device:efficiency')" index="/device-utilization">设备效能</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:device:control')" index="/device-command">设备操控</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:device:monitor')" index="/digital-twin">数字孪生</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:device:list')" index="/devices">设备管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:network:view')" index="/device-network">设备联网</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:group:view')" index="/device-group-manage">设备分组</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:maint:view')" index="/device-maintenance">设备维保</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:wash:view')" index="/wash-record">清洗记录</el-menu-item>
         </el-sub-menu>
 
         <!-- 2. 煎药作业 -->
@@ -101,8 +105,6 @@
           <el-menu-item v-if="userStore.hasPermission('eq:water:view')" index="/water-formulas">加水公式</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('md:package:view')" index="/formula/package-spec">包装规格</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:alarm:view')" index="/alarm-configs">告警配置</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:maint:view')" index="/device-maintenance">设备维保</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:wash:view')" index="/wash-record">清洗记录</el-menu-item>
         </el-sub-menu>
 
         <!-- 7. 基础数据 -->
