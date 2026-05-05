@@ -14,6 +14,7 @@ public class AlertLog {
     private Long id;
     private Long monitorId;
     private Long taskId;
+    private String stage;
     private Integer alertLevel;
     private String alertType;
     private String alertContent;

@@ -673,7 +673,7 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("queryTasks: 按状态和设备 ID 分页查询")
     void testQueryTasksWithFilters() {
-        taskService.queryTasks("煎药中", 10L, null, null, null, null, null, null, 1, 20);
+        taskService.queryTasks("煎药中", 10L, null, null, null, null, null, null, null, 1, 20);
 
         verify(taskMapper).selectPage(any(), any());
     }

@@ -11,7 +11,9 @@ public class TimeRuleRequest {
     private String ruleCode;
     @NotBlank
     private String ruleName;
+    /** NORMAL-普通, EMERGENCY-普通急诊, CRITICAL_EMERGENCY-危重急诊 */
     private String prescriptionType;
+    /** SOAK-泡药, FIRST_DECOCTION-一煎, SECOND_DECOCTION-二煎, DECOCT-煎药, WRAP-包装 */
     @NotBlank
     private String stage;
     @NotNull

@@ -5,6 +5,11 @@ export function getDeviceList(params: any) {
   return request.get('/v1/eq/devices', { params })
 }
 
+/** 全部设备组（设备管理 / 煎药选机等） */
+export function getDeviceGroupsAll() {
+  return request.get('/v1/eq/groups/all')
+}
+
 export function getDeviceById(id: number | string) {
   return request.get(`/v1/eq/devices/${id}`)
 }

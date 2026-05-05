@@ -11,6 +11,7 @@ import cn.org.openygt.production.mapper.TimeMonitorMapper;
 import cn.org.openygt.production.mapper.TimeRuleMapper;
 import cn.org.openygt.production.service.TimeMonitorService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,14 +38,24 @@ public class TimeMonitorServiceImpl implements TimeMonitorService {
 
     @Override
     public TimeMonitorDashboardDTO getDashboard() {
-        List<TimeMonitor> monitors = timeMonitorMapper.selectList(new LambdaQueryWrapper<TimeMonitor>()
+        List<TimeMonitor> allMonitors = timeMonitorMapper.selectList(new LambdaQueryWrapper<TimeMonitor>()
                 .orderByDesc(TimeMonitor::getUpdatedAt));
+        List<TimeMonitor> monitors = allMonitors.stream()
+                .filter(m -> m.getTaskId() != null)
+                .filter(m -> m.getActualStart() != null)
+                .filter(m -> m.getActualEnd() == null)
+                .collect(Collectors.toMap(TimeMonitor::getTaskId, m -> m, this::pickDashboardMonitor))
+                .values()
+                .stream()
+                .sorted(Comparator.comparing(TimeMonitor::getUpdatedAt, Comparator.nullsLast(Comparator.reverseOrder()))
+                        .thenComparing(TimeMonitor::getId, Comparator.nullsLast(Comparator.reverseOrder())))
+                .collect(Collectors.toList());
 
         TimeMonitorDashboardDTO dto = new TimeMonitorDashboardDTO();
         dto.setTotalTasks(monitors.size());
-        dto.setOnTimeTasks((int) monitors.stream().filter(m -> m.getStatus() != null && m.getStatus() == 0).count());
-        dto.setWarningTasks((int) monitors.stream().filter(m -> m.getStatus() != null && m.getStatus() == 1).count());
-        dto.setAlertTasks((int) monitors.stream().filter(m -> m.getStatus() != null && m.getStatus() >= 2).count());
+        dto.setOnTimeTasks((int) monitors.stream().filter(this::isNormalMonitor).count());
+        dto.setWarningTasks((int) monitors.stream().filter(this::isWarningMonitor).count());
+        dto.setAlertTasks((int) monitors.stream().filter(this::isTimeoutMonitor).count());
 
         dto.setItems(monitors.stream().map(m -> {
             TimeMonitorDashboardDTO.TimeMonitorItemDTO item = new TimeMonitorDashboardDTO.TimeMonitorItemDTO();
@@ -55,12 +67,10 @@ public class TimeMonitorServiceImpl implements TimeMonitorService {
             item.setPlannedEnd(m.getPlannedEnd());
             item.setActualStart(m.getActualStart());
             item.setActualEnd(m.getActualEnd());
-            // 实时计算剩余秒数
             if (m.getActualEnd() != null) {
                 item.setRemainingSeconds(0);
             } else if (m.getPlannedEnd() != null) {
-                long secs = ChronoUnit.SECONDS.between(LocalDateTime.now(), m.getPlannedEnd());
-                item.setRemainingSeconds((int) Math.max(0, secs));
+                item.setRemainingSeconds((int) ChronoUnit.SECONDS.between(LocalDateTime.now(), m.getPlannedEnd()));
             } else {
                 item.setRemainingSeconds(m.getRemainingSeconds());
             }
@@ -103,10 +113,23 @@ public class TimeMonitorServiceImpl implements TimeMonitorService {
         rule.setIsDefault(request.getIsDefault());
         rule.setUpdatedAt(LocalDateTime.now());
 
+        validateThresholds(rule);
+
         if (request.getId() != null) {
             timeRuleMapper.updateById(rule);
         } else {
             timeRuleMapper.insert(rule);
+        }
+
+        if (rule.getIsDefault() != null && rule.getIsDefault() == 1) {
+            LambdaUpdateWrapper<TimeRule> clearDefaults = new LambdaUpdateWrapper<>();
+            clearDefaults.eq(TimeRule::getPrescriptionType, rule.getPrescriptionType())
+                    .eq(TimeRule::getStage, rule.getStage())
+                    .eq(TimeRule::getIsDefault, 1)
+                    .ne(TimeRule::getId, rule.getId())
+                    .set(TimeRule::getIsDefault, 0)
+                    .set(TimeRule::getUpdatedAt, LocalDateTime.now());
+            timeRuleMapper.update(null, clearDefaults);
         }
         return rule;
     }
@@ -162,5 +185,53 @@ public class TimeMonitorServiceImpl implements TimeMonitorService {
         dto.setAlertLevelDistribution(levelDist);
         dto.setAlertTypeDistribution(typeDist);
         return dto;
+    }
+
+    private boolean isNormalMonitor(TimeMonitor monitor) {
+        Integer status = monitor.getStatus();
+        Integer alertLevel = monitor.getAlertLevel();
+        return (status != null && (status == 1 || status == 2))
+                && (alertLevel == null || alertLevel == 0);
+    }
+
+    private boolean isWarningMonitor(TimeMonitor monitor) {
+        Integer status = monitor.getStatus();
+        Integer alertLevel = monitor.getAlertLevel();
+        return status != null && status != 3 && alertLevel != null && alertLevel == 1;
+    }
+
+    private boolean isTimeoutMonitor(TimeMonitor monitor) {
+        Integer status = monitor.getStatus();
+        Integer alertLevel = monitor.getAlertLevel();
+        return (status != null && status == 3) || (alertLevel != null && alertLevel >= 2);
+    }
+
+    private void validateThresholds(TimeRule rule) {
+        int standard = rule.getStandardDuration() != null ? rule.getStandardDuration() : 0;
+        int warning = rule.getWarningThreshold() != null ? rule.getWarningThreshold() : 0;
+        int alert = rule.getAlertThreshold() != null ? rule.getAlertThreshold() : 0;
+        int critical = rule.getCriticalThreshold() != null ? rule.getCriticalThreshold() : 0;
+
+        if (standard <= 0) {
+            throw new IllegalArgumentException("标准时长必须大于0");
+        }
+        if (warning < 0 || alert < 0 || critical < 0) {
+            throw new IllegalArgumentException("预警、超时、严重阈值不能小于0");
+        }
+        if (alert < warning) {
+            throw new IllegalArgumentException("超时阈值不能小于预警阈值");
+        }
+        if (critical < alert) {
+            throw new IllegalArgumentException("严重阈值不能小于超时阈值");
+        }
+    }
+
+    private TimeMonitor pickDashboardMonitor(TimeMonitor left, TimeMonitor right) {
+        Comparator<TimeMonitor> comparator = Comparator
+                .comparing((TimeMonitor m) -> m.getActualEnd() == null ? 1 : 0)
+                .thenComparing(m -> m.getUpdatedAt() != null ? m.getUpdatedAt() : m.getCreatedAt(),
+                        Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(TimeMonitor::getId, Comparator.nullsLast(Comparator.naturalOrder()));
+        return comparator.compare(left, right) >= 0 ? left : right;
     }
 }
