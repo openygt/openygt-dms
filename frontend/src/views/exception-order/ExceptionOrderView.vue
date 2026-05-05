@@ -27,8 +27,9 @@
         </el-form-item>
       </el-form>
 
-      <el-table :data="list" v-loading="loading">
-        <el-table-column prop="exceptionNo" label="异常单号" width="150" />
+      <el-table :data="list" v-loading="loading" border>
+        <el-table-column prop="exceptionNo" label="异常单号" width="160" />
+        <el-table-column prop="taskId" label="关联任务" width="100" />
         <el-table-column prop="exceptionType" label="类型" width="100">
           <template #default="{row}">
             {{ typeText(row.exceptionType) }}
@@ -44,16 +45,30 @@
         <el-table-column prop="description" label="描述" show-overflow-tooltip />
         <el-table-column prop="currentStatus" label="状态" width="100">
           <template #default="{row}">
-            {{ statusText(row.currentStatus) }}
+            <el-tag :type="statusTagType(row.currentStatus)">{{ statusText(row.currentStatus) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column prop="createdAt" label="创建时间" width="160">
           <template #default="{row}">
-            <el-button v-if="row.currentStatus === 0" size="small" type="primary" @click="handleHandle(row)">处理</el-button>
-            <el-button v-if="row.currentStatus !== 2" size="small" type="warning" @click="handleEscalate(row)">升级</el-button>
+            {{ formatDateTime(row.createdAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="200" fixed="right">
+          <template #default="{row}">
+            <el-button v-if="row.currentStatus !== 2" size="small" type="primary" @click="handleHandle(row)">处理</el-button>
+            <el-button v-if="row.currentStatus !== 2 && row.currentStatus !== 3" size="small" type="warning" @click="handleEscalate(row)">升级</el-button>
           </template>
         </el-table-column>
       </el-table>
+
+      <el-pagination
+        style="margin-top: 16px; justify-content: flex-end"
+        v-model:current-page="pagination.page"
+        v-model:page-size="pagination.size"
+        :total="pagination.total"
+        layout="total, prev, pager, next"
+        @current-change="fetchList"
+      />
     </el-card>
 
     <el-dialog title="处理异常工单" v-model="handleDialogVisible" width="500px">
@@ -71,13 +86,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import request from '@/api/request'
 import { ElMessage } from 'element-plus'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const currentUserId = computed(() => userStore.userInfo?.id || 0)
 
 const list = ref([])
 const loading = ref(false)
 const query = ref<any>({})
+const pagination = ref({ page: 1, size: 20, total: 0 })
 const handleDialogVisible = ref(false)
 const handleForm = ref<any>({})
 const currentRow = ref<any>(null)
@@ -94,14 +114,33 @@ const statusText = (status: number) => {
   const map: Record<number, string> = { 0: '待处理', 1: '处理中', 2: '已解决', 3: '已升级' }
   return map[status] || '未知'
 }
+const statusTagType = (status: number) => {
+  const map: Record<number, string> = { 0: 'info', 1: 'warning', 2: 'success', 3: 'danger' }
+  return map[status] || ''
+}
+const formatDateTime = (dt?: string) => {
+  if (!dt) return '-'
+  const d = new Date(dt)
+  if (isNaN(d.getTime())) return dt
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  })
+}
 
 const fetchList = async () => {
   loading.value = true
   try {
-    const res = await request.get('/v1/prod/exception-order/list', { params: query.value })
-    list.value = res.data.data?.records || []
-  } catch (e) {
-    ElMessage.error('获取列表失败')
+    const params = {
+      ...query.value,
+      page: pagination.value.page,
+      size: pagination.value.size
+    }
+    const res: any = await request.get('/v1/prod/exception-order/list', { params })
+    list.value = res.data?.records || []
+    pagination.value.total = res.data?.total || 0
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '获取列表失败')
   } finally {
     loading.value = false
   }
@@ -116,14 +155,14 @@ const handleHandle = (row: any) => {
 const submitHandle = async () => {
   try {
     await request.post(`/v1/prod/exception-order/${currentRow.value.id}/handle`, {
-      handlerId: 1,
+      handlerId: currentUserId.value,
       handleResult: handleForm.value.handleResult
     })
     ElMessage.success('处理成功')
     handleDialogVisible.value = false
     fetchList()
-  } catch (e) {
-    ElMessage.error('处理失败')
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '处理失败')
   }
 }
 
@@ -132,8 +171,8 @@ const handleEscalate = async (row: any) => {
     await request.post(`/v1/prod/exception-order/${row.id}/escalate`, { escalationReason: '需要上级支援' })
     ElMessage.success('升级成功')
     fetchList()
-  } catch (e) {
-    ElMessage.error('升级失败')
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '升级失败')
   }
 }
 

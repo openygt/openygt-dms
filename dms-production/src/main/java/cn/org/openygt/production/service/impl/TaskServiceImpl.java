@@ -4,6 +4,8 @@ import cn.org.openygt.common.dto.EqDeviceDTO;
 import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.EquipmentService;
 import cn.org.openygt.common.service.PrintService;
+import cn.org.openygt.common.service.QualityService;
+import cn.org.openygt.common.service.RetainSampleFacade;
 import cn.org.openygt.inventory.dto.ConsumeItemRequest;
 import cn.org.openygt.inventory.dto.ConsumeRecordRequest;
 import cn.org.openygt.inventory.service.ConsumeRecordService;
@@ -44,6 +46,9 @@ public class TaskServiceImpl implements TaskService {
     private final ConsumeRecordService consumeRecordService;
 
     private final HrEmployeeMapper hrEmployeeMapper;
+
+    private final RetainSampleFacade retainSampleFacade;
+    private final QualityService qualityService;
 
     // ==================== 状态机核心 ====================
 
@@ -229,8 +234,27 @@ public class TaskServiceImpl implements TaskService {
     public Task qualityInspect(Long taskId, InspectionResultType result, String operatorId, String remark, String reworkNode) {
         Task task = getTaskOrThrow(taskId);
         assertStatus(task, "待质检");
+        // 任务状态与质检台账在同一事务内提交；台账写入失败则整单回滚
+        qualityService.inspect(taskId, result, operatorId, remark, reworkNode);
         doQualityInspect(task, result, operatorId, remark, reworkNode);
         taskMapper.updateById(task);
+        tryCreateRetainSampleAfterPass(task, result, operatorId);
+        createStepLog(taskId, "INSPECT", null, operatorId, null);
+        closeLastStepLog(taskId, "INSPECT", result != null ? result.getLabel() : null, remark);
+        return task;
+    }
+
+    @Override
+    @Transactional
+    public Task qualityInspectWithItems(Long taskId, InspectionResultType result, String operatorId, String remark,
+                                        String reworkNode, List<cn.org.openygt.common.dto.InspectionItemDTO> items) {
+        Task task = getTaskOrThrow(taskId);
+        assertStatus(task, "待质检");
+        // 先写完整质检台账（含检查项），失败则整单回滚，避免任务已推进但台账缺失
+        qualityService.inspectWithItems(taskId, result, operatorId, remark, reworkNode, items);
+        doQualityInspect(task, result, operatorId, remark, reworkNode);
+        taskMapper.updateById(task);
+        tryCreateRetainSampleAfterPass(task, result, operatorId);
         createStepLog(taskId, "INSPECT", null, operatorId, null);
         closeLastStepLog(taskId, "INSPECT", result != null ? result.getLabel() : null, remark);
         return task;
@@ -569,6 +593,23 @@ public class TaskServiceImpl implements TaskService {
     private int calculateDuration(LocalDateTime start, LocalDateTime end) {
         if (start == null || end == null) return 0;
         return (int) ChronoUnit.MINUTES.between(start, end);
+    }
+
+    /**
+     * 留样仅在生产质检接口中创建一次，避免与 qt/inspect 双写重复；失败不阻断任务状态。
+     */
+    private void tryCreateRetainSampleAfterPass(Task task, InspectionResultType result, String operatorId) {
+        if (result != InspectionResultType.PASS && result != InspectionResultType.CONCESSION) {
+            return;
+        }
+        if (task.getPrescriptionId() == null) {
+            return;
+        }
+        try {
+            retainSampleFacade.createAfterPass(task.getId(), task.getPrescriptionId(), operatorId);
+        } catch (Exception e) {
+            log.error("留样创建失败，不阻断质检: taskId={}", task.getId(), e);
+        }
     }
 
     private void doQualityInspect(Task task, InspectionResultType result, String operatorId, String remark, String reworkNode) {

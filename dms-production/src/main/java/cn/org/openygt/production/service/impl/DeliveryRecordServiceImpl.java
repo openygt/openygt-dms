@@ -3,7 +3,7 @@ package cn.org.openygt.production.service.impl;
 import cn.org.openygt.production.entity.DeliveryRecord;
 import cn.org.openygt.production.mapper.DeliveryRecordMapper;
 import cn.org.openygt.production.service.DeliveryRecordService;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Service;
@@ -23,19 +23,19 @@ public class DeliveryRecordServiceImpl implements DeliveryRecordService {
 
     @Override
     public IPage<DeliveryRecord> list(String status, String deliveryType, String keyword, int page, int size) {
-        QueryWrapper<DeliveryRecord> wrapper = new QueryWrapper<>();
+        LambdaQueryWrapper<DeliveryRecord> wrapper = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(status)) {
-            wrapper.eq("status", status);
+            wrapper.eq(DeliveryRecord::getStatus, status);
         }
         if (StringUtils.hasText(deliveryType)) {
-            wrapper.eq("delivery_type", deliveryType);
+            wrapper.eq(DeliveryRecord::getDeliveryType, deliveryType);
         }
         if (StringUtils.hasText(keyword)) {
-            wrapper.and(w -> w.like("prescription_no", keyword)
-                    .or().like("patient_name", keyword)
-                    .or().like("receiver_name", keyword));
+            wrapper.and(w -> w.like(DeliveryRecord::getPrescriptionNo, keyword)
+                    .or().like(DeliveryRecord::getPatientName, keyword)
+                    .or().like(DeliveryRecord::getReceiverName, keyword));
         }
-        wrapper.orderByDesc("created_at");
+        wrapper.orderByDesc(DeliveryRecord::getCreatedAt);
         return deliveryRecordMapper.selectPage(new Page<>(page, size), wrapper);
     }
 
@@ -65,6 +65,13 @@ public class DeliveryRecordServiceImpl implements DeliveryRecordService {
     @Override
     @Transactional
     public void delete(Long id) {
+        DeliveryRecord record = deliveryRecordMapper.selectById(id);
+        if (record == null) {
+            throw new IllegalArgumentException("交付记录不存在: " + id);
+        }
+        if ("DELIVERED".equals(record.getStatus())) {
+            throw new IllegalStateException("已交付记录不允许删除");
+        }
         deliveryRecordMapper.deleteById(id);
     }
 
@@ -74,6 +81,9 @@ public class DeliveryRecordServiceImpl implements DeliveryRecordService {
         DeliveryRecord record = deliveryRecordMapper.selectById(id);
         if (record == null) {
             throw new IllegalArgumentException("交付记录不存在: " + id);
+        }
+        if ("DELIVERED".equals(record.getStatus())) {
+            throw new IllegalStateException("该记录已交付，请勿重复确认");
         }
         record.setStatus("DELIVERED");
         record.setOperatorId(operatorId);

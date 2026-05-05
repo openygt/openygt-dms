@@ -25,6 +25,7 @@ export default defineConfig({
     }
   },
   server: {
+    // openygt-dms-05：前端 5175，代理本实例后端 9095
     port: 5175,
     host: '0.0.0.0',
     allowedHosts: true,

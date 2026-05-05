@@ -60,7 +60,7 @@
       </el-row>
 
       <el-table :data="list" v-loading="loading" border>
-        <el-table-column prop="date" label="日期" />
+        <el-table-column prop="statDate" label="日期" />
         <el-table-column prop="taskCount" label="任务数" />
         <el-table-column prop="completedCount" label="已完成" />
         <el-table-column prop="doseCount" label="付数" />
@@ -80,7 +80,7 @@ import { ref, onMounted } from 'vue'
 import request from '@/api/request'
 
 interface ReportItem {
-  date: string
+  statDate: string
   taskCount: number
   completedCount: number
   doseCount: number
@@ -107,7 +107,11 @@ async function fetchData() {
     summary.value.totalTasks = list.value.reduce((s, r) => s + r.taskCount, 0)
     summary.value.completedTasks = list.value.reduce((s, r) => s + r.completedCount, 0)
     summary.value.totalDoses = list.value.reduce((s, r) => s + r.doseCount, 0)
-    const avg = list.value.length ? list.value.reduce((s, r) => s + r.avgDuration, 0) / list.value.length : 0
+    // 加权平均：按每日 completedCount 加权，避免天数简单平均导致偏差
+    const totalCompleted = list.value.reduce((s, r) => s + r.completedCount, 0)
+    const avg = totalCompleted > 0
+      ? list.value.reduce((s, r) => s + r.avgDuration * r.completedCount, 0) / totalCompleted
+      : 0
     summary.value.avgDuration = Math.round(avg * 10) / 10
   } finally {
     loading.value = false

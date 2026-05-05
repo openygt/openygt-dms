@@ -1,17 +1,15 @@
 package cn.org.openygt.quality.service;
 
+import cn.org.openygt.common.dto.InspectionItemDTO;
 import cn.org.openygt.common.dto.InspectionResult;
-import cn.org.openygt.common.dto.ProdTaskDTO;
 import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.ProductionQueryService;
 import cn.org.openygt.common.service.QualityService;
 import cn.org.openygt.quality.dto.InspectExecuteRequest;
 import cn.org.openygt.quality.entity.Inspection;
 import cn.org.openygt.quality.entity.InspectionItem;
-import cn.org.openygt.quality.entity.RetainSample;
 import cn.org.openygt.quality.mapper.InspectionItemMapper;
 import cn.org.openygt.quality.mapper.InspectionMapper;
-import cn.org.openygt.quality.service.RetainSampleService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +28,6 @@ public class QualityServiceImpl implements QualityService {
     private final InspectionMapper inspectionMapper;
     private final InspectionItemMapper inspectionItemMapper;
     private final ProductionQueryService productionQueryService;
-    private final RetainSampleService retainSampleService;
 
     @Override
     @Transactional
@@ -62,20 +59,6 @@ public class QualityServiceImpl implements QualityService {
         ir.setInspectedAt(LocalDateTime.now());
         ir.setIsException(isExceptionResult(result) ? 1 : 0);
         ir.setExceptionReason(isExceptionResult(result) ? remark : null);
-
-        // 质检通过（PASS/CONCESSION）时自动创建留样
-        if (result == InspectionResultType.PASS || result == InspectionResultType.CONCESSION) {
-            try {
-                ProdTaskDTO task = productionQueryService.getTaskById(taskId);
-                if (task != null && task.getPrescriptionId() != null) {
-                    retainSampleService.createSamplesForTask(taskId, task.getPrescriptionId(),
-                            resolveOperatorId(operatorId));
-                    log.info("留样已创建: taskId={}, prescriptionId={}", taskId, task.getPrescriptionId());
-                }
-            } catch (Exception e) {
-                log.error("留样创建失败，不影响质检主流程: taskId={}", taskId, e);
-            }
-        }
 
         log.info("质检完成: taskId={}, result={}, operatorId={}", taskId, result, operatorId);
         return ir;
@@ -124,16 +107,81 @@ public class QualityServiceImpl implements QualityService {
 
     @Override
     public cn.org.openygt.common.dto.InspectionSummaryDTO getInspectionSummary(LocalDateTime from, LocalDateTime to) {
-        // TODO: 实现统计聚合（Wave 2）
-        log.warn("getInspectionSummary 尚未实现");
-        return new cn.org.openygt.common.dto.InspectionSummaryDTO();
+        LambdaQueryWrapper<Inspection> wrapper = new LambdaQueryWrapper<>();
+        if (from != null) wrapper.ge(Inspection::getCreatedAt, from);
+        if (to != null) wrapper.le(Inspection::getCreatedAt, to);
+        List<Inspection> list = inspectionMapper.selectList(wrapper);
+
+        int total = list.size();
+        int pass = 0, concession = 0, rework = 0, scrap = 0;
+        for (Inspection i : list) {
+            if (i.getResult() == null) continue;
+            switch (i.getResult()) {
+                case PASS: pass++; break;
+                case CONCESSION: concession++; break;
+                case REWORK: rework++; break;
+                case SCRAP: scrap++; break;
+                default: break;
+            }
+        }
+
+        cn.org.openygt.common.dto.InspectionSummaryDTO dto = new cn.org.openygt.common.dto.InspectionSummaryDTO();
+        dto.setTotalCount(total);
+        dto.setPassCount(pass);
+        dto.setConcessionCount(concession);
+        dto.setReworkCount(rework);
+        dto.setScrapCount(scrap);
+        dto.setPassRate(total > 0 ? round2((double) pass / total * 100) : 0.0);
+        dto.setReworkRate(total > 0 ? round2((double) rework / total * 100) : 0.0);
+        dto.setScrapRate(total > 0 ? round2((double) scrap / total * 100) : 0.0);
+        return dto;
     }
 
     @Override
     public List<cn.org.openygt.common.dto.InspectionTrendDTO> getInspectionTrend(String groupBy) {
-        // TODO: 实现趋势统计（Wave 2）
-        log.warn("getInspectionTrend 尚未实现");
-        return java.util.Collections.emptyList();
+        // 默认查最近 30 天
+        LocalDateTime from = LocalDateTime.now().minusDays(30);
+        LambdaQueryWrapper<Inspection> wrapper = new LambdaQueryWrapper<>();
+        wrapper.ge(Inspection::getCreatedAt, from);
+        List<Inspection> list = inspectionMapper.selectList(wrapper);
+
+        java.util.Map<String, cn.org.openygt.common.dto.InspectionTrendDTO> map = new java.util.TreeMap<>();
+        java.time.format.DateTimeFormatter fmt;
+        if ("month".equals(groupBy)) {
+            fmt = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM");
+        } else if ("week".equals(groupBy)) {
+            fmt = java.time.format.DateTimeFormatter.ofPattern("yyyy-'W'ww");
+        } else {
+            fmt = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        }
+
+        for (Inspection i : list) {
+            if (i.getCreatedAt() == null || i.getResult() == null) continue;
+            String period = i.getCreatedAt().format(fmt);
+            cn.org.openygt.common.dto.InspectionTrendDTO dto = map.computeIfAbsent(period, k -> {
+                cn.org.openygt.common.dto.InspectionTrendDTO d = new cn.org.openygt.common.dto.InspectionTrendDTO();
+                d.setPeriod(k);
+                d.setTotalCount(0);
+                d.setPassCount(0);
+                d.setConcessionCount(0);
+                d.setReworkCount(0);
+                d.setScrapCount(0);
+                return d;
+            });
+            dto.setTotalCount(dto.getTotalCount() + 1);
+            switch (i.getResult()) {
+                case PASS: dto.setPassCount(dto.getPassCount() + 1); break;
+                case CONCESSION: dto.setConcessionCount(dto.getConcessionCount() + 1); break;
+                case REWORK: dto.setReworkCount(dto.getReworkCount() + 1); break;
+                case SCRAP: dto.setScrapCount(dto.getScrapCount() + 1); break;
+                default: break;
+            }
+        }
+        return new java.util.ArrayList<>(map.values());
+    }
+
+    private Double round2(double v) {
+        return Math.round(v * 100.0) / 100.0;
     }
 
     private String deduceNextStatus(InspectionResultType result, String reworkNode) {
@@ -150,26 +198,10 @@ public class QualityServiceImpl implements QualityService {
         }
     }
 
-    /**
-     * 带检查项明细的质检执行（Phase 5.5 增强）。
-     */
+    @Override
     @Transactional
-    public InspectionResult inspectWithItems(InspectExecuteRequest req) {
-        Long taskId = req.getTaskId();
-        String overallResult = req.getOverallResult();
-        if (overallResult == null || overallResult.trim().isEmpty()) {
-            throw new IllegalArgumentException("质检结果不能为空");
-        }
-        InspectionResultType result;
-        try {
-            result = InspectionResultType.valueOf(overallResult.trim());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("无效的质检结果: " + overallResult);
-        }
-        String operatorId = req.getOperatorId();
-        String remark = req.getRemark();
-        String reworkNode = req.getReworkNode();
-
+    public InspectionResult inspectWithItems(Long taskId, InspectionResultType result, String operatorId,
+                                              String remark, String reworkNode, List<InspectionItemDTO> items) {
         // 通过 SPI 验证任务存在性
         if (productionQueryService.getTaskById(taskId) == null) {
             throw new IllegalArgumentException("任务不存在: " + taskId);
@@ -188,9 +220,9 @@ public class QualityServiceImpl implements QualityService {
         inspectionMapper.insert(inspection);
 
         // 写入检查项明细
-        if (req.getItems() != null && !req.getItems().isEmpty()) {
+        if (items != null && !items.isEmpty()) {
             int sort = 1;
-            for (InspectExecuteRequest.InspectItemDTO item : req.getItems()) {
+            for (InspectionItemDTO item : items) {
                 InspectionItem ii = new InspectionItem();
                 ii.setInspectionId(inspection.getId());
                 ii.setItemCode(item.getItemCode());
@@ -214,23 +246,40 @@ public class QualityServiceImpl implements QualityService {
         ir.setIsException(isExceptionResult(result) ? 1 : 0);
         ir.setExceptionReason(isExceptionResult(result) ? remark : null);
 
-        // 质检通过（PASS/CONCESSION）时自动创建留样
-        if (result == InspectionResultType.PASS || result == InspectionResultType.CONCESSION) {
-            try {
-                ProdTaskDTO task = productionQueryService.getTaskById(taskId);
-                if (task != null && task.getPrescriptionId() != null) {
-                    retainSampleService.createSamplesForTask(taskId, task.getPrescriptionId(),
-                            resolveOperatorId(operatorId));
-                    log.info("留样已创建(含明细): taskId={}, prescriptionId={}", taskId, task.getPrescriptionId());
-                }
-            } catch (Exception e) {
-                log.error("留样创建失败，不影响质检主流程: taskId={}", taskId, e);
+        log.info("质检完成(含明细): taskId={}, result={}, operatorId={}, items={}", taskId, result, operatorId,
+                items != null ? items.size() : 0);
+        return ir;
+    }
+
+    /**
+     * 带检查项明细的质检执行（Phase 5.5 增强，Controller 入口）。
+     */
+    @Transactional
+    public InspectionResult inspectWithItems(InspectExecuteRequest req) {
+        String overallResult = req.getOverallResult();
+        if (overallResult == null || overallResult.trim().isEmpty()) {
+            throw new IllegalArgumentException("质检结果不能为空");
+        }
+        InspectionResultType result;
+        try {
+            result = InspectionResultType.valueOf(overallResult.trim());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("无效的质检结果: " + overallResult);
+        }
+        List<InspectionItemDTO> items = null;
+        if (req.getItems() != null) {
+            items = new java.util.ArrayList<>();
+            for (InspectExecuteRequest.InspectItemDTO dto : req.getItems()) {
+                InspectionItemDTO item = new InspectionItemDTO();
+                item.setItemCode(dto.getItemCode());
+                item.setItemName(dto.getItemName());
+                item.setResult(dto.getResult());
+                item.setActualValue(dto.getActualValue());
+                item.setRemark(dto.getRemark());
+                items.add(item);
             }
         }
-
-        log.info("质检完成(含明细): taskId={}, result={}, operatorId={}, items={}", taskId, result, operatorId,
-                req.getItems() != null ? req.getItems().size() : 0);
-        return ir;
+        return inspectWithItems(req.getTaskId(), result, req.getOperatorId(), req.getRemark(), req.getReworkNode(), items);
     }
 
     /**
@@ -244,17 +293,5 @@ public class QualityServiceImpl implements QualityService {
         return result == InspectionResultType.CONCESSION
                 || result == InspectionResultType.REWORK
                 || result == InspectionResultType.SCRAP;
-    }
-
-    private Long resolveOperatorId(String operatorId) {
-        if (operatorId == null || operatorId.trim().isEmpty()) {
-            return 0L;
-        }
-        try {
-            return Long.valueOf(operatorId.trim());
-        } catch (NumberFormatException e) {
-            log.warn("operatorId 不是有效数字: {}, 使用默认值 0", operatorId);
-            return 0L;
-        }
     }
 }

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import cn.org.openygt.production.ProductionModule;
+import java.util.Arrays;
 import java.util.List;
 
 @RestController
@@ -32,6 +33,17 @@ public class TimeMonitorController {
     @GetMapping("/monitor/time-monitor/dashboard")
     public ApiResponse<TimeMonitorDashboardDTO> getDashboard() {
         return ApiResponse.success(timeMonitorService.getDashboard());
+    }
+
+    @GetMapping("/monitor/time-monitor/list")
+    public ApiResponse<IPage<TimeMonitorDashboardDTO.TimeMonitorItemDTO>> listMonitors(
+            @RequestParam(defaultValue = "all") String category,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        if (!Arrays.asList("all", "normal", "warning", "timeout", "resolved").contains(category)) {
+            return ApiResponse.error(400, "无效的分类参数: " + category);
+        }
+        return ApiResponse.success(timeMonitorService.listMonitorsByCategory(category, page, size));
     }
 
     @GetMapping("/monitor/time-monitor/{taskId}")

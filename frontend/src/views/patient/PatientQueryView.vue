@@ -47,8 +47,8 @@
       </el-row>
     </el-card>
 
-    <!-- 查询结果 -->
-    <el-card v-if="resultVisible" shadow="never">
+    <!-- 扫码查询结果 -->
+    <el-card v-if="resultVisible && queryType === 'code'" shadow="never">
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
           <span>查询结果</span>
@@ -57,28 +57,17 @@
       </template>
 
       <el-descriptions :column="2" border>
-        <el-descriptions-item label="处方号">{{ result.prescriptionNo }}</el-descriptions-item>
-        <el-descriptions-item label="患者姓名">{{ result.patientName }}</el-descriptions-item>
-        <el-descriptions-item label="医院">{{ result.hospitalName }}</el-descriptions-item>
-        <el-descriptions-item label="科室">{{ result.departmentName }}</el-descriptions-item>
-        <el-descriptions-item label="付数">{{ result.repetition }} 付</el-descriptions-item>
-        <el-descriptions-item label="剂数">{{ result.doseCount }} 剂</el-descriptions-item>
-        <el-descriptions-item label="预计完成">{{ result.estimatedFinishTime }}</el-descriptions-item>
-        <el-descriptions-item label="取药窗口">
-          <el-tag type="success" size="large">{{ result.pickupWindow || 'A01' }}</el-tag>
-        </el-descriptions-item>
+        <el-descriptions-item label="患者姓名">{{ result.patientName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="手机号">{{ result.patientPhone || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="当前状态">{{ result.currentStatus || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="进度">{{ result.progressPercent != null ? result.progressPercent + '%' : '-' }}</el-descriptions-item>
+        <el-descriptions-item label="预计完成">{{ result.estimatedFinishTime || '-' }}</el-descriptions-item>
       </el-descriptions>
 
       <div class="progress-section">
         <h4>煎药进度</h4>
-        <el-steps :active="result.stepIndex" finish-status="success" align-center>
-          <el-step title="处方接收" description="已接收" />
-          <el-step title="调剂" description="药材调配" />
-          <el-step title="浸泡" description="浸泡等待" />
-          <el-step title="煎煮" description="自动煎煮" />
-          <el-step title="包装" description="汤剂包装" />
-          <el-step title="质检" description="质量检验" />
-          <el-step title="待取药" description="窗口取药" />
+        <el-steps :active="activeStep" finish-status="success" align-center>
+          <el-step v-for="(step, idx) in stepList" :key="idx" :title="step.stepName" :description="step.status" />
         </el-steps>
       </div>
 
@@ -88,31 +77,53 @@
       </div>
     </el-card>
 
+    <!-- 手机号查询结果（处方列表） -->
+    <el-card v-if="resultVisible && queryType === 'phone'" shadow="never">
+      <template #header>
+        <div style="display: flex; justify-content: space-between; align-items: center">
+          <span>处方列表</span>
+          <el-button size="small" @click="resultVisible = false">关闭</el-button>
+        </div>
+      </template>
+      <el-table :data="prescriptionList" border @row-click="handleSelectPrescription">
+        <el-table-column prop="prescriptionNumber" label="处方号" min-width="140" />
+        <el-table-column prop="patientName" label="患者姓名" min-width="100" />
+        <el-table-column prop="department" label="科室" min-width="100" />
+        <el-table-column prop="repetition" label="付数" width="80" />
+        <el-table-column label="操作" width="120">
+          <template #default="{ row }">
+            <el-button link type="primary" @click.stop="handleSelectPrescription(row)">查看追溯</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
     <!-- 追溯弹窗 -->
     <el-dialog v-model="traceDialogVisible" title="处方追溯信息" width="640px">
-      <el-timeline>
+      <el-timeline v-if="traceList.length">
         <el-timeline-item
-          v-for="item in traceList"
-          :key="item.id"
-          :type="item.type || 'primary'"
-          :timestamp="item.time"
+          v-for="(item, idx) in traceList"
+          :key="idx"
+          :type="idx === traceList.length - 1 ? 'success' : 'primary'"
+          :timestamp="item.operateTime"
           placement="top"
         >
           <el-card shadow="hover" size="small">
-            <div style="font-weight: 600">{{ item.title }}</div>
-            <div style="color: var(--el-text-color-secondary); margin-top: 4px">{{ item.detail }}</div>
-            <div v-if="item.operator" style="color: var(--el-text-color-secondary); margin-top: 4px; font-size: 12px">
-              操作人：{{ item.operator }}
+            <div style="font-weight: 600">{{ item.stage }}</div>
+            <div style="color: var(--el-text-color-secondary); margin-top: 4px">{{ item.remark || '-' }}</div>
+            <div v-if="item.operatorName" style="color: var(--el-text-color-secondary); margin-top: 4px; font-size: 12px">
+              操作人：{{ item.operatorName }}
             </div>
           </el-card>
         </el-timeline-item>
       </el-timeline>
+      <el-empty v-else description="暂无追溯记录" />
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { FullScreen, Phone, Camera } from '@element-plus/icons-vue'
 import { queryByCode, queryByPhone, getPatientProgress, getPrescriptionTrace } from '@/api/newModules'
@@ -120,25 +131,63 @@ import { queryByCode, queryByPhone, getPatientProgress, getPrescriptionTrace } f
 const codeQuery = ref('')
 const phoneForm = reactive({ phone: '' })
 const resultVisible = ref(false)
+const queryType = ref<'code' | 'phone'>('code')
+
+// 扫码查询保存的 token 和处方ID
+const currentToken = ref('')
+const currentPrescriptionId = ref<number | string>('')
+
 const result = reactive<any>({
-  prescriptionNo: '',
   patientName: '',
-  hospitalName: '',
-  departmentName: '',
-  repetition: 0,
-  doseCount: 0,
+  patientPhone: '',
+  currentStatus: '',
+  progressPercent: 0,
   estimatedFinishTime: '',
-  pickupWindow: '',
-  stepIndex: 0
+  steps: []
 })
+
+const prescriptionList = ref<any[]>([])
+const stepList = computed(() => result.steps || [])
+const activeStep = computed(() => {
+  const steps = result.steps || []
+  // 找到最后一个"已完成"的索引+1
+  let active = 0
+  for (let i = 0; i < steps.length; i++) {
+    if (steps[i].status === '已完成') {
+      active = i + 1
+    } else if (steps[i].status === '进行中') {
+      active = i
+      break
+    }
+  }
+  return active
+})
+
+const traceDialogVisible = ref(false)
+const traceList = ref<any[]>([])
 
 async function handleCodeQuery() {
   if (!codeQuery.value.trim()) { ElMessage.warning('请输入条码'); return }
   try {
     const res = await queryByCode({ code: codeQuery.value.trim() }) as any
-    fillResult(res.data)
-  } catch {
-    fillMockResult()
+    const tokenData = res.data
+    if (!tokenData || !tokenData.token) {
+      ElMessage.warning('未找到查询码对应的记录')
+      return
+    }
+    currentToken.value = tokenData.token
+    currentPrescriptionId.value = tokenData.prescriptionId || ''
+
+    // 用 token 查进度
+    const progressRes = await getPatientProgress(tokenData.token) as any
+    const data = progressRes.data || {}
+    Object.assign(result, data)
+    queryType.value = 'code'
+    resultVisible.value = true
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '查询失败'
+    ElMessage.error(msg)
+    resultVisible.value = false
   }
 }
 
@@ -146,57 +195,65 @@ async function handlePhoneQuery() {
   if (!phoneForm.phone.trim()) { ElMessage.warning('请输入手机号'); return }
   try {
     const res = await queryByPhone({ phone: phoneForm.phone.trim() }) as any
-    fillResult(res.data)
-  } catch {
-    fillMockResult()
+    const list = res.data || []
+    if (!list.length) {
+      ElMessage.warning('未找到该手机号关联的处方')
+      return
+    }
+    prescriptionList.value = list
+    queryType.value = 'phone'
+    resultVisible.value = true
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '查询失败'
+    ElMessage.error(msg)
+    resultVisible.value = false
   }
 }
 
-function fillResult(data: any) {
-  Object.assign(result, data)
-  resultVisible.value = true
-}
-
-function fillMockResult() {
-  Object.assign(result, {
-    prescriptionNo: 'P202405010001',
-    patientName: '王患者',
-    hospitalName: '中医院',
-    departmentName: '内科',
-    repetition: 7,
-    doseCount: 14,
-    estimatedFinishTime: '2024-05-01 15:30',
-    pickupWindow: 'B03',
-    stepIndex: 4
-  })
-  resultVisible.value = true
+async function handleSelectPrescription(row: any) {
+  if (!row.id) return
+  currentPrescriptionId.value = row.id
+  currentToken.value = ''
+  // 显示追溯
+  traceDialogVisible.value = true
+  traceList.value = []
+  try {
+    const res = await getPrescriptionTrace(row.id) as any
+    traceList.value = res.data?.traces || []
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '查询追溯失败'
+    ElMessage.error(msg)
+  }
 }
 
 async function refreshProgress() {
+  if (!currentToken.value) {
+    ElMessage.warning('暂无查询令牌，请先扫码查询')
+    return
+  }
   try {
-    const res = await getPatientProgress(result.prescriptionNo) as any
+    const res = await getPatientProgress(currentToken.value) as any
     if (res.data) Object.assign(result, res.data)
     ElMessage.success('已刷新')
-  } catch {
-    ElMessage.info('进度未变化')
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '刷新失败'
+    ElMessage.error(msg)
   }
 }
 
-const traceDialogVisible = ref(false)
-const traceList = ref<any[]>([])
-
 async function openTraceDialog() {
+  if (!currentPrescriptionId.value) {
+    ElMessage.warning('暂无处方信息')
+    return
+  }
   traceDialogVisible.value = true
+  traceList.value = []
   try {
-    const res = await getPrescriptionTrace(result.prescriptionNo) as any
-    traceList.value = res.data || []
-  } catch {
-    traceList.value = [
-      { id: 1, title: '处方接收', detail: '处方已接收并录入系统', time: '2024-05-01 08:00', operator: '系统', type: 'success' },
-      { id: 2, title: '调剂完成', detail: '药材调配完成，进入浸泡环节', time: '2024-05-01 09:30', operator: '调剂员-张三', type: 'success' },
-      { id: 3, title: '浸泡开始', detail: '药材浸泡中，预计30分钟', time: '2024-05-01 09:45', operator: '系统', type: 'primary' },
-      { id: 4, title: '煎煮中', detail: '正在煎煮第1付', time: '2024-05-01 10:20', operator: '煎药机-01', type: 'warning' }
-    ]
+    const res = await getPrescriptionTrace(currentPrescriptionId.value) as any
+    traceList.value = res.data?.traces || []
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '查询追溯失败'
+    ElMessage.error(msg)
   }
 }
 </script>
