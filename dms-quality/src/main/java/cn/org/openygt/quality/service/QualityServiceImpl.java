@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -108,8 +109,8 @@ public class QualityServiceImpl implements QualityService {
     @Override
     public cn.org.openygt.common.dto.InspectionSummaryDTO getInspectionSummary(LocalDateTime from, LocalDateTime to) {
         LambdaQueryWrapper<Inspection> wrapper = new LambdaQueryWrapper<>();
-        if (from != null) wrapper.ge(Inspection::getCreatedAt, from);
-        if (to != null) wrapper.le(Inspection::getCreatedAt, to);
+        if (from != null) wrapper.ge(Inspection::getInspectedAt, from);
+        if (to != null) wrapper.le(Inspection::getInspectedAt, to);
         List<Inspection> list = inspectionMapper.selectList(wrapper);
 
         int total = list.size();
@@ -138,11 +139,15 @@ public class QualityServiceImpl implements QualityService {
     }
 
     @Override
-    public List<cn.org.openygt.common.dto.InspectionTrendDTO> getInspectionTrend(String groupBy) {
-        // 默认查最近 30 天
-        LocalDateTime from = LocalDateTime.now().minusDays(30);
+    public List<cn.org.openygt.common.dto.InspectionTrendDTO> getInspectionTrend(LocalDateTime from, LocalDateTime to, String groupBy) {
         LambdaQueryWrapper<Inspection> wrapper = new LambdaQueryWrapper<>();
-        wrapper.ge(Inspection::getCreatedAt, from);
+        if (from != null) {
+            wrapper.ge(Inspection::getInspectedAt, from);
+        } else {
+            // 默认查最近 30 天
+            wrapper.ge(Inspection::getInspectedAt, LocalDateTime.now().minusDays(30));
+        }
+        if (to != null) wrapper.le(Inspection::getInspectedAt, to);
         List<Inspection> list = inspectionMapper.selectList(wrapper);
 
         java.util.Map<String, cn.org.openygt.common.dto.InspectionTrendDTO> map = new java.util.TreeMap<>();
@@ -156,8 +161,8 @@ public class QualityServiceImpl implements QualityService {
         }
 
         for (Inspection i : list) {
-            if (i.getCreatedAt() == null || i.getResult() == null) continue;
-            String period = i.getCreatedAt().format(fmt);
+            if (i.getInspectedAt() == null || i.getResult() == null) continue;
+            String period = i.getInspectedAt().format(fmt);
             cn.org.openygt.common.dto.InspectionTrendDTO dto = map.computeIfAbsent(period, k -> {
                 cn.org.openygt.common.dto.InspectionTrendDTO d = new cn.org.openygt.common.dto.InspectionTrendDTO();
                 d.setPeriod(k);
@@ -178,6 +183,36 @@ public class QualityServiceImpl implements QualityService {
             }
         }
         return new java.util.ArrayList<>(map.values());
+    }
+
+    @Override
+    public List<Map<String, Object>> getInspectionReasonStat(LocalDateTime from, LocalDateTime to) {
+        LambdaQueryWrapper<Inspection> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Inspection::getIsException, 1);
+        if (from != null) wrapper.ge(Inspection::getInspectedAt, from);
+        if (to != null) wrapper.le(Inspection::getInspectedAt, to);
+        wrapper.isNotNull(Inspection::getExceptionReason);
+        List<Inspection> list = inspectionMapper.selectList(wrapper);
+
+        java.util.Map<String, int[]> map = new java.util.HashMap<>();
+        for (Inspection i : list) {
+            String reason = i.getExceptionReason();
+            if (reason == null || reason.trim().isEmpty()) continue;
+            int[] counts = map.computeIfAbsent(reason.trim(), k -> new int[2]);
+            counts[1]++; // fail
+        }
+
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (Map.Entry<String, int[]> entry : map.entrySet()) {
+            Map<String, Object> row = new java.util.HashMap<>();
+            row.put("item", entry.getKey());
+            row.put("pass", 0);
+            row.put("fail", entry.getValue()[1]);
+            result.add(row);
+        }
+        // 按不合格数降序
+        result.sort((a, b) -> Integer.compare((Integer) b.get("fail"), (Integer) a.get("pass")));
+        return result;
     }
 
     private Double round2(double v) {
