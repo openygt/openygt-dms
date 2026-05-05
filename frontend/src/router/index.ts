@@ -15,7 +15,7 @@ const router = createRouter({
         { path: 'tasks', name: 'Tasks', component: () => import('@/views/task/TaskListView.vue'), meta: { title: '煎药任务', perm: 'prod:task:view' } },
         { path: 'prescriptions', name: 'Prescriptions', component: () => import('@/views/prod/PrescriptionListView.vue'), meta: { title: '处方管理', perm: 'prod:prescription:list' } },
         { path: 'consume-log', name: 'ConsumeLog', component: () => import('@/views/inventory/ConsumeLogView.vue'), meta: { title: '药材消耗', perm: 'inv:log:list' } },
-        { path: 'devices', name: 'Devices', component: () => import('@/views/eq/DeviceListView.vue'), meta: { title: '设备台账', perm: 'eq:device:list' } },
+        { path: 'devices', name: 'Devices', component: () => import('@/views/eq/DeviceListView.vue'), meta: { title: '设备管理', perm: 'eq:device:list' } },
         { path: 'device-monitor', name: 'DeviceMonitor', component: () => import('@/views/eq/DeviceMonitorView.vue'), meta: { title: '设备监控', perm: 'eq:device:monitor' } },
         { path: 'device/:code/detail', name: 'DeviceDetail', component: () => import('@/views/eq/DeviceDetailView.vue'), meta: { title: '设备详情' } },
         { path: 'alarms', name: 'Alarms', component: () => import('@/views/monitor/AlarmLogView.vue'), meta: { title: '告警管理', perm: 'eq:alarm:view' } },
@@ -91,11 +91,11 @@ router.beforeEach(async (to, from, next) => {
     next('/login')
     return
   }
-  // 开发环境跳过权限检查（数字孪生演示用）
-  // if (to.meta.perm && !userStore.hasPermission(to.meta.perm as string)) {
-  //   next('/dashboard')
-  //   return
-  // }
+  // 生产环境强制执行 meta.perm 权限校验；开发环境跳过以便调试
+  if (!import.meta.env.DEV && to.meta.perm && !userStore.hasPermission(to.meta.perm as string)) {
+    next('/dashboard')
+    return
+  }
   next()
 })
 
