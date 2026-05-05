@@ -2,14 +2,12 @@
   <div class="device-utilization" v-loading="pageLoading" element-loading-text="加载中..." element-loading-background="rgba(255,255,255,0.9)">
     <div class="page-header-title">设备效能：<span class="page-header-sub">设备开机率、空闲率、故障率趋势</span></div>
     <div class="page-header">
-
-      <el-button type="primary" @click="exportData">导出</el-button>
     </div>
 
     <el-card class="filter-card">
       <el-form :inline="true">
         <el-form-item label="设备">
-          <el-select v-model="filter.deviceCode" placeholder="全部设备" clearable>
+          <el-select v-model="filter.deviceCode" placeholder="请选择" clearable style="width: 220px">
             <el-option v-for="d in deviceOptions" :key="d" :label="d" :value="d" />
           </el-select>
         </el-form-item>
