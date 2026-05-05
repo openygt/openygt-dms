@@ -60,7 +60,7 @@
       </el-row>
 
       <el-table :data="list" v-loading="loading" border>
-        <el-table-column prop="date" label="日期" />
+        <el-table-column prop="statDate" label="日期" />
         <el-table-column prop="taskCount" label="任务数" />
         <el-table-column prop="completedCount" label="已完成" />
         <el-table-column prop="doseCount" label="付数" />
@@ -80,7 +80,7 @@ import { ref, onMounted } from 'vue'
 import request from '@/api/request'
 
 interface ReportItem {
-  date: string
+  statDate: string
   taskCount: number
   completedCount: number
   doseCount: number

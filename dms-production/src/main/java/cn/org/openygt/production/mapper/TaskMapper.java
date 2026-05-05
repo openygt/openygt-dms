@@ -32,7 +32,8 @@ public interface TaskMapper extends BaseMapper<Task> {
      */
     @Select("SELECT DATE(t.created_at) as statDate, COUNT(*) as totalTasks, " +
             "SUM(CASE WHEN t.status = '已完成' OR t.status = '已部分完成' THEN 1 ELSE 0 END) as completedTasks, " +
-            "SUM(COALESCE(p.repetition * p.bags_per_repetition, 1)) as doseCount, " +
+            "SUM(CASE WHEN t.status IN ('已完成', '已部分完成') " +
+            "     THEN COALESCE(p.repetition * p.bags_per_repetition, 1) ELSE 0 END) as doseCount, " +
             "AVG(CASE WHEN t.status IN ('已完成', '已部分完成') AND t.complete_time IS NOT NULL " +
             "     THEN TIMESTAMPDIFF(MINUTE, t.created_at, t.complete_time) ELSE NULL END) as avgDurationMinutes " +
             "FROM prod_task t LEFT JOIN prod_prescription p ON t.prescription_id = p.id " +
