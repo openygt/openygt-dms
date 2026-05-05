@@ -4,10 +4,14 @@ import cn.org.openygt.common.dto.EqDeviceDTO;
 import cn.org.openygt.common.enums.InspectionResultType;
 import cn.org.openygt.common.service.EquipmentService;
 import cn.org.openygt.common.service.PrintService;
+import cn.org.openygt.common.dto.InspectionResult;
+import cn.org.openygt.common.service.QualityService;
+import cn.org.openygt.common.service.RetainSampleFacade;
 import cn.org.openygt.inventory.dto.ConsumeRecordRequest;
 import cn.org.openygt.inventory.service.ConsumeRecordService;
 import cn.org.openygt.production.entity.*;
 import cn.org.openygt.production.mapper.*;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -17,7 +21,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -57,15 +60,23 @@ class TaskServiceImplTest {
     private ConsumeRecordService consumeRecordService;
     @Mock
     private cn.org.openygt.production.mapper.HrEmployeeMapper hrEmployeeMapper;
+    @Mock
+    private RetainSampleFacade retainSampleFacade;
+    @Mock
+    private QualityService qualityService;
 
     private TaskServiceImpl taskService;
 
     @BeforeEach
     void setUp() {
+        lenient().when(qualityService.inspect(anyLong(), any(), any(), any(), any()))
+                .thenReturn(new InspectionResult());
+        lenient().doNothing().when(retainSampleFacade).createAfterPass(anyLong(), anyLong(), any());
         taskService = new TaskServiceImpl(
                 taskMapper, historyMapper, workRecordMapper, stepLogMapper,
                 handoverDetailMapper, prescriptionMedicineMapper, prescriptionMapper,
-                equipmentService, printService, consumeRecordService, hrEmployeeMapper
+                equipmentService, printService, consumeRecordService, hrEmployeeMapper,
+                retainSampleFacade, qualityService
         );
     }
 
@@ -673,6 +684,8 @@ class TaskServiceImplTest {
     @Test
     @DisplayName("queryTasks: 按状态和设备 ID 分页查询")
     void testQueryTasksWithFilters() {
+        when(taskMapper.selectPage(any(), any())).thenReturn(new Page<>(1, 20, 0));
+
         taskService.queryTasks("煎药中", 10L, null, null, null, null, null, null, null, 1, 20);
 
         verify(taskMapper).selectPage(any(), any());

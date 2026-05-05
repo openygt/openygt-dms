@@ -6,8 +6,10 @@ import cn.org.openygt.production.entity.Task;
 import cn.org.openygt.production.service.TaskService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/prod/tasks")
 @RequiredArgsConstructor
@@ -54,6 +56,18 @@ public class TaskController {
         InspectionResultType resultType = InspectionResultType.valueOf(request.getResult());
         return ApiResponse.success(taskService.qualityInspect(id, resultType,
                 resolveOperatorId(request.getOperatorId(), userId), request.getRemark(), request.getReworkNode()));
+    }
+
+    /**
+     * 详细质检（含检查项明细）：后端原子接口，统一完成 任务推进 + 台账写入 + 留样创建。
+     */
+    @PostMapping("/{id}/quality-detail")
+    public ApiResponse<Task> qualityInspectWithItems(@PathVariable Long id,
+                                                      @RequestBody QualityDetailRequest request,
+                                                      @RequestAttribute(value = "userId", required = false) Long userId) {
+        InspectionResultType resultType = InspectionResultType.valueOf(request.getResult());
+        return ApiResponse.success(taskService.qualityInspectWithItems(id, resultType,
+                resolveOperatorId(request.getOperatorId(), userId), request.getRemark(), request.getReworkNode(), request.getItems()));
     }
 
     @PostMapping("/{id}/suspend")
@@ -111,6 +125,15 @@ public class TaskController {
         private String operatorId;
         private String remark;
         private String reworkNode;
+    }
+
+    @lombok.Data
+    public static class QualityDetailRequest {
+        private String result;
+        private String operatorId;
+        private String remark;
+        private String reworkNode;
+        private java.util.List<cn.org.openygt.common.dto.InspectionItemDTO> items;
     }
 
     @lombok.Data

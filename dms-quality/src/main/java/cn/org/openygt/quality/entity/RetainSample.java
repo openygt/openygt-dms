@@ -18,7 +18,7 @@ public class RetainSample extends BaseEntity {
     private Long taskId;
     private Long prescriptionId;
     private String sampleNo;
-    /** 1=质检样 2=24h留样 3=72h留样 */
+    /** 固定 7 天留样，恒为 4（库字段保留以兼容历史脚本） */
     private Integer sampleType;
     private Integer retainDuration;
     private LocalDateTime retainTime;
