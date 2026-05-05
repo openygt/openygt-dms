@@ -182,6 +182,10 @@
 import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const currentOperatorId = computed(() => userStore.userInfo?.username || 'unknown')
 
 interface QcRecord {
   id: number
@@ -326,21 +330,20 @@ function openInspectDialog(row: Task, result: string) {
 async function handleInspectSubmit() {
   try {
     const { taskId, result, remark } = inspectForm.value
-    // 1. 更新生产任务状态
+    // 生产接口内已同步：任务状态 + 留样 + qt_inspection，勿再调 /v1/qt/inspect（旧版会重复留样）
     await request.post(`/v1/prod/tasks/${taskId}/quality`, {
       result,
-      operatorId: 'admin',
+      operatorId: currentOperatorId.value,
       remark
-    })
-    // 2. 记录质检结果
-    await request.post('/v1/qt/inspect', null, {
-      params: { taskId, result, operatorId: 'admin', remark }
     })
     ElMessage.success(result === 'PASS' ? '质检已通过' : '质检已标记不通过')
     inspectVisible.value = false
     fetchPendingTasks()
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '操作失败'
+    ElMessage.error(msg)
+  }
 }
 
 // 打开返工弹窗
@@ -398,22 +401,20 @@ async function handleReworkSubmit() {
   }
   try {
     const { taskId, reworkNode, remark } = reworkForm.value
-    // 1. 更新生产任务状态
     await request.post(`/v1/prod/tasks/${taskId}/quality`, {
       result: 'REWORK',
-      operatorId: 'admin',
+      operatorId: currentOperatorId.value,
       remark,
       reworkNode
-    })
-    // 2. 记录质检结果
-    await request.post('/v1/qt/inspect', null, {
-      params: { taskId, result: 'REWORK', operatorId: 'admin', remark, reworkNode }
     })
     ElMessage.success('返工已提交')
     reworkVisible.value = false
     fetchPendingTasks()
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '操作失败'
+    ElMessage.error(msg)
+  }
 }
 
 // 打开详细质检弹窗
@@ -438,26 +439,22 @@ async function handleDetailInspectSubmit() {
   try {
     const req = {
       taskId: form.taskId,
-      operatorId: 'admin',
+      operatorId: currentOperatorId.value,
       overallResult: form.overallResult,
       remark: form.remark,
       reworkNode: form.reworkNode,
       items: form.items
     }
-    // 1. 调用详细质检接口
-    await request.post('/v1/qt/inspect/detail', req)
-    // 2. 更新生产任务状态
-    await request.post(`/v1/prod/tasks/${form.taskId}/quality`, {
-      result: form.overallResult,
-      operatorId: 'admin',
-      remark: form.remark,
-      reworkNode: form.reworkNode
-    })
+    // 详细质检走后端原子接口：任务推进 + 台账 + 检查项 + 留样 在一个事务内完成
+    await request.post(`/v1/prod/tasks/${form.taskId}/quality-detail`, req)
     ElMessage.success('质检已提交')
     detailInspectVisible.value = false
     fetchPendingTasks()
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '操作失败'
+    ElMessage.error(msg)
+  }
 }
 
 onMounted(() => {
