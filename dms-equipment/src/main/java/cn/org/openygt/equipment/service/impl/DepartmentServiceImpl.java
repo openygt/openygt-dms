@@ -3,7 +3,7 @@ package cn.org.openygt.equipment.service.impl;
 import cn.org.openygt.equipment.entity.Department;
 import cn.org.openygt.equipment.mapper.DepartmentMapper;
 import cn.org.openygt.equipment.service.DepartmentService;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -17,22 +17,22 @@ public class DepartmentServiceImpl extends ServiceImpl<DepartmentMapper, Departm
 
     @Override
     public IPage<Department> list(String keyword, Long hospitalId, int page, int size) {
-        QueryWrapper<Department> wrapper = new QueryWrapper<>();
+        LambdaQueryWrapper<Department> wrapper = new LambdaQueryWrapper<>();
         if (keyword != null && !keyword.isEmpty()) {
-            wrapper.and(w -> w.like("dept_name", keyword)
-                    .or().like("dept_code", keyword));
+            wrapper.and(w -> w.like(Department::getDeptName, keyword)
+                    .or().like(Department::getDeptCode, keyword));
         }
         if (hospitalId != null) {
-            wrapper.eq("hospital_id", hospitalId);
+            wrapper.eq(Department::getHospitalId, hospitalId);
         }
-        wrapper.orderByAsc("sort_order");
+        wrapper.orderByAsc(Department::getSortOrder);
         return baseMapper.selectPage(new Page<>(page, size), wrapper);
     }
 
     @Override
     public List<Department> listAll() {
-        QueryWrapper<Department> wrapper = new QueryWrapper<>();
-        wrapper.orderByAsc("sort_order");
+        LambdaQueryWrapper<Department> wrapper = new LambdaQueryWrapper<>();
+        wrapper.orderByAsc(Department::getSortOrder);
         return baseMapper.selectList(wrapper);
     }
 
@@ -41,6 +41,12 @@ public class DepartmentServiceImpl extends ServiceImpl<DepartmentMapper, Departm
     public Department create(Department department) {
         if (department.getStatus() == null) {
             department.setStatus(1);
+        }
+        // 校验编码唯一性
+        LambdaQueryWrapper<Department> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Department::getDeptCode, department.getDeptCode());
+        if (baseMapper.selectCount(wrapper) > 0) {
+            throw new IllegalArgumentException("科室编码已存在: " + department.getDeptCode());
         }
         baseMapper.insert(department);
         return department;
@@ -52,6 +58,14 @@ public class DepartmentServiceImpl extends ServiceImpl<DepartmentMapper, Departm
         Department existing = baseMapper.selectById(id);
         if (existing == null) {
             throw new IllegalArgumentException("科室不存在: " + id);
+        }
+        // 校验编码唯一性（排除自身）
+        if (department.getDeptCode() != null && !department.getDeptCode().equals(existing.getDeptCode())) {
+            LambdaQueryWrapper<Department> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(Department::getDeptCode, department.getDeptCode()).ne(Department::getId, id);
+            if (baseMapper.selectCount(wrapper) > 0) {
+                throw new IllegalArgumentException("科室编码已存在: " + department.getDeptCode());
+            }
         }
         department.setId(id);
         baseMapper.updateById(department);
@@ -70,6 +84,12 @@ public class DepartmentServiceImpl extends ServiceImpl<DepartmentMapper, Departm
     @Override
     @Transactional
     public void delete(Long id) {
-        baseMapper.deleteById(id);
+        Department existing = baseMapper.selectById(id);
+        if (existing == null) {
+            throw new IllegalArgumentException("科室不存在: " + id);
+        }
+        // 禁用优先，避免物理删除造成孤儿数据
+        existing.setStatus(0);
+        baseMapper.updateById(existing);
     }
 }

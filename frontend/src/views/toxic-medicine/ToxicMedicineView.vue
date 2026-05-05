@@ -23,6 +23,11 @@
             {{ row.washLevel === 2 ? '强化' : '常规' }}
           </template>
         </el-table-column>
+        <el-table-column prop="isActive" label="状态" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.isActive === 1 ? 'success' : 'danger'">{{ row.isActive === 1 ? '启用' : '禁用' }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="180">
           <template #default="{row}">
             <el-button size="small" @click="handleEdit(row)">编辑</el-button>
@@ -34,30 +39,36 @@
 
     <el-dialog :title="dialogTitle" v-model="dialogVisible" width="500px">
       <el-form :model="form" label-width="120px">
-        <el-form-item label="药材ID">
-          <el-input v-model="form.medicineId" type="number" />
+        <el-form-item label="药材ID" required>
+          <el-input v-model.number="form.medicineId" type="number" />
         </el-form-item>
-        <el-form-item label="药材名称">
+        <el-form-item label="药材名称" required>
           <el-input v-model="form.medicineName" />
         </el-form-item>
-        <el-form-item label="毒性等级">
+        <el-form-item label="毒性等级" required>
           <el-select v-model="form.toxicityLevel">
             <el-option label="小毒" :value="1" />
             <el-option label="有毒" :value="2" />
             <el-option label="大毒" :value="3" />
           </el-select>
         </el-form-item>
-        <el-form-item label="单次最大用量">
+        <el-form-item label="单次最大用量" required>
           <el-input v-model="form.maxDosage" type="number" />
         </el-form-item>
-        <el-form-item label="每日最大用量">
+        <el-form-item label="每日最大用量" required>
           <el-input v-model="form.maxDailyDosage" type="number" />
         </el-form-item>
-        <el-form-item label="清洗级别">
+        <el-form-item label="清洗级别" required>
           <el-select v-model="form.washLevel">
             <el-option label="常规" :value="1" />
             <el-option label="强化" :value="2" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="状态" required>
+          <el-radio-group v-model="form.isActive">
+            <el-radio :label="1">启用</el-radio>
+            <el-radio :label="0">禁用</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" />
@@ -92,9 +103,9 @@ const fetchList = async () => {
   loading.value = true
   try {
     const res = await request.get('/v1/base/toxic-medicine')
-    list.value = res.data.data?.records || []
-  } catch (e) {
-    ElMessage.error('获取列表失败')
+    list.value = res.data?.records || []
+  } catch (e: any) {
+    ElMessage.error(e?.message || '获取列表失败')
   } finally {
     loading.value = false
   }
@@ -124,8 +135,8 @@ const handleSubmit = async () => {
     ElMessage.success('保存成功')
     dialogVisible.value = false
     fetchList()
-  } catch (e) {
-    ElMessage.error('保存失败')
+  } catch (e: any) {
+    ElMessage.error(e?.message || '保存失败')
   }
 }
 
@@ -135,8 +146,10 @@ const handleDelete = async (row: any) => {
     await request.delete(`/v1/base/toxic-medicine/${row.id}`)
     ElMessage.success('删除成功')
     fetchList()
-  } catch (e) {
-    // cancel
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e?.message || '删除失败')
+    }
   }
 }
 

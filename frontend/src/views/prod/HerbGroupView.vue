@@ -133,9 +133,14 @@ async function loadGroups() {
 }
 
 async function handleConfirm(group: HerbGroupItem) {
-  await confirmHerbGroup(group.id, {})
-  group.confirmed = true
-  ElMessage.success(`${group.name} 投料确认成功`)
+  try {
+    await confirmHerbGroup(group.id, {})
+    group.confirmed = true
+    ElMessage.success(`${group.name} 投料确认成功`)
+  } catch (err: any) {
+    const msg = err?.message || err?.response?.data?.message || '投料确认失败'
+    ElMessage.error(msg)
+  }
 }
 
 onMounted(async () => {
