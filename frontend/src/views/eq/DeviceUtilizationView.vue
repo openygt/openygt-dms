@@ -63,12 +63,12 @@
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
-import { getDeviceUtilizationStats, getDeviceUtilizationTrend } from '@/api/equipment'
+import { getDeviceList, getDeviceUtilizationStats, getDeviceUtilizationTrend } from '@/api/equipment'
 
 const pageLoading = ref(true)
 const loading = ref(false)
 const utilizationList = ref<any[]>([])
-const deviceOptions = ref<string[]>(['DECOCT_001', 'DECOCT_002', 'PACK_001'])
+const deviceOptions = ref<string[]>([])
 const trendChartRef = ref<HTMLElement>()
 let trendChart: echarts.ECharts | null = null
 
@@ -135,13 +135,23 @@ function exportData() {
   ElMessage.success('导出功能开发中')
 }
 
+async function loadDeviceOptions() {
+  try {
+    const res: any = await getDeviceList({ page: 1, size: 999 })
+    const devices = res.data?.records || res.data || []
+    deviceOptions.value = devices.map((d: any) => d.deviceCode).filter(Boolean)
+  } catch (err) {
+    // 静默失败，保留空列表
+  }
+}
+
 onMounted(() => {
   nextTick(() => {
     if (trendChartRef.value) {
       trendChart = echarts.init(trendChartRef.value)
       window.addEventListener('resize', () => trendChart?.resize())
     }
-    loadData().finally(() => {
+    Promise.all([loadDeviceOptions(), loadData()]).finally(() => {
       setTimeout(() => { pageLoading.value = false }, 400)
     })
   })

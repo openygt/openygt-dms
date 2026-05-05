@@ -1,8 +1,10 @@
 package cn.org.openygt.equipment.service.impl;
 
 import cn.org.openygt.equipment.entity.DeviceUtilization;
+import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.entity.EqDeviceStatus;
 import cn.org.openygt.equipment.mapper.DeviceUtilizationMapper;
+import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceStatusMapper;
 import cn.org.openygt.equipment.service.DeviceUtilizationService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,7 @@ public class DeviceUtilizationServiceImpl implements DeviceUtilizationService {
 
     private final DeviceUtilizationMapper utilizationMapper;
     private final EqDeviceStatusMapper statusMapper;
+    private final EqDeviceMapper eqDeviceMapper;
 
     @Override
     public List<DeviceUtilization> queryUtilization(String deviceCode, LocalDate startDate, LocalDate endDate) {
@@ -94,28 +97,27 @@ public class DeviceUtilizationServiceImpl implements DeviceUtilizationService {
             }
         }
 
-        // 也处理当天无快照但有前序状态的设备
-        Set<String> allDeviceCodes = new HashSet<>();
-        if (snapshots != null) {
-            for (EqDeviceStatus s : snapshots) {
-                allDeviceCodes.add(s.getDeviceCode());
-            }
-        }
         int totalMinutesPerDay = 24 * 60; // 1440
 
-        // 收集需要处理的设备编码：当天有快照的 + 前一天最后一条快照存在的
-        Set<String> devicesToProcess = new HashSet<>(byDevice.keySet());
-
-        for (String deviceCode : byDevice.keySet()) {
-            EqDeviceStatus preStatus = statusMapper.findLatestBeforeTime(deviceCode, startStr);
-            if (preStatus != null) {
-                devicesToProcess.add(deviceCode); // 确保包含
-            }
+        // 从 eq_device 获取所有设备编码，确保当天无快照但有前序状态的设备也被处理
+        List<EqDevice> allDevices = eqDeviceMapper.findAllDeviceCodes();
+        Set<String> devicesToProcess = new HashSet<>();
+        for (EqDevice d : allDevices) {
+            devicesToProcess.add(d.getDeviceCode());
         }
 
-        // 也处理只有前序状态、当天无快照的设备
-        // 先获取所有在 eq_device_status 中出现过的设备（简化：从当天快照+前一天快照获取）
-        // 更完善的方式是查询 eq_device 表，但这里先简化
+        // 批量查询当天各设备的完成任务数
+        Map<String, Integer> taskCountMap = new HashMap<>();
+        List<Map<String, Object>> taskCountRows = utilizationMapper.selectTaskCountByDevice(date.toString());
+        if (taskCountRows != null) {
+            for (Map<String, Object> row : taskCountRows) {
+                String code = (String) row.get("device_code");
+                Object cnt = row.get("task_count");
+                if (code != null && cnt != null) {
+                    taskCountMap.put(code, ((Number) cnt).intValue());
+                }
+            }
+        }
 
         for (String deviceCode : devicesToProcess) {
             List<EqDeviceStatus> list = byDevice.getOrDefault(deviceCode, new ArrayList<>());
@@ -230,7 +232,7 @@ public class DeviceUtilizationServiceImpl implements DeviceUtilizationService {
             util.setUtilizationRate(utilizationRate);
             util.setAvailabilityRate(availabilityRate);
             util.setFaultCount(faultCount);
-            util.setTaskCount(0);
+            util.setTaskCount(taskCountMap.getOrDefault(deviceCode, 0));
             util.setCreatedAt(LocalDateTime.now());
             util.setUpdatedAt(LocalDateTime.now());
             util.setDeleted(0);
