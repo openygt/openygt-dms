@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Collections;
+import java.util.concurrent.Executor;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -29,6 +30,9 @@ class MessageRouterTest {
     @Mock
     private GatewayDeviceSessionController gatewayDeviceSessionController;
 
+    @Mock
+    private Executor asyncExecutor;
+
     private GatewayProperties properties;
     private MessageRouter router;
 
@@ -38,7 +42,7 @@ class MessageRouterTest {
         properties.setBackendUrl("http://equipment-service");
         properties.getRetry().setMaxAttempts(3);
         properties.getRetry().setBackoffMillis(0L);
-        router = new MessageRouter(restTemplate, properties, gatewayDeviceSessionController);
+        router = new MessageRouter(restTemplate, properties, gatewayDeviceSessionController, asyncExecutor);
     }
 
     @Test

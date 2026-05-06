@@ -52,7 +52,7 @@
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑规格' : '新增规格'" width="560px">
-      <el-form :model="form" label-width="100px">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-form-item label="规格编码" required>
           <el-input v-model="form.specCode" />
         </el-form-item>
@@ -120,6 +120,14 @@ const total = ref(0)
 
 const search = reactive({ keyword: '' })
 const form = ref<Partial<PackageSpec>>({ status: 1 })
+const formRef = ref<any>(null)
+const formRules = {
+  specCode: [{ required: true, message: '规格编码不能为空', trigger: 'blur' }],
+  specName: [{ required: true, message: '规格名称不能为空', trigger: 'blur' }],
+  volumeMl: [{ required: true, message: '容量不能为空', trigger: 'change' }],
+  bagType: [{ required: true, message: '袋型不能为空', trigger: 'change' }],
+  status: [{ required: true, message: '状态不能为空', trigger: 'change' }],
+}
 
 async function fetchData() {
   loading.value = true
@@ -151,6 +159,8 @@ function openDialog(row?: PackageSpec) {
 }
 
 async function handleSave() {
+  if (!formRef.value) return
+  await formRef.value.validate()
   try {
     if (form.value.id) {
       await updatePackageSpec(form.value.id, form.value)

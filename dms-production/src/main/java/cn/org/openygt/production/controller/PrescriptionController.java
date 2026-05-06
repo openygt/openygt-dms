@@ -33,7 +33,7 @@ public class PrescriptionController {
 
     @GetMapping("/{id}")
     public ApiResponse<Prescription> getById(@PathVariable Long id) {
-        Prescription p = prescriptionService.getById(id);
+        Prescription p = prescriptionService.getDetail(id);
         return p == null ? ApiResponse.error(404, "处方不存在") : ApiResponse.success(p);
     }
 

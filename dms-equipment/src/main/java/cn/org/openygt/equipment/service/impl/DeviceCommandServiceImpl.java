@@ -46,6 +46,11 @@ public class DeviceCommandServiceImpl implements DeviceCommandService {
         command.setCommandPayload(payload);
         command.setStatus("PENDING");
         command.setRetryCount(0);
+        // 按指令类型推导风险元数据
+        RiskMeta meta = resolveRiskMeta(commandType);
+        command.setCommandLevel(meta.commandLevel);
+        command.setRiskLevel(meta.riskLevel);
+        command.setRequireConfirm(meta.requireConfirm);
         command.setCreatedAt(LocalDateTime.now());
         command.setUpdatedAt(LocalDateTime.now());
         commandMapper.insert(command);
@@ -117,6 +122,47 @@ public class DeviceCommandServiceImpl implements DeviceCommandService {
             case "STOP":
             case "END_TASK": return "IDLE";
             default: return null;
+        }
+    }
+
+    /**
+     * 按指令类型推导风险元数据。
+     * 后端统一推导，不依赖前端传入，确保高风险指令在库表中可识别。
+     */
+    private RiskMeta resolveRiskMeta(String commandType) {
+        if (commandType == null) {
+            return new RiskMeta("NORMAL", "LOW", 0);
+        }
+        switch (commandType) {
+            case "EMERGENCY_STOP":
+                return new RiskMeta("CRITICAL", "HIGH", 1);
+            case "STOP":
+            case "PAUSE":
+            case "PAUSE_PRINT":
+                return new RiskMeta("IMPORTANT", "MEDIUM", 1);
+            case "START_SOAK":
+            case "START_DECOCT":
+            case "START_PACKAGE":
+            case "START_PRINT":
+            case "REPRINT_LABEL":
+            case "RESUME":
+            case "SET_TEMP":
+            case "ADD_LATE_REMIND":
+            case "CONFIRM_ADD_LATE":
+                return new RiskMeta("NORMAL", "LOW", 0);
+            default:
+                return new RiskMeta("NORMAL", "LOW", 0);
+        }
+    }
+
+    private static class RiskMeta {
+        final String commandLevel;
+        final String riskLevel;
+        final Integer requireConfirm;
+        RiskMeta(String commandLevel, String riskLevel, Integer requireConfirm) {
+            this.commandLevel = commandLevel;
+            this.riskLevel = riskLevel;
+            this.requireConfirm = requireConfirm;
         }
     }
 

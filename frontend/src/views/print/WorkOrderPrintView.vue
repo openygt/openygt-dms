@@ -77,6 +77,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
+import { useUserStore } from '@/stores/user'
 
 const loading = ref(false)
 const tableData = ref<any[]>([])
@@ -95,6 +96,7 @@ async function loadData() {
     })
     const pageData = res.data || {}
     tableData.value = (pageData.records || []).map((item: any) => ({
+      id: item.id,
       prescriptionNo: item.prescriptionNo || '-',
       patientName: item.patientName || '-',
       deviceCode: item.deviceCode || '-',
@@ -106,12 +108,9 @@ async function loadData() {
     }))
     pagination.total = pageData.total || 0
   } catch (e) {
-    // 接口可能不存在，使用模拟数据
-    tableData.value = [
-      { prescriptionNo: 'PRE20260401001', patientName: '张三', deviceCode: 'JY-001', schemeName: '常压煎煮', decoctTime: '45', packageType: '袋装', status: 'PENDING', remark: '先煎30分钟' },
-      { prescriptionNo: 'PRE20260401002', patientName: '李四', deviceCode: 'JY-002', schemeName: '高压煎煮', decoctTime: '30', packageType: '袋装', status: 'PRINTED', remark: '' },
-    ]
-    pagination.total = 2
+    tableData.value = []
+    pagination.total = 0
+    // 错误已由拦截器提示
   } finally {
     loading.value = false
   }
@@ -130,20 +129,44 @@ function preview(row: any) {
   previewVisible.value = true
 }
 
-function printRow(row: any) {
-  ElMessage.success(`工单 ${row.prescriptionNo} 已发送打印`)
+async function printRow(row: any) {
+  if (!row.id) {
+    ElMessage.warning('任务ID不存在，无法打印')
+    return
+  }
+  try {
+    const userStore = useUserStore()
+    await request.post(`/v1/prt/tasks/${row.id}/submit`, null, {
+      params: { deviceCode: row.deviceCode || '', operatorId: userStore.userInfo?.username || '' }
+    })
+    ElMessage.success(`工单 ${row.prescriptionNo} 已提交打印`)
+    loadData()
+  } catch (e) {
+    // 错误已由拦截器提示
+  }
 }
 
 function handleSelectionChange(rows: any[]) {
   selectedRows.value = rows
 }
 
-function batchPrint() {
+async function batchPrint() {
   if (selectedRows.value.length === 0) {
     ElMessage.warning('请先选择工单')
     return
   }
-  ElMessage.success(`已发送 ${selectedRows.value.length} 张工单打印`)
+  try {
+    const userStore = useUserStore()
+    await Promise.all(selectedRows.value.map(row =>
+      request.post(`/v1/prt/tasks/${row.id}/submit`, null, {
+        params: { deviceCode: row.deviceCode || '', operatorId: userStore.userInfo?.username || '' }
+      })
+    ))
+    ElMessage.success(`已提交 ${selectedRows.value.length} 张工单打印`)
+    loadData()
+  } catch (e) {
+    // 错误已由拦截器提示
+  }
 }
 
 onMounted(loadData)

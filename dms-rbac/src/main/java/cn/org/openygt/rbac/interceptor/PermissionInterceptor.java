@@ -41,6 +41,13 @@ public class PermissionInterceptor implements HandlerInterceptor {
             return false;
         }
 
+        // 管理员/主任拥有全部权限，直接放行
+        boolean adminLike = (roles != null && (roles.contains("ROLE_ADMIN") || roles.contains("ROLE_DIRECTOR")))
+                || (permissions != null && (permissions.contains("ROLE_ADMIN") || permissions.contains("ROLE_DIRECTOR")));
+        if (adminLike) {
+            return true;
+        }
+
         for (String required : ann.value()) {
             if (roles != null && roles.contains(required)) {
                 return true;

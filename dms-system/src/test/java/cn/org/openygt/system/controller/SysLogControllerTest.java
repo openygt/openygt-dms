@@ -40,7 +40,7 @@ class SysLogControllerTest {
     @Test
     void list_shouldReturnPagedResult() throws Exception {
         Page<SysLog> page = new Page<>(1, 20);
-        when(logService.list(anyString(), anyInt(), anyInt())).thenReturn(page);
+        when(logService.list(anyString(), isNull(), anyInt(), anyInt())).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/sys/logs")
                         .param("keyword", "test")
@@ -53,7 +53,7 @@ class SysLogControllerTest {
     @Test
     void list_shouldReturnAll_whenNoKeyword() throws Exception {
         Page<SysLog> page = new Page<>(1, 20);
-        when(logService.list(isNull(), anyInt(), anyInt())).thenReturn(page);
+        when(logService.list(isNull(), isNull(), anyInt(), anyInt())).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/sys/logs"))
                 .andExpect(status().isOk())

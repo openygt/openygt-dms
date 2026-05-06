@@ -21,7 +21,11 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="deptCode" label="编码" width="120" />
         <el-table-column prop="deptName" label="名称" />
-        <el-table-column prop="hospitalId" label="医院ID" width="100" />
+        <el-table-column label="所属医院" width="180">
+          <template #default="{ row }">
+            <span>{{ hospitalMap[row.hospitalId] || '-' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="description" label="描述" />
         <el-table-column prop="sortOrder" label="排序" width="80" />
         <el-table-column prop="status" label="状态" width="100">
@@ -58,8 +62,10 @@
         <el-form-item label="科室名称" required>
           <el-input v-model="form.deptName" />
         </el-form-item>
-        <el-form-item label="医院ID">
-          <el-input v-model.number="form.hospitalId" type="number" />
+        <el-form-item label="所属医院" required>
+          <el-select v-model="form.hospitalId" placeholder="请选择医院" clearable style="width: 100%">
+            <el-option v-for="h in hospitalList" :key="h.id" :label="h.name" :value="h.id" />
+          </el-select>
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="form.description" type="textarea" rows="2" />
@@ -67,7 +73,7 @@
         <el-form-item label="排序">
           <el-input v-model.number="form.sortOrder" type="number" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="状态" required>
           <el-radio-group v-model="form.status">
             <el-radio :label="1">启用</el-radio>
             <el-radio :label="0">禁用</el-radio>
@@ -87,6 +93,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   getDepartmentList,
+  getAllHospitals,
   createDepartment,
   updateDepartment,
   deleteDepartment
@@ -111,6 +118,8 @@ const total = ref(0)
 
 const search = reactive({ keyword: '' })
 const form = ref<Partial<Department>>({ status: 1 })
+const hospitalList = ref<any[]>([])
+const hospitalMap = ref<Record<number, string>>({})
 
 async function fetchData() {
   loading.value = true
@@ -152,7 +161,9 @@ async function handleSave() {
     }
     dialogVisible.value = false
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || e?.message || '保存失败')
+  }
 }
 
 async function handleDelete(row: Department) {
@@ -161,8 +172,27 @@ async function handleDelete(row: Department) {
     await deleteDepartment(row.id)
     ElMessage.success('删除成功')
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e?.response?.data?.message || e?.message || '删除失败')
+    }
+  }
 }
 
-onMounted(fetchData)
+async function loadHospitals() {
+  try {
+    const res: any = await getAllHospitals()
+    hospitalList.value = res.data || []
+    const map: Record<number, string> = {}
+    hospitalList.value.forEach((h: any) => { map[h.id] = h.name })
+    hospitalMap.value = map
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || e?.message || '加载医院列表失败')
+  }
+}
+
+onMounted(() => {
+  loadHospitals()
+  fetchData()
+})
 </script>

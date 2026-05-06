@@ -412,7 +412,7 @@ function buildGanttRows(items: any[]) {
 }
 
 async function loadTaskOptions() {
-  const res: any = await request.get('/v1/prod/tasks', { params: { status: '待煎药', page: 1, size: 200 } })
+  const res: any = await request.get('/v1/prod/tasks', { params: { status: 'PENDING,ASSIGNED,COMPLETED,待煎药,待泡药,泡药中,待包装,包装中', page: 1, size: 200 } })
   pendingTasks.value = (res.data?.records || []).map((item: any) => ({
     id: item.id,
     name: `任务-${item.id} / 处方-${item.prescriptionId || '-'}`

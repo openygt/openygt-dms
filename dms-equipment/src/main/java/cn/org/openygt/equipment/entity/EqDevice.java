@@ -17,6 +17,9 @@ public class EqDevice extends BaseEntity {
 
     private String deviceCode;
     private String name;
+
+    public String getDeviceName() { return name; }
+    public void setDeviceName(String deviceName) { this.name = deviceName; }
     private Integer deviceType;
     private String ipAddress;
     private Integer port;

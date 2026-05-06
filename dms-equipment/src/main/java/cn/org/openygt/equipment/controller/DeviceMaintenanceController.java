@@ -3,10 +3,13 @@ package cn.org.openygt.equipment.controller;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.EquipmentModule;
 import cn.org.openygt.equipment.entity.DeviceMaintenance;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.equipment.service.DeviceMaintenanceService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping(EquipmentModule.API_PREFIX + "/device-maintenances")
@@ -16,6 +19,7 @@ public class DeviceMaintenanceController {
     private final DeviceMaintenanceService deviceMaintenanceService;
 
     @GetMapping
+    @RequiresPermissions("eq:maint:view")
     public ApiResponse<IPage<DeviceMaintenance>> list(
             @RequestParam(required = false) Long deviceId,
             @RequestParam(required = false) String maintenanceType,
@@ -31,12 +35,12 @@ public class DeviceMaintenanceController {
     }
 
     @PostMapping
-    public ApiResponse<DeviceMaintenance> create(@RequestBody DeviceMaintenance record) {
+    public ApiResponse<DeviceMaintenance> create(@RequestBody @Valid DeviceMaintenance record) {
         return ApiResponse.success(deviceMaintenanceService.create(record));
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<DeviceMaintenance> update(@PathVariable Long id, @RequestBody DeviceMaintenance record) {
+    public ApiResponse<DeviceMaintenance> update(@PathVariable Long id, @RequestBody @Valid DeviceMaintenance record) {
         return ApiResponse.success(deviceMaintenanceService.update(id, record));
     }
 

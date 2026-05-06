@@ -9,6 +9,7 @@ import cn.org.openygt.quality.dto.InspectExecuteRequest;
 import cn.org.openygt.quality.entity.Inspection;
 import cn.org.openygt.quality.entity.InspectionItem;
 import cn.org.openygt.quality.mapper.InspectionItemMapper;
+import cn.org.openygt.quality.mapper.UserNameMapper;
 import cn.org.openygt.quality.mapper.InspectionMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -28,6 +29,8 @@ public class QualityServiceImpl implements QualityService {
 
     private final InspectionMapper inspectionMapper;
     private final InspectionItemMapper inspectionItemMapper;
+    private final UserNameMapper userNameMapper;
+
     private final ProductionQueryService productionQueryService;
 
     @Override
@@ -103,7 +106,25 @@ public class QualityServiceImpl implements QualityService {
         if (endTime != null && !endTime.isEmpty()) {
             wrapper.le(Inspection::getCreatedAt, endTime);
         }
-        return inspectionMapper.selectPage(new Page<>(page, size), wrapper);
+        Page<Inspection> pageResult = inspectionMapper.selectPage(new Page<>(page, size), wrapper);
+        // 填充操作人姓名
+        java.util.Set<String> opIds = pageResult.getRecords().stream()
+                .map(Inspection::getOperatorId)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+        if (!opIds.isEmpty()) {
+            java.util.List<java.util.Map<String, Object>> userMaps = userNameMapper.selectNamesByIds(opIds.stream().map(Long::valueOf).collect(java.util.stream.Collectors.toList()));
+            java.util.Map<Long, String> nameMap = userMaps.stream().collect(java.util.stream.Collectors.toMap(
+                    m -> Long.valueOf(m.get("id").toString()),
+                    m -> m.get("realName") != null ? m.get("realName").toString() : "",
+                    (a, b) -> a));
+            for (Inspection ins : pageResult.getRecords()) {
+                if (ins.getOperatorId() != null) {
+                    ins.setOperatorName(nameMap.getOrDefault(Long.valueOf(ins.getOperatorId()), ins.getOperatorId()));
+                }
+            }
+        }
+        return pageResult;
     }
 
     @Override

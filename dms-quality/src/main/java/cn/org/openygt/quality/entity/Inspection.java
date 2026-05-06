@@ -29,4 +29,9 @@ public class Inspection extends BaseEntity {
 
     /** 异常原因摘要 */
     private String exceptionReason;
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private String operatorName;
+
+    public String getOperatorName() { return operatorName; }
+    public void setOperatorName(String operatorName) { this.operatorName = operatorName; }
 }
