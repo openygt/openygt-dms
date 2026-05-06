@@ -3,6 +3,7 @@ package cn.org.openygt.equipment.controller;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.entity.WashRecord;
 import cn.org.openygt.equipment.entity.WashStandard;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.equipment.service.WashRecordService;
 import cn.org.openygt.equipment.service.WashStandardService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -20,11 +21,13 @@ public class WashController {
     private final WashStandardService washStandardService;
 
     @PostMapping("/wash/start")
+    @RequiresPermissions("eq:wash:view")
     public ApiResponse<WashRecord> startWash(@RequestBody StartWashRequest request) {
         return ApiResponse.success(washRecordService.startWash(request.getDeviceId(), request.getTaskId(), request.getOperatorId()));
     }
 
     @PostMapping("/wash/{id}/complete")
+    @RequiresPermissions("eq:wash:view")
     public ApiResponse<WashRecord> completeWash(@PathVariable Long id, @RequestBody CompleteWashRequest request) {
         return ApiResponse.success(washRecordService.completeWash(id, request.getOperatorId(), request.getActualDurationMinutes()));
     }

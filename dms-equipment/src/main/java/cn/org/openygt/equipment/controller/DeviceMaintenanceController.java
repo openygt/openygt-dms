@@ -3,6 +3,7 @@ package cn.org.openygt.equipment.controller;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.EquipmentModule;
 import cn.org.openygt.equipment.entity.DeviceMaintenance;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.equipment.service.DeviceMaintenanceService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ public class DeviceMaintenanceController {
     private final DeviceMaintenanceService deviceMaintenanceService;
 
     @GetMapping
+    @RequiresPermissions("eq:maint:view")
     public ApiResponse<IPage<DeviceMaintenance>> list(
             @RequestParam(required = false) Long deviceId,
             @RequestParam(required = false) String maintenanceType,

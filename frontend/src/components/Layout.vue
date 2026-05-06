@@ -33,27 +33,35 @@
           </template>
           <el-menu-item v-if="userStore.hasPermission('ops:dashboard:view')" index="/dashboard">生产看板</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('prod:record:view')" index="/task-assignment">生产记录</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('prod:monitor:view')" index="/time-monitor">时效监控</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:device:monitor')" index="/device-monitor">设备监控</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:alarm:view')" index="/alarms">告警管理</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:device:emergency')" index="/device-command">远程急停</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:trace:view')" index="/step-visualization">流程跟踪</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('ops:capacity:view')" index="/capacity">产能统计</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:device:efficiency')" index="/device-utilization">设备效能</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:device:list')" index="/devices">设备管理</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:log:view')" index="/logs">操作日志</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:setting:view')" index="/production-setting">生产设置</el-menu-item>
+        </el-sub-menu>
+
+        <!-- 2. 设备管理 -->
+        <el-sub-menu index="/equipment">
+          <template #title>
+            <el-icon><Monitor /></el-icon>
+            <span>设备管理</span>
+          </template>
+          <el-menu-item v-if="userStore.hasPermission('eq:device:list')" index="/devices">设备台账</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:network:view')" index="/device-network">设备联网</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:group:view')" index="/device-group-manage">设备分组</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:group:view')" index="/device-group-manage">分组配对</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:device:monitor')" index="/device-monitor">设备监控</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:device:emergency')" index="/device-command">远程操控</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:alarm:view')" index="/alarms">告警中心</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:maint:view')" index="/device-maintenance">设备维保</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:wash:view')" index="/wash-record">清洗记录</el-menu-item>
         </el-sub-menu>
 
-        <!-- 2. 煎药作业 -->
+        <!-- 3. 煎药作业 -->
         <el-sub-menu index="/prod">
           <template #title>
             <el-icon><FirstAidKit /></el-icon>
             <span>煎药作业</span>
           </template>
           <el-menu-item v-if="userStore.hasPermission('prod:task:view')" index="/tasks">煎药任务</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('prod:trace:view')" index="/step-visualization">流程跟踪</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('prod:dosing:view')" index="/herb-group">分组投料</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('prod:voice:view')" index="/voice-setting">语音播报</el-menu-item>
         </el-sub-menu>
