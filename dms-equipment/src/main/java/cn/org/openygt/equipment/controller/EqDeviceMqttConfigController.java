@@ -3,6 +3,7 @@ package cn.org.openygt.equipment.controller;
 import cn.org.openygt.equipment.EquipmentModule;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.entity.EqDeviceMqttConfig;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.equipment.service.EqDeviceMqttConfigService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,6 +18,7 @@ public class EqDeviceMqttConfigController {
     private final EqDeviceMqttConfigService mqttConfigService;
 
     @GetMapping
+    @RequiresPermissions("eq:network:view")
     public ApiResponse<EqDeviceMqttConfig> getConfig(@PathVariable String deviceCode) {
         return ApiResponse.success(mqttConfigService.getByDeviceCode(deviceCode));
     }

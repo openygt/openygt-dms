@@ -5,6 +5,7 @@ import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.dto.AlarmLogDTO;
 import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.entity.EqDeviceAlarm;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.equipment.mapper.EqDeviceAlarmMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -29,6 +30,7 @@ public class EqAlarmController {
     private final EqDeviceMapper deviceMapper;
 
     @GetMapping
+    @RequiresPermissions("eq:alarm:view")
     public ApiResponse<Page<AlarmLogDTO>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
