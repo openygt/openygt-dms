@@ -87,12 +87,14 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow } from '@dcloudio/uni-app'
 import { get, post } from '../../utils/request.js'
 
 const taskId = ref('')
 const barcode = ref('')
 const deviceId = ref('')
+const decoctDeviceId = ref('')
+const packageDeviceId = ref('')
 const barcodeInput = ref('')
 const currentStep = ref('待泡药')
 const selectedStep = ref('')
@@ -143,6 +145,13 @@ onLoad((options) => {
   loadTaskProgress(preselectStep)
 })
 
+onShow(() => {
+  // 从设备绑定页面返回后刷新任务进度
+  if (barcode.value) {
+    loadTaskProgress()
+  }
+})
+
 async function loadTaskProgress(preselectStep) {
   if (!barcode.value) return
   try {
@@ -156,9 +165,13 @@ async function loadTaskProgress(preselectStep) {
         label: s.label,
         completed: s.completed,
         current: s.current,
-        completedAt: s.completedAt
+        completedAt: s.completedAt,
+        needDevice: s.needDevice
       }))
     }
+    // 同步设备信息
+    decoctDeviceId.value = res.decoctDeviceId || ''
+    packageDeviceId.value = res.packageDeviceId || ''
     // 如果有预选中步骤，自动选中
     if (preselectStep) {
       selectedStep.value = preselectStep
@@ -205,13 +218,39 @@ async function handleConfirm() {
     if (!confirm) return
   }
 
+  // 根据步骤类型自动解析设备ID
+  let reqDeviceId = deviceId.value
+  const stepInfo = steps.value.find(s => s.value === selectedStep.value)
+  if (stepInfo && stepInfo.needDevice) {
+    if (selectedStep.value === 'START_DECOCT') {
+      reqDeviceId = decoctDeviceId.value
+    } else if (selectedStep.value === 'START_PACKAGE') {
+      reqDeviceId = packageDeviceId.value
+    }
+    // 仍无设备ID，提示先绑定
+    if (!reqDeviceId) {
+      uni.showModal({
+        title: '需要绑定设备',
+        content: '该工序需要先绑定设备，是否前往绑定？',
+        success: (modalRes) => {
+          if (modalRes.confirm) {
+            uni.navigateTo({
+              url: `/pages/device/bind?taskId=${taskId.value}&barcode=${barcode.value}&stepType=${selectedStep.value}`
+            })
+          }
+        }
+      })
+      return
+    }
+  }
+
   loading.value = true
   try {
     await post('/task/confirm', {
       taskId: taskId.value,
       stepType: selectedStep.value,
       remark: remark.value,
-      deviceId: deviceId.value || undefined
+      deviceId: reqDeviceId || undefined
     })
 
     if (uni.$ygtFeedback) uni.$ygtFeedback.success()

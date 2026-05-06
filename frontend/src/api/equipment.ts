@@ -119,8 +119,8 @@ export function getTraceEvents(prescriptionNo: string) {
   return request.get(`/v1/eq/traces/${prescriptionNo}/events`)
 }
 
-export function getTraceTemperatureCurve(prescriptionNo: string, granularity = '1min') {
-  return request.get(`/v1/eq/traces/${prescriptionNo}/temperature-curve`, { params: { granularity } })
+export function getTraceTemperatureCurve(prescriptionNo: string) {
+  return request.get(`/v1/eq/traces/${prescriptionNo}/temperature-curve`)
 }
 
 export function updateTraceStep(prescriptionNo: string, stepCode: string, data: any) {

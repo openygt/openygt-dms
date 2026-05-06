@@ -38,7 +38,9 @@ public class PdaScanHandler {
 
     private BarcodeType parseBarcodeType(String barcode) {
         if (barcode == null || barcode.isEmpty()) return BarcodeType.UNKNOWN;
-        if (barcode.startsWith("TASK") || barcode.startsWith("task")) return BarcodeType.TASK;
+        // 优先查数据库判断条码类型：先查任务，再查设备
+        if (taskService.getByBarcode(barcode) != null) return BarcodeType.TASK;
+        // 设备条码前缀识别（TODO: 未来可改为查设备表）
         if (barcode.startsWith("DEV") || barcode.startsWith("EQ")) return BarcodeType.DEVICE;
         return BarcodeType.MEDICINE;
     }
@@ -48,7 +50,15 @@ public class PdaScanHandler {
         if (task == null) {
             return PdaScanResult.error("任务不存在");
         }
-        TaskStatus status = TaskStatus.valueOf(task.getStatus());
+        TaskStatus status = TaskStatus.fromLabel(task.getStatus());
+        if (status == null) {
+            // 兼容英文枚举名（如 COMPLETED）
+            try {
+                status = TaskStatus.valueOf(task.getStatus());
+            } catch (IllegalArgumentException e) {
+                return PdaScanResult.info("当前状态：" + task.getStatus(), task);
+            }
+        }
         switch (status) {
             case WAIT_SOAK:
                 taskService.startSoak(task.getId(), String.valueOf(operatorId));

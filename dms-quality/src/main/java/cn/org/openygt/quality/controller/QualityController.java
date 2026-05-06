@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 质量追溯接口。
@@ -33,7 +34,6 @@ public class QualityController {
     public static final String API_PREFIX = "/api/v1/qt";
 
     private final QualityService qualityService;
-    private final QualityServiceImpl qualityServiceImpl;
 
     /**
      * 执行质检（旧版，已废弃）。请使用生产模块的 POST /v1/prod/tasks/{id}/quality。
@@ -70,7 +70,7 @@ public class QualityController {
             @RequestParam(required = false) String result,
             @RequestParam(required = false) String startTime,
             @RequestParam(required = false) String endTime) {
-        return ApiResponse.success(qualityServiceImpl.listInspections(result, startTime, endTime, page, size));
+        return ApiResponse.success(((QualityServiceImpl) qualityService).listInspections(result, startTime, endTime, page, size));
     }
 
     /**
@@ -79,7 +79,7 @@ public class QualityController {
      */
     @PostMapping("/inspect/detail")
     public ApiResponse<InspectionResult> inspectWithItems(@Validated @RequestBody InspectExecuteRequest req) {
-        return ApiResponse.success(qualityServiceImpl.inspectWithItems(req));
+        return ApiResponse.success(((QualityServiceImpl) qualityService).inspectWithItems(req));
     }
 
     /**
@@ -87,11 +87,13 @@ public class QualityController {
      */
     @GetMapping("/report/summary")
     public ApiResponse<InspectionSummaryDTO> summary(
+            @RequestParam(required = false) String dateStart,
+            @RequestParam(required = false) String dateEnd,
             @RequestParam(required = false) String startTime,
             @RequestParam(required = false) String endTime) {
-        LocalDateTime from = parseDateTime(startTime);
-        LocalDateTime to = parseDateTime(endTime);
-        return ApiResponse.success(qualityServiceImpl.getInspectionSummary(from, to));
+        LocalDateTime from = parseDateTime(dateStart != null ? dateStart : startTime);
+        LocalDateTime to = parseDateTime(dateEnd != null ? dateEnd : endTime);
+        return ApiResponse.success(qualityService.getInspectionSummary(from, to));
     }
 
     /**
@@ -99,8 +101,24 @@ public class QualityController {
      */
     @GetMapping("/report/trend")
     public ApiResponse<List<InspectionTrendDTO>> trend(
+            @RequestParam(required = false) String dateStart,
+            @RequestParam(required = false) String dateEnd,
             @RequestParam(required = false, defaultValue = "day") String groupBy) {
-        return ApiResponse.success(qualityServiceImpl.getInspectionTrend(groupBy));
+        LocalDateTime from = parseDateTime(dateStart);
+        LocalDateTime to = parseDateTime(dateEnd);
+        return ApiResponse.success(qualityService.getInspectionTrend(from, to, groupBy));
+    }
+
+    /**
+     * 不合格原因分布统计。
+     */
+    @GetMapping("/report/reason")
+    public ApiResponse<List<Map<String, Object>>> reason(
+            @RequestParam(required = false) String dateStart,
+            @RequestParam(required = false) String dateEnd) {
+        LocalDateTime from = parseDateTime(dateStart);
+        LocalDateTime to = parseDateTime(dateEnd);
+        return ApiResponse.success(qualityService.getInspectionReasonStat(from, to));
     }
 
     private LocalDateTime parseDateTime(String s) {
@@ -117,6 +135,6 @@ public class QualityController {
      */
     @GetMapping("/inspection/{inspectionId}/items")
     public ApiResponse<List<InspectionItem>> getInspectionItems(@PathVariable Long inspectionId) {
-        return ApiResponse.success(qualityServiceImpl.getInspectionItems(inspectionId));
+        return ApiResponse.success(((QualityServiceImpl) qualityService).getInspectionItems(inspectionId));
     }
 }

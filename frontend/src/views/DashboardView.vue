@@ -1,6 +1,24 @@
 <template>
   <div class="dashboard">
-    <div class="page-header-title">生产看板：<span class="page-header-sub">今日任务数、进行中、已完成、设备在线率、告警数</span></div>
+    <div class="dashboard-page-head">
+      <div>
+        <div class="page-header-title">
+          生产看板：<span class="page-header-sub">今日总任务、完成/进行占比、任务侧报警；下方为任务状态分布、设备在线结构（总数/在线/在线异常）与待处理告警</span>
+        </div>
+      </div>
+      <el-button type="primary" plain :loading="loading || alarmLoading" @click="refreshAll">刷新</el-button>
+    </div>
+
+    <el-alert
+      v-if="dashboardError && !loading"
+      type="error"
+      :closable="false"
+      show-icon
+      class="dashboard-alert"
+      :title="dashboardError"
+    >
+      <el-button size="small" type="primary" @click="fetchDashboard">重试看板数据</el-button>
+    </el-alert>
 
     <!-- KPI 卡片矩阵 -->
     <div class="kpi-grid">
@@ -16,7 +34,10 @@
             {{ Math.abs(kpi.trend) }}%
           </span>
         </div>
-        <div class="kpi-sub">{{ kpi.sub }}</div>
+        <div class="kpi-sub">
+          {{ kpi.sub }}
+          <span v-if="kpi.trend === 0" class="kpi-flat"> · 环比持平</span>
+        </div>
       </div>
     </div>
 
@@ -26,7 +47,11 @@
         v-for="action in quickActions"
         :key="action.path"
         class="quick-item"
-        @click="$router.push(action.path)"
+        role="button"
+        tabindex="0"
+        @click="goQuick(action.path)"
+        @keydown.enter.prevent="goQuick(action.path)"
+        @keydown.space.prevent="goQuick(action.path)"
       >
         <div class="quick-icon" :style="{ background: action.bg }">
           <el-icon :size="20" color="#fff"><component :is="action.icon" /></el-icon>
@@ -45,13 +70,17 @@
           </div>
         </template>
         <LoadingState v-if="loading" description="加载任务数据..." />
+        <div v-else-if="dashboardError" class="card-error">
+          <p>看板任务数据未能加载</p>
+          <el-button size="small" type="primary" @click="fetchDashboard">重试</el-button>
+        </div>
         <EmptyState
           v-else-if="!taskDist.length"
           title="暂无任务数据"
           description="今日还没有生成任务"
         />
         <div v-else class="dist-list">
-          <div v-for="item in taskDist" :key="item.status" class="dist-item">
+          <div v-for="(item, tIdx) in taskDist" :key="'ts-' + tIdx + '-' + (item.status || 'x')" class="dist-item">
             <div class="dist-label">
               <span class="dist-dot" :style="{ background: statusColor(item.status) }"></span>
               <span>{{ statusLabel(item.status) }}</span>
@@ -69,67 +98,99 @@
           <div class="card-header">
             <span>设备类型分布</span>
             <div>
-              <el-tag size="small" type="info">总数/在线/在线有异常</el-tag>
+              <el-tag size="small" type="info">总数 / 在线 / 在线异常</el-tag>
               <el-button size="small" type="primary" style="margin-left: 8px" @click="$router.push('/device-monitor')">进入监控</el-button>
             </div>
           </div>
         </template>
         <LoadingState v-if="loading" description="加载设备数据..." />
+        <div v-else-if="dashboardError" class="card-error">
+          <p>看板设备数据未能加载</p>
+          <el-button size="small" type="primary" @click="fetchDashboard">重试</el-button>
+        </div>
         <EmptyState
           v-else-if="!deviceDist.length"
           title="暂无设备数据"
           description="还没有录入设备信息"
         />
-        <div v-else class="dist-list">
-          <div v-for="item in deviceDist" :key="item.deviceType" class="dist-item">
+        <div v-else>
+          <div class="device-legend" aria-label="设备条图例">
+            <span><span class="legend-swatch legend-offline" aria-hidden="true" />离线</span>
+            <span><span class="legend-swatch legend-online" aria-hidden="true" />在线</span>
+            <span><span class="legend-swatch legend-alarm" aria-hidden="true" />在线且异常</span>
+          </div>
+          <div class="dist-list">
+          <div v-for="(item, dIdx) in deviceDist" :key="'dt-' + dIdx + '-' + (item.deviceType || 'x')" class="dist-item">
             <div class="dist-label">
               <span class="dist-dot" :style="{ background: deviceColor(item.deviceType) }"></span>
               <span>{{ deviceTypeName(item.deviceType) }}</span>
             </div>
             <div class="dist-bar-wrap" :style="{ width: exactPercent(item.count, maxDeviceCount) + '%' }">
               <div class="dist-bar-stack">
-                <div class="dist-bar-online" :style="{ flex: (item.onlineCount || 0) - (item.onlineWithAlarmCount || 0), background: deviceColor(item.deviceType) }"></div>
-                <div class="dist-bar-alarm" :style="{ flex: item.onlineWithAlarmCount || 0 }"></div>
-                <div class="dist-bar-gray" :style="{ flex: item.count - (item.onlineCount || 0) }"></div>
+                <div class="dist-bar-online" :style="{ flex: Math.max(0, item.flexOnlineNormal || 0), background: deviceColor(item.deviceType) }"></div>
+                <div class="dist-bar-alarm" :style="{ flex: Math.max(0, item.flexAlarm || 0) }"></div>
+                <div class="dist-bar-gray" :style="{ flex: Math.max(0, item.flexOffline || 0) }"></div>
               </div>
             </div>
             <span class="dist-value ygt-num">
-              {{ item.count }}/{{ item.onlineCount||0 }}/{{ item.onlineWithAlarmCount||0 }}
+              {{ item.count }}/{{ item.onlineCount }}/{{ item.onlineWithAlarmCount }}
             </span>
           </div>
+        </div>
         </div>
       </el-card>
     </div>
 
     <!-- 异常预警列表 -->
-    <el-card shadow="never" style="margin-top: var(--ygt-space-4)">
+    <el-card shadow="never" style="margin-top: var(--ygt-space-4)" data-testid="dashboard-alarm-card">
       <template #header>
         <div class="card-header">
           <span>异常预警</span>
           <div>
-            <el-tag v-if="alarmList.length > 0" size="small" type="danger">{{ alarmList.length }} 条待处理</el-tag>
+            <el-tag v-if="alarmLoading" size="small" type="info">加载中</el-tag>
+            <el-tag v-else-if="alarmError" size="small" type="warning">告警未加载</el-tag>
+            <el-tag v-else-if="alarmList.length > 0" size="small" type="danger">{{ alarmList.length }} 条待处理</el-tag>
             <el-tag v-else size="small" type="success">无异常</el-tag>
             <el-button size="small" type="primary" style="margin-left: 8px" @click="$router.push('/alarms')">查看全部</el-button>
           </div>
         </div>
       </template>
       <LoadingState v-if="alarmLoading" description="加载告警数据..." />
+      <div v-else-if="alarmError" class="card-error">
+        <p>{{ alarmError }}</p>
+        <el-button size="small" type="primary" @click="fetchAlarms">重试</el-button>
+      </div>
       <EmptyState
         v-else-if="alarmList.length === 0"
         title="暂无异常预警"
         description="系统运行正常，未检测到异常"
       />
       <div v-else class="alarm-list">
-        <div v-for="alarm in alarmList.slice(0, 5)" :key="alarm.id" class="alarm-item" :class="`alarm-${alarm.alarmLevel?.toLowerCase() || 'info'}`">
+        <div
+          v-for="(alarm, aIdx) in alarmList.slice(0, 5)"
+          :key="alarm.id != null ? 'al-' + alarm.id : 'al-i-' + aIdx"
+          class="alarm-item"
+          :class="alarmItemClass(alarm)"
+        >
           <div class="alarm-main">
             <div class="alarm-top">
               <el-tag size="small" :type="alarmLevelType(alarm.alarmLevel)">{{ alarm.alarmLevel || 'INFO' }}</el-tag>
               <span class="alarm-device">{{ alarm.deviceCode || '-' }}</span>
               <span class="alarm-time">{{ formatDateTime(alarm.createdAt) }}</span>
             </div>
-            <div class="alarm-content">{{ alarm.content || alarm.alarmType || '-' }}</div>
+            <el-tooltip :content="alarmDisplayText(alarm)" placement="top" :disabled="!alarmDisplayText(alarm) || alarmDisplayText(alarm).length < 32">
+              <div class="alarm-content">{{ alarmDisplayText(alarm) }}</div>
+            </el-tooltip>
           </div>
-          <el-button size="small" type="success" @click="resolveAlarm(alarm.id)">处理</el-button>
+          <el-button
+            size="small"
+            type="success"
+            :loading="resolvingAlarmId === alarm.id"
+            :disabled="resolvingAlarmId !== null && resolvingAlarmId !== alarm.id"
+            @click="resolveAlarm(alarm.id)"
+          >
+            处理
+          </el-button>
         </div>
         <div v-if="alarmTotal > 5" class="alarm-more">
           <el-link type="primary" @click="$router.push('/alarms')">还有 {{ alarmTotal - 5 }} 条，点击查看全部</el-link>
@@ -164,25 +225,35 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import request from '@/api/request'
 import { ElMessage } from 'element-plus'
 import {
   Document, SuccessFilled, WarningFilled, Clock,
-  Pointer, Cpu, Printer, List, TrendCharts, CaretTop, CaretBottom, Minus
+  Cpu, Printer, List, TrendCharts, CaretTop, CaretBottom, Odometer
 } from '@element-plus/icons-vue'
 import EmptyState from '@/components/states/EmptyState.vue'
 import LoadingState from '@/components/states/LoadingState.vue'
 
+const router = useRouter()
 const userStore = useUserStore()
 const loading = ref(false)
+const dashboardError = ref<string | null>(null)
+const alarmError = ref<string | null>(null)
+const resolvingAlarmId = ref<number | null>(null)
+const refreshInFlight = ref(false)
 
-const kpis = ref([
-  { label: '今日任务', value: 0, sub: '较昨日', trend: 0, icon: 'Document', type: 'primary' },
-  { label: '已完成', value: 0, sub: '完成率', trend: 0, icon: 'SuccessFilled', type: 'success' },
-  { label: '进行中', value: 0, sub: '活跃工单', trend: 0, icon: 'Clock', type: 'warning' },
-  { label: '活跃告警', value: 0, sub: '待处理', trend: 0, icon: 'WarningFilled', type: 'danger' }
-])
+function defaultKpis() {
+  return [
+    { label: '总任务数', value: 0, sub: '今日任务', trend: 0, icon: Document, type: 'primary' as const },
+    { label: '已完成', value: 0, sub: '占比 0%', trend: 0, icon: SuccessFilled, type: 'success' as const },
+    { label: '进行中', value: 0, sub: '占比 0%', trend: 0, icon: Clock, type: 'warning' as const },
+    { label: '正在报警', value: 0, sub: '需干预', trend: 0, icon: WarningFilled, type: 'danger' as const }
+  ]
+}
+
+const kpis = ref(defaultKpis())
 
 const taskDist = ref<any[]>([])
 const deviceDist = ref<any[]>([])
@@ -195,14 +266,84 @@ const maxDeviceCount = computed(() => Math.max(1, ...deviceDist.value.map((d: an
 
 const quickActions = computed(() => {
   const actions = [
-    { label: '任务管理', path: '/tasks', icon: 'List', bg: 'var(--ygt-primary-500)', perm: 'prod:task:view' },
-    { label: '设备管理', path: '/devices', icon: 'Cpu', bg: 'var(--ygt-success)', perm: 'eq:device:list' },
-    { label: '打印管理', path: '/print-center', icon: 'Printer', bg: 'var(--ygt-warning)', perm: 'prt:queue:view' },
-    { label: '产能报表', path: '/capacity', icon: 'TrendCharts', bg: 'var(--ygt-info)', perm: 'ops:capacity:view' },
-    { label: '温度曲线', path: '/temperature-curve', icon: 'Odometer', bg: '#e91e63', perm: 'eq:device:monitor' },
+    { label: '任务管理', path: '/tasks', icon: List, bg: 'var(--ygt-primary-500)', perm: 'prod:task:view' },
+    { label: '设备管理', path: '/devices', icon: Cpu, bg: 'var(--ygt-success)', perm: 'eq:device:list' },
+    { label: '打印管理', path: '/print-center', icon: Printer, bg: 'var(--ygt-warning)', perm: 'prt:queue:view' },
+    { label: '产能报表', path: '/capacity', icon: TrendCharts, bg: 'var(--ygt-info)', perm: 'ops:capacity:view' },
+    { label: '温度曲线', path: '/temperature-curve', icon: Odometer, bg: '#e91e63', perm: 'eq:temp:view' },
   ]
   return actions.filter(a => userStore.hasPermission(a.perm))
 })
+
+function goQuick(path: string) {
+  router.push(path)
+}
+
+function getRejectMessage(e: unknown): string {
+  const x = e as Record<string, unknown> | undefined
+  if (x && typeof x.message === 'string' && x.message) return x.message
+  const err = e as { response?: { data?: { message?: string } } }
+  const m = err?.response?.data?.message
+  return typeof m === 'string' && m ? m : '加载失败，请稍后重试'
+}
+
+function alarmDisplayText(alarm: { content?: string; alarmType?: string }) {
+  return alarm.content || alarm.alarmType || '-'
+}
+
+async function refreshAll() {
+  if (refreshInFlight.value) return
+  refreshInFlight.value = true
+  dashboardError.value = null
+  alarmError.value = null
+  try {
+    await Promise.all([fetchDashboard(), fetchAlarms()])
+  } finally {
+    refreshInFlight.value = false
+  }
+}
+
+function safeInt(v: unknown, min = 0): number {
+  const n = Math.floor(Number(v))
+  if (!Number.isFinite(n)) return min
+  return Math.max(min, n)
+}
+
+function safeTrend(v: unknown): number {
+  const n = Number(v)
+  if (!Number.isFinite(n)) return 0
+  return n
+}
+
+/** 后端异常数据：在线数大于总数、告警数大于在线等，统一钳位避免条带与数字矛盾 */
+function normalizeDeviceDistribution(raw: any[]) {
+  return (raw || []).map((d: any) => {
+    let count = safeInt(d?.count, 0)
+    let online = safeInt(d?.onlineCount ?? d?.online_count, 0)
+    let alarmN = safeInt(d?.onlineWithAlarmCount ?? d?.online_with_alarm_count, 0)
+    online = Math.min(online, count)
+    alarmN = Math.min(alarmN, online)
+    const flexOnlineNormal = Math.max(0, online - alarmN)
+    const flexAlarm = Math.max(0, alarmN)
+    const flexOffline = Math.max(0, count - online)
+    return {
+      deviceType: String(d?.deviceType ?? d?.device_type ?? ''),
+      count,
+      onlineCount: online,
+      onlineWithAlarmCount: alarmN,
+      flexOnlineNormal,
+      flexAlarm,
+      flexOffline
+    }
+  })
+}
+
+function alarmItemClass(alarm: { alarmLevel?: string }) {
+  const raw = (alarm.alarmLevel || 'info').toLowerCase()
+  if (raw === 'critical' || raw === '严重') return 'alarm-critical'
+  if (raw === 'warning' || raw === '警告') return 'alarm-warning'
+  return 'alarm-info'
+}
 
 const statusMap: Record<string, { label: string; color: string }> = {
   '待泡药': { label: '待泡药', color: 'var(--ygt-gray-400)' },
@@ -256,8 +397,10 @@ function alarmLevelType(level?: string) {
 }
 
 function deviceTypeName(type: string) {
+  const t = String(type || '').trim()
+  if (!t) return '未知类型'
   const map: Record<string, string> = { '1': '煎药机', '2': '包装机', '3': '标签打印机', '4': '激光打印机', '5': 'PDA' }
-  return map[type] || type
+  return map[t] || `类型 ${t}`
 }
 
 function deviceColor(type: string) {
@@ -276,31 +419,35 @@ function exactPercent(value: number, max: number) {
 
 async function fetchDashboard() {
   loading.value = true
+  dashboardError.value = null
   try {
     const res: any = await request.get('/v1/ops/dashboard/realtime')
-    const data = res.data || {}
-    const totalTasks = data.todayTotalTasks || 0
-    const ended = data.todayEndedTasks || 0
-    const inProgress = data.todayInProgressTasks || 0
-    const alerting = data.todayAlertingTasks || 0
-    // 占比计算（避免除零）
+    const data = res?.data && typeof res.data === 'object' ? res.data : {}
+    const totalTasks = safeInt(data.todayTotalTasks, 0)
+    const ended = safeInt(data.todayEndedTasks, 0)
+    const inProgress = safeInt(data.todayInProgressTasks, 0)
+    const alerting = safeInt(data.todayAlertingTasks, 0)
     const endedRate = totalTasks > 0 ? Math.round((ended / totalTasks) * 100) : 0
     const inProgressRate = totalTasks > 0 ? Math.round((inProgress / totalTasks) * 100) : 0
     kpis.value = [
-      { label: '总任务数', value: totalTasks, sub: '今日任务', trend: data.taskTrend || 0, icon: 'Document', type: 'primary' },
-      { label: '已完成', value: ended, sub: '占比 ' + endedRate + '%', trend: data.endedTrend || 0, icon: 'SuccessFilled', type: 'success' },
-      { label: '进行中', value: inProgress, sub: '占比 ' + inProgressRate + '%', trend: data.inProgressTrend || 0, icon: 'Clock', type: 'warning' },
-      { label: '正在报警', value: alerting, sub: '需干预', trend: data.alertingTrend || 0, icon: 'WarningFilled', type: 'danger' }
+      { label: '总任务数', value: totalTasks, sub: '今日任务', trend: safeTrend(data.taskTrend), icon: Document, type: 'primary' },
+      { label: '已完成', value: ended, sub: '占比 ' + endedRate + '%', trend: safeTrend(data.endedTrend), icon: SuccessFilled, type: 'success' },
+      { label: '进行中', value: inProgress, sub: '占比 ' + inProgressRate + '%', trend: safeTrend(data.inProgressTrend), icon: Clock, type: 'warning' },
+      { label: '正在报警', value: alerting, sub: '需干预', trend: safeTrend(data.alertingTrend), icon: WarningFilled, type: 'danger' }
     ]
-    taskDist.value = (data.taskStatusDistribution || []).map((d: any) => ({ status: d.status || d.status, count: d.count || 0 }))
-    deviceDist.value = (data.deviceTypeDistribution || []).map((d: any) => ({
-      deviceType: d.deviceType || d.device_type,
-      count: d.count || 0,
-      onlineCount: d.onlineCount || d.onlineCount || 0,
-      onlineWithAlarmCount: d.onlineWithAlarmCount || d.onlineWithAlarmCount || 0
+    taskDist.value = (Array.isArray(data.taskStatusDistribution) ? data.taskStatusDistribution : []).map((d: any) => ({
+      status: String(d?.status ?? '').trim() || '（未命名状态）',
+      count: safeInt(d?.count, 0)
     }))
+    deviceDist.value = normalizeDeviceDistribution(
+      Array.isArray(data.deviceTypeDistribution) ? data.deviceTypeDistribution : []
+    )
   } catch (e) {
     console.error('Dashboard fetch error:', e)
+    dashboardError.value = getRejectMessage(e)
+    kpis.value = defaultKpis()
+    taskDist.value = []
+    deviceDist.value = []
   } finally {
     loading.value = false
   }
@@ -308,26 +455,38 @@ async function fetchDashboard() {
 
 async function fetchAlarms() {
   alarmLoading.value = true
+  alarmError.value = null
   try {
     const res: any = await request.get('/v1/eq/alarms', { params: { status: 'PENDING', page: 1, size: 10 } })
-    const page = res.data || {}
-    alarmList.value = page.records || []
-    alarmTotal.value = page.total || 0
+    const page = res?.data && typeof res.data === 'object' ? res.data : {}
+    const records = Array.isArray(page.records) ? page.records : []
+    alarmList.value = records.filter((a: any) => a != null)
+    alarmTotal.value = safeInt(page.total, alarmList.value.length)
   } catch (e) {
     console.error('Alarm fetch error:', e)
+    alarmError.value = getRejectMessage(e)
+    alarmList.value = []
+    alarmTotal.value = 0
   } finally {
     alarmLoading.value = false
   }
 }
 
-async function resolveAlarm(id: number) {
+async function resolveAlarm(id: number | undefined) {
+  if (id == null || Number.isNaN(Number(id))) {
+    ElMessage.warning('告警数据异常，无法处理')
+    return
+  }
+  resolvingAlarmId.value = id
   try {
     await request.put(`/v1/eq/alarms/${id}/resolve`)
     ElMessage.success('告警已处理')
-    fetchAlarms()
-    fetchDashboard()
+    await Promise.all([fetchAlarms(), fetchDashboard()])
   } catch (e) {
-    ElMessage.error('处理失败')
+    // 错误提示由 request 拦截器统一弹出；此处仅结束 loading
+    console.warn('resolveAlarm', e)
+  } finally {
+    resolvingAlarmId.value = null
   }
 }
 
@@ -340,6 +499,64 @@ onMounted(() => {
 <style scoped>
 .dashboard {
   padding: var(--ygt-space-4);
+}
+
+.dashboard-page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ygt-space-4);
+  margin-bottom: var(--ygt-space-4);
+}
+
+.dashboard-alert {
+  margin-bottom: var(--ygt-space-4);
+}
+
+.card-error {
+  padding: var(--ygt-space-6);
+  text-align: center;
+  color: var(--ygt-text-secondary);
+  font-size: var(--ygt-text-sm);
+}
+.card-error p {
+  margin: 0 0 var(--ygt-space-3);
+}
+
+.device-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ygt-space-4);
+  font-size: var(--ygt-text-xs);
+  color: var(--ygt-text-tertiary);
+  margin-bottom: var(--ygt-space-3);
+}
+.device-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.legend-offline {
+  background: var(--ygt-gray-200);
+  border: 1px solid var(--ygt-gray-300);
+}
+.legend-online {
+  background: var(--ygt-primary-400);
+}
+.legend-alarm {
+  background: var(--el-color-danger);
+}
+
+.kpi-flat {
+  color: var(--ygt-text-tertiary);
+  font-weight: var(--ygt-fw-normal);
 }
 
 .page-title {
@@ -444,6 +661,10 @@ onMounted(() => {
   border-color: var(--ygt-primary-300);
   box-shadow: var(--ygt-shadow-md);
   transform: translateY(-1px);
+}
+.quick-item:focus-visible {
+  outline: 2px solid var(--ygt-primary-500);
+  outline-offset: 2px;
 }
 
 .quick-icon {

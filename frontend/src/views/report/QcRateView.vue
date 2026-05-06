@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
 import * as echarts from 'echarts'
 import { getQcRateTrend, getQcRateReason, getQcRateSummary } from '@/api/report'
@@ -104,9 +104,10 @@ const summary = reactive({
 
 function renderChart() {
   if (!chartRef.value) return
-  if (!chartInstance) {
-    chartInstance = echarts.init(chartRef.value)
+  if (chartInstance) {
+    chartInstance.dispose()
   }
+  chartInstance = echarts.init(chartRef.value)
   const data = trendData.value
   chartInstance.setOption({
     tooltip: { trigger: 'axis' },
@@ -167,8 +168,19 @@ async function handleSearch() {
   }
 }
 
+function handleResize() {
+  chartInstance?.resize()
+}
+
 onMounted(() => {
+  window.addEventListener('resize', handleResize)
   handleSearch()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  chartInstance?.dispose()
+  chartInstance = null
 })
 </script>
 

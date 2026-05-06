@@ -23,7 +23,7 @@ public interface DecoctionTraceService {
 
     void recordEvent(DecoctionTraceEvent event);
 
-    Map<String, Object> getTemperatureCurve(String prescriptionNo, String granularity);
+    Map<String, Object> getTemperatureCurve(String prescriptionNo);
 
     Long countByStatusToday(String status);
 }

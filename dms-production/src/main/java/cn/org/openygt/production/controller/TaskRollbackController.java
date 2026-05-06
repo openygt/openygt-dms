@@ -3,8 +3,10 @@ package cn.org.openygt.production.controller;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.production.dto.RollbackApproveRequest;
 import cn.org.openygt.production.dto.RollbackRequest;
+import cn.org.openygt.production.entity.RollbackReason;
 import cn.org.openygt.production.entity.TaskRollback;
 import cn.org.openygt.production.service.TaskRollbackService;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -31,8 +33,15 @@ public class TaskRollbackController {
     }
 
     @GetMapping("/rollback/list")
-    public ApiResponse<List<TaskRollback>> list(@RequestParam(required = false) Long taskId,
-                                                  @RequestParam(required = false) Integer approvalStatus) {
-        return ApiResponse.success(taskRollbackService.listRollbacks(taskId, approvalStatus));
+    public ApiResponse<IPage<TaskRollback>> list(@RequestParam(required = false) Long taskId,
+                                                   @RequestParam(required = false) Integer approvalStatus,
+                                                   @RequestParam(defaultValue = "1") Integer page,
+                                                   @RequestParam(defaultValue = "20") Integer size) {
+        return ApiResponse.success(taskRollbackService.listRollbacks(taskId, approvalStatus, page, size));
+    }
+
+    @GetMapping("/rollback/reasons")
+    public ApiResponse<List<RollbackReason>> reasons() {
+        return ApiResponse.success(taskRollbackService.listActiveReasons());
     }
 }

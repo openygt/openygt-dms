@@ -658,12 +658,12 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     }
 
     private String calcPrescriptionStatus(List<Task> tasks) {
-        if (tasks == null || tasks.isEmpty()) return "待处理";
+        if (tasks == null || tasks.isEmpty()) return "PENDING";
         boolean allPending = tasks.stream().allMatch(t -> "待泡药".equals(t.getStatus()));
         boolean allCompleted = tasks.stream().allMatch(t -> "已完成".equals(t.getStatus()));
-        if (allPending) return "待处理";
-        if (allCompleted) return "处理完毕";
-        return "处理中";
+        if (allPending) return "PENDING";
+        if (allCompleted) return "COMPLETED";
+        return "PROCESSING";
     }
 
     private BigDecimal parseBigDecimal(String value, BigDecimal defaultValue) {
