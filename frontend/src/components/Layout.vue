@@ -35,7 +35,7 @@
           <el-menu-item v-if="userStore.hasPermission('prod:record:view')" index="/task-assignment">生产记录</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('prod:trace:view')" index="/step-visualization">流程跟踪</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('ops:capacity:view')" index="/capacity">产能统计</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('prod:log:view')" index="/logs">操作日志</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:task:view')" index="/tasks">煎药任务</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('prod:setting:view')" index="/production-setting">生产设置</el-menu-item>
         </el-sub-menu>
 
@@ -53,17 +53,6 @@
           <el-menu-item v-if="userStore.hasPermission('eq:alarm:view')" index="/alarms">告警中心</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:maint:view')" index="/device-maintenance">设备维保</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:wash:view')" index="/wash-record">清洗记录</el-menu-item>
-        </el-sub-menu>
-
-        <!-- 3. 煎药作业 -->
-        <el-sub-menu index="/prod">
-          <template #title>
-            <el-icon><FirstAidKit /></el-icon>
-            <span>煎药作业</span>
-          </template>
-          <el-menu-item v-if="userStore.hasPermission('prod:task:view')" index="/tasks">煎药任务</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('prod:dosing:view')" index="/herb-group">分组投料</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('prod:voice:view')" index="/voice-setting">语音播报</el-menu-item>
         </el-sub-menu>
 
         <!-- 3. 质量检验 -->
@@ -100,7 +89,6 @@
           <el-menu-item v-if="userStore.hasPermission('trace:rx:view')" index="/traces">处方追溯</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('trace:batch:view')" index="/trace/batch">批次追溯</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('trace:exc:view')" index="/trace/exception">异常追溯</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('sys:log:view')" index="/logs">操作日志</el-menu-item>
         </el-sub-menu>
 
         <!-- 6. 工艺配置 -->
