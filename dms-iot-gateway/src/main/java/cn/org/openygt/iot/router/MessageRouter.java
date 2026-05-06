@@ -4,6 +4,7 @@ import cn.org.openygt.iot.config.GatewayProperties;
 import cn.org.openygt.iot.gateway.session.GatewayDeviceSessionController;
 import cn.org.openygt.iot.protocol.DeviceMessage;
 import cn.org.openygt.iot.protocol.MessageType;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -14,6 +15,7 @@ import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Executor;
 
 /**
  * 消息路由器
@@ -27,13 +29,16 @@ public class MessageRouter {
     private final RestTemplate restTemplate;
     private final GatewayProperties properties;
     private final GatewayDeviceSessionController gatewayDeviceSessionController;
+    private final Executor asyncExecutor;
 
     public MessageRouter(RestTemplate restTemplate,
                          GatewayProperties properties,
-                         GatewayDeviceSessionController gatewayDeviceSessionController) {
+                         GatewayDeviceSessionController gatewayDeviceSessionController,
+                         @Qualifier("gatewayAsyncExecutor") Executor asyncExecutor) {
         this.restTemplate = restTemplate;
         this.properties = properties;
         this.gatewayDeviceSessionController = gatewayDeviceSessionController;
+        this.asyncExecutor = asyncExecutor;
     }
 
     /**
@@ -45,50 +50,47 @@ public class MessageRouter {
             return;
         }
 
-        boolean accepted;
-        switch (MessageType.from(message.getMessageType())) {
+        // 1. 消息类型校验 + 日志记录
+        MessageType msgType = MessageType.from(message.getMessageType());
+        switch (msgType) {
             case TELEMETRY:
-                accepted = handleTelemetry(message);
+                log.info("[TELEMETRY] device={}, payload={}", message.getDeviceCode(), message.getPayload());
                 break;
             case STATUS:
-                accepted = handleStatus(message);
+                log.info("[STATUS] device={}, payload={}", message.getDeviceCode(), message.getPayload());
                 break;
             case ALARM:
-                accepted = handleAlarm(message);
+                log.warn("[ALARM] device={}, payload={}", message.getDeviceCode(), message.getPayload());
                 break;
             case COMMAND_ACK:
-                accepted = handleCommandAck(message);
+                log.info("[ACK] device={}, payload={}", message.getDeviceCode(), message.getPayload());
                 break;
             default:
                 log.warn("未知消息类型: {}", message.getMessageType());
-                accepted = false;
+                return;
         }
 
-        if (accepted) {
-            gatewayDeviceSessionController.touchOnlineDevice(
-                    message.getDeviceCode(), message.getProtocolType(), message.getSourceIp());
-        }
+        // 2. 先更新本地在线状态（不依赖后端回写是否成功）
+        gatewayDeviceSessionController.touchOnlineDevice(
+                message.getDeviceCode(), message.getProtocolType(), message.getSourceIp());
+
+        // 3. 再异步回写后端（失败不影响在线状态，仅记录告警）
+        final DeviceMessage msg = message;
+        asyncExecutor.execute(() -> {
+            try {
+                boolean ok = postToEquipment(msg);
+                if (!ok) {
+                    log.warn("异步回写后端失败（不影响设备在线状态）: device={}, type={}",
+                            msg.getDeviceCode(), msg.getMessageType());
+                }
+            } catch (Exception e) {
+                log.error("异步回写后端异常（不影响设备在线状态）: device={}, type={}",
+                        msg.getDeviceCode(), msg.getMessageType(), e);
+            }
+        });
     }
 
-    private boolean handleTelemetry(DeviceMessage message) {
-        log.info("[TELEMETRY] device={}, payload={}", message.getDeviceCode(), message.getPayload());
-        return postToEquipment(message);
-    }
-
-    private boolean handleStatus(DeviceMessage message) {
-        log.info("[STATUS] device={}, payload={}", message.getDeviceCode(), message.getPayload());
-        return postToEquipment(message);
-    }
-
-    private boolean handleAlarm(DeviceMessage message) {
-        log.warn("[ALARM] device={}, payload={}", message.getDeviceCode(), message.getPayload());
-        return postToEquipment(message);
-    }
-
-    private boolean handleCommandAck(DeviceMessage message) {
-        log.info("[ACK] device={}, payload={}", message.getDeviceCode(), message.getPayload());
-        return postToEquipment(message);
-    }
+    // handleXxx 方法已内联到 route() 中，postToEquipment 统一在 route() 末尾异步调用
 
     private boolean postToEquipment(DeviceMessage message) {
         String url = properties.getBackendUrl() + "/api/v1/eq/gateway/report";
