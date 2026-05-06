@@ -259,19 +259,29 @@ function formatTime(dt: string | null): string {
 async function loadData() {
   loading.value = true
   try {
-    const params: any = { page: 1, size: 9999 }
+    const params: any = { page: page.value, size: pageSize.value }
     if (search.emergencyLevel != null) params.emergencyLevel = search.emergencyLevel
     if (search.status) params.status = search.status
-    if (search.prescriptionNumber) params.prescriptionNumber = search.prescriptionNumber
-    if (search.patientName) params.patientName = search.patientName
     const res: any = await getEmergencyPrescriptions(params)
     const data = res.data || {}
-    const list = data.records || []
+    let list = data.records || []
+
+    // Client-side filtering for prescriptionNumber and patientName
+    if (search.prescriptionNumber) {
+      list = list.filter((item: any) =>
+        (item.prescriptionNumber || '').includes(search.prescriptionNumber)
+      )
+    }
+    if (search.patientName) {
+      list = list.filter((item: any) =>
+        (item.patientName || '').includes(search.patientName)
+      )
+    }
 
     tableData.value = list
     total.value = data.total || list.length
 
-    // Stats from full dataset (size=9999 ensures all records)
+    // Stats from current page data
     emergencyStat.total = total.value
     emergencyStat.pending = list.filter((item: any) => item.status === 'PENDING').length
     emergencyStat.overdue = list.filter((item: any) => isOverdue(item)).length
