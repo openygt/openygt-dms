@@ -1,7 +1,10 @@
 <template>
   <view class="container">
     <view class="task-info">
-      <text class="info-label" data-testid="sign-task-barcode">任务: {{ taskBarcode }}</text>
+      <text class="info-label" data-testid="sign-task-barcode">任务号: {{ taskBarcode || taskId }}</text>
+      <text class="info-label" v-if="patientName">患者: {{ patientName }}</text>
+      <text class="info-label" v-if="prescriptionNumber">处方号: {{ prescriptionNumber }}</text>
+      <text class="info-label" v-if="taskStatus">当前状态: {{ taskStatus }}</text>
       <text class="info-label">从: {{ handoverFrom }}</text>
       <text class="info-label">到: {{ handoverTo }}</text>
     </view>
@@ -26,10 +29,13 @@
 <script setup>
 import { ref } from 'vue'
 import { onLoad, onReady } from '@dcloudio/uni-app'
-import { post } from '../../utils/request.js'
+import { get, post } from '../../utils/request.js'
 
 const taskId = ref('')
 const taskBarcode = ref('')
+const patientName = ref('')
+const prescriptionNumber = ref('')
+const taskStatus = ref('')
 const handoverFrom = ref('')
 const handoverTo = ref('')
 const remark = ref('')
@@ -45,7 +51,20 @@ onLoad((options) => {
   const userInfo = uni.getStorageSync('pda_user_info') || {}
   handoverFrom.value = userInfo.userName || userInfo.userCode || '当前操作员'
   handoverTo.value = options.handoverTo || '下一工序'
+  loadTaskInfo()
 })
+
+async function loadTaskInfo() {
+  if (!taskId.value) return
+  try {
+    const res = await get(`/task/${taskBarcode.value || taskId.value}`)
+    patientName.value = res.patientName || ''
+    prescriptionNumber.value = res.prescriptionNumber || ''
+    taskStatus.value = res.statusName || res.status || ''
+  } catch (e) {
+    console.error('加载任务信息失败', e)
+  }
+}
 
 onReady(() => {
   ctx = uni.createCanvasContext('signCanvas')
@@ -81,6 +100,15 @@ function clearSign() {
 
 async function handleConfirm() {
   if (!hasSigned.value) { uni.showToast({ title: '请先签字', icon: 'none' }); return }
+  const { confirm } = await uni.showModal({
+    title: '确认交接签字',
+    content: `患者：${patientName.value || '-'}
+处方号：${prescriptionNumber.value || '-'}
+交接对象：${handoverTo.value}
+
+签字后不可撤销，是否确认？`
+  })
+  if (!confirm) return
   loading.value = true
   try {
     const tempPath = await new Promise((resolve, reject) => {

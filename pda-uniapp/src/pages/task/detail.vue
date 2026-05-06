@@ -300,7 +300,7 @@ function goReprint() {
 </script>
 
 <style scoped>
-.container { padding-bottom: 200rpx; }
+.container { padding-bottom: calc(240rpx + env(safe-area-inset-bottom)); }
 .task-card { background: #fff; margin: 20rpx; border-radius: 16rpx; padding: 30rpx; }
 .task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20rpx; }
 .task-status-row { display: flex; align-items: center; }
@@ -460,7 +460,7 @@ function goReprint() {
 .med-name { font-size: 28rpx; color: #333; }
 .med-dosage { font-size: 26rpx; color: #666; }
 .timeline-section { background: #fff; margin: 20rpx; border-radius: 16rpx; padding: 30rpx; }
-.action-footer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 20rpx 30rpx; box-shadow: 0 -2rpx 12rpx rgba(0,0,0,0.06); }
+.action-footer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; padding: 20rpx 30rpx; padding-bottom: calc(20rpx + env(safe-area-inset-bottom)); box-shadow: 0 -2rpx 12rpx rgba(0,0,0,0.06); }
 .main-btn { height: 96rpx; background: #0066CC; color: #fff; font-size: 34rpx; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; margin-bottom: 16rpx; }
 .main-btn.disabled { background: #ccc; }
 .sub-actions { display: flex; gap: 20rpx; }
