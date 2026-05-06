@@ -8,6 +8,8 @@ import cn.org.openygt.production.entity.WorkRecord;
 import cn.org.openygt.production.mapper.StepLogMapper;
 import cn.org.openygt.production.mapper.TaskMapper;
 import cn.org.openygt.production.mapper.WorkRecordMapper;
+import cn.org.openygt.system.mapper.SysUserMapper;
+import cn.org.openygt.system.entity.SysUser;
 import cn.org.openygt.production.service.StepVisualizationService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class StepVisualizationServiceImpl implements StepVisualizationService {
     private final TaskMapper taskMapper;
     private final StepLogMapper stepLogMapper;
     private final WorkRecordMapper workRecordMapper;
+    private final SysUserMapper sysUserMapper;
 
     /** 展示步骤定义（前端展示用，顺序固定） */
     private static final Map<String, String> STEP_DEFINITIONS = new LinkedHashMap<>();
@@ -79,6 +82,17 @@ public class StepVisualizationServiceImpl implements StepVisualizationService {
                 .collect(Collectors.groupingBy(StepLog::getStepType));
 
         List<StepInfoDTO> result = new ArrayList<>();
+
+        // 批量查询操作人姓名
+        java.util.Set<String> opIds = stepLogs.stream()
+                .map(StepLog::getOperatorId)
+                .filter(java.util.Objects::nonNull)
+                .collect(java.util.stream.Collectors.toSet());
+        java.util.Map<String, String> nameMap = new java.util.HashMap<>();
+        if (!opIds.isEmpty()) {
+            java.util.List<SysUser> users = sysUserMapper.selectBatchIds(opIds.stream().map(Long::valueOf).collect(java.util.stream.Collectors.toList()));
+            nameMap = users.stream().collect(java.util.stream.Collectors.toMap(u -> String.valueOf(u.getId()), SysUser::getRealName, (a, b) -> a));
+        }
         for (Map.Entry<String, String> entry : STEP_DEFINITIONS.entrySet()) {
             String stepCode = entry.getKey();
             String stepName = entry.getValue();
@@ -98,6 +112,7 @@ public class StepVisualizationServiceImpl implements StepVisualizationService {
                 dto.setEndTime(latest.getEndedAt());
                 dto.setOperatorId(latest.getOperatorId());
                 dto.setResult(latest.getResult());
+                dto.setOperatorName(nameMap.getOrDefault(latest.getOperatorId(), latest.getOperatorId()));
                 if (latest.getStartedAt() != null && latest.getEndedAt() != null) {
                     dto.setDurationMinutes((int) ChronoUnit.MINUTES.between(latest.getStartedAt(), latest.getEndedAt()));
                 }
