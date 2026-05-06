@@ -48,7 +48,9 @@
         </el-table-column>
         <el-table-column prop="groupName" label="所属分组">
           <template #default="{ row }">
-            {{ pairingMap[row.id] || row.groupName || groupMap[row.groupId] || '-' }}
+            <el-tag v-if="row.groupId && groupMap[row.groupId]" size="small">{{ groupMap[row.groupId] }}</el-tag>
+            <el-tag v-else-if="row.groupName" size="small" type="info">{{ row.groupName }}</el-tag>
+            <span v-else class="text-muted">未分组</span>
           </template>
         </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
@@ -230,7 +232,11 @@
         <el-descriptions-item label="编码">{{ detail?.deviceCode }}</el-descriptions-item>
         <el-descriptions-item label="名称">{{ detail?.name }}</el-descriptions-item>
         <el-descriptions-item label="类型">{{ deviceTypeText(detail?.deviceType) }}</el-descriptions-item>
-        <el-descriptions-item label="分组">{{ detail?.groupName || (detail?.groupId != null ? groupMap[detail.groupId] : undefined) || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="分组">
+          <el-tag v-if="detail?.groupId && groupMap[detail.groupId]" size="small">{{ groupMap[detail.groupId] }}</el-tag>
+          <el-tag v-else-if="detail?.groupName" size="small" type="info">{{ detail.groupName }}</el-tag>
+          <span v-else class="text-muted">未分组</span>
+        </el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="statusTag(detail?.status)">{{ statusText(detail?.status) }}</el-tag>
         </el-descriptions-item>

@@ -2,6 +2,7 @@ package cn.org.openygt.system.service.impl;
 
 import cn.org.openygt.system.entity.SysLog;
 import cn.org.openygt.system.mapper.SysLogMapper;
+import cn.org.openygt.system.mapper.SysUserMapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -21,11 +22,14 @@ class SysLogServiceImplTest {
     @Mock
     private SysLogMapper logMapper;
 
+    @Mock
+    private SysUserMapper userMapper;
+
     private SysLogServiceImpl logService;
 
     @BeforeEach
     void setUp() {
-        logService = new SysLogServiceImpl(logMapper);
+        logService = new SysLogServiceImpl(logMapper, userMapper);
     }
 
     @Test
@@ -46,7 +50,7 @@ class SysLogServiceImplTest {
         Page<SysLog> page = new Page<>(1, 10);
         when(logMapper.selectPage(any(Page.class), any(LambdaQueryWrapper.class))).thenReturn(page);
 
-        IPage<SysLog> result = logService.list("keyword", 1, 10);
+        IPage<SysLog> result = logService.list("keyword", null, 1, 10);
 
         assertNotNull(result);
     }
@@ -56,7 +60,7 @@ class SysLogServiceImplTest {
         Page<SysLog> page = new Page<>(1, 20);
         when(logMapper.selectPage(any(Page.class), any(LambdaQueryWrapper.class))).thenReturn(page);
 
-        IPage<SysLog> result = logService.list(null, 1, 20);
+        IPage<SysLog> result = logService.list(null, null, 1, 20);
 
         assertNotNull(result);
     }
