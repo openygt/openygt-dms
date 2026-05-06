@@ -720,7 +720,7 @@ async function openCreateDialog(row?: any) {
   } else {
     // 新增模式：清空表单
     form.id = undefined
-    form.prescriptionNumber = generatePrescriptionNo(); form.patientName = ''; form.patientPhone = ''
+    form.prescriptionNumber = ''; form.patientName = ''; form.patientPhone = ''
     form.hospitalId = null; form.patientType = 0
     form.doctorName = ''; form.schemeId = null; form.repetition = 7
     form.deliveryType = ''; form.deliveryAddress = ''
@@ -771,13 +771,6 @@ function onMedicineSelect(selected: any, row: any) {
   row.medicineId = selected.id
   row.medicineName = selected.medicineName
   row.unit = selected.unit || 'g'
-}
-
-function generatePrescriptionNo(): string {
-  const now = new Date()
-  const prefix = 'PRE' + now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0')
-  const random = String(Math.floor(Math.random() * 9000) + 1000)
-  return prefix + '-' + random
 }
 
 async function handleSave() {
