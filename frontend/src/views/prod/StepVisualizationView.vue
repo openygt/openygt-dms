@@ -52,7 +52,7 @@
         </div>
       </template>
 
-      <el-steps :active="currentStepIndex" finish-status="success" align-center class="custom-steps">
+      <el-steps :active="currentStepIndex" align-center class="custom-steps">
         <el-step
           v-for="(step, index) in stepList"
           :key="step.code"
