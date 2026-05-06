@@ -105,31 +105,8 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         LocalDateTime dayStart = targetDate.atStartOfDay();
         LocalDateTime dayEnd = targetDate.plusDays(1).atStartOfDay();
 
-        // 去重检查：同一天同一员工不能分配多个任务
-        if (employeeId != null) {
-            Long empCount = assignmentMapper.selectCount(
-                    new LambdaQueryWrapper<TaskAssignment>()
-                            .eq(TaskAssignment::getEmployeeId, employeeId)
-                            .apply("COALESCE(scheduled_start_time, created_at) >= {0}", dayStart)
-                            .apply("COALESCE(scheduled_start_time, created_at) < {0}", dayEnd)
-                            .in(TaskAssignment::getStatus, 1, 2));
-            if (empCount > 0) {
-                throw new IllegalArgumentException("该员工在所选日期已有分配任务，请选择其他员工");
-            }
-        }
-
-        // 去重检查：同一天同一设备不能分配多个任务
-        if (deviceId != null) {
-            Long devCount = assignmentMapper.selectCount(
-                    new LambdaQueryWrapper<TaskAssignment>()
-                            .eq(TaskAssignment::getDeviceId, deviceId)
-                            .apply("COALESCE(scheduled_start_time, created_at) >= {0}", dayStart)
-                            .apply("COALESCE(scheduled_start_time, created_at) < {0}", dayEnd)
-                            .in(TaskAssignment::getStatus, 1, 2));
-            if (devCount > 0) {
-                throw new IllegalArgumentException("该设备在所选日期已有分配任务，请选择其他设备");
-            }
-        }
+        // 去重检查：同一员工不能重复分配到同一任务（按任务去重，允许多任务）
+        // 业务场景：一个煎药工一天处理7-8个任务，需要支持同一天多次记录
 
         TaskAssignment assignment = new TaskAssignment();
         assignment.setTaskId(taskId);
@@ -158,36 +135,8 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         LocalDate targetDate = assignment.getScheduledStartTime() != null
                 ? assignment.getScheduledStartTime().toLocalDate()
                 : assignment.getCreatedAt() != null ? assignment.getCreatedAt().toLocalDate() : LocalDate.now();
-        LocalDateTime dayStart = targetDate.atStartOfDay();
-        LocalDateTime dayEnd = targetDate.plusDays(1).atStartOfDay();
-
-        // 去重检查：同一员工在同一天不能分配多个任务（排除自身）
-        if (newEmployeeId != null) {
-            Long empCount = assignmentMapper.selectCount(
-                    new LambdaQueryWrapper<TaskAssignment>()
-                            .eq(TaskAssignment::getEmployeeId, newEmployeeId)
-                            .ne(TaskAssignment::getId, assignmentId)
-                            .apply("COALESCE(scheduled_start_time, created_at) >= {0}", dayStart)
-                            .apply("COALESCE(scheduled_start_time, created_at) < {0}", dayEnd)
-                            .in(TaskAssignment::getStatus, 1, 2));
-            if (empCount > 0) {
-                throw new IllegalArgumentException("该员工在所选日期已有分配任务");
-            }
-        }
-
-        // 去重检查：同一设备在同一天不能分配多个任务（排除自身）
-        if (newDeviceId != null) {
-            Long devCount = assignmentMapper.selectCount(
-                    new LambdaQueryWrapper<TaskAssignment>()
-                            .eq(TaskAssignment::getDeviceId, newDeviceId)
-                            .ne(TaskAssignment::getId, assignmentId)
-                            .apply("COALESCE(scheduled_start_time, created_at) >= {0}", dayStart)
-                            .apply("COALESCE(scheduled_start_time, created_at) < {0}", dayEnd)
-                            .in(TaskAssignment::getStatus, 1, 2));
-            if (devCount > 0) {
-                throw new IllegalArgumentException("该设备在所选日期已有分配任务");
-            }
-        }
+        // 修改记录只需检查任务去重（已在manualAssign中处理），
+        // 不再限制同一天员工/设备数量（一个煎药工一天处理多个任务）
 
         assignment.setDeviceId(newDeviceId);
         assignment.setEmployeeId(newEmployeeId);
