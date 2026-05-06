@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("prescription_default")
+@TableName("prod_prescription_default")
 public class PrescriptionDefault extends BaseEntity {
 
     private String settingKey;

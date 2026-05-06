@@ -45,7 +45,7 @@ const router = createRouter({
         { path: 'roles', name: 'Roles', component: () => import('@/views/system/RoleListView.vue'), meta: { title: '权限管理', perm: 'sys:role:list' } },
         { path: 'menus', name: 'Menus', component: () => import('@/views/system/MenuManageView.vue'), meta: { title: '菜单管理', perm: 'sys:menu:list' } },
         { path: 'configs', name: 'Configs', component: () => import('@/views/system/ConfigListView.vue'), meta: { title: '参数配置', perm: 'sys:config:list' } },
-        { path: 'logs', name: 'Logs', component: () => import('@/views/system/SysLogView.vue'), meta: { title: '操作日志', perm: 'sys:log:list' } },
+
         { path: 'sys/logs', name: 'SysLogs', component: () => import('@/views/system/SysLogView.vue'), meta: { title: '系统日志', perm: 'sys:log:list' } },
         { path: 'interface-center', name: 'InterfaceCenter', component: () => import('@/views/system/InterfaceCenterView.vue'), meta: { title: '接口中心' } },
         { path: 'hospitals', name: 'Hospitals', component: () => import('@/views/md/HospitalListView.vue'), meta: { title: '医院管理', perm: 'md:hospital:view' } },
