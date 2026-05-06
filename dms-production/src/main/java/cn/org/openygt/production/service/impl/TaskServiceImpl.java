@@ -369,7 +369,13 @@ public class TaskServiceImpl implements TaskService {
                                   String operatorId, String operatorKeyword, String prescriptionNumber,
                                   String startTime, String endTime, int page, int size) {
         LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
-        if (status != null && !status.isEmpty()) wrapper.eq(Task::getStatus, status);
+        if (status != null && !status.isEmpty()) {
+            if (status.contains(",")) {
+                wrapper.in(Task::getStatus, java.util.Arrays.asList(status.split(",")));
+            } else {
+                wrapper.eq(Task::getStatus, status);
+            }
+        }
         if (deviceId != null) {
             wrapper.and(w -> w.eq(Task::getDecoctDeviceId, deviceId).or().eq(Task::getPackageDeviceId, deviceId));
         }
