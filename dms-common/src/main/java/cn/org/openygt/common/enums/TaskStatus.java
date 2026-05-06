@@ -42,4 +42,14 @@ public enum TaskStatus {
             "待包装", "包装中", "待质检", "已暂存", "待交接"
         ))
     );
+
+    public static TaskStatus fromLabel(String label) {
+        if (label == null) return null;
+        for (TaskStatus status : values()) {
+            if (status.label.equals(label)) {
+                return status;
+            }
+        }
+        return null;
+    }
 }
