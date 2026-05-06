@@ -4,6 +4,7 @@ import cn.org.openygt.equipment.EquipmentModule;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.entity.DeviceCommand;
 import cn.org.openygt.equipment.service.DeviceCommandService;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ public class DeviceCommandController {
     private final DeviceCommandService commandService;
 
     @PostMapping
+    @RequiresPermissions("eq:device:emergency")
     public ApiResponse<DeviceCommand> createCommand(@RequestBody Map<String, Object> request) {
         String deviceCode = (String) request.get("deviceCode");
         String commandType = (String) request.get("commandType");
