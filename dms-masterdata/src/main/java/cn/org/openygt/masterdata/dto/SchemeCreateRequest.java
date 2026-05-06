@@ -1,6 +1,7 @@
 package cn.org.openygt.masterdata.dto;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
@@ -11,6 +12,10 @@ public class SchemeCreateRequest {
     @NotBlank(message = "方案名称不能为空")
     private String name;
 
+    @NotBlank(message = "方案编码不能为空")
+    private String code;
+
+    @NotNull(message = "煎煮类型不能为空")
     private Integer schemeType;
     private Integer decoctTimes;
     private Integer pressure;
@@ -21,7 +26,10 @@ public class SchemeCreateRequest {
     private String description;
 
     // Phase 1 扩展字段
+    @NotNull(message = "一煎时长不能为空")
     private Integer firstDecoctTime;
+
+    @NotNull(message = "二煎时长不能为空")
     private Integer secondDecoctTime;
     private Integer soakTime;
     private Integer drainTime;
@@ -29,6 +37,16 @@ public class SchemeCreateRequest {
     private Integer lateAddRemindTime;
     private BigDecimal tempRiseRate;
     private Integer isDefault;
+
+    /** 高温报警阈值（℃） */
+    private BigDecimal alarmHighTemp;
+
+    /** 低温报警阈值（℃） */
+    private BigDecimal alarmLowTemp;
+
+    /** 状态: 1启用 0禁用 */
+    @NotNull(message = "状态不能为空")
+    private Integer status;
 
     public String getName() {
         return name;
@@ -164,5 +182,37 @@ public class SchemeCreateRequest {
 
     public void setIsDefault(Integer isDefault) {
         this.isDefault = isDefault;
+    }
+
+    public BigDecimal getAlarmHighTemp() {
+        return alarmHighTemp;
+    }
+
+    public void setAlarmHighTemp(BigDecimal alarmHighTemp) {
+        this.alarmHighTemp = alarmHighTemp;
+    }
+
+    public BigDecimal getAlarmLowTemp() {
+        return alarmLowTemp;
+    }
+
+    public void setAlarmLowTemp(BigDecimal alarmLowTemp) {
+        this.alarmLowTemp = alarmLowTemp;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public Integer getStatus() {
+        return status;
+    }
+
+    public void setStatus(Integer status) {
+        this.status = status;
     }
 }

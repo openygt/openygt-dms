@@ -123,11 +123,12 @@ public class TaskController {
     }
 
     private String resolveOperatorId(String operatorId, Long userId) {
-        if (operatorId != null && !operatorId.trim().isEmpty()) {
-            return operatorId;
-        }
+        // 写操作优先以鉴权上下文中的 userId 为准，防止请求体伪造 operatorId
         if (userId != null) {
             return String.valueOf(userId);
+        }
+        if (operatorId != null && !operatorId.trim().isEmpty()) {
+            return operatorId;
         }
         return "SYSTEM";
     }

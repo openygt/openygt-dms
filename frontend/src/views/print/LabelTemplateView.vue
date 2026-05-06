@@ -39,7 +39,7 @@
         <el-table-column prop="heightMm" label="高度(mm)" min-width="100" />
         <el-table-column prop="status" label="状态" min-width="80">
           <template #default="{ row }">
-            <el-tag v-if="row.status === 'ENABLED'" type="success">启用</el-tag>
+            <el-tag v-if="row.status === 1" type="success">启用</el-tag>
             <el-tag v-else type="info">禁用</el-tag>
           </template>
         </el-table-column>
@@ -86,8 +86,8 @@
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio label="ENABLED">启用</el-radio>
-            <el-radio label="DISABLED">禁用</el-radio>
+            <el-radio :label="1">启用</el-radio>
+            <el-radio :label="0">禁用</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="模板内容" prop="content">
@@ -119,7 +119,7 @@ interface LabelTemplate {
   templateType: string
   widthMm: number
   heightMm: number
-  status: string
+  status: number
   content: string
 }
 
@@ -144,7 +144,7 @@ const form = reactive<LabelTemplate>({
   templateType: '',
   widthMm: 50,
   heightMm: 30,
-  status: 'ENABLED',
+  status: 1,
   content: ''
 })
 
@@ -182,7 +182,7 @@ function resetForm() {
   form.templateType = ''
   form.widthMm = 50
   form.heightMm = 30
-  form.status = 'ENABLED'
+  form.status = 1
   form.content = ''
 }
 

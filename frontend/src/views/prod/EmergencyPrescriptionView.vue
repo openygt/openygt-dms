@@ -262,8 +262,6 @@ async function loadData() {
     const params: any = { page: page.value, size: pageSize.value }
     if (search.emergencyLevel != null) params.emergencyLevel = search.emergencyLevel
     if (search.status) params.status = search.status
-    // prescriptionNumber and patientName are filtered client-side for now
-    // as the backend list endpoint does not support them directly
     const res: any = await getEmergencyPrescriptions(params)
     const data = res.data || {}
     let list = data.records || []
@@ -283,8 +281,7 @@ async function loadData() {
     tableData.value = list
     total.value = data.total || list.length
 
-    // Aggregate stats from the current page data
-    // For accurate overall stats we would need a separate stats endpoint
+    // Stats from current page data
     emergencyStat.total = total.value
     emergencyStat.pending = list.filter((item: any) => item.status === 'PENDING').length
     emergencyStat.overdue = list.filter((item: any) => isOverdue(item)).length

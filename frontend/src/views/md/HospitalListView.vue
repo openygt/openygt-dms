@@ -26,7 +26,7 @@
         <el-table-column prop="code" label="医院编码" />
         <el-table-column prop="contactPerson" label="联系人" />
         <el-table-column prop="phone" label="联系电话" />
-        <el-table-column prop="address" label="地址" />
+
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
@@ -59,7 +59,7 @@
         <el-form-item label="地址">
           <el-input v-model="form.address" type="textarea" rows="2" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="状态" required>
           <el-radio-group v-model="form.status">
             <el-radio :label="1">启用</el-radio>
             <el-radio :label="0">禁用</el-radio>
@@ -123,7 +123,9 @@ async function handleSave() {
     }
     dialogVisible.value = false
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || e?.message || '保存失败')
+  }
 }
 
 async function handleDelete(row: Hospital) {
@@ -132,7 +134,12 @@ async function handleDelete(row: Hospital) {
     await request.delete(`/v1/md/hospitals/${row.id}`)
     ElMessage.success('删除成功')
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    // 用户取消删除不提示
+    if (e !== 'cancel') {
+      ElMessage.error(e?.response?.data?.message || e?.message || '删除失败')
+    }
+  }
 }
 
 onMounted(fetchData)

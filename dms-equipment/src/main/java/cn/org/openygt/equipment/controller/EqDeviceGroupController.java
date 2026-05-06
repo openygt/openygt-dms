@@ -3,6 +3,7 @@ import cn.org.openygt.equipment.EquipmentModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.entity.EqDeviceGroup;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.equipment.service.EqDeviceGroupService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -40,6 +41,7 @@ public class EqDeviceGroupController {
     }
 
     @GetMapping
+    @RequiresPermissions("eq:group:view")
     public ApiResponse<Page<EqDeviceGroup>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "50") int size,
@@ -58,6 +60,7 @@ public class EqDeviceGroupController {
     }
 
     @GetMapping("/all")
+    @RequiresPermissions("eq:group:view")
     public ApiResponse<List<EqDeviceGroup>> all() {
         return ApiResponse.success(groupService.list());
     }

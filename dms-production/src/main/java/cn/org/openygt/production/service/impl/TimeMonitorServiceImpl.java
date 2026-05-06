@@ -112,7 +112,7 @@ public class TimeMonitorServiceImpl implements TimeMonitorService {
         List<TimeMonitor> monitors = timeMonitorMapper.selectList(new LambdaQueryWrapper<TimeMonitor>()
                 .isNotNull(TimeMonitor::getTaskId)
                 .isNotNull(TimeMonitor::getActualStart)
-                .isNull(TimeMonitor::getActualEnd)
+                
                 .orderByDesc(TimeMonitor::getUpdatedAt));
         return monitors.stream()
                 .collect(Collectors.toMap(TimeMonitor::getTaskId, m -> m, this::pickDashboardMonitor))

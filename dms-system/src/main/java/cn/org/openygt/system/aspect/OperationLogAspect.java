@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
@@ -15,6 +16,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import cn.org.openygt.common.util.JwtUtil;
+import org.springframework.util.StringUtils;
 
 /**
  * 操作日志 AOP —— 拦截 Controller 层写操作，记录到 sys_log。
@@ -42,7 +45,7 @@ public class OperationLogAspect {
         long elapsed = System.currentTimeMillis() - start;
 
         try {
-            recordLog(joinPoint, elapsed);
+            recordLog(joinPoint, elapsed, true, result);
         } catch (Exception e) {
             log.error("操作日志记录失败", e);
         }
@@ -50,7 +53,18 @@ public class OperationLogAspect {
         return result;
     }
 
-    private void recordLog(ProceedingJoinPoint joinPoint, long elapsed) {
+    @AfterThrowing(pointcut = "controllerLayer() && (@annotation(org.springframework.web.bind.annotation.PostMapping) || " +
+            "@annotation(org.springframework.web.bind.annotation.PutMapping) || " +
+            "@annotation(org.springframework.web.bind.annotation.DeleteMapping))", throwing = "ex")
+    public void afterThrowingOperation(org.aspectj.lang.JoinPoint joinPoint, Throwable ex) {
+        try {
+            recordLog(joinPoint, 0, false, null);
+        } catch (Exception e) {
+            log.error("操作日志记录失败", e);
+        }
+    }
+
+    private void recordLog(org.aspectj.lang.JoinPoint joinPoint, long elapsed, boolean success, Object returnValue) {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         String className = signature.getDeclaringType().getSimpleName();
         String methodName = signature.getName();
@@ -68,21 +82,58 @@ public class OperationLogAspect {
         sysLog.setDetail(request.getMethod() + " " + request.getRequestURI() + " | 耗时=" + elapsed + "ms");
         sysLog.setIpAddress(getClientIp(request));
         sysLog.setCreatedAt(LocalDateTime.now());
+        sysLog.setResult(success ? "SUCCESS" : "FAILED");
 
-        // TODO: 从 JWT Token 中解析 userId
-        sysLog.setUserId(null);
+        // 从 JWT Token 中解析 userId
+        String token = request.getHeader("Authorization");
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+            try {
+                Long userId = cn.org.openygt.common.util.JwtUtil.getUserId(token);
+                if (userId != null) sysLog.setUserId(String.valueOf(userId));
+            } catch (Exception ignored) {}
+        }
+
+        // 尝试从参数中提取 targetId / targetName
+        Object[] args = joinPoint.getArgs();
+        String targetId = extractTargetId(args);
+        if (targetId != null) sysLog.setTargetId(targetId);
 
         sysLogService.saveLog(sysLog);
     }
 
+    private String extractTargetId(Object[] args) {
+        for (Object arg : args) {
+            if (arg == null) continue;
+            if (arg instanceof Number) {
+                return arg.toString();
+            }
+            if (arg instanceof String) {
+                String s = (String) arg;
+                if (s.matches("\\d+")) return s;
+            }
+            try {
+                java.lang.reflect.Method m = arg.getClass().getMethod("getId");
+                Object id = m.invoke(arg);
+                if (id != null) return id.toString();
+            } catch (Exception ignored) {}
+        }
+        return null;
+    }
+
     private String extractModule(String uri) {
         if (uri == null) return "unknown";
+        if (uri.startsWith("/api/v1/auth")) return "auth";
+        if (uri.startsWith("/api/v1/rbac")) return "auth";
         if (uri.startsWith("/api/v1/sys")) return "system";
         if (uri.startsWith("/api/v1/md")) return "masterdata";
         if (uri.startsWith("/api/v1/eq")) return "equipment";
         if (uri.startsWith("/api/v1/prod")) return "production";
         if (uri.startsWith("/api/v1/qt")) return "quality";
         if (uri.startsWith("/api/v1/prt")) return "print";
+        if (uri.startsWith("/api/v1/inv")) return "inventory";
+        if (uri.startsWith("/api/v1/analytics")) return "analytics";
+        if (uri.startsWith("/api/v1/ops")) return "analytics";
         return "unknown";
     }
 

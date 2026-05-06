@@ -21,8 +21,9 @@ public class SysLogController {
     @GetMapping
     public ApiResponse<IPage<SysLog>> list(
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String module,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
-        return ApiResponse.success(logService.list(keyword, page, size));
+        return ApiResponse.success(logService.list(keyword, module, page, size));
     }
 }
