@@ -193,6 +193,7 @@ async function sendCommand() {
 // 格式化函数
 function formatCommandType(type: string) {
   const map: Record<string, string> = {
+    START: '启动',
     START_SOAK: '启动泡药',
     START_DECOCT: '启动煎药',
     PAUSE: '暂停',
