@@ -4,9 +4,10 @@
     <el-card class="step-card" shadow="never">
       <template #header>
         <div class="card-header">
-          <span>任务编号: {{ taskId }}</span>
+          <span>任务编号: {{ displayTaskId || '未选择' }}</span>
           <el-tag v-if="currentStatus === 'NORMAL'" type="success">进行中</el-tag>
           <el-tag v-else-if="currentStatus === 'EXCEPTION'" type="danger">异常</el-tag>
+          <el-tag v-else-if="currentStatus === 'COMPLETED'" type="success">已完成</el-tag>
           <el-tag v-else type="info">未开始</el-tag>
         </div>
       </template>
@@ -62,6 +63,7 @@ import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Check, Close, Loading } from '@element-plus/icons-vue'
 import { getTaskSteps, getStepDetail } from '@/api/newModules'
+import request from '@/api/request'
 
 interface StepItem {
   code: string
@@ -77,6 +79,7 @@ interface StepItem {
 
 const route = useRoute()
 const taskId = computed(() => route.query.taskId as string || '')
+const displayTaskId = ref('')
 
 // 步骤定义以服务端字典为唯一事实来源
 const stepList = ref<StepItem[]>([
@@ -161,9 +164,10 @@ async function handleStepClick(step: StepItem) {
 }
 
 async function loadTaskSteps() {
-  if (!taskId.value) return
+  const id = taskId.value || displayTaskId.value
+  if (!id) return
   try {
-    const res: any = await getTaskSteps(taskId.value)
+    const res: any = await getTaskSteps(id)
     const steps = Array.isArray(res.data) ? res.data : []
     if (steps.length) {
       const map = new Map(steps.map((s: any) => [s.stepCode, s]))
@@ -188,8 +192,27 @@ async function loadTaskSteps() {
   }
 }
 
+async function initDefaultTask() {
+  // 如果路由没有 taskId，自动加载第一个任务
+  if (!taskId.value) {
+    try {
+      const res: any = await request.get('/v1/prod/tasks', { params: { page: 1, size: 1 } })
+      const firstTask = res.data?.records?.[0]
+      if (firstTask) {
+        displayTaskId.value = String(firstTask.id)
+        await loadTaskSteps()
+      }
+    } catch (e) {
+      // 无任务时保持默认空状态
+    }
+  } else {
+    displayTaskId.value = taskId.value
+    await loadTaskSteps()
+  }
+}
+
 onMounted(() => {
-  loadTaskSteps()
+  initDefaultTask()
 })
 </script>
 
