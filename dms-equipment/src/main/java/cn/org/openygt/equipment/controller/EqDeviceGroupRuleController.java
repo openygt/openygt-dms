@@ -4,6 +4,7 @@ import cn.org.openygt.equipment.EquipmentModule;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.entity.EqDeviceGroupRule;
 import cn.org.openygt.equipment.service.EqDeviceGroupRuleService;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +23,14 @@ public class EqDeviceGroupRuleController {
     private final EqDeviceGroupRuleService ruleService;
 
     @PostMapping
+    @RequiresPermissions("eq:group:view")
     public ApiResponse<Long> create(@RequestBody EqDeviceGroupRule rule) {
         ruleService.save(rule);
         return ApiResponse.success(rule.getId());
     }
 
     @PutMapping("/{id}")
+    @RequiresPermissions("eq:group:view")
     public ApiResponse<Void> update(@PathVariable Long id, @RequestBody EqDeviceGroupRule rule) {
         rule.setId(id);
         ruleService.updateById(rule);
@@ -53,6 +56,7 @@ public class EqDeviceGroupRuleController {
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermissions("eq:group:view")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         ruleService.removeById(id);
         return ApiResponse.success();
