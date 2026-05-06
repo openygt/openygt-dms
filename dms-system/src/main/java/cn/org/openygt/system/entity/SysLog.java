@@ -20,4 +20,8 @@ public class SysLog extends BaseAuditEntity {
     private String module;
     private String detail;
     private String ipAddress;
+
+    private String result;
+    private String targetId;
+    private String targetName;
 }
