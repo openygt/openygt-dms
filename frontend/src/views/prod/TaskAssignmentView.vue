@@ -1,15 +1,12 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">排产调度：<span class="page-header-sub">甘特图排产、设备分配、员工指派、负载均衡</span></div>
+    <div class="page-header-title">生产记录：<span class="page-header-sub">每日工作分配登记</span></div>
 
     <el-card class="search-card" shadow="never">
       <div class="toolbar">
         <div class="toolbar-left">
-          <el-button type="primary" @click="openAutoDialog">
-            <el-icon><TrendCharts /></el-icon> 自动排程
-          </el-button>
-          <el-button type="success" @click="openManualDialog">
-            <el-icon><Edit /></el-icon> 手动分配
+          <el-button type="primary" @click="openAddRecordDialog">
+            <el-icon><Edit /></el-icon> 添加记录
           </el-button>
           <el-date-picker
             v-model="selectedDate"
@@ -21,9 +18,9 @@
           />
         </div>
         <div class="toolbar-right">
-          <el-statistic title="分配记录" :value="summary.totalAssignments" />
-          <el-statistic title="设备分配" :value="summary.deviceAssignments" />
-          <el-statistic title="员工分配" :value="summary.employeeAssignments" />
+          <el-statistic title="工作记录" :value="summary.totalAssignments" />
+          <el-statistic title="涉及设备" :value="summary.deviceAssignments" />
+          <el-statistic title="涉及员工" :value="summary.employeeAssignments" />
         </div>
       </div>
     </el-card>
@@ -32,7 +29,7 @@
       <el-col :xs="24" :md="12">
         <el-card shadow="never">
           <template #header>
-            <span>员工负载</span>
+            <span>员工当日工作量</span>
           </template>
           <el-table :data="employeeLoad" size="small" border>
             <el-table-column prop="employeeName" label="员工" min-width="120" />
@@ -50,7 +47,7 @@
       <el-col :xs="24" :md="12">
         <el-card shadow="never">
           <template #header>
-            <span>设备负载</span>
+            <span>设备当日工作量</span>
           </template>
           <el-table :data="deviceLoad" size="small" border>
             <el-table-column prop="deviceName" label="设备" min-width="140" />
@@ -101,7 +98,7 @@
     <el-card shadow="never">
       <template #header>
         <div class="record-header">
-          <span>分配记录</span>
+          <span>工作记录</span>
           <el-button size="small" @click="fetchAssignments">刷新</el-button>
         </div>
       </template>
@@ -110,12 +107,12 @@
         <el-table-column prop="taskName" label="任务" min-width="120" />
         <el-table-column prop="deviceName" label="设备" min-width="140" />
         <el-table-column prop="employeeName" label="员工" min-width="120" />
-        <el-table-column prop="assignTypeLabel" label="分配类型" width="100">
+        <el-table-column prop="assignTypeLabel" label="记录类型" width="100">
           <template #default="{ row }">
             <el-tag :type="row.assignTypeTag">{{ row.assignTypeLabel }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="assignedAt" label="分配时间" min-width="170" />
+        <el-table-column prop="assignedAt" label="记录时间" min-width="170" />
         <el-table-column prop="statusLabel" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.statusTag">{{ row.statusLabel }}</el-tag>
@@ -123,73 +120,66 @@
         </el-table-column>
         <el-table-column label="操作" width="120" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" @click="openReassignDialog(row)">重新分配</el-button>
+            <el-button link type="primary" @click="openReassignDialog(row)">修改</el-button>
           </template>
         </el-table-column>
       </el-table>
     </el-card>
 
-    <el-dialog v-model="autoDialogVisible" title="自动排程" width="520px">
-      <el-form :model="autoForm" label-width="100px">
+    <el-dialog v-model="addRecordDialogVisible" title="添加记录" width="520px">
+      <el-form :model="addRecordForm" label-width="100px">
         <el-form-item label="任务" required>
-          <el-select v-model="autoForm.taskId" placeholder="选择待分配任务" style="width: 100%">
-            <el-option v-for="task in availableTasks" :key="task.id" :label="task.name" :value="task.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="分配策略" required>
-          <el-select v-model="autoForm.strategy" placeholder="选择分配策略" style="width: 100%">
-            <el-option label="负载均衡" value="LOAD_BALANCE" />
-            <el-option label="技能匹配" value="SKILL" />
-            <el-option label="紧急优先" value="URGENCY" />
-            <el-option label="相似处方" value="SIMILARITY" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="autoDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAutoAssign">确认排程</el-button>
-      </template>
-    </el-dialog>
-
-    <el-dialog v-model="manualDialogVisible" title="手动分配任务" width="520px">
-      <el-form :model="manualForm" label-width="100px">
-        <el-form-item label="任务" required>
-          <el-select v-model="manualForm.taskId" placeholder="选择待分配任务" style="width: 100%">
+          <el-select
+            v-model="addRecordForm.taskId"
+            placeholder="选择任务"
+            filterable
+            style="width: 100%"
+          >
             <el-option v-for="task in availableTasks" :key="task.id" :label="task.name" :value="task.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="员工" required>
-          <el-select v-model="manualForm.employeeId" placeholder="选择员工" style="width: 100%">
+          <el-select
+            v-model="addRecordForm.employeeId"
+            placeholder="选择员工"
+            filterable
+            style="width: 100%"
+          >
             <el-option v-for="employee in availableEmployees" :key="employee.id" :label="employee.name" :value="employee.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="设备" required>
-          <el-select v-model="manualForm.deviceId" placeholder="选择设备" style="width: 100%">
+          <el-select
+            v-model="addRecordForm.deviceId"
+            placeholder="选择设备"
+            filterable
+            style="width: 100%"
+          >
             <el-option v-for="device in availableDevices" :key="device.id" :label="device.name" :value="device.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="备注">
-          <el-input v-model="manualForm.reason" type="textarea" rows="2" />
+          <el-input v-model="addRecordForm.reason" type="textarea" rows="2" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="manualDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleManualAssign">确认分配</el-button>
+        <el-button @click="addRecordDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleAddRecord">确认</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="reassignDialogVisible" title="重新分配" width="520px">
+    <el-dialog v-model="reassignDialogVisible" title="修改记录" width="520px">
       <el-form :model="reassignForm" label-width="100px">
         <el-form-item label="当前任务">
           <span>{{ currentAssignment?.taskName }}</span>
         </el-form-item>
         <el-form-item label="新员工" required>
-          <el-select v-model="reassignForm.newEmployeeId" clearable placeholder="选择员工" style="width: 100%">
+          <el-select v-model="reassignForm.newEmployeeId" clearable filterable placeholder="选择员工" style="width: 100%">
             <el-option v-for="employee in employees" :key="employee.id" :label="employee.name" :value="employee.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="新设备" required>
-          <el-select v-model="reassignForm.newDeviceId" clearable placeholder="选择设备" style="width: 100%">
+          <el-select v-model="reassignForm.newDeviceId" clearable filterable placeholder="选择设备" style="width: 100%">
             <el-option v-for="device in devices" :key="device.id" :label="device.name" :value="device.id" />
           </el-select>
         </el-form-item>
@@ -208,10 +198,10 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Edit, TrendCharts } from '@element-plus/icons-vue'
+import { Edit } from '@element-plus/icons-vue'
 import request from '@/api/request'
 import { getDeviceList } from '@/api/equipment'
-import { getDeviceLoad, getEmployeeLoad, getSchedule, getOccupiedIds, autoAssign, manualAssign, reassign } from '@/api/newModules'
+import { getDeviceLoad, getEmployeeLoad, getSchedule, getOccupiedIds, manualAssign, reassign } from '@/api/newModules'
 
 interface AssignmentView {
   id: number
@@ -259,12 +249,11 @@ const availableTasks = computed(() =>
   pendingTasks.value.filter(t => !occupiedIds.value.taskIds.includes(t.id))
 )
 
-const manualDialogVisible = ref(false)
+const addRecordDialogVisible = ref(false)
 const reassignDialogVisible = ref(false)
-const autoDialogVisible = ref(false)
 const currentAssignment = ref<AssignmentView | null>(null)
 
-const manualForm = reactive({
+const addRecordForm = reactive({
   taskId: null as number | null,
   employeeId: null as number | null,
   deviceId: null as number | null,
@@ -275,11 +264,6 @@ const reassignForm = reactive({
   newEmployeeId: null as number | null,
   newDeviceId: null as number | null,
   reason: ''
-})
-
-const autoForm = reactive({
-  taskId: null as number | null,
-  strategy: 'LOAD_BALANCE'
 })
 
 const loadColor = [
@@ -338,14 +322,14 @@ function normalizeEmployeeLoad(items: any[]) {
     const assignedCount = Number(item.assignedCount || 0)
     const completedCount = Number(item.completedCount || 0)
     const pendingCount = Number(item.pendingCount || 0)
-    const denominator = Math.max(1, assignedCount)
+    const total = Math.max(1, assignedCount + pendingCount)
     return {
       employeeId: item.employeeId,
       employeeName: item.employeeName || `员工-${item.employeeId ?? '-'}`,
       assignedCount,
       completedCount,
       pendingCount,
-      loadRate: Math.min(100, Math.round((assignedCount / denominator) * 100))
+      loadRate: Math.min(100, Math.round((assignedCount / total) * 100))
     }
   })
 }
@@ -412,7 +396,7 @@ function buildGanttRows(items: any[]) {
 }
 
 async function loadTaskOptions() {
-  const res: any = await request.get('/v1/prod/tasks', { params: { status: 'PENDING,ASSIGNED,COMPLETED,待煎药,待泡药,泡药中,待包装,包装中', page: 1, size: 200 } })
+  const res: any = await request.get('/v1/prod/tasks', { params: { page: 1, size: 200 } })
   pendingTasks.value = (res.data?.records || []).map((item: any) => ({
     id: item.id,
     name: `任务-${item.id} / 处方-${item.prescriptionId || '-'}`
@@ -428,7 +412,7 @@ async function loadEmployees() {
 }
 
 async function loadDevices() {
-  const res: any = await getDeviceList({ page: 1, size: 200, deviceType: 1 })
+  const res: any = await getDeviceList({ page: 1, size: 200 })
   devices.value = (res.data?.records || []).map((item: any) => ({
     id: item.id,
     name: item.name || item.deviceCode || `设备-${item.id}`
@@ -477,66 +461,43 @@ async function reloadAll() {
   await Promise.all([fetchLoadData(), fetchAssignments(), loadTaskOptions()])
 }
 
-async function openAutoDialog() {
+async function openAddRecordDialog() {
   try {
     const occRes: any = await getOccupiedIds(selectedDate.value)
     occupiedIds.value = occRes.data || { taskIds: [], employeeIds: [], deviceIds: [] }
   } catch {
     occupiedIds.value = { taskIds: [], employeeIds: [], deviceIds: [] }
   }
-  autoForm.taskId = null
-  autoForm.strategy = 'LOAD_BALANCE'
-  autoDialogVisible.value = true
+  addRecordDialogVisible.value = true
+  addRecordForm.taskId = null
+  addRecordForm.employeeId = null
+  addRecordForm.deviceId = null
+  addRecordForm.reason = ''
 }
 
-async function handleAutoAssign() {
-  if (!autoForm.taskId) {
+async function handleAddRecord() {
+  if (!addRecordForm.taskId) {
     ElMessage.warning('请选择任务')
     return
   }
-  await autoAssign({ taskId: autoForm.taskId, strategy: autoForm.strategy })
-  ElMessage.success('自动排程成功')
-  autoDialogVisible.value = false
-  await reloadAll()
-}
-
-async function openManualDialog() {
-  try {
-    const occRes: any = await getOccupiedIds(selectedDate.value)
-    occupiedIds.value = occRes.data || { taskIds: [], employeeIds: [], deviceIds: [] }
-  } catch {
-    occupiedIds.value = { taskIds: [], employeeIds: [], deviceIds: [] }
-  }
-  manualDialogVisible.value = true
-  manualForm.taskId = null
-  manualForm.employeeId = null
-  manualForm.deviceId = null
-  manualForm.reason = ''
-}
-
-async function handleManualAssign() {
-  if (!manualForm.taskId) {
-    ElMessage.warning('请选择任务')
-    return
-  }
-  if (!manualForm.employeeId) {
+  if (!addRecordForm.employeeId) {
     ElMessage.warning('请选择员工')
     return
   }
-  if (!manualForm.deviceId) {
+  if (!addRecordForm.deviceId) {
     ElMessage.warning('请选择设备')
     return
   }
   try {
     await manualAssign({
-      taskId: manualForm.taskId,
-      employeeId: manualForm.employeeId,
-      deviceId: manualForm.deviceId,
-      reason: manualForm.reason || '',
+      taskId: addRecordForm.taskId,
+      employeeId: addRecordForm.employeeId,
+      deviceId: addRecordForm.deviceId,
+      reason: addRecordForm.reason || '',
       scheduledDate: selectedDate.value
     })
-    ElMessage.success('手动分配成功')
-    manualDialogVisible.value = false
+    ElMessage.success('添加记录成功')
+    addRecordDialogVisible.value = false
     await reloadAll()
   } catch (e: any) {
     // error already shown by axios interceptor
@@ -562,7 +523,7 @@ async function handleReassign() {
     newDeviceId: reassignForm.newDeviceId,
     reason: reassignForm.reason || ''
   })
-  ElMessage.success('重新分配成功')
+  ElMessage.success('修改成功')
   reassignDialogVisible.value = false
   await reloadAll()
 }
