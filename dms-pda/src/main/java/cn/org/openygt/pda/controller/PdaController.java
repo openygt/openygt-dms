@@ -155,6 +155,7 @@ public class PdaController {
                                                   Long recordId, TokenResponse tokenResponse) {
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
+        result.put("userId", userId);
         result.put("recordId", recordId);
         result.put("userCode", userCode);
         result.put("userName", userName);
