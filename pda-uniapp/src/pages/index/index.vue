@@ -9,7 +9,7 @@
     <view class="header">
       <view class="greeting-area">
         <text class="greeting" data-testid="user-name">{{ greeting }}，{{ userInfo.userName || userInfo.userCode || '操作员' }}</text>
-        <text class="device" data-testid="device-code">设备：{{ userInfo.deviceCode || '未绑定' }}</text>
+        <text class="device" data-testid="device-code" @click="goBindDevice">设备：{{ userInfo.deviceCode || '未绑定（点击绑定）' }}</text>
       </view>
     </view>
 
@@ -153,6 +153,21 @@ function goLog() { uni.switchTab({ url: '/pages/log/list' }) }
 function goVoice() { uni.navigateTo({ url: '/pages/voice/index' }) }
 function goPatientQuery() { uni.navigateTo({ url: '/pages/patient/query' }) }
 function goShelf() { uni.navigateTo({ url: '/pages/shelf/index' }) }
+function goBindDevice() {
+  if (userInfo.value.deviceCode) {
+    uni.showToast({ title: '已绑定设备：' + userInfo.value.deviceCode, icon: 'none' })
+  } else {
+    uni.showModal({
+      title: '绑定设备',
+      content: '当前未绑定PDA设备，是否前往扫码绑定？',
+      success: (res) => {
+        if (res.confirm) {
+          uni.navigateTo({ url: '/pages/task/unified-scan' })
+        }
+      }
+    })
+  }
+}
 function goTaskDetail(barcode) {
   uni.navigateTo({ url: `/pages/task/detail?barcode=${barcode}` })
 }
