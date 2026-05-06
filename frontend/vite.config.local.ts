@@ -25,13 +25,13 @@ export default defineConfig({
     }
   },
   server: {
-    // openygt-dms-03：前端 5173，代理本实例后端 9093
-    port: 5173,
+    // 与 vite.config.ts 一致：openygt-dms-05 → 5175 / 9095
+    port: 5175,
     host: '0.0.0.0',
     allowedHosts: true,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:9093',
+        target: 'http://127.0.0.1:9095',
         changeOrigin: true,
         rewrite: (path) => path
       }
