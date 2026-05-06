@@ -305,8 +305,10 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
                 if (dev != null) {
                     dto.setDeviceCode(dev.getDeviceCode());
                     dto.setDeviceName(dev.getName());
-                    dto.setIdleCount("idle".equalsIgnoreCase(dev.getStatus()) ? 1 : 0);
-                    dto.setRunningCount("running".equalsIgnoreCase(dev.getStatus()) ? 1 : 0);
+                    // 使用 DeviceDetailStatus.isRunning() 判断运行状态
+                    boolean isRunning = DeviceDetailStatus.isRunning(dev.getStatus());
+                    dto.setIdleCount(!isRunning ? 1 : 0);
+                    dto.setRunningCount(isRunning ? 1 : 0);
                 }
             } catch (Exception ignored) {
             }
