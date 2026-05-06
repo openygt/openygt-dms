@@ -481,6 +481,18 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         wrapper.orderByDesc(Prescription::getCreatedAt);
 
         List<Prescription> allList = prescriptionMapper.selectList(wrapper);
+
+        // 批量回填医院名称
+        Set<Long> hospitalIds = allList.stream().map(Prescription::getHospitalId).filter(Objects::nonNull).collect(Collectors.toSet());
+        if (!hospitalIds.isEmpty()) {
+            List<Hospital> hospitals = hospitalMapper.selectBatchIds(hospitalIds);
+            Map<Long, String> hospitalNameMap = hospitals.stream().collect(Collectors.toMap(Hospital::getId, Hospital::getName, (a, b) -> a));
+            for (Prescription p : allList) {
+                if (p.getHospitalId() != null) {
+                    p.setHospitalName(hospitalNameMap.getOrDefault(p.getHospitalId(), ""));
+                }
+            }
+        }
         if (allList.isEmpty()) {
             return new Page<>(page, size);
         }
@@ -609,6 +621,10 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         prescription.setDeptName(prescription.getDepartment());
         List<PrescriptionMedicine> medicines = prescriptionMedicineMapper.selectByPrescriptionId(id);
         prescription.setMedicineItems(medicines);
+        if (prescription.getHospitalId() != null) {
+            Hospital hospital = hospitalMapper.selectById(prescription.getHospitalId());
+            prescription.setHospitalName(hospital != null ? hospital.getName() : "");
+        }
         return prescription;
     }
 

@@ -22,6 +22,9 @@ public class Prescription {
     @TableField(exist = false)
     private String status;
     private String prescriptionNumber;
+
+    public String getPrescriptionNo() { return prescriptionNumber; }
+    public void setPrescriptionNo(String prescriptionNo) { this.prescriptionNumber = prescriptionNo; }
     private String patientName;
     private String patientPhone;
     private Integer patientType;
