@@ -259,32 +259,19 @@ function formatTime(dt: string | null): string {
 async function loadData() {
   loading.value = true
   try {
-    const params: any = { page: page.value, size: pageSize.value }
+    const params: any = { page: 1, size: 9999 }
     if (search.emergencyLevel != null) params.emergencyLevel = search.emergencyLevel
     if (search.status) params.status = search.status
-    // prescriptionNumber and patientName are filtered client-side for now
-    // as the backend list endpoint does not support them directly
+    if (search.prescriptionNumber) params.prescriptionNumber = search.prescriptionNumber
+    if (search.patientName) params.patientName = search.patientName
     const res: any = await getEmergencyPrescriptions(params)
     const data = res.data || {}
-    let list = data.records || []
-
-    // Client-side filtering for prescriptionNumber and patientName
-    if (search.prescriptionNumber) {
-      list = list.filter((item: any) =>
-        (item.prescriptionNumber || '').includes(search.prescriptionNumber)
-      )
-    }
-    if (search.patientName) {
-      list = list.filter((item: any) =>
-        (item.patientName || '').includes(search.patientName)
-      )
-    }
+    const list = data.records || []
 
     tableData.value = list
     total.value = data.total || list.length
 
-    // Aggregate stats from the current page data
-    // For accurate overall stats we would need a separate stats endpoint
+    // Stats from full dataset (size=9999 ensures all records)
     emergencyStat.total = total.value
     emergencyStat.pending = list.filter((item: any) => item.status === 'PENDING').length
     emergencyStat.overdue = list.filter((item: any) => isOverdue(item)).length

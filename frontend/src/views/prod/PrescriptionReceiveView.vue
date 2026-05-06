@@ -184,8 +184,9 @@ async function openDetail(row: Prescription) {
   try {
     const res: any = await getPrescriptionDetail(row.id)
     detail.value = res.data || null
-  } catch (e) {
-    detail.value = row
+  } catch (e: any) {
+    ElMessage.error(e?.message || '详情加载失败，请稍后重试')
+    detail.value = null
   } finally {
     detailLoading.value = false
   }
