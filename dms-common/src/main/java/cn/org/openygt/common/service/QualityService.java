@@ -8,6 +8,7 @@ import cn.org.openygt.common.enums.InspectionResultType;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 质量追溯模块对外服务接口。
@@ -29,5 +30,7 @@ public interface QualityService {
 
     InspectionSummaryDTO getInspectionSummary(LocalDateTime start, LocalDateTime end);
 
-    List<InspectionTrendDTO> getInspectionTrend(String groupBy);
+    List<InspectionTrendDTO> getInspectionTrend(LocalDateTime start, LocalDateTime end, String groupBy);
+
+    List<Map<String, Object>> getInspectionReasonStat(LocalDateTime start, LocalDateTime end);
 }

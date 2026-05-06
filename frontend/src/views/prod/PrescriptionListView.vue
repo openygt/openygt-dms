@@ -13,7 +13,7 @@
         <div v-if="activeTab === 'list'">
           <el-button type="primary" @click="openCreateDialog()">新增处方</el-button>
           <el-button @click="importDialogVisible = true">CSV导入</el-button>
-          <el-button @click="ocrDialogVisible = true">OCR识别</el-button>
+          <el-button disabled title="OCR识别功能开发中" @click="ocrDialogVisible = true">OCR识别</el-button>
         </div>
       </div>
 
@@ -30,9 +30,9 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="search.status" placeholder="全部" clearable style="width: 120px">
-            <el-option label="待处理" value="待处理" />
-            <el-option label="处理中" value="处理中" />
-            <el-option label="处理完毕" value="处理完毕" />
+            <el-option label="待处理" value="PENDING" />
+            <el-option label="处理中" value="PROCESSING" />
+            <el-option label="处理完毕" value="COMPLETED" />
           </el-select>
         </el-form-item>
         <el-form-item label="时间">
@@ -59,7 +59,7 @@
         <el-table-column label="制剂" width="100"><template #default="{row}">{{ PREPARATION_TYPES.find(p => p.value === row.preparationType)?.label || '-' }}</template></el-table-column>
         <el-table-column label="服用" width="100"><template #default="{row}">{{ USAGE_METHODS.find(u => u.value === row.usageMethod)?.label || '-' }}</template></el-table-column>
         <el-table-column label="状态" width="100">
-          <template #default="{row}"><el-tag :type="statusType(row.status)">{{ row.status }}</el-tag></template>
+          <template #default="{row}"><el-tag :type="statusType(row.status)">{{ statusLabel(row.status) }}</el-tag></template>
         </el-table-column>
         <el-table-column label="创建时间" width="160"><template #default="{row}">{{ formatTime(row.createdAt) }}</template></el-table-column>
         <el-table-column label="操作" width="220" fixed="right">
@@ -76,7 +76,7 @@
 
       <!-- 异常处方列表 -->
       <el-table v-else :data="exceptionList" v-loading="exceptionLoading" border>
-        <el-table-column prop="id" label="处方号" width="80" />
+        <el-table-column prop="prescriptionNumber" label="处方号" width="140" />
         <el-table-column prop="patientName" label="患者姓名" />
         <el-table-column label="来源" width="80"><template #default="{row}">{{ row.source || '-' }}</template></el-table-column>
         <el-table-column prop="exceptionReason" label="异常原因" min-width="200" show-overflow-tooltip />
@@ -101,10 +101,10 @@
 
     <!-- ==================== 新增处方对话框 ==================== -->
     <el-dialog v-model="createDialogVisible" :title="form.id ? '编辑处方' : '新增处方'" width="800px">
-      <el-form :model="form" :rules="formRules" label-width="100px">
+      <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-row :gutter="16">
           <el-col :span="12">
-            <el-form-item label="处方号">
+            <el-form-item label="处方号" prop="prescriptionNumber">
               <el-input v-model="form.prescriptionNumber" placeholder="处方编号" />
             </el-form-item>
           </el-col>
@@ -197,6 +197,9 @@
           <el-button size="small" @click="addMedicineBatch" v-if="form.medicineItems.length === 0">批量粘贴</el-button>
         </el-form-item>
         <el-table :data="form.medicineItems" border size="small" max-height="400">
+          <template #empty>
+            <el-empty description="暂无药材，请点击「+ 添加药材」按钮添加" :image-size="60" />
+          </template>
           <el-table-column label="药材名称" width="200">
             <template #default="{ row, $index }">
               <el-autocomplete v-model="row.medicineName" :fetch-suggestions="queryMedicines"
@@ -238,7 +241,7 @@
       </el-form>
       <template #footer>
         <el-button @click="createDialogVisible = false">取消</el-button>
-        <el-button type="primary" :disabled="!canSubmit" @click="handleSave">保存</el-button>
+        <el-button type="primary" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
 
@@ -539,6 +542,8 @@ const form = reactive<any>({
   remark: '', medicineItems: [] as MedicineItem[]
 })
 
+const formRef = ref<any>(null)
+
 const formRules = {
   prescriptionNumber: [{ required: true, message: '请输入处方号', trigger: 'blur' }],
   patientName: [{ required: true, message: '请输入患者姓名', trigger: 'blur' }],
@@ -645,8 +650,13 @@ function resetSearch() {
 }
 
 function statusType(s?: string) {
-  const map: Record<string, string> = { '待处理': 'info', '处理中': 'warning', '处理完毕': 'success' }
+  const map: Record<string, string> = { PENDING: 'info', PROCESSING: 'warning', COMPLETED: 'success' }
   return map[s || ''] || ''
+}
+
+function statusLabel(s?: string) {
+  const map: Record<string, string> = { PENDING: '待处理', PROCESSING: '处理中', COMPLETED: '处理完毕' }
+  return map[s || ''] || s || '-'
 }
 
 function receiveStatusLabel(s?: string) {
@@ -744,12 +754,17 @@ function addMedicineBatch() {
 }
 
 // 药品自动补全
-async function queryMedicines(query: string, cb: (results: any[]) => void) {
-  if (!query || query.length < 1) { cb([]); return }
-  try {
-    const res: any = await searchMedicines(query)
-    cb((res.data?.records || []).map((m: any) => ({ ...m, value: m.medicineName })))
-  } catch { cb([]) }
+let medicineQueryTimer: ReturnType<typeof setTimeout> | null = null
+
+function queryMedicines(query: string, cb: (results: any[]) => void) {
+  if (!query || query.length < 2) { cb([]); return }
+  if (medicineQueryTimer) clearTimeout(medicineQueryTimer)
+  medicineQueryTimer = setTimeout(async () => {
+    try {
+      const res: any = await searchMedicines(query)
+      cb((res.data?.records || []).map((m: any) => ({ ...m, value: m.medicineName })))
+    } catch { cb([]) }
+  }, 300)
 }
 
 function onMedicineSelect(selected: any, row: any) {
@@ -759,6 +774,8 @@ function onMedicineSelect(selected: any, row: any) {
 }
 
 async function handleSave() {
+  const valid = await formRef.value?.validate().catch(() => false)
+  if (!valid) return
   try {
     // 前端防御：确保药材明细有效
     const validItems = (form.medicineItems || []).filter((item: MedicineItem) =>
@@ -926,8 +943,10 @@ async function viewDetail(row: any) {
   try {
     const res: any = await getPrescriptionDetail(row.id)
     detail.value = res.data || null
-  } catch { detail.value = row }
-  finally { detailLoading.value = false }
+  } catch (e: any) {
+    detail.value = null
+    ElMessage.error(e?.response?.data?.message || '详情加载失败')
+  } finally { detailLoading.value = false }
 }
 
 // ==================== 驳回 ====================
@@ -1020,10 +1039,12 @@ async function fetchHospitals() {
   try {
     const res: any = await request.get('/v1/md/hospitals', { params: { page: 1, size: 999 } })
     const list = res.data?.records || []
-    const enabled = list.filter((h: any) => h.status === 1)
+    const enabled = list.filter((h: any) => h.status === 1 || h.status === 'ACTIVE')
     hospitals.value = enabled
     hospitalMap.value = Object.fromEntries(enabled.map((h: any) => [h.id, h.name]))
-  } catch {}
+  } catch (e: any) {
+    ElMessage.error('医院列表加载失败')
+  }
 }
 
 onMounted(() => { fetchData(); fetchExceptions(); fetchSchemes(); fetchHospitals() })

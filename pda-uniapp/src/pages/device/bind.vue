@@ -27,6 +27,10 @@
         </view>
       </view>
     </view>
+    <view class="recent-devices empty" v-else>
+      <text class="section-title">最近使用设备</text>
+      <text class="empty-text">暂无最近使用设备，请扫描或手动输入设备编码</text>
+    </view>
 
     <button class="bind-btn" :disabled="!deviceCode || loading" :loading="loading" @click="handleBind" data-testid="btn-bind">确认绑定</button>
   </view>
@@ -121,4 +125,6 @@ function cacheRecentDevice(code, step) {
 .manual-input { height: 80rpx; background: #f5f5f5; border-radius: 12rpx; padding: 0 24rpx; font-size: 30rpx; }
 .bind-btn { height: 96rpx; background: #0066CC; color: #fff; font-size: 34rpx; border-radius: 12rpx; display: flex; align-items: center; justify-content: center; }
 .bind-btn[disabled] { background: #99c2e6; }
+.recent-devices.empty { text-align: center; }
+.empty-text { font-size: 28rpx; color: #999; }
 </style>

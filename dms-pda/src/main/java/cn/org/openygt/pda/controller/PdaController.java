@@ -155,6 +155,7 @@ public class PdaController {
                                                   Long recordId, TokenResponse tokenResponse) {
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
+        result.put("userId", userId);
         result.put("recordId", recordId);
         result.put("userCode", userCode);
         result.put("userName", userName);
@@ -241,7 +242,7 @@ public class PdaController {
         String prescriptionNo = prescription != null ? prescription.getPrescriptionNumber() : null;
         Map<String, Object> curveData = new HashMap<>();
         if (prescriptionNo != null) {
-            curveData = decoctionTraceService.getTemperatureCurve(prescriptionNo, "1min");
+            curveData = decoctionTraceService.getTemperatureCurve(prescriptionNo);
         }
         return ApiResponse.success(curveData);
     }

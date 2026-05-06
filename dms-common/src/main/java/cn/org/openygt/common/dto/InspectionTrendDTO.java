@@ -16,4 +16,8 @@ public class InspectionTrendDTO implements Serializable {
     private Integer concessionCount;
     private Integer reworkCount;
     private Integer scrapCount;
+
+    public Integer getTotal() {
+        return totalCount;
+    }
 }
