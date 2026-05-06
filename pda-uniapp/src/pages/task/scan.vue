@@ -219,7 +219,7 @@ async function queryTask() {
 
 function goToTask() {
   if (taskCard.value) {
-    uni.navigateTo({ url: `/pages/task/detail?taskId=${taskCard.value.taskId}&barcode=${barcode.value}` })
+    uni.navigateTo({ url: `/pages/task/confirm?taskId=${taskCard.value.taskId}&barcode=${barcode.value}` })
   }
 }
 
