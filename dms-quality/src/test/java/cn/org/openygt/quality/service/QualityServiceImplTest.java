@@ -1,5 +1,7 @@
 package cn.org.openygt.quality.service;
 
+import cn.org.openygt.quality.mapper.UserNameMapper;
+
 import cn.org.openygt.common.dto.InspectionResult;
 import cn.org.openygt.common.dto.ProdTaskDTO;
 import cn.org.openygt.common.enums.InspectionResultType;
@@ -37,6 +39,8 @@ class QualityServiceImplTest {
 
     @Mock
     private InspectionItemMapper inspectionItemMapper;
+    @Mock
+    private UserNameMapper userNameMapper;
 
     private QualityServiceImpl qualityService;
 
@@ -45,7 +49,7 @@ class QualityServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        qualityService = new QualityServiceImpl(inspectionMapper, inspectionItemMapper, productionQueryService);
+        qualityService = new QualityServiceImpl(inspectionMapper, inspectionItemMapper, userNameMapper, productionQueryService);
     }
 
     // ==================== inspect ====================

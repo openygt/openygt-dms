@@ -12,6 +12,7 @@ import cn.org.openygt.equipment.service.BarcodeService;
 import cn.org.openygt.equipment.service.EqDeviceMqttConfigService;
 import cn.org.openygt.equipment.service.EqDeviceOperatorService;
 import cn.org.openygt.equipment.service.EqDeviceService;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -68,6 +69,7 @@ public class EqDeviceController {
     }
 
     @GetMapping
+    @RequiresPermissions("eq:device:list")
     public ApiResponse<IPage<EqDevice>> list(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer deviceType,

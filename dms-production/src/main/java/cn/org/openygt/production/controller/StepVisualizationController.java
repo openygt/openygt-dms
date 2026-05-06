@@ -6,6 +6,7 @@ import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.production.dto.StepDetailDTO;
 import cn.org.openygt.production.dto.StepInfoDTO;
 import cn.org.openygt.production.service.StepVisualizationService;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -23,11 +24,13 @@ public class StepVisualizationController {
     private final StepVisualizationService stepVisualizationService;
 
     @GetMapping("/task/{taskId}/steps")
+    @RequiresPermissions("prod:trace:view")
     public ApiResponse<List<StepInfoDTO>> getTaskSteps(@PathVariable Long taskId) {
         return ApiResponse.success(stepVisualizationService.getTaskSteps(taskId));
     }
 
     @GetMapping("/task/{taskId}/step-detail")
+    @RequiresPermissions("prod:trace:view")
     public ApiResponse<StepDetailDTO> getStepDetail(@PathVariable Long taskId,
                                                      @RequestParam String stepCode) {
         return ApiResponse.success(stepVisualizationService.getStepDetail(taskId, stepCode));

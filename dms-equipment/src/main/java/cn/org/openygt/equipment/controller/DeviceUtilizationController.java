@@ -3,6 +3,7 @@ package cn.org.openygt.equipment.controller;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.EquipmentModule;
 import cn.org.openygt.equipment.entity.DeviceUtilization;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.equipment.service.DeviceUtilizationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +23,7 @@ public class DeviceUtilizationController {
     private final DeviceUtilizationService deviceUtilizationService;
 
     @GetMapping
+    @RequiresPermissions("ops:capacity:view")
     public ApiResponse<List<DeviceUtilization>> queryUtilization(
             @RequestParam(required = false) String deviceCode,
             @RequestParam(required = false) String startDate,
@@ -32,6 +34,7 @@ public class DeviceUtilizationController {
     }
 
     @GetMapping("/trend")
+    @RequiresPermissions("ops:capacity:view")
     public ApiResponse<List<Map<String, Object>>> getTrend(
             @RequestParam String deviceCode,
             @RequestParam(defaultValue = "7") int days) {

@@ -5,6 +5,7 @@ import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.dto.AlarmLogDTO;
 import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.entity.EqDeviceAlarm;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.equipment.mapper.EqDeviceAlarmMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Collections;
 import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +31,7 @@ public class EqAlarmController {
     private final EqDeviceMapper deviceMapper;
 
     @GetMapping
+    @RequiresPermissions("eq:alarm:view")
     public ApiResponse<Page<AlarmLogDTO>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -79,9 +82,14 @@ public class EqAlarmController {
                 .map(EqDeviceAlarm::getDeviceId)
                 .distinct()
                 .collect(Collectors.toList());
-        Map<Long, String> deviceCodeMap = deviceIds.isEmpty() ? Collections.emptyMap() :
-                deviceMapper.selectBatchIds(deviceIds).stream()
-                        .collect(Collectors.toMap(EqDevice::getId, EqDevice::getDeviceCode));
+        Map<Long, String> deviceCodeMap = new HashMap<>();
+        if (!deviceIds.isEmpty()) {
+            for (EqDevice d : deviceMapper.selectBatchIds(deviceIds)) {
+                if (d != null && d.getId() != null) {
+                    deviceCodeMap.put(d.getId(), d.getDeviceCode());
+                }
+            }
+        }
 
         // 5. 组装DTO
         List<AlarmLogDTO> dtoList = alarmPage.getRecords().stream().map(alarm -> {

@@ -21,6 +21,11 @@ export function deleteMedicine(id: number | string) {
   return request.delete(`/v1/eq/medicines/${id}`)
 }
 
+// ========== 医院管理 ==========
+export function getAllHospitals() {
+  return request.get('/v1/md/hospitals/all')
+}
+
 // ========== 科室管理 ==========
 export function getDepartmentList(params?: any) {
   return request.get('/v1/eq/departments', { params })

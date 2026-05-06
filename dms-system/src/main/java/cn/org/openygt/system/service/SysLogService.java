@@ -7,5 +7,5 @@ public interface SysLogService {
 
     void saveLog(SysLog log);
 
-    IPage<SysLog> list(String keyword, int page, int size);
+    IPage<SysLog> list(String keyword, String module, int page, int size);
 }

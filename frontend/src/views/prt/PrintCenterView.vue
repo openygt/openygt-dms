@@ -42,6 +42,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
+import { useUserStore } from '@/stores/user'
 
 interface PrintTask {
   id: number
@@ -75,7 +76,7 @@ async function fetchData() {
     const res: any = await request.get('/v1/prt/queue')
     list.value = res.data || []
   } catch (e) {
-    list.value = []
+    // 错误已由拦截器提示，保留当前列表不变
   } finally {
     loading.value = false
   }
@@ -83,18 +84,28 @@ async function fetchData() {
 
 async function handleRetry(row: PrintTask) {
   try {
-    await request.post(`/v1/prt/tasks/${row.taskId}/retry`)
+    const userStore = useUserStore()
+    await request.post(`/v1/prt/tasks/${row.taskId}/retry`, null, {
+      params: { deviceCode: row.deviceCode, operatorId: userStore.userInfo?.username || '' }
+    })
     ElMessage.success('重试成功')
     fetchData()
-  } catch (e) {}
+  } catch (e) {
+    // 错误已由拦截器提示
+  }
 }
 
 async function handleSubmit(row: PrintTask) {
   try {
-    await request.post(`/v1/prt/tasks/${row.taskId}/submit`)
+    const userStore = useUserStore()
+    await request.post(`/v1/prt/tasks/${row.taskId}/submit`, null, {
+      params: { deviceCode: row.deviceCode, operatorId: userStore.userInfo?.username || '' }
+    })
     ElMessage.success('提交成功')
     fetchData()
-  } catch (e) {}
+  } catch (e) {
+    // 错误已由拦截器提示
+  }
 }
 
 onMounted(fetchData)

@@ -30,4 +30,10 @@ public class DeviceCommand extends BaseEntity {
     private LocalDateTime ackTime;
     /** 失败原因 */
     private String failReason;
+    /** 指令等级: NORMAL/IMPORTANT/CRITICAL */
+    private String commandLevel;
+    /** 风险等级: LOW/MEDIUM/HIGH */
+    private String riskLevel;
+    /** 是否需要确认: 0否/1是 */
+    private Integer requireConfirm;
 }

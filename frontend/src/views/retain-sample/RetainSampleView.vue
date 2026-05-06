@@ -79,7 +79,7 @@ const formatDateTime = (dt: string) => {
 }
 
 const statusText = (status: number) => {
-  const map: Record<number, string> = { 1: '留样中', 2: '已复检', 3: '可销毁', 4: '已销毁' }
+  const map: Record<number, string> = { 1: '在库', 2: '已销毁', 3: '已过期', 4: '已复检' }
   return map[status] || '未知'
 }
 
