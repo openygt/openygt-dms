@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">进度查询：<span class="page-header-sub">患者查询煎药进度、预计完成时间</span></div>
     <!-- 查询区域 -->
     <el-card shadow="never">
       <el-row :gutter="24">

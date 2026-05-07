@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">生产记录：<span class="page-header-sub">每日工作分配登记</span></div>
 
     <el-card class="search-card" shadow="never">
       <div class="toolbar">

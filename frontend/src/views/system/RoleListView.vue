@@ -1,10 +1,9 @@
 <template>
   <div>
-    <div class="page-header-title">权限管理：<span class="page-header-sub">角色定义、权限分配、菜单授权</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>角色管理</span>
+          
           <el-button type="primary" @click="openDialog()">新增角色</el-button>
         </div>
       </template>

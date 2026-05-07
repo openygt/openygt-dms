@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">身份条码：<span class="page-header-sub">员工身份条码生成、打印</span></div>
     <el-card class="search-card" shadow="never">
       <el-form :model="searchForm" inline @submit.prevent>
         <el-form-item label="部门">

@@ -3,7 +3,6 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>设备清洗记录</span>
         </div>
       </template>
       <el-table :data="list" v-loading="loading">

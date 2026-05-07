@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="page-header-title">成品货架管理：<span class="page-header-sub">区域、编码、容量等主数据维护</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

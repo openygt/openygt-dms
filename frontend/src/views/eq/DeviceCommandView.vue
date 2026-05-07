@@ -1,10 +1,6 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">
-      远程急停
-      <span class="page-header-sub">远程启停单台设备、调参数、急停，不用跑车间按按钮</span>
-    </div>
-    <el-row :gutter="16" class="mt-4">
+    <el-row :gutter="16">
       <el-col :span="6">
         <el-card shadow="never">
           <template #header>选择设备</template>
@@ -249,7 +245,7 @@ function resolveStatusTag(status: string) {
 </script>
 
 <style scoped>
-.page-container { padding: 16px; }
+.page-container { padding: 0; }
 .mt-4 { margin-top: 16px; }
 .ml-2 { margin-left: 8px; }
 .ml-1 { margin-left: 4px; }

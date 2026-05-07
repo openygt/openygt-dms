@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="page-header-title" style="margin-bottom: 16px">质量检验：<span class="page-header-sub">质检记录、合格/不合格判定、复检流程</span></div>
     <!-- 待质检任务 -->
     <el-card style="margin-bottom: 16px">
       <template #header>

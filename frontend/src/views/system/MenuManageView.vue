@@ -1,10 +1,9 @@
 <template>
   <div>
-    <div class="page-header-title">菜单管理：<span class="page-header-sub">菜单结构、显示顺序、权限绑定</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>菜单管理</span>
+          
           <el-button type="primary" @click="openDialog()">新增菜单</el-button>
         </div>
       </template>

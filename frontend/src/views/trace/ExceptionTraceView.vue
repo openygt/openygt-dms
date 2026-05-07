@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">异常追溯：<span class="page-header-sub">异常记录、处理过程、责任追溯</span></div>
     <el-card class="search-card" shadow="never">
       <el-form :model="searchForm" inline>
         <el-form-item label="日期范围">
