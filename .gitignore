@@ -63,6 +63,8 @@ test-results/
 playwright-report/
 tests-e2e/
 e2e/
+!frontend/e2e/
+!frontend/e2e/**/*.ts
 frontend/test-evidence/
 .gitnexus
 docs

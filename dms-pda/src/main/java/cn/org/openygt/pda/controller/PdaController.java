@@ -311,10 +311,12 @@ public class PdaController {
                 case "END_POUR":
                     task = taskService.endPour(taskId, operatorId);
                     break;
+                case "START_WRAP":
                 case "START_PACKAGE":
                     String packageDeviceCode = resolvePackageDevice(request.getDeviceId(), taskId);
                     task = taskService.startWrap(taskId, packageDeviceCode, operatorId);
                     break;
+                case "END_WRAP":
                 case "END_PACKAGE":
                     task = taskService.endWrap(taskId, operatorId);
                     break;
