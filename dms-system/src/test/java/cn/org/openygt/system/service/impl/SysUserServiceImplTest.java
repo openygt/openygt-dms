@@ -53,16 +53,26 @@ class SysUserServiceImplTest {
     }
 
     @Test
-    void create_shouldSkipEncrypt_whenPasswordNull() {
+    void create_shouldThrow_whenPasswordNull() {
         SysUser user = new SysUser();
         user.setUsername("nopass");
 
+        assertThrows(IllegalArgumentException.class, () -> userService.create(user));
+    }
+
+    @Test
+    void create_shouldSetInactive_whenStatusZero() {
+        SysUser user = new SysUser();
+        user.setUsername("testuser");
+        user.setPassword("raw-password");
+        user.setStatus("0");
+
+        when(passwordEncoder.encode("raw-password")).thenReturn("encoded-password");
         when(userMapper.insert(any(SysUser.class))).thenReturn(1);
 
         SysUser result = userService.create(user);
 
-        assertEquals("ACTIVE", result.getStatus());
-        assertNull(result.getPassword());
+        assertEquals("INACTIVE", result.getStatus());
     }
 
     @Test
