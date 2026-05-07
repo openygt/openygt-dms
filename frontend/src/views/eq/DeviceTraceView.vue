@@ -71,6 +71,7 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-empty v-if="!loading && traceList.length === 0" description="暂无追溯数据" />
       <el-pagination
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.size"
