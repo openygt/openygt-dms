@@ -14,6 +14,7 @@ import cn.org.openygt.production.entity.Task;
 import cn.org.openygt.production.mapper.PrescriptionMapper;
 import cn.org.openygt.production.mapper.PrescriptionMedicineMapper;
 import cn.org.openygt.production.mapper.TaskMapper;
+import cn.org.openygt.common.enums.TaskStatus;
 import cn.org.openygt.production.service.PrescriptionService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -57,7 +58,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
         Task task = new Task();
         task.setPrescriptionId(prescription.getId());
-        task.setStatus("待泡药");
+        task.setStatus(TaskStatus.WAIT_SOAK.getLabel());
         task.setTargetTemp(BigDecimal.valueOf(100));
         task.setSoakDuration(30);
         taskMapper.insert(task);
@@ -109,7 +110,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         // 创建任务
         Task task = new Task();
         task.setPrescriptionId(prescription.getId());
-        task.setStatus("待泡药");
+        task.setStatus(TaskStatus.WAIT_SOAK.getLabel());
         task.setTargetTemp(BigDecimal.valueOf(100));
         task.setSoakDuration(30);
         if (request.getSchemeId() != null) {
@@ -324,7 +325,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         if (!hasException) {
             Task task = new Task();
             task.setPrescriptionId(prescription.getId());
-            task.setStatus("待泡药");
+            task.setStatus(TaskStatus.WAIT_SOAK.getLabel());
             task.setTargetTemp(BigDecimal.valueOf(100));
             task.setSoakDuration(30);
             taskMapper.insert(task);
@@ -431,7 +432,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         if (taskCount == 0) {
             Task task = new Task();
             task.setPrescriptionId(id);
-            task.setStatus("待泡药");
+            task.setStatus(TaskStatus.WAIT_SOAK.getLabel());
             task.setTargetTemp(BigDecimal.valueOf(100));
             task.setSoakDuration(30);
             taskMapper.insert(task);
@@ -577,7 +578,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         if (taskCount == 0) {
             Task task = new Task();
             task.setPrescriptionId(id);
-            task.setStatus("待泡药");
+            task.setStatus(TaskStatus.WAIT_SOAK.getLabel());
             task.setTargetTemp(BigDecimal.valueOf(100));
             task.setSoakDuration(30);
             if (prescription.getSchemeId() != null) {
@@ -659,8 +660,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
     private String calcPrescriptionStatus(List<Task> tasks) {
         if (tasks == null || tasks.isEmpty()) return "PENDING";
-        boolean allPending = tasks.stream().allMatch(t -> "待泡药".equals(t.getStatus()));
-        boolean allCompleted = tasks.stream().allMatch(t -> "已完成".equals(t.getStatus()));
+        boolean allPending = tasks.stream().allMatch(t -> TaskStatus.WAIT_SOAK.getLabel().equals(t.getStatus()));
+        boolean allCompleted = tasks.stream().allMatch(t -> TaskStatus.COMPLETED.getLabel().equals(t.getStatus()));
         if (allPending) return "PENDING";
         if (allCompleted) return "COMPLETED";
         return "PROCESSING";
