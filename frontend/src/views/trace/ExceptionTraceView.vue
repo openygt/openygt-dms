@@ -76,6 +76,7 @@
         </el-table-column>
         <el-table-column prop="createdAt" label="发生时间" min-width="160" />
       </el-table>
+      <el-empty v-if="!loading && tableData.length === 0" description="暂无异常记录" />
       <div class="pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
@@ -123,6 +124,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import { getExceptionList, getExceptionById, getExceptionStat } from '@/api/trace'
 
 interface ExceptionRecord {
@@ -170,8 +172,8 @@ async function handleSearch() {
     const data = res.data || {}
     tableData.value = data.records || []
     pagination.total = data.total || 0
-  } catch (e) {
-    // handled by interceptor
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }
@@ -190,7 +192,8 @@ async function loadStats() {
     statTotal.value = byType.reduce((sum: number, item: any) => sum + (item.value || 0), 0)
     statPending.value = byStatus.find((item: any) => item.name === 'PENDING')?.value || 0
     statResolved.value = byStatus.find((item: any) => item.name === 'RESOLVED')?.value || 0
-  } catch (e) {
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '加载统计失败')
     statTotal.value = pagination.total
     statPending.value = tableData.value.filter((r) => r.handleStatus === 'PENDING').length
     statResolved.value = tableData.value.filter((r) => r.handleStatus === 'RESOLVED').length
@@ -202,7 +205,8 @@ async function handleRowClick(row: ExceptionRecord) {
   try {
     const res: any = await getExceptionById(row.id)
     detail.value = res.data || null
-  } catch (e) {
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '获取详情失败')
     detail.value = null
   }
 }
