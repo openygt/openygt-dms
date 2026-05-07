@@ -30,11 +30,13 @@ public class DeviceCommandController {
     }
 
     @PostMapping("/{commandId}/send")
+    @RequiresPermissions("eq:device:emergency")
     public ApiResponse<DeviceCommand> sendCommand(@PathVariable Long commandId) {
         return ApiResponse.success(commandService.sendCommand(commandId));
     }
 
     @PostMapping("/{commandId}/ack")
+    @RequiresPermissions("eq:device:emergency")
     public ApiResponse<DeviceCommand> ackCommand(@PathVariable Long commandId,
                                                   @RequestBody Map<String, Object> request) {
         String responsePayload = request.get("responsePayload") != null ? request.get("responsePayload").toString() : null;
@@ -42,6 +44,7 @@ public class DeviceCommandController {
     }
 
     @PostMapping("/{commandId}/fail")
+    @RequiresPermissions("eq:device:emergency")
     public ApiResponse<DeviceCommand> failCommand(@PathVariable Long commandId,
                                                    @RequestBody Map<String, Object> request) {
         String failReason = (String) request.get("failReason");

@@ -40,6 +40,9 @@ public class DeviceCommandServiceImpl implements DeviceCommandService {
     @Override
     @Transactional
     public DeviceCommand createCommand(String deviceCode, String commandType, String payload) {
+        // P0-3: 校验设备状态，禁止向离线/故障设备发送启动类指令
+        validateDeviceStatus(deviceCode, commandType);
+
         DeviceCommand command = new DeviceCommand();
         command.setDeviceCode(deviceCode);
         command.setCommandType(commandType);
@@ -70,6 +73,33 @@ public class DeviceCommandServiceImpl implements DeviceCommandService {
         commandMapper.updateById(command);
 
         return command;
+    }
+
+    /**
+     * P0-3: 设备状态校验。
+     * OFFLINE 设备禁止所有操控指令；FAULT 设备禁止启动类指令。
+     */
+    private void validateDeviceStatus(String deviceCode, String commandType) {
+        QueryWrapper<EqDevice> wrapper = new QueryWrapper<>();
+        wrapper.eq("device_code", deviceCode);
+        EqDevice device = deviceMapper.selectOne(wrapper);
+        if (device == null) {
+            throw new IllegalArgumentException("设备不存在: " + deviceCode);
+        }
+        String detailStatus = device.getDetailStatus();
+        String status = device.getStatus();
+
+        // OFFLINE 设备禁止所有操控指令
+        if ("OFFLINE".equals(detailStatus) || "OFFLINE".equals(status)) {
+            throw new IllegalStateException("设备处于离线状态，无法接收指令: " + deviceCode);
+        }
+
+        // FAULT 设备禁止启动类指令
+        boolean isStartCommand = commandType != null && (
+                commandType.startsWith("START") || commandType.equals("RESUME") || commandType.equals("REPRINT_LABEL"));
+        if (isStartCommand && ("FAULT".equals(detailStatus) || "FAULT".equals(status))) {
+            throw new IllegalStateException("设备处于故障状态，禁止发送启动类指令: " + deviceCode);
+        }
     }
 
     private void updateDeviceExpectedStatus(String deviceCode, String commandType) {
