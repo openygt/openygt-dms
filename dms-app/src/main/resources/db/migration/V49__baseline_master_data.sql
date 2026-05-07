@@ -352,8 +352,11 @@ SELECT
     hospital_name, system_code, contact, mobile, address, 
     CASE WHEN status = 1 THEN 1 ELSE 0 END, 'default'
 FROM yylx_spd_yangxin_v2.bas_hospital bh
-WHERE bh.is_del = 0
-  AND NOT EXISTS (SELECT 1 FROM md_hospital mh WHERE mh.code = CONVERT(bh.system_code USING utf8mb4) COLLATE utf8mb4_unicode_ci);
+WHERE (bh.is_del = 0 OR bh.is_del IS NULL)
+  AND NOT EXISTS (
+      SELECT 1 FROM md_hospital mh 
+      WHERE mh.name = CONVERT(bh.hospital_name USING utf8mb4) COLLATE utf8mb4_unicode_ci
+  );
 
 -- --------------------------------------------------
 -- 13. 煎药方案补充（向已有表 md_decoct_scheme 追加）

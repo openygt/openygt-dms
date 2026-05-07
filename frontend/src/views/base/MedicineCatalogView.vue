@@ -18,15 +18,14 @@
       </el-form>
       <el-table :data="list" v-loading="loading" border data-testid="data-table">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="medicineCode" label="编码" width="120" />
-        <el-table-column prop="medicineName" label="名称" />
-        <el-table-column prop="hisCode" label="HIS编码" width="120" />
-        <el-table-column prop="spec" label="规格" width="100" />
-        <el-table-column prop="unit" label="单位" width="80" />
-        <el-table-column prop="stockWarning" label="库存预警" width="100" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="code" label="编码" width="120" />
+        <el-table-column prop="name" label="名称" />
+        <el-table-column prop="pinyin" label="拼音" width="120" />
+        <el-table-column prop="unitName" label="单位" width="80" />
+        <el-table-column prop="drugLevel" label="毒性" width="80" />
+        <el-table-column prop="isEnabled" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
+            <el-tag :type="row.isEnabled === 1 ? 'success' : 'danger'">{{ row.isEnabled === 1 ? '启用' : '禁用' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
@@ -52,32 +51,32 @@
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑药材' : '新增药材'" width="560px">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-        <el-form-item label="药材编码" prop="medicineCode">
-          <el-input v-model="form.medicineCode" />
+        <el-form-item label="药材编码" prop="code">
+          <el-input v-model="form.code" />
         </el-form-item>
-        <el-form-item label="药材名称" prop="medicineName">
-          <el-input v-model="form.medicineName" />
+        <el-form-item label="药材名称" prop="name">
+          <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item label="别名">
-          <el-input v-model="form.aliases" />
+        <el-form-item label="拼音">
+          <el-input v-model="form.pinyin" />
         </el-form-item>
-        <el-form-item label="HIS编码" prop="hisCode">
-          <el-input v-model="form.hisCode" />
+        <el-form-item label="单位" prop="unitName">
+          <el-input v-model="form.unitName" />
         </el-form-item>
-        <el-form-item label="国标编码">
-          <el-input v-model="form.nationalCode" />
+        <el-form-item label="毒性分类">
+          <el-input v-model="form.drugLevel" />
         </el-form-item>
-        <el-form-item label="规格" prop="spec">
-          <el-input v-model="form.spec" />
+        <el-form-item label="功效分类">
+          <el-input v-model="form.efficacyCategory" />
         </el-form-item>
-        <el-form-item label="单位" prop="unit">
-          <el-input v-model="form.unit" />
+        <el-form-item label="药用部位">
+          <el-input v-model="form.medicinalPart" />
         </el-form-item>
-        <el-form-item label="库存预警">
-          <el-input v-model.number="form.stockWarning" type="number" />
+        <el-form-item label="炮制方法">
+          <el-input v-model="form.processingMethod" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="form.status">
+        <el-form-item label="状态" prop="isEnabled">
+          <el-radio-group v-model="form.isEnabled">
             <el-radio :label="1">启用</el-radio>
             <el-radio :label="0">禁用</el-radio>
           </el-radio-group>
@@ -107,15 +106,15 @@ const userStore = useUserStore()
 
 interface Medicine {
   id: number
-  medicineCode: string
-  medicineName: string
-  aliases: string
-  hisCode: string
-  nationalCode: string
-  spec: string
-  unit: string
-  stockWarning: number
-  status: number
+  code: string
+  name: string
+  pinyin: string
+  unitName: string
+  drugLevel: string
+  efficacyCategory: string
+  medicinalPart: string
+  processingMethod: string
+  isEnabled: number
 }
 
 const list = ref<Medicine[]>([])
@@ -128,15 +127,13 @@ const total = ref(0)
 const formRef = ref<FormInstance>()
 
 const search = reactive({ keyword: '' })
-const form = ref<Partial<Medicine>>({ status: 1 })
+const form = ref<Partial<Medicine>>({ isEnabled: 1 })
 
 const rules: FormRules = {
-  medicineCode: [{ required: true, message: '请输入药材编码', trigger: 'blur' }],
-  medicineName: [{ required: true, message: '请输入药材名称', trigger: 'blur' }],
-  hisCode: [{ required: true, message: '请输入HIS编码', trigger: 'blur' }],
-  spec: [{ required: true, message: '请输入规格', trigger: 'blur' }],
-  unit: [{ required: true, message: '请输入单位', trigger: 'blur' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }]
+  code: [{ required: true, message: '请输入药材编码', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入药材名称', trigger: 'blur' }],
+  unitName: [{ required: true, message: '请输入单位', trigger: 'blur' }],
+  isEnabled: [{ required: true, message: '请选择状态', trigger: 'change' }]
 }
 
 async function fetchData() {
@@ -166,7 +163,7 @@ function resetSearch() {
 }
 
 function openDialog(row?: Medicine) {
-  form.value = row ? { ...row } : { status: 1 }
+  form.value = row ? { ...row } : { isEnabled: 1 }
   dialogVisible.value = true
   if (formRef.value) {
     formRef.value.clearValidate()
