@@ -460,13 +460,30 @@ function printStatusTag(status?: string) {
 }
 
 async function sendDeviceCommand(device: any, commandType: string) {
+  // P0-2: 普通操控操作增加二次确认（急停走独立 confirmEmergencyStop）
+  const confirmMap: Record<string, string> = {
+    START_SOAK: '确认开始浸泡？',
+    START_PACKAGE: '确认开始包装？',
+    START_PRINT: '确认开始打印？',
+    REPRINT_LABEL: '确认补打标签？',
+    PAUSE: '确认暂停当前任务？',
+    PAUSE_PRINT: '确认暂停打印？',
+    RESUME: '确认继续执行任务？'
+  }
+  const confirmText = confirmMap[commandType] || `确认执行 ${commandType} 指令？`
+  try {
+    await ElMessageBox.confirm(confirmText, '操作确认', { type: 'warning' })
+  } catch {
+    return // 用户取消
+  }
   try {
     await createCommand({ deviceCode: device.deviceCode, commandType, payload: null })
     ElMessage.success('指令已发送')
     // 立即刷新设备列表，确保状态即时更新（WebSocket可能有延迟）
     await loadDevices()
-  } catch (err) {
-    ElMessage.error('指令发送失败')
+  } catch (err: any) {
+    const msg = err?.response?.data?.message || err?.message || '指令发送失败'
+    if (msg !== '取消') ElMessage.error(msg)
   }
 }
 
