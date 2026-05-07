@@ -57,8 +57,8 @@
         <el-form-item label="规格名称" required>
           <el-input v-model="form.specName" />
         </el-form-item>
-        <el-form-item label="容量(ml)">
-          <el-input v-model.number="form.volumeMl" type="number" />
+        <el-form-item label="容量(ml)" prop="volumeMl">
+          <el-input-number v-model="form.volumeMl" :min="1" style="width: 100%" />
         </el-form-item>
         <el-form-item label="袋型">
           <el-select v-model="form.bagType" placeholder="请选择袋型" style="width: 100%">
@@ -71,7 +71,7 @@
           <el-input v-model="form.description" type="textarea" rows="2" />
         </el-form-item>
         <el-form-item label="排序">
-          <el-input v-model.number="form.sortOrder" type="number" />
+          <el-input-number v-model="form.sortOrder" :min="0" style="width: 100%" />
         </el-form-item>
         <el-form-item label="状态">
           <el-radio-group v-model="form.status">
@@ -169,7 +169,9 @@ async function handleSave() {
     }
     dialogVisible.value = false
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message || '保存失败')
+  }
 }
 
 async function handleDelete(row: PackageSpec) {
@@ -178,7 +180,11 @@ async function handleDelete(row: PackageSpec) {
     await deletePackageSpec(row.id)
     ElMessage.success('删除成功')
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e.response?.data?.message || '删除失败')
+    }
+  }
 }
 
 onMounted(fetchData)
