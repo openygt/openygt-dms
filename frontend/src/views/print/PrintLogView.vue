@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getPrintLogList } from '@/api/printLog'
 
@@ -73,7 +73,16 @@ const searchForm = reactive({
   status: '',
   deviceCode: ''
 })
-const tableData = ref<PrintLog[]>([])
+const allData = ref<PrintLog[]>([])
+const page = ref(1)
+const size = ref(20)
+const total = ref(0)
+
+const tableData = computed(() => {
+  const start = (page.value - 1) * size.value
+  const end = start + size.value
+  return allData.value.slice(start, end)
+})
 
 async function handleSearch() {
   loading.value = true
@@ -82,9 +91,10 @@ async function handleSearch() {
       status: searchForm.status || undefined,
       deviceCode: searchForm.deviceCode || undefined
     })
-    tableData.value = res.data || []
-  } catch (e) {
-    // handled by interceptor
+    allData.value = res.data || []
+    total.value = allData.value.length
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }
