@@ -25,8 +25,8 @@
         </el-table-column>
         <el-table-column label="操作" width="150">
           <template #default="{ row }">
-            <el-button link type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button link type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button link type="primary" :data-testid="`edit-alarm-config-${row.id}`" @click="handleEdit(row)">编辑</el-button>
+            <el-button link type="danger" :data-testid="`delete-alarm-config-${row.id}`" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
