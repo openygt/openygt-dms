@@ -20,9 +20,17 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class TimeMonitorRuleResolver {
 
-    private static final Set<String> SOAK_STATUSES = new HashSet<>(Arrays.asList("待泡药", "泡药中"));
-    private static final Set<String> DECOCT_STATUSES = new HashSet<>(Arrays.asList("待煎药", "煎药中", "待出液", "出液中"));
-    private static final Set<String> WRAP_STATUSES = new HashSet<>(Arrays.asList("待包装", "包装中"));
+    private static final Set<String> SOAK_STATUSES = new HashSet<>(Arrays.asList(
+        cn.org.openygt.common.enums.TaskStatus.WAIT_SOAK.getCode(),
+        cn.org.openygt.common.enums.TaskStatus.SOAKING.getCode()));
+    private static final Set<String> DECOCT_STATUSES = new HashSet<>(Arrays.asList(
+        cn.org.openygt.common.enums.TaskStatus.WAIT_DECOCT.getCode(),
+        cn.org.openygt.common.enums.TaskStatus.DECOCTING.getCode(),
+        cn.org.openygt.common.enums.TaskStatus.WAIT_POUR.getCode(),
+        cn.org.openygt.common.enums.TaskStatus.POURING.getCode()));
+    private static final Set<String> WRAP_STATUSES = new HashSet<>(Arrays.asList(
+        cn.org.openygt.common.enums.TaskStatus.WAIT_WRAP.getCode(),
+        cn.org.openygt.common.enums.TaskStatus.WRAPPING.getCode()));
 
     private final TimeRuleMapper timeRuleMapper;
     private final EmergencyPrescriptionMapper emergencyPrescriptionMapper;

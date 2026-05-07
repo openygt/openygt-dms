@@ -244,11 +244,11 @@ public class QualityServiceImpl implements QualityService {
         switch (result) {
             case PASS:
             case CONCESSION:
-                return "待交接";
+                return cn.org.openygt.common.enums.TaskStatus.WAIT_HANDOVER.getCode();
             case REWORK:
-                return reworkNode != null && !reworkNode.isEmpty() ? reworkNode : "待煎药";
+                return reworkNode != null && !reworkNode.isEmpty() ? reworkNode : cn.org.openygt.common.enums.TaskStatus.WAIT_DECOCT.getCode();
             case SCRAP:
-                return "已报废";
+                return cn.org.openygt.common.enums.TaskStatus.SCRAPPED.getCode();
             default:
                 throw new IllegalArgumentException("未知的质检结果: " + result);
         }

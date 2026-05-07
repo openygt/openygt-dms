@@ -152,7 +152,7 @@ const activeStep = computed(() => {
   // 找到最后一个"已完成"的索引+1
   let active = 0
   for (let i = 0; i < steps.length; i++) {
-    if (steps[i].status === '已完成') {
+    if (steps[i].status === 'COMPLETED') {
       active = i + 1
     } else if (steps[i].status === '进行中') {
       active = i

@@ -69,7 +69,7 @@ public class EqDeviceController {
     }
 
     @GetMapping
-    @RequiresPermissions("eq:device:list")
+    @RequiresPermissions("eq:device:view")
     public ApiResponse<IPage<EqDevice>> list(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer deviceType,

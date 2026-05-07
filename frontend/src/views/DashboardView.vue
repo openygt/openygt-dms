@@ -264,7 +264,7 @@ const maxDeviceCount = computed(() => Math.max(1, ...deviceDist.value.map((d: an
 const quickActions = computed(() => {
   const actions = [
     { label: '任务管理', path: '/tasks', icon: List, bg: 'var(--ygt-primary-500)', perm: 'prod:task:view' },
-    { label: '设备管理', path: '/devices', icon: Cpu, bg: 'var(--ygt-success)', perm: 'eq:device:list' },
+    { label: '设备管理', path: '/devices', icon: Cpu, bg: 'var(--ygt-success)', perm: 'eq:device:view' },
     { label: '打印管理', path: '/print-center', icon: Printer, bg: 'var(--ygt-warning)', perm: 'prt:queue:view' },
     { label: '产能报表', path: '/capacity', icon: TrendCharts, bg: 'var(--ygt-info)', perm: 'ops:capacity:view' },
     { label: '温度曲线', path: '/temperature-curve', icon: Odometer, bg: '#e91e63', perm: 'eq:temp:view' },

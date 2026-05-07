@@ -304,8 +304,8 @@ function getAssignTypeMeta(assignType: number | null | undefined) {
 function getStatusMeta(status: string | number | null | undefined) {
   if (status === 0 || status === '0' || status === 1 || status === '1') return { label: '待执行', tag: 'info' }
   if (status === 2 || status === '2') return { label: '执行中', tag: 'primary' }
-  if (status === 3 || status === '3') return { label: '已完成', tag: 'success' }
-  if (status === 4 || status === '4') return { label: '已取消', tag: 'danger' }
+  if (status === 'COMPLETED' || status === 'COMPLETED') return { label: '已完成', tag: 'success' }
+  if (status === 'CANCELLED' || status === 'CANCELLED') return { label: '已取消', tag: 'danger' }
   return { label: String(status ?? '-'), tag: 'info' }
 }
 

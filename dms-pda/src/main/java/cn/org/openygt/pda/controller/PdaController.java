@@ -13,6 +13,7 @@ import cn.org.openygt.pda.service.PdaLoginRecordService;
 import cn.org.openygt.pda.service.PdaOperationLogService;
 import cn.org.openygt.pda.service.PdaReviewPhotoService;
 import cn.org.openygt.common.dto.EqDeviceDTO;
+import cn.org.openygt.common.enums.TaskStatus;
 import cn.org.openygt.production.entity.Prescription;
 import cn.org.openygt.production.entity.PrescriptionMedicine;
 import cn.org.openygt.production.entity.StepLog;
@@ -255,7 +256,7 @@ public class PdaController {
         // 查询当前操作人正在处理的任务（排除已完成/已报废）
         List<Task> tasks = taskService.queryTasks(null, null, null, null,
                 String.valueOf(userId), null, null, null, null, 1, limit).getRecords().stream()
-                .filter(t -> !"已完成".equals(t.getStatus()) && !"已报废".equals(t.getStatus()))
+                .filter(t -> !TaskStatus.COMPLETED.getCode().equals(t.getStatus()) && !TaskStatus.SCRAPPED.getCode().equals(t.getStatus()))
                 .collect(Collectors.toList());
         List<Map<String, Object>> result = new ArrayList<>();
         for (Task task : tasks) {
@@ -591,13 +592,13 @@ public class PdaController {
 
     private Map<String, Object> buildNextAction(String status) {
         Map<String, String> nextMap = new HashMap<>();
-        nextMap.put("待泡药", "START_SOAK");
+        nextMap.put(TaskStatus.WAIT_SOAK.getCode(), "START_SOAK");
         nextMap.put("泡药中", "END_SOAK");
-        nextMap.put("待煎药", "START_DECOCT");
+        nextMap.put(TaskStatus.WAIT_DECOCT.getCode(), "START_DECOCT");
         nextMap.put("煎药中", "END_DECOCT");
         nextMap.put("待出液", "START_POUR");
         nextMap.put("出液中", "END_POUR");
-        nextMap.put("待包装", "START_PACKAGE");
+        nextMap.put(TaskStatus.WAIT_WRAP.getCode(), "START_PACKAGE");
         nextMap.put("包装中", "END_PACKAGE");
         nextMap.put("待贴标", "LABEL_CONFIRM");
         nextMap.put("待质检", "INSPECT_PASS");
@@ -635,43 +636,37 @@ public class PdaController {
     }
 
     private int getCurrentStepIndex(String status) {
-        switch (status) {
-            case "待泡药": return 0;
-            case "泡药中": return 1;
-            case "待煎药": return 2;
-            case "煎药中": return 3;
-            case "待出液": return 4;
-            case "出液中": return 5;
-            case "待包装": return 6;
-            case "包装中": return 7;
-            case "待贴标": return 8;
-            case "待质检": return 9;
-            case "待交接": return 10;
-            case "已完成":
-            case "已部分完成": return 10;
-            case "已报废": return -1;
-            default: return -1;
-        }
+        if (TaskStatus.WAIT_SOAK.getCode().equals(status) || "待泡药".equals(status)) return 0;
+        if (TaskStatus.SOAKING.getCode().equals(status) || "泡药中".equals(status)) return 1;
+        if (TaskStatus.WAIT_DECOCT.getCode().equals(status) || "待煎药".equals(status)) return 2;
+        if (TaskStatus.DECOCTING.getCode().equals(status) || "煎药中".equals(status)) return 3;
+        if (TaskStatus.WAIT_POUR.getCode().equals(status) || "待出液".equals(status)) return 4;
+        if (TaskStatus.POURING.getCode().equals(status) || "出液中".equals(status)) return 5;
+        if (TaskStatus.WAIT_WRAP.getCode().equals(status) || "待包装".equals(status)) return 6;
+        if (TaskStatus.WRAPPING.getCode().equals(status) || "包装中".equals(status)) return 7;
+        if (TaskStatus.WAIT_LABEL.getCode().equals(status) || "待贴标".equals(status)) return 8;
+        if (TaskStatus.WAIT_QC.getCode().equals(status) || "待质检".equals(status)) return 9;
+        if (TaskStatus.WAIT_HANDOVER.getCode().equals(status) || "待交接".equals(status)) return 10;
+        if (TaskStatus.COMPLETED.getCode().equals(status) || TaskStatus.PARTIAL_COMPLETED.getCode().equals(status) || "已完成".equals(status) || "已部分完成".equals(status)) return 10;
+        if (TaskStatus.SCRAPPED.getCode().equals(status) || "已报废".equals(status)) return -1;
+        return -1;
     }
 
     private String mapStatus(String dbStatus) {
-        switch (dbStatus) {
-            case "待泡药": return "PENDING";
-            case "泡药中": return "SOAKING";
-            case "待煎药": return "SOAKED";
-            case "煎药中": return "DECOCTING";
-            case "待出液": return "DECOCTED";
-            case "出液中": return "POURING";
-            case "待包装": return "POURED";
-            case "包装中": return "PACKAGING";
-            case "待贴标": return "PACKAGED";
-            case "待质检": return "LABELING";
-            case "待交接": return "INSPECTING";
-            case "已完成":
-            case "已部分完成": return "COMPLETED";
-            case "已报废": return "CANCELLED";
-            default: return dbStatus;
-        }
+        if (TaskStatus.WAIT_SOAK.getCode().equals(dbStatus) || "待泡药".equals(dbStatus)) return "PENDING";
+        if (TaskStatus.SOAKING.getCode().equals(dbStatus) || "泡药中".equals(dbStatus)) return "SOAKING";
+        if (TaskStatus.WAIT_DECOCT.getCode().equals(dbStatus) || "待煎药".equals(dbStatus)) return "SOAKED";
+        if (TaskStatus.DECOCTING.getCode().equals(dbStatus) || "煎药中".equals(dbStatus)) return "DECOCTING";
+        if (TaskStatus.WAIT_POUR.getCode().equals(dbStatus) || "待出液".equals(dbStatus)) return "DECOCTED";
+        if (TaskStatus.POURING.getCode().equals(dbStatus) || "出液中".equals(dbStatus)) return "POURING";
+        if (TaskStatus.WAIT_WRAP.getCode().equals(dbStatus) || "待包装".equals(dbStatus)) return "POURED";
+        if (TaskStatus.WRAPPING.getCode().equals(dbStatus) || "包装中".equals(dbStatus)) return "PACKAGING";
+        if (TaskStatus.WAIT_LABEL.getCode().equals(dbStatus) || "待贴标".equals(dbStatus)) return "PACKAGED";
+        if (TaskStatus.WAIT_QC.getCode().equals(dbStatus) || "待质检".equals(dbStatus)) return "LABELING";
+        if (TaskStatus.WAIT_HANDOVER.getCode().equals(dbStatus) || "待交接".equals(dbStatus)) return "INSPECTING";
+        if (TaskStatus.COMPLETED.getCode().equals(dbStatus) || TaskStatus.PARTIAL_COMPLETED.getCode().equals(dbStatus) || "已完成".equals(dbStatus) || "已部分完成".equals(dbStatus)) return "COMPLETED";
+        if (TaskStatus.SCRAPPED.getCode().equals(dbStatus) || "已报废".equals(dbStatus)) return "CANCELLED";
+        return dbStatus;
     }
 
     /**

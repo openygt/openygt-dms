@@ -45,7 +45,7 @@
             <el-icon><Monitor /></el-icon>
             <span>设备管理</span>
           </template>
-          <el-menu-item v-if="userStore.hasPermission('eq:device:list')" index="/devices">设备台账</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:device:view')" index="/devices">设备台账</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:network:view')" index="/device-network">设备联网</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:group:view')" index="/device-group-manage">分组配对</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:device:monitor')" index="/device-monitor">设备监控</el-menu-item>
