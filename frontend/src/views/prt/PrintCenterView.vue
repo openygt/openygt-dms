@@ -114,5 +114,18 @@ async function handleRetry(row: PrintTask) {
   }
 }
 
+async function handleSubmit(row: PrintTask) {
+  try {
+    const userStore = useUserStore()
+    await request.post(`/v1/prt/tasks/${row.taskId}/submit`, null, {
+      params: { deviceCode: row.deviceCode, operatorId: userStore.userInfo?.username || '' }
+    })
+    ElMessage.success('提交成功')
+    fetchData()
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message || '提交失败')
+  }
+}
+
 onMounted(fetchData)
 </script>
