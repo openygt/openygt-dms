@@ -168,8 +168,10 @@ async function handleDelete(row: any) {
     await deleteAlarmConfig(row.id)
     ElMessage.success('删除成功')
     loadConfigs()
-  } catch (err) {
-    // cancelled
+  } catch (err: any) {
+    if (err !== 'cancel') {
+      ElMessage.error(err.response?.data?.message || '删除失败')
+    }
   }
 }
 
