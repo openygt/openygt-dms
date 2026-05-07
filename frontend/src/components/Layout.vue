@@ -307,8 +307,8 @@ function openChangePassword() {
 
 /* 页面标题样式 */
 .page-header-title {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: normal;
   color: var(--el-text-color-primary);
   margin-bottom: 16px;
 }

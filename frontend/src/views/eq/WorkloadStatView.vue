@@ -1,5 +1,7 @@
 <template>
   <div class="workload-stat">
+    <el-button :icon="ArrowLeft" @click="router.back()">返回</el-button>
+    <div style="height: 16px"></div>
     <div class="page-header">
 
       <el-button type="primary" @click="exportExcel">导出Excel</el-button>
@@ -79,9 +81,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { getWorkloadStats } from '@/api/equipment'
 
+const router = useRouter()
 const loading = ref(false)
 const statList = ref<any[]>([])
 const summaryList = ref<any[]>([

@@ -1,5 +1,7 @@
 <template>
   <div class="page-container">
+    <el-button :icon="ArrowLeft" @click="router.back()">返回</el-button>
+    <div style="height: 16px"></div>
 
     <el-card class="info-card" shadow="never">
       <template #header>
@@ -56,8 +58,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import { FirstAidKit } from '@element-plus/icons-vue'
 import request from '@/api/request'
 import { confirmHerbGroup, getHerbGroups } from '@/api/newModules'
@@ -77,6 +80,7 @@ interface HerbGroupItem {
 }
 
 const route = useRoute()
+const router = useRouter()
 const prescriptionId = computed(() => String(route.query.prescriptionId || route.params.prescriptionId || ''))
 
 const groupList = ref<HerbGroupItem[]>([])

@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>医师管理</span>
+          
           <el-button type="primary" data-testid="create-btn" @click="openDialog()">新增医师</el-button>
         </div>
       </template>

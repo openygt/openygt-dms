@@ -1,7 +1,5 @@
 <template>
   <div>
-    <div style="height: 16px"></div>
-
     <!-- 操作栏 -->
     <el-card>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">

@@ -3,12 +3,11 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>异常工单管理</span>
         </div>
       </template>
       <el-form :inline="true" :model="query" class="demo-form-inline">
         <el-form-item label="状态">
-          <el-select v-model="query.status" clearable placeholder="全部">
+          <el-select v-model="query.status" clearable placeholder="全部" style="width: 160px">
             <el-option label="待处理" :value="0" />
             <el-option label="处理中" :value="1" />
             <el-option label="已解决" :value="2" />
@@ -16,7 +15,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="等级">
-          <el-select v-model="query.level" clearable placeholder="全部">
+          <el-select v-model="query.level" clearable placeholder="全部" style="width: 160px">
             <el-option label="一般" :value="1" />
             <el-option label="严重" :value="2" />
             <el-option label="紧急" :value="3" />

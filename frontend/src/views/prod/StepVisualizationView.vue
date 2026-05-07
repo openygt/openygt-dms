@@ -1,29 +1,19 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">流程跟踪：<span class="page-header-sub">泡药→头煎→二煎→出液→包装→质检，走到哪一步</span></div>
+    <div class="page-header-title">{{ pageTitle }}<span v-if="pageDesc" class="page-header-sub">：{{ pageDesc }}</span></div>
 
     <!-- 任务选择区域 -->
     <el-card class="task-selector-card" shadow="never">
       <div class="task-selector">
         <span class="selector-label">任务编号：</span>
-        <el-select
-          v-model="selectedTaskId"
-          filterable
-          remote
-          :remote-method="searchTasks"
-          :loading="taskSearchLoading"
-          placeholder="请选择或搜索任务"
+        <el-input
+          v-model="taskSearchInput"
+          placeholder="请输入任务号"
           class="task-select"
           clearable
-          @change="handleTaskChange"
-        >
-          <el-option
-            v-for="task in taskOptions"
-            :key="task.id"
-            :label="formatTaskLabel(task)"
-            :value="task.id"
-          />
-        </el-select>
+          @keyup.enter="doSearchTask"
+        />
+        <el-button type="primary" :loading="taskSearchLoading" @click="doSearchTask">搜索</el-button>
         <el-tag v-if="selectedTaskId && currentStatus === 'COMPLETED'" type="success">已完成</el-tag>
         <el-tag v-else-if="selectedTaskId && currentStatus === 'EXCEPTION'" type="danger">异常</el-tag>
         <el-tag v-else-if="selectedTaskId && currentStatus === 'NORMAL'" type="primary">进行中</el-tag>
@@ -31,16 +21,32 @@
       </div>
     </el-card>
 
+    <!-- 搜索结果列表 -->
+    <el-card v-if="taskOptions.length > 0 && !selectedTaskId" class="search-result-card" shadow="never">
+      <template #header>
+        <span>搜索结果（{{ taskOptions.length }} 条）</span>
+      </template>
+      <el-table :data="taskOptions" highlight-current-row @row-click="(row: any) => handleTaskChange(row.id)">
+        <el-table-column prop="id" label="任务号" width="100" />
+        <el-table-column prop="prescriptionNumber" label="处方号" />
+        <el-table-column prop="status" label="状态" width="120" />
+        <el-table-column label="操作" width="100">
+          <template #default="{ row }">
+            <el-button type="primary" link size="small" @click="handleTaskChange(row.id)">查看</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
     <!-- 空数据提示 -->
     <el-empty
-      v-if="!selectedTaskId"
-      description="请选择要查看的煎药任务"
+      v-if="!selectedTaskId && taskOptions.length === 0"
+      description="请输入任务号搜索"
       class="empty-hint"
     >
       <template #image>
         <el-icon :size="60" color="#c0c4cc"><Document /></el-icon>
       </template>
-      <el-button type="primary" @click="focusTaskSelect">选择任务</el-button>
     </el-empty>
 
     <!-- 步骤展示区域 -->
@@ -139,6 +145,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useMenuDesc } from '@/composables/useMenuDesc'
 import { ElMessage } from 'element-plus'
 import { Check, Close, Loading, Document } from '@element-plus/icons-vue'
 import { getTaskSteps, getStepDetail } from '@/api/newModules'
@@ -178,11 +185,15 @@ interface TaskOption {
 
 const route = useRoute()
 const router = useRouter()
+const { title, description } = useMenuDesc()
+const pageTitle = computed(() => title.value)
+const pageDesc = computed(() => description.value)
 
 // 任务选择相关
 const selectedTaskId = ref<number | null>(null)
 const taskOptions = ref<TaskOption[]>([])
 const taskSearchLoading = ref(false)
+const taskSearchInput = ref('')
 const taskSelectRef = ref<any>(null)
 
 // 步骤相关
@@ -344,8 +355,42 @@ function handleTaskChange(taskId: number | undefined) {
 
 // 聚焦任务选择框
 function focusTaskSelect() {
-  // 触发任务搜索加载选项并展开下拉
-  searchTasks('')
+  taskSearchInput.value = ''
+}
+
+// 搜索任务按钮
+async function doSearchTask() {
+  const query = taskSearchInput.value.trim()
+  if (!query) {
+    ElMessage.warning('请输入任务号')
+    return
+  }
+  taskSearchLoading.value = true
+  try {
+    const params: any = { page: 1, size: 20 }
+    if (/^\d+$/.test(query)) {
+      params.id = query
+    } else {
+      params.prescriptionNumber = query
+    }
+    const res: any = await request.get('/v1/prod/tasks', { params })
+    const records = Array.isArray(res.data?.records) ? res.data.records : []
+    if (records.length === 0) {
+      ElMessage.warning('未找到匹配的任务')
+      return
+    }
+    if (records.length === 1) {
+      handleTaskChange(records[0].id)
+    } else {
+      taskOptions.value = records
+      ElMessage.info(`找到 ${records.length} 条任务，请点击选择`)
+    }
+  } catch (e) {
+    console.error('搜索任务失败', e)
+    ElMessage.error('搜索失败')
+  } finally {
+    taskSearchLoading.value = false
+  }
 }
 
 // 点击步骤
@@ -426,8 +471,6 @@ async function loadTaskSteps() {
 
 // 初始化
 onMounted(async () => {
-  await loadInitialTasks()
-
   // 从 URL 获取 taskId
   const urlTaskId = route.query.taskId
   if (urlTaskId) {
@@ -455,7 +498,10 @@ watch(() => route.query.taskId, (newId) => {
 
 <style scoped lang="scss">
 .page-container {
-  padding: var(--ygt-space-4);
+  padding: 0;
+}
+.page-header-title {
+  margin-bottom: 16px;
 }
 
 .task-selector-card {

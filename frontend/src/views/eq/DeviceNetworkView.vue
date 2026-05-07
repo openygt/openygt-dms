@@ -236,10 +236,10 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .page-container {
-  padding: var(--ygt-space-4);
+  padding: 0;
 }
 .network-tabs {
-  margin-top: 16px;
+  margin-top: 0;
 }
 .device-list-card {
   .device-item {

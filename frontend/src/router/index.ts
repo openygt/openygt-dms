@@ -13,7 +13,7 @@ const router = createRouter({
       children: [
         { path: 'dashboard', name: 'Dashboard', component: () => import('@/views/DashboardView.vue'), meta: { title: '生产看板' } },
         { path: 'tasks', name: 'Tasks', component: () => import('@/views/task/TaskListView.vue'), meta: { title: '煎药任务', perm: 'prod:task:view', dynamicTitle: true } },
-        { path: 'prescriptions', name: 'Prescriptions', component: () => import('@/views/prod/PrescriptionListView.vue'), meta: { title: '处方管理', perm: 'prod:prescription:list' } },
+        { path: 'prescriptions', name: 'Prescriptions', component: () => import('@/views/prod/PrescriptionListView.vue'), meta: { title: '处方录入', perm: 'prod:prescription:list' } },
         { path: 'consume-log', name: 'ConsumeLog', component: () => import('@/views/inventory/ConsumeLogView.vue'), meta: { title: '药材消耗', perm: 'inv:log:list' } },
         { path: 'devices', name: 'Devices', component: () => import('@/views/eq/DeviceListView.vue'), meta: { title: '设备台账', perm: 'eq:device:list' } },
         { path: 'device-monitor', name: 'DeviceMonitor', component: () => import('@/views/eq/DeviceMonitorView.vue'), meta: { title: '设备监控', perm: 'eq:device:monitor' } },
@@ -67,7 +67,7 @@ const router = createRouter({
         { path: 'production-setting', name: 'ProductionSetting', component: () => import('@/views/prod/ProductionSettingView.vue'), meta: { title: '生产设置', perm: 'prod:setting:view' } },
         { path: 'herb-group', name: 'HerbGroup', component: () => import('@/views/prod/HerbGroupView.vue'), meta: { title: '分组投料', perm: 'prod:dosing:view' } },
         { path: 'time-monitor', name: 'TimeMonitor', component: () => import('@/views/monitor/TimeMonitorView.vue'), meta: { title: '时效监控' } },
-        { path: 'emergency', name: 'EmergencyPrescription', component: () => import('@/views/prod/EmergencyPrescriptionView.vue'), meta: { title: '急诊快速通道' } },
+        { path: 'emergency', name: 'EmergencyPrescription', component: () => import('@/views/prod/EmergencyPrescriptionView.vue'), meta: { title: '紧急处方' } },
         { path: 'temperature-curve', name: 'TemperatureCurve', component: () => import('@/views/eq/TemperatureCurveView.vue'), meta: { title: '温曲查询', perm: 'eq:temp:view' } },
         { path: 'digital-twin', redirect: '/device-monitor' },
         { path: 'toxic-medicine', name: 'ToxicMedicine', component: () => import('@/views/toxic-medicine/ToxicMedicineView.vue'), meta: { title: '毒性药材管理', perm: 'base:toxic:manage' } },

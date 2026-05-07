@@ -394,7 +394,7 @@ onMounted(() => { loadDevices(); loadGroups(); loadPairings(); loadAllGroups(); 
 </script>
 
 <style scoped lang="scss">
-.page-container { padding: var(--ygt-space-4); }
-.group-tabs { margin-top: 16px; }
+.page-container { padding: 0; }
+.group-tabs { margin-top: 0; }
 .rule-toolbar { display: flex; align-items: center; }
 </style>
