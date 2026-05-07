@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">合格统计：<span class="page-header-sub">质检合格率、不合格原因分析</span></div>
     <el-card class="filter-card" shadow="never">
       <el-form :model="searchForm" inline>
         <el-form-item label="日期范围">

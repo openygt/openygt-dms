@@ -12,7 +12,7 @@ const router = createRouter({
       redirect: '/dashboard',
       children: [
         { path: 'dashboard', name: 'Dashboard', component: () => import('@/views/DashboardView.vue'), meta: { title: '生产看板' } },
-        { path: 'tasks', name: 'Tasks', component: () => import('@/views/task/TaskListView.vue'), meta: { title: '煎药任务', perm: 'prod:task:view' } },
+        { path: 'tasks', name: 'Tasks', component: () => import('@/views/task/TaskListView.vue'), meta: { title: '煎药任务', perm: 'prod:task:view', dynamicTitle: true } },
         { path: 'prescriptions', name: 'Prescriptions', component: () => import('@/views/prod/PrescriptionListView.vue'), meta: { title: '处方管理', perm: 'prod:prescription:list' } },
         { path: 'consume-log', name: 'ConsumeLog', component: () => import('@/views/inventory/ConsumeLogView.vue'), meta: { title: '药材消耗', perm: 'inv:log:list' } },
         { path: 'devices', name: 'Devices', component: () => import('@/views/eq/DeviceListView.vue'), meta: { title: '设备台账', perm: 'eq:device:list' } },
@@ -63,7 +63,7 @@ const router = createRouter({
         { path: 'alarm-configs', name: 'AlarmConfigs', component: () => import('@/views/monitor/AlarmConfigView.vue'), meta: { title: '告警配置' } },
         { path: 'device-command', name: 'DeviceCommand', component: () => import('@/views/eq/DeviceCommandView.vue'), meta: { title: '远程操控', perm: 'eq:device:emergency' } },
         { path: 'device-maintenance', name: 'DeviceMaintenance', component: () => import('@/views/eq/DeviceMaintenanceView.vue'), meta: { title: '设备维保', perm: 'eq:maint:view' } },
-        { path: 'step-visualization', name: 'StepVisualization', component: () => import('@/views/prod/StepVisualizationView.vue'), meta: { title: '流程跟踪', perm: 'prod:trace:view' } },
+        { path: 'step-visualization', name: 'StepVisualization', component: () => import('@/views/prod/StepVisualizationView.vue'), meta: { title: '流程跟踪', perm: 'prod:trace:view', dynamicTitle: true } },
         { path: 'production-setting', name: 'ProductionSetting', component: () => import('@/views/prod/ProductionSettingView.vue'), meta: { title: '生产设置', perm: 'prod:setting:view' } },
         { path: 'herb-group', name: 'HerbGroup', component: () => import('@/views/prod/HerbGroupView.vue'), meta: { title: '分组投料', perm: 'prod:dosing:view' } },
         { path: 'time-monitor', name: 'TimeMonitor', component: () => import('@/views/monitor/TimeMonitorView.vue'), meta: { title: '时效监控' } },

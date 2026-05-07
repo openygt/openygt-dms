@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">分组投料：<span class="page-header-sub">先煎/群煎/后下/冲服、扫码确认、倒计时提醒</span></div>
 
     <el-card class="info-card" shadow="never">
       <template #header>

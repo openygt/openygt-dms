@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="page-header-title">打印中心：<span class="page-header-sub">标签/工单统一打印入口</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

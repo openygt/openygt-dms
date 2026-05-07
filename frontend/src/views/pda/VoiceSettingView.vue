@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">语音播报：<span class="page-header-sub">语速/音量/语音包/免打扰、任务到达播报</span></div>
     <el-row :gutter="16">
       <el-col :xs="24" :md="12">
         <el-card shadow="never">

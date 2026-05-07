@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">设备维保：<span class="page-header-sub">维护计划、维护记录、下次保养提醒，设备别等坏了才修</span></div>
     <el-card class="mt-4" shadow="never">
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

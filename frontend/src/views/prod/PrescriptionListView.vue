@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="page-header-title">处方录入：<span class="page-header-sub">手工录入处方、导入、查询和异常处方处理</span></div>
     <div style="height: 16px"></div>
 
     <!-- 操作栏 -->
