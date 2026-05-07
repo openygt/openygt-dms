@@ -31,7 +31,8 @@ export const useUserStore = defineStore('user', () => {
     localStorage.setItem('token', res.data.token)
     syncRequestAuthorization(res.data.token)
     await fetchUserInfo()
-    await fetchMenus()
+    // TODO: 动态菜单方案待产品确认，当前侧栏为静态编码
+    // await fetchMenus()
   }
 
   function fetchUserInfo() {

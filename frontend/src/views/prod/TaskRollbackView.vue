@@ -147,8 +147,11 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { RefreshLeft } from '@element-plus/icons-vue'
+import { useUserStore } from '@/stores/user'
 import { rollbackTask, approveRollback, getRollbackList, getRollbackReasons } from '@/api/newModules'
 import request from '@/api/request'
+
+const userStore = useUserStore()
 
 const loading = ref(false)
 const searchForm = reactive({ status: null as number | null, taskName: '' })
@@ -260,7 +263,7 @@ async function submitRollback() {
         rollbackTo,
         reasonCode: rollbackForm.reasonCode,
         remark: rollbackForm.remark,
-        operatorId: 1 // TODO: 从登录态获取当前用户ID
+        operatorId: userStore.userInfo?.id
       })
       ElMessage.success('回退申请已提交')
       rollbackDialogVisible.value = false
@@ -287,7 +290,7 @@ async function submitApprove() {
   if (!currentRow.value) return
   try {
     await approveRollback(currentRow.value.id, {
-      approverId: 1, // TODO: 从登录态获取当前用户ID
+      approverId: userStore.userInfo?.id,
       approvalStatus: approveStatus.value,
       approvalComment: approveForm.comment
     })

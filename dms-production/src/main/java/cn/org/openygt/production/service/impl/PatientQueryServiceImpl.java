@@ -146,19 +146,19 @@ public class PatientQueryServiceImpl implements PatientQueryService {
 
     private Integer calculateProgressPercent(Task task) {
         if (task == null) return 0;
-        if ("已完成".equals(task.getStatus()) || "已部分完成".equals(task.getStatus())) return 100;
+        if (cn.org.openygt.common.enums.TaskStatus.COMPLETED.getLabel().equals(task.getStatus()) || cn.org.openygt.common.enums.TaskStatus.PARTIAL_COMPLETED.getLabel().equals(task.getStatus())) return 100;
         String status = task.getStatus();
-        if ("待泡药".equals(status)) return 0;
-        if ("泡药中".equals(status)) return 10;
-        if ("待煎药".equals(status)) return 20;
-        if ("煎药中".equals(status)) return 40;
-        if ("待出液".equals(status)) return 50;
-        if ("出液中".equals(status)) return 60;
-        if ("待包装".equals(status)) return 70;
-        if ("包装中".equals(status)) return 80;
-        if ("待贴标".equals(status)) return 90;
-        if ("待质检".equals(status)) return 95;
-        if ("待交接".equals(status)) return 98;
+        if (cn.org.openygt.common.enums.TaskStatus.WAIT_SOAK.getLabel().equals(status)) return 0;
+        if (cn.org.openygt.common.enums.TaskStatus.SOAKING.getLabel().equals(status)) return 10;
+        if (cn.org.openygt.common.enums.TaskStatus.WAIT_DECOCT.getLabel().equals(status)) return 20;
+        if (cn.org.openygt.common.enums.TaskStatus.DECOCTING.getLabel().equals(status)) return 40;
+        if (cn.org.openygt.common.enums.TaskStatus.WAIT_POUR.getLabel().equals(status)) return 50;
+        if (cn.org.openygt.common.enums.TaskStatus.POURING.getLabel().equals(status)) return 60;
+        if (cn.org.openygt.common.enums.TaskStatus.WAIT_WRAP.getLabel().equals(status)) return 70;
+        if (cn.org.openygt.common.enums.TaskStatus.WRAPPING.getLabel().equals(status)) return 80;
+        if (cn.org.openygt.common.enums.TaskStatus.WAIT_LABEL.getLabel().equals(status)) return 90;
+        if (cn.org.openygt.common.enums.TaskStatus.WAIT_QC.getLabel().equals(status)) return 95;
+        if (cn.org.openygt.common.enums.TaskStatus.WAIT_HANDOVER.getLabel().equals(status)) return 98;
         return 0;
     }
 }

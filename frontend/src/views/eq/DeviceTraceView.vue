@@ -108,8 +108,8 @@ async function loadDevices() {
     if (Array.isArray(records)) {
       deviceOptions.value = records.map((d: any) => d.deviceCode || d.code || d.device_code || '').filter(Boolean)
     }
-  } catch (e) {
-    // 静默失败，保留空下拉让用户手动输入
+  } catch (e: any) {
+    ElMessage.warning('设备列表加载失败：' + (e?.message || '未知错误'))
   }
 }
 

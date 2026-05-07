@@ -1,7 +1,9 @@
 package cn.org.openygt.pda.service;
 
+import cn.org.openygt.common.dto.EqDeviceDTO;
 import cn.org.openygt.common.enums.TaskStatus;
 import cn.org.openygt.common.enums.TaskStatusDisplay;
+import cn.org.openygt.common.service.EquipmentService;
 import cn.org.openygt.production.entity.Task;
 import cn.org.openygt.production.service.TaskService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import java.util.Map;
 public class PdaScanHandler {
 
     private final TaskService taskService;
+    private final EquipmentService equipmentService;
 
     public PdaScanResult handleScan(String barcode, Long operatorId) {
         BarcodeType type = parseBarcodeType(barcode);
@@ -87,11 +90,18 @@ public class PdaScanHandler {
     }
 
     private PdaScanResult handleDeviceScan(String barcode, Long operatorId) {
-        return PdaScanResult.info("设备扫码功能待实现", null);
+        EqDeviceDTO device = equipmentService.getDeviceByCode(barcode);
+        if (device == null) {
+            return PdaScanResult.error("设备不存在：" + barcode);
+        }
+        String statusName = device.getStatus() != null ? device.getStatus() : "未知";
+        return PdaScanResult.deviceInfo("设备已识别：" + device.getName() + " (" + statusName + ")",
+                device.getDeviceCode(), device.getName(), statusName);
     }
 
     private PdaScanResult handleMedicineScan(String barcode, Long operatorId) {
-        return PdaScanResult.info("药材扫码功能待实现", null);
+        // 药材扫码需AI识别，暂不实现
+        return PdaScanResult.info("药材扫码：" + barcode + "（需AI识别，请手动确认）", null);
     }
 
     public enum BarcodeType {
@@ -151,6 +161,11 @@ public class PdaScanHandler {
 
         public static PdaScanResult error(String errorMsg) {
             return new PdaScanResult(false, "ERROR", null, null, null, null, null, errorMsg);
+        }
+
+        public static PdaScanResult deviceInfo(String actionName, String deviceCode, String deviceName, String deviceStatus) {
+            DisplayInfo display = new DisplayInfo(deviceName, "#1890FF", "device", "状态：" + deviceStatus);
+            return new PdaScanResult(true, "DEVICE_INFO", actionName, null, deviceStatus, display, null, null);
         }
 
         private static DisplayInfo buildDisplay(Task task) {
