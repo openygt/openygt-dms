@@ -1,9 +1,8 @@
 <template>
   <div>
-    <div class="page-header-title">告警管理：<span class="page-header-sub">设备故障/温度异常/超时告警、处理/升级</span></div>
     <el-card>
       <template #header>
-        <span>告警日志</span>
+        <div></div>
       </template>
       <el-form :inline="true" :model="query" style="margin-bottom: 16px">
         <el-form-item label="设备编码">

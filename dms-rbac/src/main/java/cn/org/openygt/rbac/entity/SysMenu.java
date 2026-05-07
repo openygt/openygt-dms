@@ -25,6 +25,7 @@ public class SysMenu extends BaseEntity {
     private Long parentId;
     private String status;
     private String permission; // 按钮权限标识
+    private String description; // 页面功能描述
 
     @TableField(exist = false)
     private List<SysMenu> children;

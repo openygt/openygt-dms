@@ -1,10 +1,9 @@
 <template>
   <div>
-    <div class="page-header-title">人员管理：<span class="page-header-sub">员工信息、角色分配、条码管理</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>用户管理</span>
+          
           <el-button type="primary" v-if="userStore.hasPermission('sys:user:create')" @click="openDialog()">新增用户</el-button>
         </div>
       </template>

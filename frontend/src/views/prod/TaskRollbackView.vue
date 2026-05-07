@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">返工处理：<span class="page-header-sub">异常回退、重新煎煮、质量追溯</span></div>
     <el-card class="search-card" shadow="never">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px">
         <el-form :model="searchForm" inline @submit.prevent>

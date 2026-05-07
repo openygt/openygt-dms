@@ -1,10 +1,5 @@
 <template>
   <div class="device-trace">
-    <div class="page-header-title">处方追溯：<span class="page-header-sub">从接收→煎煮→质检→发药全链路追溯</span></div>
-    <div class="page-header">
-
-    </div>
-
     <el-card class="filter-card">
       <el-form :inline="true" :model="filterForm">
         <el-form-item label="处方号">
@@ -233,15 +228,6 @@ onMounted(() => {
 <style scoped lang="scss">
 .device-trace {
   padding: 16px;
-
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-
-    h2 { margin: 0; font-size: 20px; }
-  }
 
   .filter-card { margin-bottom: 16px; }
 

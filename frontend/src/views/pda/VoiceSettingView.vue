@@ -1,11 +1,12 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">语音播报：<span class="page-header-sub">语速/音量/语音包/免打扰、任务到达播报</span></div>
+    <el-button :icon="ArrowLeft" @click="router.back()">返回</el-button>
+    <div style="height: 16px"></div>
     <el-row :gutter="16">
       <el-col :xs="24" :md="12">
         <el-card shadow="never">
           <template #header>
-            <span>语音设置</span>
+            
           </template>
           <el-form :model="form" label-width="120px">
             <el-form-item label="设备标识">
@@ -60,9 +61,12 @@
 
 <script setup lang="ts">
 import { onMounted, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { VideoPlay } from '@element-plus/icons-vue'
+import { VideoPlay, ArrowLeft } from '@element-plus/icons-vue'
 import { getVoiceSettings, tts, updateVoiceSettings } from '@/api/newModules'
+
+const router = useRouter()
 
 const form = reactive({
   id: null as number | null,

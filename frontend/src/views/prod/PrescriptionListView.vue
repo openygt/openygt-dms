@@ -1,8 +1,5 @@
 <template>
   <div>
-    <div class="page-header-title">处方录入：<span class="page-header-sub">手工录入处方、导入、查询和异常处方处理</span></div>
-    <div style="height: 16px"></div>
-
     <!-- 操作栏 -->
     <el-card>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
@@ -596,12 +593,6 @@ const URGENT_LEVELS = [
 
 // ==================== 计算属性 ====================
 
-const canSubmit = computed(() => {
-  if (!form.patientName) return false
-  if (!form.medicineItems.length) return false
-  return form.medicineItems.every((m: MedicineItem) => m.medicineName && m.dosage > 0)
-})
-
 // ==================== 数据加载 ====================
 
 async function fetchData() {
@@ -688,7 +679,7 @@ function formatTime(dt: string) {
 async function openCreateDialog(row?: any) {
   if (row) {
     // 编辑模式：先加载详情（列表数据不含药材明细）
-    if (!row.id) {
+    if (row.id == null) {
       ElMessage.error('处方ID无效，无法编辑')
       return
     }
@@ -744,7 +735,7 @@ function addMedicineBatch() {
         form.medicineItems.push({
           medicineId: null,
           medicineName: parts[0],
-          dosage: parseFloat(parts[1]) || 10,
+          dosage: isNaN(parseFloat(parts[1])) ? 10 : parseFloat(parts[1]),
           unit: parts[2] || 'g',
           decoctionMethod: 'NORMAL', batchNo: '', isToxic: false
         })
@@ -770,7 +761,7 @@ function queryMedicines(query: string, cb: (results: any[]) => void) {
 function onMedicineSelect(selected: any, row: any) {
   row.medicineId = selected.id
   row.medicineName = selected.medicineName
-  row.unit = selected.unit || 'g'
+  row.unit = selected.unit ?? 'g'
 }
 
 async function handleSave() {
@@ -879,7 +870,7 @@ async function handleOcrConfirm() {
 // ==================== 异常处方处理 ====================
 
 async function resolveException(row: any) {
-  if (!row.id) {
+  if (row.id == null) {
     ElMessage.error('处方ID无效，无法纠正')
     return
   }
@@ -933,7 +924,7 @@ async function resolveException(row: any) {
 // ==================== 详情 ====================
 
 async function viewDetail(row: any) {
-  if (!row.id) {
+  if (row.id == null) {
     ElMessage.error('处方ID无效，无法查看详情')
     return
   }
@@ -961,9 +952,10 @@ function openRejectDialog(row: any) {
 async function handleReject() {
   if (!rejectForm.rejectType) { ElMessage.warning('请选择驳回类型'); return }
   if (!rejectForm.reason) { ElMessage.warning('请输入驳回原因'); return }
+  if (rejectForm.id == null) { ElMessage.warning('处方ID无效'); return }
   const userStore = useUserStore()
   try {
-    await rejectPrescription(rejectForm.id!, {
+    await rejectPrescription(rejectForm.id, {
       rejectType: rejectForm.rejectType,
       reason: rejectForm.reason,
       operatorId: userStore.userInfo?.id || 0,
@@ -987,8 +979,9 @@ function openUrgentDialog(row: any) {
 }
 
 async function handleUrgent() {
+  if (urgentForm.id == null) { ElMessage.warning('处方ID无效'); return }
   try {
-    await markEmergency(urgentForm.id!, urgentForm.level, {
+    await markEmergency(urgentForm.id, urgentForm.level, {
       deliveryType: urgentForm.deliveryType || undefined,
       deliveryLocation: urgentForm.deliveryLocation || undefined,
       delayReason: urgentForm.delayReason || undefined
