@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">急诊快速通道：<span class="page-header-sub">急诊处方优先处理、时效保障</span></div>
 
     <!-- 急诊统计 -->
     <el-card class="emergency-stat" shadow="never">

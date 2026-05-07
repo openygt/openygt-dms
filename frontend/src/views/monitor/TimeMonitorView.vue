@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">时效监控：<span class="page-header-sub">各设备倒计时、超时预警、时效达成率</span></div>
 
     <el-row :gutter="16" class="stat-row">
       <el-col :span="6">

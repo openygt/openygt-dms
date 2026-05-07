@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">工单打印：煎药工单：<span class="page-header-sub">设备号、工艺参数、注意事项，煎药工拿着单子干活不迷路</span></div>
     <el-card class="mt-4" shadow="never">
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="page-header-title">包装规格：<span class="page-header-sub">袋型、标签格式、打印模板</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

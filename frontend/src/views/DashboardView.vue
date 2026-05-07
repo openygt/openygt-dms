@@ -2,9 +2,6 @@
   <div class="dashboard">
     <div class="dashboard-page-head">
       <div>
-        <div class="page-header-title">
-          生产看板：<span class="page-header-sub">今日总任务、完成/进行占比、任务侧报警；下方为任务状态分布、设备在线结构（总数/在线/在线异常）与待处理告警</span>
-        </div>
       </div>
       <el-button type="primary" plain :loading="loading || alarmLoading" @click="refreshAll">刷新</el-button>
     </div>

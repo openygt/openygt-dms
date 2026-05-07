@@ -1,9 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">
-      设备分组
-      <span class="page-header-sub">设备分组管理、生产线配对规则、设备联动规则</span>
-    </div>
     <el-tabs v-model="activeTab" class="group-tabs">
       <el-tab-pane label="分组管理" name="group">
         <div class="rule-toolbar">

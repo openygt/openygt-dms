@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">发药确认：<span class="page-header-sub">按处方/患者发药、签收确认</span></div>
     <el-card class="search-card" shadow="never">
       <el-form :model="searchForm" inline>
         <el-form-item label="状态">

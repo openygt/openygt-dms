@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">批次追溯：<span class="page-header-sub">按批次号追溯生产全过程</span></div>
     <el-card class="search-card" shadow="never">
       <el-form :model="searchForm" inline>
         <el-form-item label="批次号">
