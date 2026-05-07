@@ -58,6 +58,16 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <el-empty v-if="!loading && tableData.length === 0" description="暂无返工记录">
+        <template #description>
+          <div>
+            <p>暂无返工记录</p>
+            <p style="font-size: 12px; color: #999; margin-top: 8px">质检返工或任务回退后将自动生成返工记录</p>
+          </div>
+        </template>
+      </el-empty>
+
       <div class="pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"

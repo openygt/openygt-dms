@@ -40,8 +40,17 @@
         </el-table-column>
       </el-table>
 
+      <el-empty v-if="!loading && list.length === 0" description="暂无留样记录">
+        <template #description>
+          <div>
+            <p>暂无留样记录</p>
+            <p style="font-size: 12px; color: #999; margin-top: 8px">质检通过/不通过后将自动创建留样</p>
+          </div>
+        </template>
+      </el-empty>
+
       <el-pagination
-        v-if="mode === 'list'"
+        v-if="mode === 'list' && list.length > 0"
         style="margin-top: 16px; justify-content: flex-end"
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.size"

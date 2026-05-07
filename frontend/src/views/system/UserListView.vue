@@ -9,7 +9,7 @@
       </template>
       <el-form :inline="true" @submit.prevent>
         <el-form-item label="关键词">
-          <el-input v-model="search.keyword" placeholder="用户名/手机号" clearable />
+          <el-input v-model="search.keyword" placeholder="用户名/姓名/手机号" clearable />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="fetchData">查询</el-button>
@@ -35,32 +35,35 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-empty v-if="!loading && list.length === 0" description="暂无数据" />
       <el-pagination
         style="margin-top: 16px; justify-content: flex-end"
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.size"
         :total="pagination.total"
-        layout="total, prev, pager, next"
+        layout="total, sizes, prev, pager, next"
+        :page-sizes="[10, 20, 50]"
+        @size-change="fetchData"
         @current-change="fetchData"
       />
     </el-card>
 
     <!-- 新增/编辑 -->
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑用户' : '新增用户'" width="500px">
-      <el-form :model="form" label-width="80px">
-        <el-form-item label="用户名" required>
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
+        <el-form-item label="用户名" prop="username">
           <el-input v-model="form.username" :disabled="!!form.id" />
         </el-form-item>
-        <el-form-item label="姓名">
+        <el-form-item label="姓名" prop="realName">
           <el-input v-model="form.realName" />
         </el-form-item>
-        <el-form-item label="手机号">
+        <el-form-item label="手机号" prop="phone">
           <el-input v-model="form.phone" />
         </el-form-item>
-        <el-form-item label="密码" :required="!form.id">
-          <el-input v-model="form.password" type="password" placeholder="不填则保持不变" />
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="form.password" type="password" :placeholder="form.id ? '不填则保持不变' : ''" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio :label="1">启用</el-radio>
             <el-radio :label="0">禁用</el-radio>
@@ -69,7 +72,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
+        <el-button type="primary" :loading="saveLoading" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
 
@@ -79,7 +82,7 @@
         <el-form-item label="用户">
           <span>{{ currentUser?.username }}</span>
         </el-form-item>
-        <el-form-item label="角色">
+        <el-form-item label="角色" required>
           <el-select v-model="selectedRoleIds" multiple placeholder="请选择角色" style="width: 100%">
             <el-option v-for="role in allRoles" :key="role.id" :label="role.roleName" :value="role.id" />
           </el-select>
@@ -87,7 +90,7 @@
       </el-form>
       <template #footer>
         <el-button @click="roleDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleAssignRoles">保存</el-button>
+        <el-button type="primary" :loading="assignLoading" @click="handleAssignRoles">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -96,6 +99,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import request from '@/api/request'
 import { useUserStore } from '@/stores/user'
 
@@ -117,15 +121,37 @@ interface Role {
 
 const list = ref<User[]>([])
 const loading = ref(false)
+const saveLoading = ref(false)
+const assignLoading = ref(false)
 const dialogVisible = ref(false)
 const roleDialogVisible = ref(false)
 const currentUser = ref<User | null>(null)
 const selectedRoleIds = ref<number[]>([])
 const allRoles = ref<Role[]>([])
+const formRef = ref<FormInstance>()
 
 const search = ref({ keyword: '' })
 const pagination = ref({ page: 1, size: 10, total: 0 })
 const form = ref<Partial<User & { password?: string }>>({})
+
+const rules: FormRules = {
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  password: [{
+    validator: (_rule: any, value: any, callback: any) => {
+      if (!form.value.id && (!value || value.trim() === '')) {
+        callback(new Error('请输入密码'))
+      } else {
+        callback()
+      }
+    },
+    trigger: 'blur'
+  }],
+  realName: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+  ]
+}
 
 async function fetchData() {
   loading.value = true
@@ -135,6 +161,8 @@ async function fetchData() {
     })
     list.value = res.data?.records || []
     pagination.value.total = res.data?.total || 0
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }
@@ -143,9 +171,17 @@ async function fetchData() {
 function openDialog(row?: User) {
   form.value = row ? { ...row } : { status: 1 }
   dialogVisible.value = true
+  if (formRef.value) {
+    formRef.value.clearValidate()
+  }
 }
 
 async function handleSave() {
+  if (!formRef.value) return
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  saveLoading.value = true
   try {
     if (form.value.id) {
       const payload: any = { ...form.value }
@@ -158,8 +194,10 @@ async function handleSave() {
     }
     dialogVisible.value = false
     fetchData()
-  } catch (e) {
-    // error handled by interceptor
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '保存失败')
+  } finally {
+    saveLoading.value = false
   }
 }
 
@@ -169,8 +207,10 @@ async function handleDelete(row: User) {
     await request.delete(`/v1/sys/users/${row.id}`)
     ElMessage.success('删除成功')
     fetchData()
-  } catch (e) {
-    // cancelled
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e?.response?.data?.message || '删除失败')
+    }
   }
 }
 
@@ -181,23 +221,36 @@ async function openRoleDialog(row: User) {
   try {
     const res: any = await request.get(`/v1/rbac/users/${row.id}/roles`)
     selectedRoleIds.value = (res.data || []).map((r: Role) => r.id)
-  } catch (e) {}
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '获取角色失败')
+  }
 }
 
 async function handleAssignRoles() {
   if (!currentUser.value) return
+  if (selectedRoleIds.value.length === 0) {
+    ElMessage.warning('请至少选择一个角色')
+    return
+  }
+  assignLoading.value = true
   try {
     await request.post(`/v1/rbac/users/${currentUser.value.id}/roles`, selectedRoleIds.value)
     ElMessage.success('角色分配成功')
     roleDialogVisible.value = false
-  } catch (e) {}
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '分配失败')
+  } finally {
+    assignLoading.value = false
+  }
 }
 
 async function fetchRoles() {
   try {
     const res: any = await request.get('/v1/rbac/roles')
     allRoles.value = res.data || []
-  } catch (e) {}
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '获取角色列表失败')
+  }
 }
 
 onMounted(() => {

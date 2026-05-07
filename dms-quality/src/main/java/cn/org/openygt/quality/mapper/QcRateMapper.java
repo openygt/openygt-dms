@@ -23,13 +23,16 @@ public interface QcRateMapper {
                                      @Param("format") String format);
 
     @Select("<script>"
-            + "SELECT '外观' as item, SUM(CASE WHEN is_exception = 0 THEN 1 ELSE 0 END) as pass, SUM(CASE WHEN is_exception = 1 THEN 1 ELSE 0 END) as fail FROM qt_inspection WHERE deleted = 0"
-            + "<if test='dateStart != null and dateStart !=\"\"'> AND inspected_at &gt;= #{dateStart}</if>"
-            + "<if test='dateEnd != null and dateEnd !=\"\"'> AND inspected_at &lt;= #{dateEnd}</if>"
-            + " UNION ALL "
-            + "SELECT '密封' as item, SUM(CASE WHEN is_exception = 0 THEN 1 ELSE 0 END) as pass, SUM(CASE WHEN is_exception = 1 THEN 1 ELSE 0 END) as fail FROM qt_inspection WHERE deleted = 0"
-            + "<if test='dateStart != null and dateStart !=\"\"'> AND inspected_at &gt;= #{dateStart}</if>"
-            + "<if test='dateEnd != null and dateEnd !=\"\"'> AND inspected_at &lt;= #{dateEnd}</if>"
+            + "SELECT i.item_name as item, "
+            + "SUM(CASE WHEN i.result = 'PASS' THEN 1 ELSE 0 END) as pass, "
+            + "SUM(CASE WHEN i.result = 'FAIL' THEN 1 ELSE 0 END) as fail "
+            + "FROM qt_inspection_item i "
+            + "INNER JOIN qt_inspection q ON i.inspection_id = q.id "
+            + "WHERE q.deleted = 0"
+            + "<if test='dateStart != null and dateStart !=\"\"'> AND q.inspected_at &gt;= #{dateStart}</if>"
+            + "<if test='dateEnd != null and dateEnd !=\"\"'> AND q.inspected_at &lt;= #{dateEnd}</if>"
+            + " GROUP BY i.item_code, i.item_name"
+            + " ORDER BY fail DESC"
             + "</script>")
     List<Map<String, Object>> reasonStat(@Param("dateStart") String dateStart, @Param("dateEnd") String dateEnd);
 
