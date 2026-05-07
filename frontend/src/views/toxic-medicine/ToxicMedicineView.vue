@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>毒性药材清单管理</span>
+          
           <el-button type="primary" @click="handleAdd">新增毒性药材</el-button>
         </div>
       </template>

@@ -115,13 +115,16 @@ const mainActionText = computed(() => {
   if (!action) {
     if (task.value.status === 'COMPLETED') return '已完成'
     if (task.value.status === 'CANCELLED') return '已取消'
+    if (task.value.status === 'SCRAPPED') return '已报废'
+    if (task.value.status === 'SUSPENDED') return '已挂起'
     return '无操作'
   }
   return action.text
 })
 
 const canAction = computed(() => {
-  return task.value.nextAction != null && task.value.status !== 'COMPLETED' && task.value.status !== 'CANCELLED'
+  const terminal = ['COMPLETED', 'CANCELLED', 'SCRAPPED', 'SUSPENDED']
+  return task.value.nextAction != null && !terminal.includes(task.value.status)
 })
 
 onLoad((options) => {
@@ -260,7 +263,7 @@ async function confirmStep(action, skipDeviceId) {
     // START_PACKAGE 且 skipDeviceId=true → 不传deviceId，由后端自动分组解析
     const deviceId = skipDeviceId ? null :
                      action.stepType === 'START_DECOCT' ? task.value.decoctDeviceId :
-                     action.stepType === 'START_PACKAGE' ? (task.value.packageDeviceId || task.value.decoctDeviceId) : null
+                     action.stepType === 'START_PACKAGE' ? task.value.packageDeviceId : null
     await post('/task/confirm', {
       taskId: task.value.taskId,
       stepType: action.stepType,

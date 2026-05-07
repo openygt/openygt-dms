@@ -1,6 +1,7 @@
 <template>
   <div class="device-utilization" v-loading="pageLoading" element-loading-text="加载中..." element-loading-background="rgba(255,255,255,0.9)">
-    <div class="page-header-title">设备效能：<span class="page-header-sub">设备开机率、空闲率、故障率趋势</span></div>
+    <el-button :icon="ArrowLeft" @click="router.back()">返回</el-button>
+    <div style="height: 16px"></div>
     <div class="page-header">
     </div>
 
@@ -59,10 +60,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { ArrowLeft } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
 import { getDeviceList, getDeviceUtilizationStats, getDeviceUtilizationTrend } from '@/api/equipment'
 
+const router = useRouter()
 const pageLoading = ref(true)
 const loading = ref(false)
 const utilizationList = ref<any[]>([])

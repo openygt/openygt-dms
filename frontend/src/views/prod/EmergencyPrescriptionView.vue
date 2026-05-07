@@ -1,7 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">急诊快速通道：<span class="page-header-sub">急诊处方优先处理、时效保障</span></div>
-
     <!-- 急诊统计 -->
     <el-card class="emergency-stat" shadow="never">
       <el-row :gutter="24" align="middle">
@@ -190,7 +188,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { FirstAidKit } from '@element-plus/icons-vue'
 import { getEmergencyPrescriptions, markEmergency, signEmergency } from '@/api/newModules'
@@ -352,7 +350,7 @@ onMounted(() => {
 }
 
 .emergency-stat {
-  margin-top: 16px;
+  margin-top: 0;
   background: linear-gradient(135deg, #f56c6c 0%, #ff9f9f 100%);
   color: #fff;
   border: none;

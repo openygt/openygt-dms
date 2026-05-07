@@ -97,6 +97,7 @@ const decoctDeviceId = ref('')
 const packageDeviceId = ref('')
 const barcodeInput = ref('')
 const currentStep = ref('待泡药')
+const taskStatus = ref('')
 const selectedStep = ref('')
 const remark = ref('')
 const loading = ref(false)
@@ -121,6 +122,9 @@ const selectedLabel = computed(() => {
 
 const confirmBtnText = computed(() => {
   if (!barcode.value) return '请先扫码加载任务'
+  if (taskStatus.value === '已完成') return '任务已完成'
+  if (taskStatus.value === '已挂起') return '任务已挂起'
+  if (taskStatus.value === '已报废') return '任务已报废'
   return '确认工序'
 })
 
@@ -158,6 +162,7 @@ async function loadTaskProgress(preselectStep) {
     uni.showLoading({ title: '加载中' })
     const res = await get(`/task/${barcode.value}`)
     currentStep.value = res.statusName || res.status || '待泡药'
+    taskStatus.value = res.statusName || res.status || ''
     // 同步后端步骤状态
     if (res.steps && res.steps.length > 0) {
       steps.value = res.steps.map(s => ({
@@ -178,12 +183,22 @@ async function loadTaskProgress(preselectStep) {
     }
   } catch (e) {
     console.error('加载任务进度失败', e)
+    uni.showToast({ title: '加载任务失败：' + (e.message || '请重试'), icon: 'none' })
+    // 清空状态防止显示脏数据
+    currentStep.value = '加载失败'
+    taskStatus.value = ''
+    steps.value.forEach(s => { s.completed = false; s.current = false })
   } finally {
     uni.hideLoading()
   }
 }
 
 function selectStep(step) {
+  // 终态/异常状态禁止操作
+  if (taskStatus.value === '已完成' || taskStatus.value === '已挂起' || taskStatus.value === '已报废') {
+    uni.showToast({ title: '当前任务不可操作', icon: 'none' })
+    return
+  }
   if (step.completed) {
     uni.showToast({ title: '该工序已完成', icon: 'none' })
     return
@@ -201,6 +216,11 @@ function selectStep(step) {
 }
 
 async function handleConfirm() {
+  // 终态/异常状态禁止提交
+  if (taskStatus.value === '已完成' || taskStatus.value === '已挂起' || taskStatus.value === '已报废') {
+    uni.showToast({ title: '当前任务不可操作', icon: 'none' })
+    return
+  }
   if (!selectedStep.value) {
     if (uni.$ygtFeedback) uni.$ygtFeedback.warning()
     uni.showToast({ title: '请选择要确认的工序', icon: 'none' })

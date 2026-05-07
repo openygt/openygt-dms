@@ -1,6 +1,5 @@
 <template>
   <div class="device-monitor" :class="{ 'is-fullscreen': isFullscreen }">
-    <div class="page-header-title">设备监控：<span class="page-header-sub">设备实时状态、温度曲线、故障告警</span></div>
     <!-- 顶部工具栏 -->
     <div class="monitor-toolbar">
       <div class="toolbar-left">
@@ -25,9 +24,7 @@
       </div>
       <div class="toolbar-right">
         <el-button-group class="quick-links">
-          <el-button size="large" @click="$router.push('/traces')">煎药追溯</el-button>
           <el-button size="large" @click="$router.push('/eq-dashboard')">数据看板</el-button>
-          <el-button size="large" @click="$router.push('/workload')">工作量</el-button>
           <el-button size="large" @click="$router.push('/device-utilization')">利用率</el-button>
         </el-button-group>
         <el-radio-group v-model="activeType" size="large">

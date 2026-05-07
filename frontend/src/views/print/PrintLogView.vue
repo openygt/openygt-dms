@@ -1,6 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">打印记录：<span class="page-header-sub">打印队列、失败重试、记录查询</span></div>
     <el-card class="search-card" shadow="never">
       <el-form :model="searchForm" inline>
         <el-form-item label="打印状态">

@@ -1,6 +1,5 @@
 <template>
   <div class="temperature-curve-page">
-    <div class="page-header-title">温曲查询：<span class="page-header-sub">按处方/设备查询历史温度曲线</span></div>
     <el-card class="search-card">
       <el-form :inline="true" :model="searchForm">
         <el-form-item label="任务条码">
