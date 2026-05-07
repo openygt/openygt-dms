@@ -1,18 +1,58 @@
 <template>
   <div class="page-container">
     <div class="page-header-title">流程跟踪：<span class="page-header-sub">泡药→头煎→二煎→出液→包装→质检，走到哪一步</span></div>
-    <el-card class="step-card" shadow="never">
+
+    <!-- 任务选择区域 -->
+    <el-card class="task-selector-card" shadow="never">
+      <div class="task-selector">
+        <span class="selector-label">任务编号：</span>
+        <el-select
+          v-model="selectedTaskId"
+          filterable
+          remote
+          :remote-method="searchTasks"
+          :loading="taskSearchLoading"
+          placeholder="请选择或搜索任务"
+          class="task-select"
+          clearable
+          @change="handleTaskChange"
+        >
+          <el-option
+            v-for="task in taskOptions"
+            :key="task.id"
+            :label="formatTaskLabel(task)"
+            :value="task.id"
+          />
+        </el-select>
+        <el-tag v-if="selectedTaskId && currentStatus === 'COMPLETED'" type="success">已完成</el-tag>
+        <el-tag v-else-if="selectedTaskId && currentStatus === 'EXCEPTION'" type="danger">异常</el-tag>
+        <el-tag v-else-if="selectedTaskId && currentStatus === 'NORMAL'" type="primary">进行中</el-tag>
+        <el-tag v-else-if="selectedTaskId" type="info">未开始</el-tag>
+      </div>
+    </el-card>
+
+    <!-- 空数据提示 -->
+    <el-empty
+      v-if="!selectedTaskId"
+      description="请选择要查看的煎药任务"
+      class="empty-hint"
+    >
+      <template #image>
+        <el-icon :size="60" color="#c0c4cc"><Document /></el-icon>
+      </template>
+      <el-button type="primary" @click="focusTaskSelect">选择任务</el-button>
+    </el-empty>
+
+    <!-- 步骤展示区域 -->
+    <el-card v-show="selectedTaskId" class="step-card" shadow="never" v-loading="stepLoading">
       <template #header>
         <div class="card-header">
-          <span>任务编号: {{ displayTaskId || '未选择' }}</span>
-          <el-tag v-if="currentStatus === 'NORMAL'" type="success">进行中</el-tag>
-          <el-tag v-else-if="currentStatus === 'EXCEPTION'" type="danger">异常</el-tag>
-          <el-tag v-else-if="currentStatus === 'COMPLETED'" type="success">已完成</el-tag>
-          <el-tag v-else type="info">未开始</el-tag>
+          <span>任务 #{{ selectedTaskId }}</span>
+          <el-button v-if="selectedStep" link type="primary" @click="selectedStep = null; drawerVisible = false">关闭详情</el-button>
         </div>
       </template>
 
-      <el-steps :active="currentStepIndex" finish-status="success" align-center class="custom-steps">
+      <el-steps :active="currentStepIndex" align-center class="custom-steps">
         <el-step
           v-for="(step, index) in stepList"
           :key="step.code"
@@ -30,17 +70,25 @@
           </template>
         </el-step>
       </el-steps>
+
+      <!-- 步骤进度提示 -->
+      <div v-if="processingStepName" class="step-progress-hint">
+        <el-icon class="is-loading"><Loading /></el-icon>
+        <span>当前正在进行：{{ processingStepName }}</span>
+      </div>
     </el-card>
 
-    <el-card v-if="selectedStep" class="detail-card" shadow="never">
-      <template #header>
-        <div class="detail-header">
-          <span>{{ selectedStep.name }} - 详情</span>
-          <el-button link type="primary" @click="selectedStep = null">关闭</el-button>
-        </div>
-      </template>
-      <el-descriptions :column="3" border>
+    <!-- 步骤详情抽屉 -->
+    <el-drawer
+      v-model="drawerVisible"
+      :title="selectedStep ? `${selectedStep.name} - 详情` : '步骤详情'"
+      direction="rtl"
+      size="400px"
+      :loading="detailLoading"
+    >
+      <el-descriptions v-if="selectedStep" :column="1" border>
         <el-descriptions-item label="步骤编码">{{ selectedStep.code }}</el-descriptions-item>
+        <el-descriptions-item label="步骤名称">{{ selectedStep.name }}</el-descriptions-item>
         <el-descriptions-item label="开始时间">{{ formatDateTime(selectedStep.startTime) }}</el-descriptions-item>
         <el-descriptions-item label="结束时间">{{ formatDateTime(selectedStep.endTime) }}</el-descriptions-item>
         <el-descriptions-item label="持续时长">{{ formatDuration(selectedStep.durationMinutes) }}</el-descriptions-item>
@@ -52,16 +100,47 @@
           <el-tag v-else-if="selectedStep.status === 'EXCEPTION'" type="danger">异常</el-tag>
           <el-tag v-else type="info">未开始</el-tag>
         </el-descriptions-item>
+        <el-descriptions-item v-if="selectedStep.pauseDuration" label="暂停时长">
+          {{ selectedStep.pauseDuration }} 分钟
+        </el-descriptions-item>
+        <el-descriptions-item v-if="selectedStep.pauseReason" label="暂停原因">
+          {{ selectedStep.pauseReason }}
+        </el-descriptions-item>
+        <el-descriptions-item v-if="selectedStep.delayMinutes" label="延迟时长">
+          {{ selectedStep.delayMinutes }} 分钟
+        </el-descriptions-item>
+        <el-descriptions-item v-if="selectedStep.delayReason" label="延迟原因">
+          {{ selectedStep.delayReason }}
+        </el-descriptions-item>
       </el-descriptions>
-    </el-card>
+
+      <!-- 工作记录 -->
+      <div v-if="selectedStep?.workRecords?.length" class="work-records">
+        <el-divider>工作记录</el-divider>
+        <el-timeline>
+          <el-timeline-item
+            v-for="record in selectedStep.workRecords"
+            :key="record.createdAt"
+            :timestamp="formatDateTime(record.createdAt)"
+            placement="top"
+          >
+            <div class="work-record-item">
+              <span class="operator">{{ record.operatorName || record.operatorId || '未知' }}</span>
+              <span class="action">{{ record.action }}</span>
+              <span v-if="record.workTime" class="duration">{{ record.workTime }}分钟</span>
+            </div>
+          </el-timeline-item>
+        </el-timeline>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Check, Close, Loading } from '@element-plus/icons-vue'
+import { Check, Close, Loading, Document } from '@element-plus/icons-vue'
 import { getTaskSteps, getStepDetail } from '@/api/newModules'
 import request from '@/api/request'
 
@@ -75,41 +154,108 @@ interface StepItem {
   operatorName?: string
   durationMinutes?: number
   result?: string
+  pauseDuration?: number
+  pauseReason?: string
+  delayMinutes?: number
+  delayReason?: string
+  workRecords?: WorkRecord[]
+}
+
+interface WorkRecord {
+  operatorId: string
+  operatorName: string
+  action: string
+  workTime: number
+  createdAt: string
+}
+
+interface TaskOption {
+  id: number
+  prescriptionNumber?: string
+  status?: string
+  operatorName?: string
 }
 
 const route = useRoute()
-const taskId = computed(() => route.query.taskId as string || '')
-const displayTaskId = ref('')
+const router = useRouter()
 
-// 步骤定义以服务端字典为唯一事实来源
-const stepList = ref<StepItem[]>([
-  { code: 'RECEIVE', name: '接收', status: 'PENDING' },
-  { code: 'ADJUST', name: '调配', status: 'PENDING' },
-  { code: 'SOAK', name: '泡药', status: 'PENDING' },
-  { code: 'FIRST_DECOCTION', name: '一煎', status: 'PENDING' },
-  { code: 'SECOND_DECOCTION', name: '二煎', status: 'PENDING' },
-  { code: 'POUR', name: '出液', status: 'PENDING' },
-  { code: 'WRAP', name: '包装', status: 'PENDING' },
-  { code: 'QC', name: '质检', status: 'PENDING' },
-  { code: 'DELIVER', name: '交付', status: 'PENDING' }
-])
+// 任务选择相关
+const selectedTaskId = ref<number | null>(null)
+const taskOptions = ref<TaskOption[]>([])
+const taskSearchLoading = ref(false)
+const taskSelectRef = ref<any>(null)
 
+// 步骤相关
+const stepList = ref<StepItem[]>(getDefaultSteps())
+const stepLoading = ref(false)
+const selectedStep = ref<StepItem | null>(null)
+const drawerVisible = ref(false)
+const detailLoading = ref(false)
+
+// 步骤详情缓存
+const stepDetailCache = ref<Map<string, StepItem>>(new Map())
+
+function getDefaultSteps(): StepItem[] {
+  return [
+    { code: 'RECEIVE', name: '接收', status: 'PENDING' },
+    { code: 'ADJUST', name: '调配', status: 'PENDING' },
+    { code: 'SOAK', name: '泡药', status: 'PENDING' },
+    { code: 'FIRST_DECOCTION', name: '一煎', status: 'PENDING' },
+    { code: 'SECOND_DECOCTION', name: '二煎', status: 'PENDING' },
+    { code: 'POUR', name: '出液', status: 'PENDING' },
+    { code: 'WRAP', name: '包装', status: 'PENDING' },
+    { code: 'QC', name: '质检', status: 'PENDING' },
+    { code: 'DELIVER', name: '交付', status: 'PENDING' }
+  ]
+}
+
+function formatTaskLabel(task: TaskOption): string {
+  const parts = [`任务 #${task.id}`]
+  if (task.prescriptionNumber) parts.push(task.prescriptionNumber)
+  if (task.status) parts.push(`[${task.status}]`)
+  if (task.operatorName) parts.push(`- ${task.operatorName}`)
+  return parts.join(' ')
+}
+
+// 计算当前任务整体状态
 const currentStatus = computed(() => {
+  if (!stepList.value.length) return 'PENDING'
   const hasException = stepList.value.some(s => s.status === 'EXCEPTION')
   if (hasException) return 'EXCEPTION'
-  const hasProcessing = stepList.value.some(s => s.status === 'PROCESSING')
-  if (hasProcessing) return 'NORMAL'
   const allCompleted = stepList.value.every(s => s.status === 'COMPLETED')
   if (allCompleted) return 'COMPLETED'
-  return 'NORMAL'
+  const hasProcessing = stepList.value.some(s => s.status === 'PROCESSING')
+  if (hasProcessing) return 'NORMAL'
+  return 'PENDING'
 })
-const selectedStep = ref<StepItem | null>(null)
 
+// 当前正在进行的步骤名称
+const processingStepName = computed(() => {
+  const step = stepList.value.find(s => s.status === 'PROCESSING')
+  return step?.name || null
+})
+
+/**
+ * 计算当前激活步骤索引
+ * 修复：当全部完成时，返回最后一个步骤索引（8），而不是超出范围的9
+ * 这样 el-steps 能正确高亮所有已完成的步骤
+ */
 const currentStepIndex = computed(() => {
-  const idx = stepList.value.findIndex(s => s.status === 'PROCESSING')
-  if (idx >= 0) return idx
-  const lastCompleted = stepList.value.map((s, i) => s.status === 'COMPLETED' ? i : -1).filter(i => i >= 0)
-  return lastCompleted.length ? lastCompleted[lastCompleted.length - 1] + 1 : 0
+  // 找到正在进行的步骤
+  const processingIdx = stepList.value.findIndex(s => s.status === 'PROCESSING')
+  if (processingIdx >= 0) return processingIdx
+
+  // 找到最后一个已完成的步骤
+  const completedIndices = stepList.value
+    .map((s, i) => s.status === 'COMPLETED' ? i : -1)
+    .filter(i => i >= 0)
+
+  if (completedIndices.length === 0) return 0
+
+  // 关键修复：如果全部完成，返回最后一个索引（8），而不是9
+  // 这样 el-steps 的 active 不会超出范围
+  const lastCompletedIdx = completedIndices[completedIndices.length - 1]
+  return Math.min(lastCompletedIdx, stepList.value.length - 1)
 })
 
 function getStepStatus(step: StepItem, index: number): string {
@@ -144,30 +290,114 @@ function formatDuration(minutes: number | undefined) {
   return `${m}分`
 }
 
-async function handleStepClick(step: StepItem) {
-  if (!taskId.value) return
+// 搜索任务
+async function searchTasks(query: string) {
+  taskSearchLoading.value = true
   try {
-    const res: any = await getStepDetail(taskId.value, step.code)
+    const params: any = { page: 1, size: 20 }
+    if (query) {
+      // 支持任务号搜索
+      if (/^\d+$/.test(query)) {
+        params.id = query
+      } else {
+        params.prescriptionNumber = query
+      }
+    }
+    const res: any = await request.get('/v1/prod/tasks', { params })
+    taskOptions.value = Array.isArray(res.data?.records) ? res.data.records : []
+  } catch (e) {
+    console.error('搜索任务失败', e)
+  } finally {
+    taskSearchLoading.value = false
+  }
+}
+
+// 加载初始任务列表
+async function loadInitialTasks() {
+  taskSearchLoading.value = true
+  try {
+    const res: any = await request.get('/v1/prod/tasks', { params: { page: 1, size: 20 } })
+    taskOptions.value = Array.isArray(res.data?.records) ? res.data.records : []
+  } catch (e) {
+    console.error('加载任务列表失败', e)
+  } finally {
+    taskSearchLoading.value = false
+  }
+}
+
+// 任务切换处理
+function handleTaskChange(taskId: number | undefined) {
+  if (taskId) {
+    router.replace({ query: { taskId: String(taskId) } })
+    loadTaskSteps()
+    stepDetailCache.value.clear()
+    selectedStep.value = null
+    drawerVisible.value = false
+  } else {
+    // 清空选择
+    router.replace({ query: {} })
+    stepList.value = getDefaultSteps()
+    selectedStep.value = null
+    drawerVisible.value = false
+  }
+}
+
+// 聚焦任务选择框
+function focusTaskSelect() {
+  // 触发任务搜索加载选项并展开下拉
+  searchTasks('')
+}
+
+// 点击步骤
+async function handleStepClick(step: StepItem) {
+  if (!selectedTaskId.value) return
+
+  // 检查缓存
+  const cacheKey = `${selectedTaskId.value}-${step.code}`
+  if (stepDetailCache.value.has(cacheKey)) {
+    selectedStep.value = stepDetailCache.value.get(cacheKey) || null
+    drawerVisible.value = true
+    return
+  }
+
+  detailLoading.value = true
+  drawerVisible.value = true
+  try {
+    const res: any = await getStepDetail(selectedTaskId.value, step.code)
     const detail = res.data || {}
-    selectedStep.value = {
+    const stepDetail: StepItem = {
       ...step,
       startTime: detail.startTime,
       endTime: detail.endTime,
       operatorId: detail.operatorId,
       operatorName: detail.operatorName,
       durationMinutes: detail.durationMinutes,
-      result: detail.result
+      result: detail.result,
+      pauseDuration: detail.pauseDuration,
+      pauseReason: detail.pauseReason,
+      delayMinutes: detail.delayMinutes,
+      delayReason: detail.delayReason,
+      workRecords: detail.workRecords || []
     }
+    stepDetailCache.value.set(cacheKey, stepDetail)
+    selectedStep.value = stepDetail
   } catch (e) {
     selectedStep.value = step
+  } finally {
+    detailLoading.value = false
   }
 }
 
+// 加载任务步骤
 async function loadTaskSteps() {
-  const id = taskId.value || displayTaskId.value
-  if (!id) return
+  if (!selectedTaskId.value) {
+    stepList.value = getDefaultSteps()
+    return
+  }
+
+  stepLoading.value = true
   try {
-    const res: any = await getTaskSteps(id)
+    const res: any = await getTaskSteps(selectedTaskId.value)
     const steps = Array.isArray(res.data) ? res.data : []
     if (steps.length) {
       const map = new Map(steps.map((s: any) => [s.stepCode, s]))
@@ -189,36 +419,66 @@ async function loadTaskSteps() {
     }
   } catch (e) {
     ElMessage.error('加载步骤数据失败')
+  } finally {
+    stepLoading.value = false
   }
 }
 
-async function initDefaultTask() {
-  // 如果路由没有 taskId，自动加载第一个任务
-  if (!taskId.value) {
-    try {
-      const res: any = await request.get('/v1/prod/tasks', { params: { page: 1, size: 1 } })
-      const firstTask = res.data?.records?.[0]
-      if (firstTask) {
-        displayTaskId.value = String(firstTask.id)
-        await loadTaskSteps()
-      }
-    } catch (e) {
-      // 无任务时保持默认空状态
-    }
-  } else {
-    displayTaskId.value = taskId.value
-    await loadTaskSteps()
-  }
-}
+// 初始化
+onMounted(async () => {
+  await loadInitialTasks()
 
-onMounted(() => {
-  initDefaultTask()
+  // 从 URL 获取 taskId
+  const urlTaskId = route.query.taskId
+  if (urlTaskId) {
+    selectedTaskId.value = Number(urlTaskId)
+    loadTaskSteps()
+  }
+})
+
+// 监听路由变化
+watch(() => route.query.taskId, (newId) => {
+  if (newId && Number(newId) !== selectedTaskId.value) {
+    selectedTaskId.value = Number(newId)
+    loadTaskSteps()
+    stepDetailCache.value.clear()
+    selectedStep.value = null
+    drawerVisible.value = false
+  } else if (!newId && selectedTaskId.value) {
+    selectedTaskId.value = null
+    stepList.value = getDefaultSteps()
+    selectedStep.value = null
+    drawerVisible.value = false
+  }
 })
 </script>
 
 <style scoped lang="scss">
 .page-container {
   padding: var(--ygt-space-4);
+}
+
+.task-selector-card {
+  margin-bottom: 16px;
+}
+
+.task-selector {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.selector-label {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.task-select {
+  width: 360px;
+}
+
+.empty-hint {
+  margin: 60px 0;
 }
 
 .step-card {
@@ -228,12 +488,18 @@ onMounted(() => {
 .card-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
   font-weight: 500;
 }
 
 .custom-steps :deep(.el-step__icon) {
   cursor: pointer;
+  transition: transform 0.2s;
+
+  &:hover {
+    transform: scale(1.1);
+  }
 }
 
 .step-icon {
@@ -268,15 +534,44 @@ onMounted(() => {
   font-size: 14px;
 }
 
-.detail-card {
+.step-progress-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 12px;
+  background: #ecf5ff;
+  border-radius: 8px;
+  color: #409eff;
+  font-size: 14px;
+
+  .el-icon {
+    font-size: 18px;
+  }
+}
+
+.work-records {
   margin-top: 16px;
 }
 
-.detail-header {
+.work-record-item {
   display: flex;
-  justify-content: space-between;
+  gap: 8px;
   align-items: center;
-  font-weight: 500;
+
+  .operator {
+    font-weight: 500;
+  }
+
+  .action {
+    color: var(--el-text-color-secondary);
+  }
+
+  .duration {
+    color: var(--el-color-primary);
+    font-size: 12px;
+  }
 }
 
 @keyframes pulse {
