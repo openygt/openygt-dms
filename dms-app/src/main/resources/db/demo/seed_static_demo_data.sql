@@ -49,7 +49,10 @@ INSERT INTO prod_prescription (id, hospital_id, prescription_number, patient_nam
 (900000021, 2, 'DEMO-RX-20260506-0021', '谢峰', '13800138021', 0, 'OUT0021', NULL, NULL, '风寒感冒', '张医生', '骨科', NULL, '黄芪、当归、党参', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
 (900000022, 2, 'DEMO-RX-20260506-0022', '韩梅', '13800138022', 0, 'OUT0022', NULL, NULL, '风寒感冒', '李医生', '肿瘤科', NULL, '当归、党参、白术', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
 (900000023, 2, 'DEMO-RX-20260506-0023', '唐勇', '13800138023', 0, 'OUT0023', NULL, NULL, '风寒感冒', '王医生', '中医科', NULL, '党参、白术、茯苓', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
-(900000024, 2, 'DEMO-RX-20260506-0024', '曹颖', '13800138024', 0, 'OUT0024', NULL, NULL, '风寒感冒', '刘医生', '康复科', NULL, '白术、茯苓、甘草', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL');
+(900000024, 2, 'DEMO-RX-20260506-0024', '曹颖', '13800138024', 0, 'OUT0024', NULL, NULL, '风寒感冒', '刘医生', '康复科', NULL, '白术、茯苓、甘草', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
+(900000026, 2, 'DEMO-RX-20260506-0026', '吴丽', '13800138026', 0, 'OUT0026', NULL, NULL, '风寒感冒', '李医生', '外科', NULL, '当归、党参', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
+(900000027, 2, 'DEMO-RX-20260506-0027', '郑强', '13800138027', 0, 'OUT0027', NULL, NULL, '风寒感冒', '王医生', '妇科', NULL, '党参、白术', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
+(900000028, 2, 'DEMO-RX-20260506-0028', '孙芳', '13800138028', 0, 'OUT0028', NULL, NULL, '风寒感冒', '刘医生', '儿科', NULL, '白术、茯苓', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL');
 DELETE FROM prod_task WHERE id >= 900000000;
 INSERT INTO prod_task (id, prescription_id, decoct_device_id, package_device_id, scheme_id, scheme_snapshot, decoction_plan, operator_id, operator_name, status, suspended_from, suspend_reason, suspend_time, expected_resume_time, current_temp, target_temp, soak_duration, soak_start_time, soak_end_time, decoct_start_time, decoct_end_time, pour_start_time, pour_end_time, wrap_start_time, wrap_end_time, complete_time, current_stage_duration, print_device_id, print_status, print_time, deleted, created_at, updated_at, current_step, pool_id, print_copies, is_exception, is_emergency, priority, exception_reason, patient_agreement, standard_cost, actual_cost, handover_type, handover_user, handover_time, tenant_id, status_enum, barcode) VALUES
 (900000001, 900000001, 1, 5, NULL, NULL, NULL, NULL, NULL, 'WAIT_SOAK', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'WAIT_SOAK', NULL),
@@ -75,12 +78,16 @@ INSERT INTO prod_task (id, prescription_id, decoct_device_id, package_device_id,
 (900000021, 900000021, 1, 6, NULL, NULL, NULL, NULL, NULL, 'COMPLETED', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:40:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', NULL, '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-05 08:00:00', 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'COMPLETED', NULL),
 (900000022, 900000022, 2, 7, NULL, NULL, NULL, NULL, NULL, 'COMPLETED', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:40:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', NULL, '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-05 08:00:00', 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'COMPLETED', NULL),
 (900000023, 900000023, 3, 5, NULL, NULL, NULL, NULL, NULL, 'COMPLETED', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:40:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', NULL, '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-05 08:00:00', 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'COMPLETED', NULL),
-(900000024, 900000024, 4, 6, NULL, NULL, NULL, NULL, NULL, 'COMPLETED', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:40:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', NULL, '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-05 08:00:00', 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'COMPLETED', NULL);
+(900000024, 900000024, 4, 6, NULL, NULL, NULL, NULL, NULL, 'COMPLETED', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:40:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', NULL, '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-05 08:00:00', 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'COMPLETED', NULL),
+(900000025, 900000025, 5, 1, NULL, NULL, NULL, NULL, NULL, 'WAIT_DECOCT', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'WAIT_DECOCT', NULL),
+(900000026, 900000026, 6, 2, NULL, NULL, NULL, NULL, NULL, 'WAIT_POUR', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', NULL, NULL, NULL, NULL, NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'WAIT_POUR', NULL),
+(900000027, 900000027, 7, 3, NULL, NULL, NULL, NULL, NULL, 'POURING', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 08:00:00', NULL, NULL, NULL, NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'POURING', NULL),
+(900000028, 900000028, 774, 4, NULL, NULL, NULL, NULL, NULL, 'WAIT_LABEL', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 08:00:00', '2026-05-06 08:10:00', '2026-05-06 08:10:00', '2026-05-06 08:20:00', NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'WAIT_LABEL', NULL);
 
 -- --------------------------------------------------
 -- 3. 任务分配
 -- --------------------------------------------------
-DELETE FROM dms_task_assignment WHERE task_id >= 900000001 AND task_id <= 900000024;
+DELETE FROM dms_task_assignment WHERE task_id >= 900000001;
 
 INSERT INTO dms_task_assignment (id, task_id, prescription_id, device_id, employee_id, assign_type, assign_reason, scheduled_start_time, scheduled_end_time, actual_start_time, actual_end_time, status, stage_breakdown_json, created_at, updated_at) VALUES
 (900000001, 900000001, 900000001, 1, 1, 1, '自动分配', NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL),
@@ -111,7 +118,7 @@ INSERT INTO dms_task_assignment (id, task_id, prescription_id, device_id, employ
 -- --------------------------------------------------
 -- 4. 时效监控
 -- --------------------------------------------------
-DELETE FROM dms_time_monitor WHERE task_id >= 900000001 AND task_id <= 900000012;
+DELETE FROM dms_time_monitor WHERE task_id >= 900000001;
 
 INSERT INTO dms_time_monitor (id, task_id, assignment_id, prescription_id, stage, planned_start, planned_end, actual_start, actual_end, remaining_seconds, status, warning_count, last_warning_time, created_at, updated_at, alert_level) VALUES
 (900000001, 900000001, 900000001, 900000001, 'RECEIVE', '2026-05-06 06:00:00', '2026-05-06 07:00:00', NULL, NULL, 3600, 1, 0, NULL, NOW(), NULL, NULL),
@@ -130,7 +137,7 @@ INSERT INTO dms_time_monitor (id, task_id, assignment_id, prescription_id, stage
 -- --------------------------------------------------
 -- 5. 预警记录
 -- --------------------------------------------------
-DELETE FROM dms_alert_log WHERE task_id >= 900000001 AND task_id <= 900000012;
+DELETE FROM dms_alert_log WHERE task_id >= 900000001;
 
 INSERT INTO dms_alert_log (id, monitor_id, task_id, stage, alert_level, alert_type, alert_content, notify_channels, notify_targets, is_resolved, resolved_by, resolved_at, created_at) VALUES
 (900000001, 900000001, 900000001, 'RECEIVE', 1, 'DELAY', '处方接收超时', 'SMS,APP', 'OPERATOR', 0, NULL, NULL, NOW()),
@@ -144,7 +151,7 @@ INSERT INTO dms_alert_log (id, monitor_id, task_id, stage, alert_level, alert_ty
 -- --------------------------------------------------
 -- 6. 设备告警
 -- --------------------------------------------------
-DELETE FROM eq_device_alarm WHERE id >= 900000001 AND id <= 900000008;
+DELETE FROM eq_device_alarm WHERE id >= 900000001;
 
 INSERT INTO eq_device_alarm (id, device_id, alarm_type, alarm_level, message, status, resolved_time, is_resolved, resolved_at, deleted, created_at, updated_at, tenant_id) VALUES
 (900000001, 1, 'HIGH_TEMP', 'CRITICAL', '煎药机温度过高: 125°C', 1, NULL, 0, NULL, 0, NOW(), NULL, NULL),
@@ -157,7 +164,7 @@ INSERT INTO eq_device_alarm (id, device_id, alarm_type, alarm_level, message, st
 -- --------------------------------------------------
 -- 7. 告警通知
 -- --------------------------------------------------
-DELETE FROM eq_alarm_notification WHERE id >= 900000001 AND id <= 900000008;
+DELETE FROM eq_alarm_notification WHERE id >= 900000001;
 
 INSERT INTO eq_alarm_notification (id, tenant_id, alarm_id, notify_type, notify_target, notify_content, send_status, send_time, error_msg, created_at, updated_at, deleted) VALUES
 (900000001, 'default', 900000001, 'IN_APP', 'OPERATOR', '煎药机温度过高: 125°C', 'SENT', NOW(), NULL, NULL, NULL, NULL),
@@ -170,7 +177,7 @@ INSERT INTO eq_alarm_notification (id, tenant_id, alarm_id, notify_type, notify_
 -- --------------------------------------------------
 -- 8. 设备状态快照
 -- --------------------------------------------------
-DELETE FROM eq_device_status WHERE id >= 900000001 AND id <= 900000012;
+DELETE FROM eq_device_status WHERE id >= 900000001;
 
 INSERT INTO eq_device_status (id, device_code, device_type, status, detail_status, current_temp, target_temp, water_level, pressure, prescription_code, scheme_name, operator_id, operator_name, progress_percent, remaining_time, fault_code, fault_message, snapshot_time, tenant_id) VALUES
 (900000001, 'SIM-DECOCT-02', 1, 'ONLINE', 'SOAKING', 65.50, 70.00, 3, 0.00, 'DEMO-RX-20260506-0001', '标准煎药方案', 1, '张师傅', 45, 1800, '', '', NOW(), NOW()),
@@ -187,7 +194,7 @@ INSERT INTO eq_device_status (id, device_code, device_type, status, detail_statu
 -- --------------------------------------------------
 -- 9. 设备指令
 -- --------------------------------------------------
-DELETE FROM device_command WHERE id >= 900000001 AND id <= 900000012;
+DELETE FROM device_command WHERE id >= 900000001;
 
 INSERT INTO device_command (id, device_code, command_type, command_payload, status, response_payload, retry_count, send_time, ack_time, fail_reason, tenant_id, created_at, updated_at, deleted, command_level, risk_level, require_confirm) VALUES
 (900000001, 'SIM-DECOCT-02', 'START_SOAK', '{}', 'ACKED', '{}', 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
@@ -204,7 +211,7 @@ INSERT INTO device_command (id, device_code, command_type, command_payload, stat
 -- --------------------------------------------------
 -- 10. 设备分组联动规则
 -- --------------------------------------------------
-DELETE FROM eq_device_group_rule WHERE id >= 900000001 AND id <= 900000003;
+DELETE FROM eq_device_group_rule WHERE id >= 900000001;
 
 INSERT INTO eq_device_group_rule (id, group_id, rule_name, trigger_condition, action_type, target_devices, enabled, tenant_id, deleted, created_at, updated_at) VALUES
 (900000001, 900000001, '浸泡完成提醒', '{"stage":"SOAK_DONE","durationMin":30}', 'NOTIFY', '[5,6]', 1, 'default', 0, NOW(), NOW()),
@@ -214,7 +221,7 @@ INSERT INTO eq_device_group_rule (id, group_id, rule_name, trigger_condition, ac
 -- --------------------------------------------------
 -- 11. 设备维保
 -- --------------------------------------------------
-DELETE FROM eq_device_maintenance WHERE id >= 900000001 AND id <= 900000008;
+DELETE FROM eq_device_maintenance WHERE id >= 900000001;
 
 INSERT INTO eq_device_maintenance (id, device_id, maintenance_type, content, parts, cost, operator_id, plan_date, finish_date, status, tenant_id, deleted, created_at, updated_at) VALUES
 (900000001, 1, 'MAINTENANCE', '清洗加热管，检查温控器', NULL, 120.00, 1, '2026-05-01', '2026-05-02', 2, 'default', 0, NOW(), NOW()),
@@ -227,7 +234,7 @@ INSERT INTO eq_device_maintenance (id, device_id, maintenance_type, content, par
 -- --------------------------------------------------
 -- 12. 设备清洗
 -- --------------------------------------------------
-DELETE FROM eq_wash_record WHERE id >= 900000001 AND id <= 900000008;
+DELETE FROM eq_wash_record WHERE id >= 900000001;
 
 INSERT INTO eq_wash_record (id, device_id, device_code, task_id, prescription_id, wash_type, standard_duration, start_time, end_time, duration_min, result, operator_id, operator_name, remark, tenant_id, deleted, created_at) VALUES
 (900000001, 1, 'SIM-DECOCT-02', NULL, NULL, 1, 15, NOW(), NULL, NULL, NULL, 1, '张三', NULL, NULL, NULL, NULL),
@@ -240,7 +247,7 @@ INSERT INTO eq_wash_record (id, device_id, device_code, task_id, prescription_id
 -- --------------------------------------------------
 -- 13. 工作量统计（近7天）
 -- --------------------------------------------------
-DELETE FROM workload_stat WHERE id >= 900000001 AND id <= 900000009;
+DELETE FROM workload_stat WHERE id >= 900000001;
 
 INSERT INTO workload_stat (id, stat_date, operator_id, operator_name, work_type, task_count, prescription_count, package_count, duration_minutes, efficiency, tenant_id, created_at, updated_at, deleted) VALUES
 (900000001, '2026-04-30', 1, '张师傅', 'DECOCT', 15, 12, 45, 360, 85.50, 'default', NOW(), NULL, NULL),
@@ -254,7 +261,7 @@ INSERT INTO workload_stat (id, stat_date, operator_id, operator_name, work_type,
 -- --------------------------------------------------
 -- 14. 煎煮追溯
 -- --------------------------------------------------
-DELETE FROM decoction_trace WHERE id >= 900000001 AND id <= 900000008;
+DELETE FROM decoction_trace WHERE id >= 900000001;
 
 INSERT INTO decoction_trace (id, prescription_no, patient_name, patient_phone, task_id, decoct_device_code, decoct_device_name, packer_device_code, labeler_device_code, scheme_id, scheme_name, soak_time, pre_decoct_time, first_decoct_time, add_late_time, second_decoct_time, package_time, package_volume, sample_count, receive_time, audit_time, audit_pass_time, dispense_time, review_time, soak_start_time, soak_end_time, pre_decoct_start, pre_decoct_end, first_decoct_start, first_decoct_end, add_late_time_actual, second_decoct_start, second_decoct_end, package_start_time, package_end_time, deliver_time, complete_time, receive_operator, audit_operator, dispense_operator, review_operator, soak_operator, decoct_operator, package_operator, deliver_operator, temp_curve_data, max_temp, avg_temp, water_quality_check, status, exception_reason, exception_handle_result, label_print_count, delivery_no, delivery_company, tenant_id, created_at, updated_at, deleted, batch_no) VALUES
 (900000001, 'DEMO-RX-20260506-0001', '张伟', '13800138001', 900000001, 'SIM-DECOCT-02', '朋霖煎药机-01', 'PACK_001', 'LBL_PRN_001', NULL, '标准煎药方案', 30, 0, 45, 0, 0, 10, 200.0, 1, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
@@ -267,7 +274,7 @@ INSERT INTO decoction_trace (id, prescription_no, patient_name, patient_phone, t
 -- --------------------------------------------------
 -- 15. 任务状态历史
 -- --------------------------------------------------
-DELETE FROM prod_task_status_history WHERE task_id >= 900000001 AND task_id <= 900000012;
+DELETE FROM prod_task_status_history WHERE task_id >= 900000001;
 
 INSERT INTO prod_task_status_history (id, task_id, from_status, to_status, operator_id, operate_time, remark, tenant_id, trigger_source, device_code) VALUES
 (900000001, 900000001, NULL, 'WAIT_SOAK', 'system', NOW(), NULL, NULL, NULL, NULL),
@@ -286,7 +293,7 @@ INSERT INTO prod_task_status_history (id, task_id, from_status, to_status, opera
 -- --------------------------------------------------
 -- 16. 任务步骤日志
 -- --------------------------------------------------
-DELETE FROM prod_step_log WHERE id >= 900000001 AND id <= 900000008;
+DELETE FROM prod_step_log WHERE id >= 900000001;
 
 INSERT INTO prod_step_log (id, task_id, parent_id, step_type, device_id, operator_id, started_at, ended_at, is_paused, pause_reason, pause_duration, delay_minutes, delay_reason, result, abort_reason, waste_amount, waste_unit, is_retry, created_at, updated_at, tenant_id) VALUES
 (900000001, 900000001, NULL, 'SOAK', 'PDA_001', 1, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL),
@@ -376,7 +383,7 @@ INSERT INTO device_utilization (id, device_code, stat_date, total_minutes, run_m
 -- --------------------------------------------------
 -- 18. 处方药材明细
 -- --------------------------------------------------
-DELETE FROM prod_prescription_medicine WHERE prescription_id >= 900000001 AND prescription_id <= 900000024;
+DELETE FROM prod_prescription_medicine WHERE prescription_id >= 900000001;
 
 INSERT INTO prod_prescription_medicine (id, prescription_id, medicine_id, hospital_code, hospital_name, medicine_name, dosage, unit, med_usage, decoction_method, batch_no, special_decoction, is_toxic, requires_retain, retain_quantity, sort_order, tenant_id, deleted, created_at) VALUES
 (900000151, 900000001, 1, 'HOSP002', '市中医院', '黄芪', '10.0', 'g', '水煎服', '常规煎煮', 'BATCH20260506001', NULL, 0, 0, NULL, 1, 'default', 0, NOW()),
