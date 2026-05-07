@@ -53,6 +53,7 @@ const router = createRouter({
         { path: 'base/doctor', name: 'DoctorManage', component: () => import('@/views/base/DoctorManageView.vue'), meta: { title: '医师管理', perm: 'md:doctor:view' } },
         { path: 'base/medicine', name: 'MedicineCatalog', component: () => import('@/views/base/MedicineCatalogView.vue'), meta: { title: '药材管理', perm: 'md:herb:view' } },
         { path: 'schemes', name: 'Schemes', component: () => import('@/views/md/SchemeListView.vue'), meta: { title: '煎药方案', perm: 'md:scheme:view' } },
+        { path: 'medicines', name: 'Medicines', component: () => import('@/views/md/MedicineMasterDataView.vue'), meta: { title: '标准药材主数据', perm: 'md:medicine:view' } },
         { path: 'traces', name: 'Traces', component: () => import('@/views/eq/DeviceTraceView.vue'), meta: { title: '处方追溯' } },
         { path: 'traces/:prescriptionNo', name: 'TraceDetail', component: () => import('@/views/eq/DeviceTraceDetailView.vue'), meta: { title: '追溯详情' } },
         { path: 'eq-dashboard', name: 'EqDashboard', component: () => import('@/views/eq/DashboardView.vue'), meta: { title: '数据看板' } },
