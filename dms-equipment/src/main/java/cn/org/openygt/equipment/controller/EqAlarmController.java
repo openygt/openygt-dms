@@ -119,6 +119,7 @@ public class EqAlarmController {
     }
 
     @PutMapping("/{id}/resolve")
+    @RequiresPermissions("eq:alarm:manage")
     public ApiResponse<Void> resolveAlarm(@PathVariable Long id) {
         EqDeviceAlarm alarm = alarmMapper.selectById(id);
         if (alarm == null) {
@@ -131,6 +132,7 @@ public class EqAlarmController {
     }
 
     @PutMapping("/{id}/cancel")
+    @RequiresPermissions("eq:alarm:manage")
     public ApiResponse<Void> cancelAlarm(@PathVariable Long id) {
         EqDeviceAlarm alarm = alarmMapper.selectById(id);
         if (alarm == null) {
