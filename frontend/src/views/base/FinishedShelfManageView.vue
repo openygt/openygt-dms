@@ -4,7 +4,7 @@
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
           <span>货架列表</span>
-          <el-button type="primary" data-testid="create-btn" @click="openDialog()">新增货架</el-button>
+          <el-button type="primary" v-if="userStore.hasPermission('md:shelf:create')" data-testid="create-btn" @click="openDialog()">新增货架</el-button>
         </div>
       </template>
       <el-form :inline="true" @submit.prevent>
@@ -48,8 +48,8 @@
         <el-table-column prop="updatedAt" label="更新时间" min-width="160" />
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openDialog(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button size="small" v-if="userStore.hasPermission('md:shelf:update')" @click="openDialog(row)">编辑</el-button>
+            <el-button size="small" type="danger" v-if="userStore.hasPermission('md:shelf:delete')" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -107,7 +107,7 @@
       </el-form>
       <template #footer>
         <el-button data-testid="dialog-cancel-btn" @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" data-testid="dialog-save-btn" @click="handleSave">保存</el-button>
+        <el-button type="primary" :loading="saveLoading" data-testid="dialog-save-btn" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -117,6 +117,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getShelfPage, createShelfMaster, updateShelfMaster, deleteShelfMaster } from '@/api/shelf'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 interface ShelfRow {
   id: number
@@ -135,6 +138,7 @@ interface ShelfRow {
 
 const list = ref<ShelfRow[]>([])
 const loading = ref(false)
+const saveLoading = ref(false)
 const dialogVisible = ref(false)
 const formRef = ref()
 const page = ref(1)
@@ -189,7 +193,8 @@ async function fetchData() {
     const data = res.data
     list.value = data?.records || []
     total.value = data?.total ?? 0
-  } catch {
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '查询失败')
     list.value = []
     total.value = 0
   } finally {
@@ -232,6 +237,8 @@ function openDialog(row?: ShelfRow) {
 async function handleSave() {
   const ok = await formRef.value?.validate().catch(() => false)
   if (!ok) return
+
+  saveLoading.value = true
   try {
     const payload: Record<string, unknown> = {
       shelfCode: form.value.shelfCode,
@@ -256,6 +263,8 @@ async function handleSave() {
   } catch (e: any) {
     const msg = e?.response?.data?.message || e?.message || '保存失败'
     ElMessage.error(msg)
+  } finally {
+    saveLoading.value = false
   }
 }
 

@@ -3,8 +3,8 @@
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
-          
-          <el-button type="primary" data-testid="create-btn" @click="openDialog()">新增科室</el-button>
+          <span>科室管理</span>
+          <el-button type="primary" v-if="userStore.hasPermission('md:dept:create')" data-testid="create-btn" @click="openDialog()">新增科室</el-button>
         </div>
       </template>
       <el-form :inline="true" @submit.prevent>
@@ -34,8 +34,8 @@
         </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openDialog(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button size="small" v-if="userStore.hasPermission('md:dept:update')" @click="openDialog(row)">编辑</el-button>
+            <el-button size="small" type="danger" v-if="userStore.hasPermission('md:dept:delete')" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -54,14 +54,14 @@
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑科室' : '新增科室'" width="560px">
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="科室编码" required>
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
+        <el-form-item label="科室编码" prop="deptCode">
           <el-input v-model="form.deptCode" />
         </el-form-item>
-        <el-form-item label="科室名称" required>
+        <el-form-item label="科室名称" prop="deptName">
           <el-input v-model="form.deptName" />
         </el-form-item>
-        <el-form-item label="所属医院" required>
+        <el-form-item label="所属医院" prop="hospitalId">
           <el-select v-model="form.hospitalId" placeholder="请选择医院" clearable style="width: 100%">
             <el-option v-for="h in hospitalList" :key="h.id" :label="h.name" :value="h.id" />
           </el-select>
@@ -72,7 +72,7 @@
         <el-form-item label="排序">
           <el-input v-model.number="form.sortOrder" type="number" />
         </el-form-item>
-        <el-form-item label="状态" required>
+        <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio :label="1">启用</el-radio>
             <el-radio :label="0">禁用</el-radio>
@@ -81,7 +81,7 @@
       </el-form>
       <template #footer>
         <el-button data-testid="dialog-cancel-btn" @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" data-testid="dialog-save-btn" @click="handleSave">保存</el-button>
+        <el-button type="primary" :loading="saveLoading" data-testid="dialog-save-btn" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -90,6 +90,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import {
   getDepartmentList,
   getAllHospitals,
@@ -97,6 +98,9 @@ import {
   updateDepartment,
   deleteDepartment
 } from '@/api/baseData'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 interface Department {
   id: number
@@ -110,15 +114,24 @@ interface Department {
 
 const list = ref<Department[]>([])
 const loading = ref(false)
+const saveLoading = ref(false)
 const dialogVisible = ref(false)
 const page = ref(1)
 const size = ref(20)
 const total = ref(0)
+const formRef = ref<FormInstance>()
 
 const search = reactive({ keyword: '' })
 const form = ref<Partial<Department>>({ status: 1 })
 const hospitalList = ref<any[]>([])
 const hospitalMap = ref<Record<number, string>>({})
+
+const rules: FormRules = {
+  deptCode: [{ required: true, message: '请输入科室编码', trigger: 'blur' }],
+  deptName: [{ required: true, message: '请输入科室名称', trigger: 'blur' }],
+  hospitalId: [{ required: true, message: '请选择所属医院', trigger: 'change' }],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }]
+}
 
 async function fetchData() {
   loading.value = true
@@ -128,6 +141,8 @@ async function fetchData() {
     const res: any = await getDepartmentList(params)
     list.value = res.data?.records || []
     total.value = res.data?.total || 0
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }
@@ -147,9 +162,17 @@ function resetSearch() {
 function openDialog(row?: Department) {
   form.value = row ? { ...row } : { status: 1 }
   dialogVisible.value = true
+  if (formRef.value) {
+    formRef.value.clearValidate()
+  }
 }
 
 async function handleSave() {
+  if (!formRef.value) return
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  saveLoading.value = true
   try {
     if (form.value.id) {
       await updateDepartment(form.value.id, form.value)
@@ -162,6 +185,8 @@ async function handleSave() {
     fetchData()
   } catch (e: any) {
     ElMessage.error(e?.response?.data?.message || e?.message || '保存失败')
+  } finally {
+    saveLoading.value = false
   }
 }
 

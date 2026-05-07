@@ -4,7 +4,7 @@
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
           <span>药材目录</span>
-          <el-button type="primary" data-testid="create-btn" @click="openDialog()">新增药材</el-button>
+          <el-button type="primary" v-if="userStore.hasPermission('md:herb:create')" data-testid="create-btn" @click="openDialog()">新增药材</el-button>
         </div>
       </template>
       <el-form :inline="true" @submit.prevent>
@@ -31,8 +31,8 @@
         </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openDialog(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button size="small" v-if="userStore.hasPermission('md:herb:update')" @click="openDialog(row)">编辑</el-button>
+            <el-button size="small" type="danger" v-if="userStore.hasPermission('md:herb:delete')" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -51,32 +51,32 @@
     </el-card>
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑药材' : '新增药材'" width="560px">
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="药材编码" required>
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
+        <el-form-item label="药材编码" prop="medicineCode">
           <el-input v-model="form.medicineCode" />
         </el-form-item>
-        <el-form-item label="药材名称" required>
+        <el-form-item label="药材名称" prop="medicineName">
           <el-input v-model="form.medicineName" />
         </el-form-item>
         <el-form-item label="别名">
           <el-input v-model="form.aliases" />
         </el-form-item>
-        <el-form-item label="HIS编码" required>
+        <el-form-item label="HIS编码" prop="hisCode">
           <el-input v-model="form.hisCode" />
         </el-form-item>
         <el-form-item label="国标编码">
           <el-input v-model="form.nationalCode" />
         </el-form-item>
-        <el-form-item label="规格" required>
+        <el-form-item label="规格" prop="spec">
           <el-input v-model="form.spec" />
         </el-form-item>
-        <el-form-item label="单位" required>
+        <el-form-item label="单位" prop="unit">
           <el-input v-model="form.unit" />
         </el-form-item>
         <el-form-item label="库存预警">
           <el-input v-model.number="form.stockWarning" type="number" />
         </el-form-item>
-        <el-form-item label="状态" required>
+        <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
             <el-radio :label="1">启用</el-radio>
             <el-radio :label="0">禁用</el-radio>
@@ -85,7 +85,7 @@
       </el-form>
       <template #footer>
         <el-button data-testid="dialog-cancel-btn" @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" data-testid="dialog-save-btn" @click="handleSave">保存</el-button>
+        <el-button type="primary" :loading="saveLoading" data-testid="dialog-save-btn" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -94,12 +94,16 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import {
   getMedicineList,
   createMedicine,
   updateMedicine,
   deleteMedicine
 } from '@/api/baseData'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 interface Medicine {
   id: number
@@ -116,13 +120,24 @@ interface Medicine {
 
 const list = ref<Medicine[]>([])
 const loading = ref(false)
+const saveLoading = ref(false)
 const dialogVisible = ref(false)
 const page = ref(1)
 const size = ref(20)
 const total = ref(0)
+const formRef = ref<FormInstance>()
 
 const search = reactive({ keyword: '' })
 const form = ref<Partial<Medicine>>({ status: 1 })
+
+const rules: FormRules = {
+  medicineCode: [{ required: true, message: '请输入药材编码', trigger: 'blur' }],
+  medicineName: [{ required: true, message: '请输入药材名称', trigger: 'blur' }],
+  hisCode: [{ required: true, message: '请输入HIS编码', trigger: 'blur' }],
+  spec: [{ required: true, message: '请输入规格', trigger: 'blur' }],
+  unit: [{ required: true, message: '请输入单位', trigger: 'blur' }],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }]
+}
 
 async function fetchData() {
   loading.value = true
@@ -132,6 +147,8 @@ async function fetchData() {
     const res: any = await getMedicineList(params)
     list.value = res.data?.records || []
     total.value = res.data?.total || 0
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }
@@ -151,9 +168,17 @@ function resetSearch() {
 function openDialog(row?: Medicine) {
   form.value = row ? { ...row } : { status: 1 }
   dialogVisible.value = true
+  if (formRef.value) {
+    formRef.value.clearValidate()
+  }
 }
 
 async function handleSave() {
+  if (!formRef.value) return
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  saveLoading.value = true
   try {
     if (form.value.id) {
       await updateMedicine(form.value.id, form.value)
@@ -166,6 +191,8 @@ async function handleSave() {
     fetchData()
   } catch (e: any) {
     ElMessage.error(e?.response?.data?.message || e?.message || '保存失败')
+  } finally {
+    saveLoading.value = false
   }
 }
 
