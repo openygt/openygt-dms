@@ -1,9 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">
-      设备联网
-      <span class="page-header-sub">协议配置、在线心跳监测、指令下发通道管理</span>
-    </div>
     <el-tabs v-model="activeTab" class="network-tabs">
       <!-- Tab 1: 协议配置 -->
       <el-tab-pane label="协议配置" name="config">

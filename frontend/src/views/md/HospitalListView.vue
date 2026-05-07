@@ -1,9 +1,5 @@
 <template>
   <div>
-    <div class="page-header-title">
-      医院管理
-      <div class="page-header-sub">医院信息维护、科室关联</div>
-    </div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">

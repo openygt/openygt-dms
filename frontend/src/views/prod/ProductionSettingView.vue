@@ -1,6 +1,5 @@
 <template>
   <div class="production-setting">
-    <h2 class="page-header-title">生产设置</h2>
     <el-row :gutter="20">
       <el-col :span="12">
         <el-card shadow="hover" @click="$router.push('/voice-setting')" class="setting-card">

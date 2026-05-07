@@ -8,6 +8,8 @@ export interface MenuItem {
   name: string
   path: string
   icon?: string
+  title?: string
+  description?: string
   children?: MenuItem[]
 }
 
@@ -31,8 +33,7 @@ export const useUserStore = defineStore('user', () => {
     localStorage.setItem('token', res.data.token)
     syncRequestAuthorization(res.data.token)
     await fetchUserInfo()
-    // TODO: 动态菜单方案待产品确认，当前侧栏为静态编码
-    // await fetchMenus()
+    await fetchMenus()
   }
 
   function fetchUserInfo() {

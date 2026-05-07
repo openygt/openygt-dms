@@ -1,9 +1,5 @@
 <template>
   <div class="page-container">
-    <div class="page-header-title">
-      远程急停
-      <span class="page-header-sub">远程启停单台设备、调参数、急停，不用跑车间按按钮</span>
-    </div>
     <el-row :gutter="16" class="mt-4">
       <el-col :span="6">
         <el-card shadow="never">

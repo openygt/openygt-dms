@@ -159,6 +159,10 @@
         </div>
       </el-header>
       <el-main class="layout-main">
+        <!-- 标准标题区（由菜单 description 统一驱动） -->
+        <div v-if="showPageHeader" class="page-header-title">
+          {{ pageTitle }}<span v-if="pageDesc" class="page-header-sub">：{{ pageDesc }}</span>
+        </div>
         <router-view />
       </el-main>
       <ChangePasswordDialog ref="changePasswordRef" />
@@ -170,10 +174,27 @@
 import { useUserStore } from '@/stores/user'
 import ThemeToggle from './ThemeToggle.vue'
 import ChangePasswordDialog from './ChangePasswordDialog.vue'
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useMenuDesc } from '@/composables/useMenuDesc'
 
 const userStore = useUserStore()
+const route = useRoute()
 const changePasswordRef = ref<InstanceType<typeof ChangePasswordDialog>>()
+
+const { title, description } = useMenuDesc()
+const pageTitle = computed(() => title.value)
+const pageDesc = computed(() => description.value)
+const showPageHeader = computed(() => {
+  if (route.meta?.dynamicTitle) return false
+  return !!pageTitle.value
+})
+
+onMounted(() => {
+  if (userStore.isLoggedIn && userStore.menus.length === 0) {
+    userStore.fetchMenus()
+  }
+})
 
 function openChangePassword() {
   changePasswordRef.value?.open()

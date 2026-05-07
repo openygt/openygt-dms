@@ -1,6 +1,5 @@
 <template>
   <div class="device-utilization" v-loading="pageLoading" element-loading-text="加载中..." element-loading-background="rgba(255,255,255,0.9)">
-    <div class="page-header-title">设备效能：<span class="page-header-sub">设备开机率、空闲率、故障率趋势</span></div>
     <div class="page-header">
     </div>
 

@@ -1,6 +1,5 @@
 <template>
   <div class="device-monitor" :class="{ 'is-fullscreen': isFullscreen }">
-    <div class="page-header-title">设备监控：<span class="page-header-sub">设备实时状态、温度曲线、故障告警</span></div>
     <!-- 顶部工具栏 -->
     <div class="monitor-toolbar">
       <div class="toolbar-left">

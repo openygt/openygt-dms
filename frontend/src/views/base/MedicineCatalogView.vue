@@ -1,6 +1,5 @@
 <template>
   <div>
-    <div class="page-header-title">药材管理：<span class="page-header-sub">药材目录、库存关联</span></div>
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
