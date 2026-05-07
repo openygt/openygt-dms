@@ -3,7 +3,6 @@
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>设备管理</span>
           <div>
             <el-button v-if="userStore.hasPermission('eq:device:pair')" @click="pairingDialogVisible = true">生产线配对</el-button>
             <el-button type="primary" v-if="userStore.hasPermission('eq:device:create')" @click="openDialog()">新增设备</el-button>

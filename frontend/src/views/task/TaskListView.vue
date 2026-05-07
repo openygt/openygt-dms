@@ -1,13 +1,12 @@
 <template>
   <div>
     <div class="page-header-title">
-      煎药任务：<span class="page-header-sub">{{ taskPageSubtitle }}</span>
+      {{ pageTitle }}<span v-if="pageDesc" class="page-header-sub">：{{ pageDesc }}</span>
     </div>
     <div style="height: 16px"></div>
     <el-card>
       <template #header>
         <div style="display: flex; align-items: center; justify-content: space-between">
-          <span>任务管理</span>
           <el-radio-group v-model="viewMode" size="small">
             <el-radio-button label="list">列表视图</el-radio-button>
             <el-radio-button label="kanban">看板视图</el-radio-button>
@@ -298,6 +297,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
+import { useMenuDesc } from '@/composables/useMenuDesc'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
@@ -364,11 +364,9 @@ const hasTaskManage = computed(() => {
   return perms.includes('prod:task:manage')
 })
 
-const taskPageSubtitle = computed(() =>
-  hasTaskManage.value
-    ? '状态与处方筛选；有任务管理权限时可查全部任务并操作；可勾选「仅我的任务」只看本人'
-    : 'Web 端仅可查看本人任务、详情与流程跟踪；泡药/煎药等操作请在车间终端或 PDA 执行'
-)
+const { title, description } = useMenuDesc()
+const pageTitle = computed(() => title.value)
+const pageDesc = computed(() => description.value)
 
 function isDeviceGroupIdleStatus(s: unknown): boolean {
   if (s == null || String(s).trim() === '') return true

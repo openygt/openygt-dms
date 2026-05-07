@@ -1,5 +1,5 @@
 ALTER TABLE sys_menu ADD COLUMN description VARCHAR(200)
-  COMMENT '页面功能描述，用于标题区副标题展示' AFTER title;
+  COMMENT '页面功能描述，用于标题区副标题展示' AFTER name;
 
 -- 初始化数据（61条）
 -- 处方管理

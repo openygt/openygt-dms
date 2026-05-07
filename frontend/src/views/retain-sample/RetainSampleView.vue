@@ -3,7 +3,6 @@
     <el-card>
       <template #header>
         <div class="card-header">
-          <span>留样管理</span>
           <div>
             <el-tag v-if="mode === 'expiring'" type="warning" style="margin-right: 8px">即将到期预警</el-tag>
             <el-button v-if="mode === 'expiring'" @click="fetchList">返回全部</el-button>

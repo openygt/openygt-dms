@@ -2,7 +2,7 @@
   <div>
     <el-card>
       <template #header>
-        <span>告警日志</span>
+        <div></div>
       </template>
       <el-form :inline="true" :model="query" style="margin-bottom: 16px">
         <el-form-item label="设备编码">

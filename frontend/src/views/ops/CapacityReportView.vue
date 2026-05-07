@@ -1,12 +1,13 @@
 <template>
   <div>
-    <el-card>
-      <template #header>
-        <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>产能报表</span>
-          <el-button type="primary" @click="fetchData">刷新</el-button>
-        </div>
-      </template>
+    <el-tabs v-model="activeTab" type="border-card">
+      <el-tab-pane label="产能报表" name="capacity">
+        <el-card>
+          <template #header>
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <el-button type="primary" @click="fetchData">刷新</el-button>
+            </div>
+          </template>
       <el-form :inline="true" @submit.prevent>
         <el-form-item label="日期范围">
           <el-date-picker
@@ -70,13 +71,19 @@
           </template>
         </el-table-column>
       </el-table>
-    </el-card>
+        </el-card>
+      </el-tab-pane>
+      <el-tab-pane label="工作量统计" name="workload">
+        <WorkloadStatView />
+      </el-tab-pane>
+    </el-tabs>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import request from '@/api/request'
+import WorkloadStatView from '@/views/eq/WorkloadStatView.vue'
 
 interface ReportItem {
   statDate: string
@@ -87,6 +94,7 @@ interface ReportItem {
   deviceUtilization: number
 }
 
+const activeTab = ref('capacity')
 const list = ref<ReportItem[]>([])
 const loading = ref(false)
 const dateRange = ref<string[]>([])
