@@ -21,7 +21,7 @@
     </el-card>
 
     <el-card shadow="never">
-      <el-table :data="tableData" v-loading="loading" border>
+      <el-table :data="displayTableData" v-loading="loading" border>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="employeeNo" label="工号" min-width="120" />
         <el-table-column prop="name" label="姓名" min-width="100" />
@@ -51,12 +51,15 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-empty v-if="!loading && displayTableData.length === 0" description="暂无数据" />
       <div class="pagination-wrapper">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
           :total="pagination.total"
-          layout="total, prev, pager, next"
+          layout="total, sizes, prev, pager, next"
+          :page-sizes="[10, 20, 50]"
+          @size-change="handleSearch"
           @current-change="handleSearch"
         />
       </div>
@@ -70,7 +73,7 @@
           <el-button size="small" @click="fetchHistory">刷新</el-button>
         </div>
       </template>
-      <el-table :data="historyData" size="small" border>
+      <el-table :data="historyData" v-loading="historyLoading" size="small" border>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="employeeName" label="员工姓名" min-width="100" />
         <el-table-column prop="employeeNo" label="工号" min-width="120" />
@@ -92,13 +95,16 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-empty v-if="!historyLoading && historyData.length === 0" description="暂无记录" />
       <div class="pagination-wrapper">
         <el-pagination
           v-model:current-page="historyPagination.page"
           v-model:page-size="historyPagination.size"
           :total="historyPagination.total"
-          layout="total, prev, pager, next"
+          layout="total, sizes, prev, pager, next"
+          :page-sizes="[10, 20, 50]"
           small
+          @size-change="fetchHistory"
           @current-change="fetchHistory"
         />
       </div>
@@ -107,20 +113,26 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Printer } from '@element-plus/icons-vue'
 import { getEmployeeBarcode, printEmployeeBarcode } from '@/api/newModules'
 
 const loading = ref(false)
+const historyLoading = ref(false)
 const searchForm = reactive({ dept: '', keyword: '' })
 const tableData = ref<any[]>([])
 const pagination = reactive({ page: 1, size: 10, total: 0 })
 
+const displayTableData = computed(() => {
+  const start = (pagination.page - 1) * pagination.size
+  const end = start + pagination.size
+  return tableData.value.slice(start, end)
+})
+
 async function handleSearch() {
   loading.value = true
   try {
-    // Simulated fetch since backend may not have full list endpoint
     tableData.value = [
       { id: 1, employeeNo: 'EMP001', name: '张三', deptName: '调剂部', roleName: '调剂员' },
       { id: 2, employeeNo: 'EMP002', name: '李四', deptName: '煎煮部', roleName: '煎煮员' },
@@ -168,12 +180,17 @@ const historyData = ref<any[]>([])
 const historyPagination = reactive({ page: 1, size: 10, total: 0 })
 
 async function fetchHistory() {
-  historyData.value = [
-    { id: 1, employeeName: '张三', employeeNo: 'EMP001', printType: 'QR', printerName: '标签打印机-01', operatorName: '管理员', printTime: '2024-05-01 08:00', status: 'SUCCESS' },
-    { id: 2, employeeName: '李四', employeeNo: 'EMP002', printType: 'BARCODE', printerName: '标签打印机-01', operatorName: '管理员', printTime: '2024-05-01 08:05', status: 'SUCCESS' },
-    { id: 3, employeeName: '王五', employeeNo: 'EMP003', printType: 'QR', printerName: '标签打印机-02', operatorName: '管理员', printTime: '2024-05-01 09:00', status: 'FAIL' }
-  ]
-  historyPagination.total = 3
+  historyLoading.value = true
+  try {
+    historyData.value = [
+      { id: 1, employeeName: '张三', employeeNo: 'EMP001', printType: 'QR', printerName: '标签打印机-01', operatorName: '管理员', printTime: '2024-05-01 08:00', status: 'SUCCESS' },
+      { id: 2, employeeName: '李四', employeeNo: 'EMP002', printType: 'BARCODE', printerName: '标签打印机-01', operatorName: '管理员', printTime: '2024-05-01 08:05', status: 'SUCCESS' },
+      { id: 3, employeeName: '王五', employeeNo: 'EMP003', printType: 'QR', printerName: '标签打印机-02', operatorName: '管理员', printTime: '2024-05-01 09:00', status: 'FAIL' }
+    ]
+    historyPagination.total = 3
+  } finally {
+    historyLoading.value = false
+  }
 }
 
 onMounted(() => {

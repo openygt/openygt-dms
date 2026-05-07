@@ -10,18 +10,17 @@
             start-placeholder="开始日期"
             end-placeholder="结束日期"
             value-format="YYYY-MM-DD"
-            @change="handleSearch"
           />
         </el-form-item>
         <el-form-item label="汇总方式">
-          <el-radio-group v-model="searchForm.groupBy" @change="handleSearch">
+          <el-radio-group v-model="searchForm.groupBy">
             <el-radio-button label="day">日</el-radio-button>
             <el-radio-button label="week">周</el-radio-button>
             <el-radio-button label="month">月</el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" data-testid="search-btn" @click="handleSearch">查询</el-button>
+          <el-button type="primary" data-testid="search-btn" :loading="loading" @click="handleSearch">查询</el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -100,6 +99,7 @@ const summary = reactive({
   total: 0,
   passCount: 0
 })
+const loading = ref(false)
 
 function renderChart() {
   if (!chartRef.value) return
@@ -129,6 +129,7 @@ function renderChart() {
 }
 
 async function handleSearch() {
+  loading.value = true
   const params = {
     dateStart: dateRange.value ? dateRange.value[0] : undefined,
     dateEnd: dateRange.value ? dateRange.value[1] : undefined,
@@ -164,6 +165,8 @@ async function handleSearch() {
     summary.total = 0
     summary.passCount = 0
     ElMessage.error(e?.response?.data?.message || '汇总数据加载失败')
+  } finally {
+    loading.value = false
   }
 }
 

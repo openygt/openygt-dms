@@ -113,14 +113,28 @@ public class QualityServiceImpl implements QualityService {
                 .filter(java.util.Objects::nonNull)
                 .collect(java.util.stream.Collectors.toSet());
         if (!opIds.isEmpty()) {
-            java.util.List<java.util.Map<String, Object>> userMaps = userNameMapper.selectNamesByIds(opIds.stream().map(Long::valueOf).collect(java.util.stream.Collectors.toList()));
-            java.util.Map<Long, String> nameMap = userMaps.stream().collect(java.util.stream.Collectors.toMap(
-                    m -> Long.valueOf(m.get("id").toString()),
-                    m -> m.get("realName") != null ? m.get("realName").toString() : "",
-                    (a, b) -> a));
-            for (Inspection ins : pageResult.getRecords()) {
-                if (ins.getOperatorId() != null) {
-                    ins.setOperatorName(nameMap.getOrDefault(Long.valueOf(ins.getOperatorId()), ins.getOperatorId()));
+            java.util.List<Long> idList = new java.util.ArrayList<>();
+            for (String opId : opIds) {
+                try {
+                    idList.add(Long.valueOf(opId));
+                } catch (NumberFormatException e) {
+                    // operatorId 非数字（如用户名），跳过姓名查询
+                }
+            }
+            if (!idList.isEmpty()) {
+                java.util.List<java.util.Map<String, Object>> userMaps = userNameMapper.selectNamesByIds(idList);
+                java.util.Map<Long, String> nameMap = userMaps.stream().collect(java.util.stream.Collectors.toMap(
+                        m -> Long.valueOf(m.get("id").toString()),
+                        m -> m.get("realName") != null ? m.get("realName").toString() : "",
+                        (a, b) -> a));
+                for (Inspection ins : pageResult.getRecords()) {
+                    if (ins.getOperatorId() != null) {
+                        try {
+                            ins.setOperatorName(nameMap.getOrDefault(Long.valueOf(ins.getOperatorId()), ins.getOperatorId()));
+                        } catch (NumberFormatException e) {
+                            ins.setOperatorName(ins.getOperatorId());
+                        }
+                    }
                 }
             }
         }
@@ -129,20 +143,18 @@ public class QualityServiceImpl implements QualityService {
 
     @Override
     public cn.org.openygt.common.dto.InspectionSummaryDTO getInspectionSummary(LocalDateTime from, LocalDateTime to) {
-        LambdaQueryWrapper<Inspection> wrapper = new LambdaQueryWrapper<>();
-        if (from != null) wrapper.ge(Inspection::getInspectedAt, from);
-        if (to != null) wrapper.le(Inspection::getInspectedAt, to);
-        List<Inspection> list = inspectionMapper.selectList(wrapper);
+        List<Map<String, Object>> counts = inspectionMapper.countByResult(from, to);
 
-        int total = list.size();
-        int pass = 0, concession = 0, rework = 0, scrap = 0;
-        for (Inspection i : list) {
-            if (i.getResult() == null) continue;
-            switch (i.getResult()) {
-                case PASS: pass++; break;
-                case CONCESSION: concession++; break;
-                case REWORK: rework++; break;
-                case SCRAP: scrap++; break;
+        int total = 0, pass = 0, concession = 0, rework = 0, scrap = 0;
+        for (Map<String, Object> row : counts) {
+            String result = row.get("result") != null ? row.get("result").toString() : "";
+            int cnt = row.get("cnt") != null ? ((Number) row.get("cnt")).intValue() : 0;
+            total += cnt;
+            switch (result) {
+                case "PASS": pass += cnt; break;
+                case "CONCESSION": concession += cnt; break;
+                case "REWORK": rework += cnt; break;
+                case "SCRAP": scrap += cnt; break;
                 default: break;
             }
         }
@@ -232,7 +244,7 @@ public class QualityServiceImpl implements QualityService {
             result.add(row);
         }
         // 按不合格数降序
-        result.sort((a, b) -> Integer.compare((Integer) b.get("fail"), (Integer) a.get("pass")));
+        result.sort((a, b) -> Integer.compare((Integer) b.get("fail"), (Integer) a.get("fail")));
         return result;
     }
 

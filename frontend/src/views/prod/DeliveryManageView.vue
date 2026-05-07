@@ -266,7 +266,7 @@ async function handleConfirm() {
   if (!valid) return
   try {
     await confirmDelivery(confirmForm.id, {
-      operatorId: userStore.userInfo?.username || 'admin',
+      operatorId: userStore.userInfo?.id || 0,
       receiverName: confirmForm.receiverName,
       receiverPhone: confirmForm.receiverPhone,
       remark: confirmForm.remark

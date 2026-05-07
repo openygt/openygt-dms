@@ -36,6 +36,7 @@
 import { ref, reactive, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
 import { getTraceTemperatureCurve } from '@/api/equipment'
+import { ElMessage } from 'element-plus'
 
 const searchForm = reactive({
   barcode: '',
@@ -48,6 +49,7 @@ let chartInstance: echarts.ECharts | null = null
 
 async function queryCurve() {
   if (!searchForm.prescriptionNo && !searchForm.barcode) {
+    ElMessage.warning('请输入任务条码或处方号')
     return
   }
   try {
