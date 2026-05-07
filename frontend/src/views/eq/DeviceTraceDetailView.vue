@@ -127,7 +127,8 @@ async function loadEvents() {
   try {
     const res: any = await getTraceEvents(prescriptionNo.value)
     events.value = res.data || []
-  } catch (err) {
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.message || '加载工序记录失败')
     events.value = []
   }
 }
@@ -147,7 +148,8 @@ async function loadTemperature() {
     } else {
       tempCurveData.value = []
     }
-  } catch (err) {
+  } catch (err: any) {
+    ElMessage.error(err?.response?.data?.message || '加载温度数据失败')
     tempCurveData.value = []
   }
 }

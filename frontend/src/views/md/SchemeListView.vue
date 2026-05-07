@@ -176,7 +176,6 @@ const pagination = ref({ page: 1, size: 10, total: 0 })
 const formRules = {
   schemeName: [{ required: true, message: '方案名称不能为空', trigger: 'blur' }],
   schemeCode: [{ required: true, message: '方案编码不能为空', trigger: 'blur' }],
-  schemeType: [{ required: true, message: '煎煮类型不能为空', trigger: 'change' }],
   firstDecoctTime: [{ required: true, message: '一煎时长不能为空', trigger: 'change' }],
   secondDecoctTime: [{ required: true, message: '二煎时长不能为空', trigger: 'change' }],
   status: [{ required: true, message: '状态不能为空', trigger: 'change' }],
