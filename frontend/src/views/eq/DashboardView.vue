@@ -1,5 +1,7 @@
 <template>
   <div class="eq-dashboard">
+    <el-button :icon="ArrowLeft" @click="router.back()">返回</el-button>
+    <div style="height: 16px"></div>
     <div class="page-header">
 
       <el-radio-group v-model="dateRange" @change="loadAll">
@@ -79,13 +81,15 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Document, Timer, Check, Warning, TrendCharts, Cpu } from '@element-plus/icons-vue'
+import { Document, Timer, Check, Warning, TrendCharts, Cpu, ArrowLeft } from '@element-plus/icons-vue'
+import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
 import {
   getDashboardMetrics, getStageDistribution, getWorkerEfficiency,
   getHourlyTrend, getDashboardDeviceUtilization
 } from '@/api/equipment'
 
+const router = useRouter()
 const dateRange = ref('today')
 const loading = ref(false)
 const metrics = reactive<Record<string, any>>({})

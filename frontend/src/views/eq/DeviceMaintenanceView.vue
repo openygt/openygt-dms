@@ -1,9 +1,8 @@
 <template>
   <div class="page-container">
-    <el-card class="mt-4" shadow="never">
+    <el-card shadow="never">
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>维保记录</span>
           <el-button type="primary" @click="openDialog()">新增记录</el-button>
         </div>
       </template>
@@ -189,7 +188,7 @@ onMounted(loadData)
 </script>
 
 <style scoped>
-.page-container { padding: 16px; }
+.page-container { padding: 0; }
 .mt-4 { margin-top: 16px; }
 .pagination-wrapper { margin-top: 16px; display: flex; justify-content: flex-end; }
 </style>

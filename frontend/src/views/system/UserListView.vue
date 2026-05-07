@@ -3,7 +3,7 @@
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>用户管理</span>
+          
           <el-button type="primary" v-if="userStore.hasPermission('sys:user:create')" @click="openDialog()">新增用户</el-button>
         </div>
       </template>

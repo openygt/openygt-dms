@@ -495,7 +495,7 @@ onMounted(() => {
 
 <style scoped>
 .dashboard {
-  padding: var(--ygt-space-4);
+  padding: 0;
 }
 
 .dashboard-page-head {

@@ -3,7 +3,6 @@
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
-          <span>煎煮方案</span>
           <el-button type="primary" @click="openDialog()">新增方案</el-button>
         </div>
       </template>
