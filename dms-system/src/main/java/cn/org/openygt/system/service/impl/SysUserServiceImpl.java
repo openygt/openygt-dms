@@ -31,7 +31,21 @@ public class SysUserServiceImpl implements SysUserService {
     @Override
     @Transactional
     public SysUser create(SysUser user) {
-        user.setStatus("ACTIVE");
+        if (user.getUsername() == null || user.getUsername().trim().isEmpty()) {
+            throw new IllegalArgumentException("用户名不能为空");
+        }
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            throw new IllegalArgumentException("密码不能为空");
+        }
+        // 前端传数字 0/1，后端存字符串 ACTIVE/INACTIVE
+        Object status = user.getStatus();
+        if (status == null || status.toString().isEmpty()) {
+            user.setStatus("ACTIVE");
+        } else if ("0".equals(status.toString()) || "INACTIVE".equals(status.toString())) {
+            user.setStatus("INACTIVE");
+        } else {
+            user.setStatus("ACTIVE");
+        }
         // 密码加密存储
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -85,7 +99,9 @@ public class SysUserServiceImpl implements SysUserService {
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.like(SysUser::getUsername, keyword)
                    .or()
-                   .like(SysUser::getRealName, keyword);
+                   .like(SysUser::getRealName, keyword)
+                   .or()
+                   .like(SysUser::getPhone, keyword);
         }
         wrapper.orderByDesc(SysUser::getCreatedAt);
         return userMapper.selectPage(new Page<>(page, size), wrapper);

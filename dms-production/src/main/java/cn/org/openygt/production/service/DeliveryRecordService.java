@@ -1,5 +1,6 @@
 package cn.org.openygt.production.service;
 
+import cn.org.openygt.production.dto.ConfirmDeliveryRequest;
 import cn.org.openygt.production.entity.DeliveryRecord;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 
@@ -9,5 +10,5 @@ public interface DeliveryRecordService {
     DeliveryRecord create(DeliveryRecord record);
     DeliveryRecord update(Long id, DeliveryRecord record);
     void delete(Long id);
-    DeliveryRecord confirmDelivery(Long id, String operatorId, String receiverName, String receiverPhone, String remark);
+    DeliveryRecord confirmDelivery(Long id, ConfirmDeliveryRequest request);
 }

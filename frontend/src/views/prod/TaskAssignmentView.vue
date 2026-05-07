@@ -126,8 +126,8 @@
     </el-card>
 
     <el-dialog v-model="addRecordDialogVisible" title="添加记录" width="520px">
-      <el-form :model="addRecordForm" label-width="100px">
-        <el-form-item label="任务" required>
+      <el-form ref="addRecordFormRef" :model="addRecordForm" :rules="addRecordRules" label-width="100px">
+        <el-form-item label="任务" prop="taskId">
           <el-select
             v-model="addRecordForm.taskId"
             placeholder="选择任务"
@@ -137,7 +137,7 @@
             <el-option v-for="task in availableTasks" :key="task.id" :label="task.name" :value="task.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="员工" required>
+        <el-form-item label="员工" prop="employeeId">
           <el-select
             v-model="addRecordForm.employeeId"
             placeholder="选择员工"
@@ -147,7 +147,7 @@
             <el-option v-for="employee in availableEmployees" :key="employee.id" :label="employee.name" :value="employee.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="设备" required>
+        <el-form-item label="设备" prop="deviceId">
           <el-select
             v-model="addRecordForm.deviceId"
             placeholder="选择设备"
@@ -168,16 +168,16 @@
     </el-dialog>
 
     <el-dialog v-model="reassignDialogVisible" title="修改记录" width="520px">
-      <el-form :model="reassignForm" label-width="100px">
+      <el-form ref="reassignFormRef" :model="reassignForm" :rules="reassignRules" label-width="100px">
         <el-form-item label="当前任务">
           <span>{{ currentAssignment?.taskName }}</span>
         </el-form-item>
-        <el-form-item label="新员工" required>
+        <el-form-item label="新员工" prop="newEmployeeId">
           <el-select v-model="reassignForm.newEmployeeId" clearable filterable placeholder="选择员工" style="width: 100%">
             <el-option v-for="employee in employees" :key="employee.id" :label="employee.name" :value="employee.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="新设备" required>
+        <el-form-item label="新设备" prop="newDeviceId">
           <el-select v-model="reassignForm.newDeviceId" clearable filterable placeholder="选择设备" style="width: 100%">
             <el-option v-for="device in devices" :key="device.id" :label="device.name" :value="device.id" />
           </el-select>
@@ -252,18 +252,29 @@ const addRecordDialogVisible = ref(false)
 const reassignDialogVisible = ref(false)
 const currentAssignment = ref<AssignmentView | null>(null)
 
+const addRecordFormRef = ref<any>(null)
 const addRecordForm = reactive({
   taskId: null as number | null,
   employeeId: null as number | null,
   deviceId: null as number | null,
   reason: ''
 })
+const addRecordRules = {
+  taskId: [{ required: true, message: '请选择任务', trigger: 'change' }],
+  employeeId: [{ required: true, message: '请选择员工', trigger: 'change' }],
+  deviceId: [{ required: true, message: '请选择设备', trigger: 'change' }]
+}
 
+const reassignFormRef = ref<any>(null)
 const reassignForm = reactive({
   newEmployeeId: null as number | null,
   newDeviceId: null as number | null,
   reason: ''
 })
+const reassignRules = {
+  newEmployeeId: [{ required: true, message: '请选择新员工', trigger: 'change' }],
+  newDeviceId: [{ required: true, message: '请选择新设备', trigger: 'change' }]
+}
 
 const loadColor = [
   { color: '#67c23a', percentage: 50 },
@@ -475,18 +486,8 @@ async function openAddRecordDialog() {
 }
 
 async function handleAddRecord() {
-  if (!addRecordForm.taskId) {
-    ElMessage.warning('请选择任务')
-    return
-  }
-  if (!addRecordForm.employeeId) {
-    ElMessage.warning('请选择员工')
-    return
-  }
-  if (!addRecordForm.deviceId) {
-    ElMessage.warning('请选择设备')
-    return
-  }
+  const valid = await addRecordFormRef.value?.validate().catch(() => false)
+  if (!valid) return
   try {
     await manualAssign({
       taskId: addRecordForm.taskId,
@@ -499,7 +500,8 @@ async function handleAddRecord() {
     addRecordDialogVisible.value = false
     await reloadAll()
   } catch (e: any) {
-    // error already shown by axios interceptor
+    const msg = e?.response?.data?.message || e?.message || '添加失败'
+    if (msg !== '取消') ElMessage.error(msg)
   }
 }
 
@@ -513,18 +515,21 @@ function openReassignDialog(row: AssignmentView) {
 
 async function handleReassign() {
   if (!currentAssignment.value) return
-  if (!reassignForm.newEmployeeId || !reassignForm.newDeviceId) {
-    ElMessage.warning('员工和设备都必须选择')
-    return
+  const valid = await reassignFormRef.value?.validate().catch(() => false)
+  if (!valid) return
+  try {
+    await reassign(currentAssignment.value.id, {
+      newEmployeeId: reassignForm.newEmployeeId,
+      newDeviceId: reassignForm.newDeviceId,
+      reason: reassignForm.reason || ''
+    })
+    ElMessage.success('修改成功')
+    reassignDialogVisible.value = false
+    await reloadAll()
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '修改失败'
+    if (msg !== '取消') ElMessage.error(msg)
   }
-  await reassign(currentAssignment.value.id, {
-    newEmployeeId: reassignForm.newEmployeeId,
-    newDeviceId: reassignForm.newDeviceId,
-    reason: reassignForm.reason || ''
-  })
-  ElMessage.success('修改成功')
-  reassignDialogVisible.value = false
-  await reloadAll()
 }
 
 onMounted(async () => {

@@ -102,8 +102,8 @@ async function handleSearch() {
     const data = res.data || {}
     tableData.value = data.records || []
     pagination.total = data.total || 0
-  } catch (e) {
-    // handled by interceptor
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }
@@ -113,8 +113,8 @@ async function handleTestPrint(row: PrinterRecord) {
   try {
     await testPrinter(row.id)
     ElMessage.success('测试打印指令已发送')
-  } catch (e) {
-    // handled by interceptor
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message || '测试打印失败')
   }
 }
 

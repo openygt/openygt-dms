@@ -4,6 +4,7 @@ import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.common.dto.PrintTaskDTO;
 import cn.org.openygt.common.service.PrintService;
 import cn.org.openygt.print.PrintModule;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ public class PrintController {
     private final PrintService printService;
 
     @GetMapping("/tasks")
+    @RequiresPermissions("prt:task:view")
     public ApiResponse<IPage<PrintTaskDTO>> list(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size) {
@@ -23,6 +25,7 @@ public class PrintController {
     }
 
     @PostMapping("/tasks/{taskId}/submit")
+    @RequiresPermissions("prt:task:submit")
     public ApiResponse<Void> submitPrintTask(
             @PathVariable Long taskId,
             @RequestParam String deviceCode,
@@ -32,6 +35,7 @@ public class PrintController {
     }
 
     @PostMapping("/tasks/{taskId}/retry")
+    @RequiresPermissions("prt:task:retry")
     public ApiResponse<Void> retryPrint(
             @PathVariable Long taskId,
             @RequestParam String deviceCode,
@@ -41,6 +45,7 @@ public class PrintController {
     }
 
     @GetMapping("/queue")
+    @RequiresPermissions("prt:queue:view")
     public ApiResponse<Object> getPrintQueue() {
         return ApiResponse.success(printService.getPrintQueue());
     }

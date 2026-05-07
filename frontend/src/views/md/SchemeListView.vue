@@ -3,7 +3,8 @@
     <el-card>
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
-          <el-button type="primary" @click="openDialog()">新增方案</el-button>
+          <span>煎药方案</span>
+          <el-button type="primary" v-if="userStore.hasPermission('md:scheme:create')" @click="openDialog()">新增方案</el-button>
         </div>
       </template>
       <el-form :inline="true" @submit.prevent>
@@ -32,8 +33,8 @@
         </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openDialog(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button size="small" v-if="userStore.hasPermission('md:scheme:update')" @click="openDialog(row)">编辑</el-button>
+            <el-button size="small" type="danger" v-if="userStore.hasPermission('md:scheme:delete')" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -52,10 +53,10 @@
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑方案' : '新增方案'" width="600px">
       <el-form ref="formRef" :model="form" :rules="formRules" label-width="140px">
-        <el-form-item label="方案名称" required>
+        <el-form-item label="方案名称" prop="schemeName">
           <el-input v-model="form.schemeName" />
         </el-form-item>
-        <el-form-item label="方案编码" required>
+        <el-form-item label="方案编码" prop="schemeCode">
           <el-input v-model="form.schemeCode" :disabled="!!form.id" />
         </el-form-item>
         <el-row :gutter="12">
@@ -130,7 +131,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSave">保存</el-button>
+        <el-button type="primary" :loading="saveLoading" @click="handleSave">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -140,6 +141,9 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getSchemeList, createScheme, updateScheme, deleteScheme } from '@/api/equipment'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 interface Scheme {
   id: number
@@ -162,6 +166,7 @@ interface Scheme {
 
 const list = ref<Scheme[]>([])
 const loading = ref(false)
+const saveLoading = ref(false)
 const dialogVisible = ref(false)
 const search = ref({ name: '' })
 const form = ref<Partial<Scheme>>({ status: 1, isDefault: 0, alarmLowTemp: undefined, alarmHighTemp: undefined })
@@ -171,7 +176,6 @@ const pagination = ref({ page: 1, size: 10, total: 0 })
 const formRules = {
   schemeName: [{ required: true, message: '方案名称不能为空', trigger: 'blur' }],
   schemeCode: [{ required: true, message: '方案编码不能为空', trigger: 'blur' }],
-  schemeType: [{ required: true, message: '煎煮类型不能为空', trigger: 'change' }],
   firstDecoctTime: [{ required: true, message: '一煎时长不能为空', trigger: 'change' }],
   secondDecoctTime: [{ required: true, message: '二煎时长不能为空', trigger: 'change' }],
   status: [{ required: true, message: '状态不能为空', trigger: 'change' }],
@@ -188,6 +192,8 @@ async function fetchData() {
     const res: any = await getSchemeList(params)
     list.value = res.data?.records || []
     pagination.value.total = res.data?.total || 0
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }
@@ -215,7 +221,10 @@ function openDialog(row?: Scheme) {
 
 async function handleSave() {
   if (!formRef.value) return
-  await formRef.value.validate()
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  saveLoading.value = true
   try {
     const totalHeatingTime = (form.value.firstDecoctTime || 0) + (form.value.secondDecoctTime || 0)
     const payload = {
@@ -245,7 +254,11 @@ async function handleSave() {
     }
     dialogVisible.value = false
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '保存失败')
+  } finally {
+    saveLoading.value = false
+  }
 }
 
 async function handleDelete(row: Scheme) {
@@ -254,7 +267,11 @@ async function handleDelete(row: Scheme) {
     await deleteScheme(row.id)
     ElMessage.success('删除成功')
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e?.response?.data?.message || '删除失败')
+    }
+  }
 }
 
 onMounted(fetchData)

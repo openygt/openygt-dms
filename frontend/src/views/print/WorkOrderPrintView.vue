@@ -106,10 +106,10 @@ async function loadData() {
       remark: item.remark || ''
     }))
     pagination.total = pageData.total || 0
-  } catch (e) {
+  } catch (e: any) {
     tableData.value = []
     pagination.total = 0
-    // 错误已由拦截器提示
+    ElMessage.error(e.response?.data?.message || '加载失败')
   } finally {
     loading.value = false
   }
@@ -140,8 +140,8 @@ async function printRow(row: any) {
     })
     ElMessage.success(`工单 ${row.prescriptionNo} 已提交打印`)
     loadData()
-  } catch (e) {
-    // 错误已由拦截器提示
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message || '打印失败')
   }
 }
 
@@ -154,18 +154,23 @@ async function batchPrint() {
     ElMessage.warning('请先选择工单')
     return
   }
-  try {
-    const userStore = useUserStore()
-    await Promise.all(selectedRows.value.map(row =>
-      request.post(`/v1/prt/tasks/${row.id}/submit`, null, {
-        params: { deviceCode: row.deviceCode || '', operatorId: userStore.userInfo?.username || '' }
-      })
-    ))
-    ElMessage.success(`已提交 ${selectedRows.value.length} 张工单打印`)
-    loadData()
-  } catch (e) {
-    // 错误已由拦截器提示
+  const userStore = useUserStore()
+  const results = await Promise.allSettled(selectedRows.value.map(row =>
+    request.post(`/v1/prt/tasks/${row.id}/submit`, null, {
+      params: { deviceCode: row.deviceCode || '', operatorId: userStore.userInfo?.username || '' }
+    })
+  ))
+  const successCount = results.filter(r => r.status === 'fulfilled').length
+  const failCount = results.length - successCount
+  if (failCount > 0) {
+    const failedIndices = results
+      .map((r, i) => r.status === 'rejected' ? selectedRows.value[i].prescriptionNo : null)
+      .filter(Boolean)
+    ElMessage.warning(`提交完成：成功 ${successCount} 张，失败 ${failCount} 张（处方号：${failedIndices.join('、')}）`)
+  } else {
+    ElMessage.success(`已提交 ${successCount} 张工单打印`)
   }
+  loadData()
 }
 
 onMounted(loadData)

@@ -186,8 +186,10 @@ async function handleDelete(row: any) {
     await deleteWaterFormula(row.id)
     ElMessage.success('删除成功')
     loadFormulas()
-  } catch (err) {
-    // cancelled
+  } catch (err: any) {
+    if (err !== 'cancel') {
+      ElMessage.error(err.response?.data?.message || '删除失败')
+    }
   }
 }
 

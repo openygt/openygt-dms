@@ -24,7 +24,14 @@
           </template>
         </el-table-column>
       </el-table>
-      <el-empty v-if="!pendingLoading && pendingList.length === 0" description="暂无待质检任务" />
+      <el-empty v-if="!pendingLoading && pendingList.length === 0" description="暂无待质检任务">
+        <template #description>
+          <div>
+            <p>暂无待质检任务</p>
+            <p style="font-size: 12px; color: #999; margin-top: 8px">任务完成煎药、包装等工序后将自动进入待质检状态</p>
+          </div>
+        </template>
+      </el-empty>
     </el-card>
 
     <!-- 质检记录 -->
@@ -65,11 +72,16 @@
             <el-tag :type="resultType(row.result)">{{ resultText(row.result) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="operatorId" label="质检员" />
+        <el-table-column prop="operatorName" label="质检员" />
         <el-table-column prop="remark" label="备注" />
-        <el-table-column prop="createdAt" label="质检时间" width="160">
+        <el-table-column prop="inspectedAt" label="质检时间" width="160">
           <template #default="{ row }">
-            {{ formatDateTime(row.createdAt) }}
+            {{ formatDateTime(row.inspectedAt) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="100">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" link @click="openDetailView(row)">查看详情</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -90,8 +102,8 @@
         <el-form-item label="任务号">
           <span>{{ inspectForm.taskId }}</span>
         </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="inspectForm.remark" type="textarea" rows="3" placeholder="请输入备注..." />
+        <el-form-item label="备注" :required="inspectForm.result !== 'PASS'" :rules="[{ required: inspectForm.result !== 'PASS', message: '不通过时备注必填', trigger: 'blur' }]">
+          <el-input v-model="inspectForm.remark" type="textarea" rows="3" :placeholder="inspectForm.result === 'PASS' ? '请输入备注（可选）' : '请输入不通过原因（必填）'" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -116,13 +128,43 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="备注">
-          <el-input v-model="reworkForm.remark" type="textarea" rows="3" />
+        <el-form-item label="备注" required :rules="[{ required: true, message: '请输入返工原因', trigger: 'blur' }]">
+          <el-input v-model="reworkForm.remark" type="textarea" rows="3" placeholder="请输入返工原因（必填）" />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="reworkVisible = false">取消</el-button>
         <el-button type="primary" @click="handleReworkSubmit">确认返工</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 质检详情查看弹窗 -->
+    <el-dialog v-model="detailViewVisible" title="质检详情" width="560px">
+      <el-descriptions :column="2" border>
+        <el-descriptions-item label="任务号">{{ detailView.taskId }}</el-descriptions-item>
+        <el-descriptions-item label="质检结果">
+          <el-tag :type="resultType(detailView.result)">{{ resultText(detailView.result) }}</el-tag>
+        </el-descriptions-item>
+        <el-descriptions-item label="质检员">{{ detailView.operatorName || detailView.operatorId || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="质检时间">{{ formatDateTime(detailView.inspectedAt) }}</el-descriptions-item>
+        <el-descriptions-item label="备注" :span="2">{{ detailView.remark || '-' }}</el-descriptions-item>
+      </el-descriptions>
+      <el-divider v-if="detailViewItems.length > 0">检查项明细</el-divider>
+      <el-table v-if="detailViewItems.length > 0" :data="detailViewItems" border size="small">
+        <el-table-column prop="itemName" label="检查项" />
+        <el-table-column prop="result" label="结果" width="100">
+          <template #default="{ row }">
+            <el-tag v-if="row.result === 'PASS'" type="success" size="small">通过</el-tag>
+            <el-tag v-else-if="row.result === 'FAIL'" type="danger" size="small">不通过</el-tag>
+            <el-tag v-else-if="row.result === 'NA'" type="info" size="small">不适用</el-tag>
+            <span v-else>{{ row.result }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="actualValue" label="实际值" width="120" />
+        <el-table-column prop="remark" label="备注" />
+      </el-table>
+      <template #footer>
+        <el-button @click="detailViewVisible = false">关闭</el-button>
       </template>
     </el-dialog>
 
@@ -165,8 +207,8 @@
           <el-input v-model="item.remark" placeholder="备注" size="small" style="margin-top: 4px" />
         </div>
 
-        <el-form-item label="总体备注" style="margin-top: 16px">
-          <el-input v-model="detailInspectForm.remark" type="textarea" rows="3" placeholder="请输入总体备注..." />
+        <el-form-item label="总体备注" style="margin-top: 16px" :required="detailInspectForm.result !== 'PASS'" :rules="[{ required: detailInspectForm.result !== 'PASS', message: '不通过/返工/报废时备注必填', trigger: 'blur' }]">
+          <el-input v-model="detailInspectForm.remark" type="textarea" rows="3" :placeholder="detailInspectForm.result === 'PASS' ? '请输入总体备注（可选）' : '请输入原因（必填）'" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -228,6 +270,11 @@ const reworkVisible = ref(false)
 const reworkForm = ref({ taskId: 0, reworkNode: '', remark: '' })
 const reworkNodes = ref<{ label: string; value: string }[]>([])
 
+// 质检详情查看弹窗
+const detailViewVisible = ref(false)
+const detailView = ref<any>({})
+const detailViewItems = ref<any[]>([])
+
 // 详细质检弹窗
 const detailInspectVisible = ref(false)
 const detailInspectForm = ref({
@@ -250,7 +297,8 @@ function resultText(result?: string) {
   const map: Record<string, string> = {
     'PASS': '通过',
     'CONCESSION': '不通过',
-    'REWORK': '返工'
+    'REWORK': '返工',
+    'SCRAP': '报废'
   }
   return map[result || ''] || result || '-'
 }
@@ -259,6 +307,7 @@ function resultType(result?: string) {
   if (result === 'PASS') return 'success'
   if (result === 'CONCESSION') return 'danger'
   if (result === 'REWORK') return 'warning'
+  if (result === 'SCRAP') return 'info'
   return ''
 }
 
@@ -325,10 +374,27 @@ function openInspectDialog(row: Task, result: string) {
   inspectVisible.value = true
 }
 
+// 打开质检详情查看弹窗
+async function openDetailView(row: any) {
+  detailView.value = row
+  detailViewItems.value = []
+  try {
+    const res: any = await request.get(`/v1/qt/inspection/${row.id}/items`)
+    detailViewItems.value = res.data || []
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '获取检查项明细失败')
+  }
+  detailViewVisible.value = true
+}
+
 // 提交通用质检（通过/不通过）
 async function handleInspectSubmit() {
+  const { taskId, result, remark } = inspectForm.value
+  if (result !== 'PASS' && !remark?.trim()) {
+    ElMessage.warning('不通过时备注必填，请填写原因')
+    return
+  }
   try {
-    const { taskId, result, remark } = inspectForm.value
     // 生产接口内已同步：任务状态 + 留样 + qt_inspection，勿再调 /v1/qt/inspect（旧版会重复留样）
     await request.post(`/v1/prod/tasks/${taskId}/quality`, {
       result,
@@ -398,6 +464,10 @@ async function handleReworkSubmit() {
     ElMessage.warning('请选择返工节点')
     return
   }
+  if (!reworkForm.value.remark?.trim()) {
+    ElMessage.warning('返工原因必填')
+    return
+  }
   try {
     const { taskId, reworkNode, remark } = reworkForm.value
     await request.post(`/v1/prod/tasks/${taskId}/quality`, {
@@ -433,6 +503,10 @@ async function handleDetailInspectSubmit() {
   const form = detailInspectForm.value
   if (form.result === 'REWORK' && !form.reworkNode) {
     ElMessage.warning('请选择返工节点')
+    return
+  }
+  if (form.result !== 'PASS' && !form.remark?.trim()) {
+    ElMessage.warning('不通过/返工/报废时总体备注必填')
     return
   }
   try {
