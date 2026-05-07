@@ -233,7 +233,6 @@ function monitorStatusLabel(status?: number) {
   if (status === 1) return '计划中'
   if (status === 2) return '运行中'
   if (status === 3) return '已超时'
-  if (status === 4) return '已完成'
   return `状态${status}`
 }
 
@@ -242,7 +241,6 @@ function monitorStatusTag(status?: number) {
   if (status === 1) return 'success'
   if (status === 2) return 'warning'
   if (status === 3) return 'danger'
-  if (status === 4) return 'info'
   return 'info'
 }
 

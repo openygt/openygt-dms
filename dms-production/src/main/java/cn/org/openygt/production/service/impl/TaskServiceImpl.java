@@ -57,8 +57,8 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Task startSoak(Long taskId, String operatorId) {
         Task task = getTaskOrThrow(taskId);
-        assertStatus(task, TaskStatus.WAIT_SOAK.getLabel());
-        transition(task, TaskStatus.SOAKING.getLabel(), operatorId, "开始泡药");
+        assertStatus(task, TaskStatus.WAIT_SOAK.getCode());
+        transition(task, TaskStatus.SOAKING.getCode(), operatorId, "开始泡药");
         task.setSoakStartTime(LocalDateTime.now());
         taskMapper.updateById(task);
         recordWork(taskId, operatorId, null, "SOAK", 0);
@@ -74,8 +74,8 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Task endSoak(Long taskId, String operatorId) {
         Task task = getTaskOrThrow(taskId);
-        assertStatus(task, TaskStatus.SOAKING.getLabel());
-        transition(task, TaskStatus.WAIT_DECOCT.getLabel(), operatorId, "泡药结束");
+        assertStatus(task, TaskStatus.SOAKING.getCode());
+        transition(task, TaskStatus.WAIT_DECOCT.getCode(), operatorId, "泡药结束");
         task.setSoakEndTime(LocalDateTime.now());
         int duration = calculateDuration(task.getSoakStartTime(), task.getSoakEndTime());
         task.setCurrentStageDuration(duration);
@@ -90,7 +90,7 @@ public class TaskServiceImpl implements TaskService {
     public Task startDecoct(Long taskId, String deviceCode, String operatorId) {
         Task task = taskMapper.selectByIdForUpdate(taskId);
         if (task == null) throw new IllegalArgumentException("任务不存在");
-        assertStatus(task, TaskStatus.WAIT_DECOCT.getLabel());
+        assertStatus(task, TaskStatus.WAIT_DECOCT.getCode());
         Long deviceId = equipmentService.getDeviceId(deviceCode);
         if (deviceId == null) {
             EqDeviceDTO created = equipmentService.getOrCreateDevice(deviceCode, 1);
@@ -101,7 +101,7 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalStateException("设备不是空闲状态，无法绑定");
         }
         equipmentService.updateDeviceStatus(deviceId, "running");
-        transition(task, TaskStatus.DECOCTING.getLabel(), operatorId, "开始煎药，绑定设备: " + deviceCode);
+        transition(task, TaskStatus.DECOCTING.getCode(), operatorId, "开始煎药，绑定设备: " + deviceCode);
         task.setDecoctDeviceId(deviceId);
         task.setDecoctStartTime(LocalDateTime.now());
         task.setCurrentStageDuration(0);
@@ -115,8 +115,8 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Task endDecoct(Long taskId, String operatorId) {
         Task task = getTaskOrThrow(taskId);
-        assertStatus(task, TaskStatus.DECOCTING.getLabel());
-        transition(task, TaskStatus.WAIT_POUR.getLabel(), operatorId, "煎药结束");
+        assertStatus(task, TaskStatus.DECOCTING.getCode());
+        transition(task, TaskStatus.WAIT_POUR.getCode(), operatorId, "煎药结束");
         task.setDecoctEndTime(LocalDateTime.now());
         int duration = calculateDuration(task.getDecoctStartTime(), task.getDecoctEndTime());
         task.setCurrentStageDuration(duration);
@@ -139,8 +139,8 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Task startPour(Long taskId, String operatorId) {
         Task task = getTaskOrThrow(taskId);
-        assertStatus(task, TaskStatus.WAIT_POUR.getLabel());
-        transition(task, TaskStatus.POURING.getLabel(), operatorId, "开始出液");
+        assertStatus(task, TaskStatus.WAIT_POUR.getCode());
+        transition(task, TaskStatus.POURING.getCode(), operatorId, "开始出液");
         task.setPourStartTime(LocalDateTime.now());
         task.setCurrentStageDuration(0);
         taskMapper.updateById(task);
@@ -152,8 +152,8 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Task endPour(Long taskId, String operatorId) {
         Task task = getTaskOrThrow(taskId);
-        assertStatus(task, TaskStatus.POURING.getLabel());
-        transition(task, TaskStatus.WAIT_WRAP.getLabel(), operatorId, "出液结束");
+        assertStatus(task, TaskStatus.POURING.getCode());
+        transition(task, TaskStatus.WAIT_WRAP.getCode(), operatorId, "出液结束");
         task.setPourEndTime(LocalDateTime.now());
         int duration = calculateDuration(task.getPourStartTime(), task.getPourEndTime());
         task.setCurrentStageDuration(duration);
@@ -174,7 +174,7 @@ public class TaskServiceImpl implements TaskService {
     public Task startWrap(Long taskId, String deviceCode, String operatorId) {
         Task task = taskMapper.selectByIdForUpdate(taskId);
         if (task == null) throw new IllegalArgumentException("任务不存在");
-        assertStatus(task, TaskStatus.WAIT_WRAP.getLabel());
+        assertStatus(task, TaskStatus.WAIT_WRAP.getCode());
         Long deviceId = null;
         // 若未传入设备编码（如测试环境或尚未绑定包装机），跳过设备锁定直接推进状态
         if (deviceCode != null && !deviceCode.trim().isEmpty()) {
@@ -192,10 +192,10 @@ public class TaskServiceImpl implements TaskService {
                 throw new IllegalStateException("包装机不是空闲状态，无法绑定");
             }
             equipmentService.updateDeviceStatus(deviceId, "running");
-            transition(task, TaskStatus.WRAPPING.getLabel(), operatorId, "开始包装，绑定包装机: " + deviceCode);
+            transition(task, TaskStatus.WRAPPING.getCode(), operatorId, "开始包装，绑定包装机: " + deviceCode);
             task.setPackageDeviceId(deviceId);
         } else {
-            transition(task, TaskStatus.WRAPPING.getLabel(), operatorId, "开始包装（未绑定设备）");
+            transition(task, TaskStatus.WRAPPING.getCode(), operatorId, "开始包装（未绑定设备）");
         }
         task.setWrapStartTime(LocalDateTime.now());
         task.setCurrentStageDuration(0);
@@ -209,8 +209,8 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Task endWrap(Long taskId, String operatorId) {
         Task task = getTaskOrThrow(taskId);
-        assertStatus(task, TaskStatus.WRAPPING.getLabel());
-        transition(task, TaskStatus.WAIT_LABEL.getLabel(), operatorId, "包装结束");
+        assertStatus(task, TaskStatus.WRAPPING.getCode());
+        transition(task, TaskStatus.WAIT_LABEL.getCode(), operatorId, "包装结束");
         task.setWrapEndTime(LocalDateTime.now());
         int duration = calculateDuration(task.getWrapStartTime(), task.getWrapEndTime());
         task.setCurrentStageDuration(duration);
@@ -227,8 +227,8 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Task confirmLabel(Long taskId, String operatorId) {
         Task task = getTaskOrThrow(taskId);
-        assertStatus(task, TaskStatus.WAIT_LABEL.getLabel());
-        transition(task, TaskStatus.WAIT_QC.getLabel(), operatorId, "贴标完成");
+        assertStatus(task, TaskStatus.WAIT_LABEL.getCode());
+        transition(task, TaskStatus.WAIT_QC.getCode(), operatorId, "贴标完成");
         taskMapper.updateById(task);
         createStepLog(taskId, "LABEL", null, operatorId, null);
         closeLastStepLog(taskId, "LABEL", "正常", null);
@@ -239,7 +239,7 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Task qualityInspect(Long taskId, InspectionResultType result, String operatorId, String remark, String reworkNode) {
         Task task = getTaskOrThrow(taskId);
-        assertStatus(task, TaskStatus.WAIT_QC.getLabel());
+        assertStatus(task, TaskStatus.WAIT_QC.getCode());
         // 任务状态与质检台账在同一事务内提交；台账写入失败则整单回滚
         qualityService.inspect(taskId, result, operatorId, remark, reworkNode);
         doQualityInspect(task, result, operatorId, remark, reworkNode);
@@ -255,7 +255,7 @@ public class TaskServiceImpl implements TaskService {
     public Task qualityInspectWithItems(Long taskId, InspectionResultType result, String operatorId, String remark,
                                         String reworkNode, List<cn.org.openygt.common.dto.InspectionItemDTO> items) {
         Task task = getTaskOrThrow(taskId);
-        assertStatus(task, TaskStatus.WAIT_QC.getLabel());
+        assertStatus(task, TaskStatus.WAIT_QC.getCode());
         // 先写完整质检台账（含检查项），失败则整单回滚，避免任务已推进但台账缺失
         qualityService.inspectWithItems(taskId, result, operatorId, remark, reworkNode, items);
         doQualityInspect(task, result, operatorId, remark, reworkNode);
@@ -270,7 +270,7 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Task handover(Long taskId, Integer bagCount, String handoverType, String handoverUser, String remark, Boolean isFinal) {
         Task task = getTaskOrThrow(taskId);
-        if (!TaskStatus.WAIT_HANDOVER.getLabel().equals(task.getStatus()) && !TaskStatus.PARTIAL_COMPLETED.getLabel().equals(task.getStatus()) && !TaskStatus.COMPLETED.getLabel().equals(task.getStatus())) {
+        if (!TaskStatus.WAIT_HANDOVER.getCode().equals(task.getStatus()) && !TaskStatus.PARTIAL_COMPLETED.getCode().equals(task.getStatus()) && !TaskStatus.COMPLETED.getCode().equals(task.getStatus())) {
             throw new IllegalStateException("任务不在待交接状态，当前状态: " + task.getStatus());
         }
         HandoverDetail detail = new HandoverDetail();
@@ -287,7 +287,7 @@ public class TaskServiceImpl implements TaskService {
         task.setHandoverTime(LocalDateTime.now());
 
         boolean finalFlag = isFinal != null && isFinal;
-        String targetStatus = finalFlag ? TaskStatus.COMPLETED.getLabel() : TaskStatus.PARTIAL_COMPLETED.getLabel();
+        String targetStatus = finalFlag ? TaskStatus.COMPLETED.getCode() : TaskStatus.PARTIAL_COMPLETED.getCode();
         transition(task, targetStatus, handoverUser, "扫码交接: " + handoverType + ", 袋数=" + bagCount + (finalFlag ? " (完成)" : " (部分)"));
         if (finalFlag) {
             task.setCompleteTime(LocalDateTime.now());
@@ -344,7 +344,7 @@ public class TaskServiceImpl implements TaskService {
     public Task bindDevice(Long taskId, String deviceCode) {
         Task task = taskMapper.selectByIdForUpdate(taskId);
         if (task == null) throw new IllegalArgumentException("任务不存在");
-        if (!TaskStatus.WAIT_SOAK.getLabel().equals(task.getStatus()) && !TaskStatus.WAIT_DECOCT.getLabel().equals(task.getStatus())) {
+        if (!TaskStatus.WAIT_SOAK.getCode().equals(task.getStatus()) && !TaskStatus.WAIT_DECOCT.getCode().equals(task.getStatus())) {
             throw new IllegalStateException("任务状态不允许绑定设备");
         }
         Long deviceId;
@@ -364,7 +364,7 @@ public class TaskServiceImpl implements TaskService {
         equipmentService.updateDeviceStatus(deviceId, "running");
         String fromStatus = task.getStatus();
         task.setDecoctDeviceId(deviceId);
-        task.setStatus(TaskStatus.WAIT_DECOCT.getLabel().equals(fromStatus) ? TaskStatus.DECOCTING.getLabel() : TaskStatus.WAIT_DECOCT.getLabel());
+        task.setStatus(TaskStatus.WAIT_DECOCT.getCode().equals(fromStatus) ? TaskStatus.DECOCTING.getCode() : TaskStatus.WAIT_DECOCT.getCode());
         taskMapper.updateById(task);
         recordHistory(taskId, fromStatus, task.getStatus(), null, "绑定设备: " + deviceCode);
         return task;
@@ -440,9 +440,9 @@ public class TaskServiceImpl implements TaskService {
                         .last("LIMIT 1"));
         if (task == null) return null;
         task.setCurrentTemp(temperature);
-        if (TaskStatus.WAIT_DECOCT.getLabel().equals(task.getStatus())) {
-            task.setStatus(TaskStatus.DECOCTING.getLabel());
-            recordHistory(task.getId(), TaskStatus.WAIT_DECOCT.getLabel(), TaskStatus.DECOCTING.getLabel(), null, "温度上报自动推进");
+        if (TaskStatus.WAIT_DECOCT.getCode().equals(task.getStatus())) {
+            task.setStatus(TaskStatus.DECOCTING.getCode());
+            recordHistory(task.getId(), TaskStatus.WAIT_DECOCT.getCode(), TaskStatus.DECOCTING.getCode(), null, "温度上报自动推进");
         }
         taskMapper.updateById(task);
         equipmentService.updateTemperature(deviceId, temperature);
@@ -469,7 +469,7 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public List<Task> queryPrintTasks(String printStatus) {
         LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(Task::getStatus, TaskStatus.WAIT_LABEL.getLabel());
+        wrapper.eq(Task::getStatus, TaskStatus.WAIT_LABEL.getCode());
         if (printStatus != null && !printStatus.isEmpty()) {
             wrapper.eq(Task::getPrintStatus, printStatus);
         } else {
@@ -483,7 +483,7 @@ public class TaskServiceImpl implements TaskService {
     @Transactional
     public Task printLabel(Long taskId, String deviceCode, String operatorId) {
         Task task = getTaskOrThrow(taskId);
-        assertStatus(task, TaskStatus.WAIT_LABEL.getLabel());
+        assertStatus(task, TaskStatus.WAIT_LABEL.getCode());
         printService.submitPrintTask(taskId, deviceCode, operatorId);
         // 打印状态由 dms-print 维护，通过 SPI 反查
         String printStatus = printService.getPrintStatus(taskId);
@@ -492,7 +492,7 @@ public class TaskServiceImpl implements TaskService {
         Long deviceId = equipmentService.getDeviceId(deviceCode);
         task.setPrintDeviceId(deviceId);
         taskMapper.updateById(task);
-        recordHistory(taskId, TaskStatus.WAIT_LABEL.getLabel(), "PRINTED", operatorId, "打印标签成功，打印机: " + deviceCode);
+        recordHistory(taskId, TaskStatus.WAIT_LABEL.getCode(), "PRINTED", operatorId, "打印标签成功，打印机: " + deviceCode);
         return task;
     }
 
@@ -529,13 +529,13 @@ public class TaskServiceImpl implements TaskService {
         Task task = getTaskOrThrow(taskId);
         String oldStatus = task.getStatus();
         LocalDateTime now = LocalDateTime.now();
-        if (TaskStatus.DECOCTING.getLabel().equals(targetStatus) && deviceCode != null && !deviceCode.isEmpty()) {
+        if (TaskStatus.DECOCTING.getCode().equals(targetStatus) && deviceCode != null && !deviceCode.isEmpty()) {
             EqDeviceDTO created = equipmentService.getOrCreateDevice(deviceCode, 1);
             Long devId = created != null ? created.getId() : equipmentService.getDeviceId(deviceCode);
             equipmentService.updateDeviceStatus(devId, "running");
             task.setDecoctDeviceId(devId);
             task.setDecoctStartTime(now);
-        } else if (TaskStatus.WRAPPING.getLabel().equals(targetStatus) && deviceCode != null && !deviceCode.isEmpty()) {
+        } else if (TaskStatus.WRAPPING.getCode().equals(targetStatus) && deviceCode != null && !deviceCode.isEmpty()) {
             EqDeviceDTO created = equipmentService.getOrCreateDevice(deviceCode, 2);
             Long devId = created != null ? created.getId() : equipmentService.getDeviceId(deviceCode);
             equipmentService.updateDeviceStatus(devId, "running");
@@ -627,15 +627,15 @@ public class TaskServiceImpl implements TaskService {
     private void doQualityInspect(Task task, InspectionResultType result, String operatorId, String remark, String reworkNode) {
         switch (result) {
             case PASS:
-                transition(task, TaskStatus.WAIT_HANDOVER.getLabel(), operatorId, "质检通过" + (remark != null ? ": " + remark : ""));
+                transition(task, TaskStatus.WAIT_HANDOVER.getCode(), operatorId, "质检通过" + (remark != null ? ": " + remark : ""));
                 break;
             case CONCESSION:
-                transition(task, TaskStatus.WAIT_HANDOVER.getLabel(), operatorId, "质检让步放行" + (remark != null ? ": " + remark : ""));
+                transition(task, TaskStatus.WAIT_HANDOVER.getCode(), operatorId, "质检让步放行" + (remark != null ? ": " + remark : ""));
                 task.setIsException(1);
                 task.setExceptionReason(remark);
                 break;
             case REWORK:
-                String targetStatus = reworkNode != null && !reworkNode.isEmpty() ? reworkNode : TaskStatus.WAIT_DECOCT.getLabel();
+                String targetStatus = reworkNode != null && !reworkNode.isEmpty() ? reworkNode : TaskStatus.WAIT_DECOCT.getCode();
                 transition(task, targetStatus, operatorId, "质检返工→" + targetStatus + (remark != null ? ": " + remark : ""));
                 // 返工预留设备：防止返工任务无设备可用（设备若已 IDLE 则预留，若仍 RUNNING 则保持）
                 if (task.getDecoctDeviceId() != null) {
@@ -646,7 +646,7 @@ public class TaskServiceImpl implements TaskService {
                 }
                 break;
             case SCRAP:
-                transition(task, TaskStatus.SCRAPPED.getLabel(), operatorId, "质检报废" + (remark != null ? ": " + remark : ""));
+                transition(task, TaskStatus.SCRAPPED.getCode(), operatorId, "质检报废" + (remark != null ? ": " + remark : ""));
                 task.setIsException(1);
                 task.setExceptionReason(remark);
                 break;
@@ -731,7 +731,7 @@ public class TaskServiceImpl implements TaskService {
         task.setSuspendedFrom(currentStatus);
         task.setSuspendReason(reason);
         task.setSuspendTime(LocalDateTime.now());
-        transition(task, TaskStatus.SUSPENDED.getLabel(), operatorId, "挂起任务: " + reason);
+        transition(task, TaskStatus.SUSPENDED.getCode(), operatorId, "挂起任务: " + reason);
         
         // 释放设备
         if (task.getDecoctDeviceId() != null) {
@@ -774,7 +774,7 @@ public class TaskServiceImpl implements TaskService {
             throw new IllegalArgumentException("任务不存在");
         }
         String st = task.getStatus();
-        if (TaskStatus.COMPLETED.getLabel().equals(st) || TaskStatus.SCRAPPED.getLabel().equals(st)) {
+        if (TaskStatus.COMPLETED.getCode().equals(st) || TaskStatus.SCRAPPED.getCode().equals(st)) {
             throw new IllegalStateException("已完成或已报废任务不能改派操作人");
         }
         String oldOp = task.getOperatorId();

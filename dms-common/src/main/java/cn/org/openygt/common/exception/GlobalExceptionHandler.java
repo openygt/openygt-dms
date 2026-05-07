@@ -44,6 +44,16 @@ public class GlobalExceptionHandler {
         return ApiResponse.error(409, e.getMessage());
     }
 
+    /**
+     * 业务异常（第一批 ErrorCode 框架示范）
+     */
+    @ExceptionHandler(BusinessException.class)
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<?> handleBusinessException(BusinessException e) {
+        log.warn("业务异常 [{}]: {}", e.getErrorCode().getCode(), e.getMessage());
+        return ApiResponse.error(e.getErrorCode().getCode(), e.getMessage());
+    }
+
     @ExceptionHandler(UnauthorizedException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ApiResponse<?> handleUnauthorized(UnauthorizedException e) {

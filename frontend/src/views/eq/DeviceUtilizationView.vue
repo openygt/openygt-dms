@@ -134,7 +134,7 @@ function formatMinutes(mins: number) {
 }
 
 function exportData() {
-  ElMessage.success('导出功能开发中')
+  ElMessage.info('敬请期待')
 }
 
 async function loadDeviceOptions() {

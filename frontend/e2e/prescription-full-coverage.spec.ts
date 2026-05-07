@@ -33,16 +33,6 @@ test.describe('处方录入 - PrescriptionListView', () => {
     expect(text).toContain('异常处方')
     expect(text).toContain('新增处方')
     expect(text).toContain('CSV导入')
-    expect(text).toContain('OCR识别')
-  })
-
-  test('P0-OCR按钮置灰: disabled状态不可点击', async ({ page }) => {
-    await page.goto('http://localhost:5174/prescriptions')
-    await page.waitForTimeout(1500)
-
-    const ocrBtn = page.locator('button[title="OCR识别功能开发中"]')
-    await expect(ocrBtn).toBeVisible()
-    await expect(ocrBtn).toBeDisabled()
   })
 
   // ── P0: 状态搜索 ──

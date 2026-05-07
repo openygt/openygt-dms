@@ -7,7 +7,9 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 权限拦截器。
@@ -16,6 +18,24 @@ import java.util.List;
  * <p>无数据权限计算，仅做角色字符串匹配。</p>
  */
 public class PermissionInterceptor implements HandlerInterceptor {
+
+    /**
+     * 权限码兼容映射：新权限码 → 旧权限码
+     * <p>第一批治理期间，后端同时接受新旧权限码，确保切换期间不中断。</p>
+     */
+    private static final Map<String, String> PERMISSION_COMPAT_MAP = new HashMap<>();
+    static {
+        PERMISSION_COMPAT_MAP.put("eq:device:view", "eq:device:list");
+        PERMISSION_COMPAT_MAP.put("eq:device:view:mine", "eq:device:list:mine");
+        PERMISSION_COMPAT_MAP.put("prod:prescription:view", "prod:prescription:list");
+        PERMISSION_COMPAT_MAP.put("qt:inspect:view", "qt:inspect:list");
+        PERMISSION_COMPAT_MAP.put("sys:user:view", "sys:user:list");
+        PERMISSION_COMPAT_MAP.put("sys:role:view", "sys:role:list");
+        PERMISSION_COMPAT_MAP.put("sys:menu:view", "sys:menu:list");
+        PERMISSION_COMPAT_MAP.put("sys:config:view", "sys:config:list");
+        PERMISSION_COMPAT_MAP.put("sys:log:view", "sys:log:list");
+        PERMISSION_COMPAT_MAP.put("inv:log:view", "inv:log:list");
+    }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -54,6 +74,16 @@ public class PermissionInterceptor implements HandlerInterceptor {
             }
             if (permissions != null && permissions.contains(required)) {
                 return true;
+            }
+            // 兼容旧权限码：如果用户持有旧码，也放行
+            String oldPerm = PERMISSION_COMPAT_MAP.get(required);
+            if (oldPerm != null) {
+                if (roles != null && roles.contains(oldPerm)) {
+                    return true;
+                }
+                if (permissions != null && permissions.contains(oldPerm)) {
+                    return true;
+                }
             }
         }
 

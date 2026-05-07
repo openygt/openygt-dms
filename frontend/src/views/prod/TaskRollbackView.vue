@@ -211,9 +211,9 @@ const taskLoading = ref(false)
 const reasonOptions = ref<any[]>([])
 
 const stageMap: Record<string, string> = {
-  SOAK: '待泡药',
-  DECOCT: '待煎药',
-  PACKAGE: '待包装',
+  SOAK: 'WAIT_SOAK',
+  DECOCT: 'WAIT_DECOCT',
+  PACKAGE: 'WAIT_WRAP',
   QC: '待质检'
 }
 
