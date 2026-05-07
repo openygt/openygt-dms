@@ -4,7 +4,7 @@
       <template #header>
         <div style="display: flex; align-items: center; justify-content: space-between">
           <span>接口中心</span>
-          <el-button type="primary" @click="openDialog()">新增接口</el-button>
+          <el-button type="primary" v-if="userStore.hasPermission('sys:interface:create')" @click="openDialog()">新增接口</el-button>
         </div>
       </template>
 
@@ -43,8 +43,8 @@
         </el-table-column>
         <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
-            <el-button size="small" @click="openDialog(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button size="small" v-if="userStore.hasPermission('sys:interface:update')" @click="openDialog(row)">编辑</el-button>
+            <el-button size="small" type="danger" v-if="userStore.hasPermission('sys:interface:delete')" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -54,7 +54,9 @@
         v-model:current-page="pagination.page"
         v-model:page-size="pagination.size"
         :total="pagination.total"
-        layout="total, prev, pager, next"
+        layout="total, sizes, prev, pager, next"
+        :page-sizes="[10, 20, 50]"
+        @size-change="fetchData"
         @current-change="fetchData"
       />
     </el-card>
@@ -95,21 +97,23 @@
         v-model:current-page="logPagination.page"
         v-model:page-size="logPagination.size"
         :total="logPagination.total"
-        layout="total, prev, pager, next"
+        layout="total, sizes, prev, pager, next"
+        :page-sizes="[10, 20, 50]"
+        @size-change="fetchLogs"
         @current-change="fetchLogs"
       />
     </el-card>
 
     <!-- 新增/编辑弹窗 -->
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px">
-      <el-form :model="form" label-width="100px">
-        <el-form-item label="接口编码" required>
+      <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
+        <el-form-item label="接口编码" prop="interfaceCode">
           <el-input v-model="form.interfaceCode" placeholder="如 HIS_001" />
         </el-form-item>
-        <el-form-item label="接口名称" required>
+        <el-form-item label="接口名称" prop="interfaceName">
           <el-input v-model="form.interfaceName" placeholder="如 HIS处方接口" />
         </el-form-item>
-        <el-form-item label="接口类型" required>
+        <el-form-item label="接口类型" prop="interfaceType">
           <el-select v-model="form.interfaceType" placeholder="请选择" style="width: 100%">
             <el-option label="HIS" value="HIS" />
             <el-option label="设备" value="DEVICE" />
@@ -146,7 +150,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">保存</el-button>
+        <el-button type="primary" :loading="saveLoading" @click="handleSubmit">保存</el-button>
       </template>
     </el-dialog>
   </div>
@@ -155,6 +159,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { FormInstance, FormRules } from 'element-plus'
 import {
   getInterfaceConfigs,
   createInterfaceConfig,
@@ -162,9 +167,13 @@ import {
   deleteInterfaceConfig,
   getInterfaceLogs
 } from '@/api/interfaceCenter'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 const list = ref<any[]>([])
 const loading = ref(false)
+const saveLoading = ref(false)
 const logList = ref<any[]>([])
 const logLoading = ref(false)
 
@@ -178,6 +187,13 @@ const dialogVisible = ref(false)
 const dialogTitle = ref('新增接口')
 const form = ref<any>({ status: 1 })
 const isEdit = ref(false)
+const formRef = ref<FormInstance>()
+
+const rules: FormRules = {
+  interfaceCode: [{ required: true, message: '请输入接口编码', trigger: 'blur' }],
+  interfaceName: [{ required: true, message: '请输入接口名称', trigger: 'blur' }],
+  interfaceType: [{ required: true, message: '请选择接口类型', trigger: 'change' }]
+}
 
 function typeTag(type?: string) {
   if (type === 'HIS') return 'primary'
@@ -202,6 +218,8 @@ async function fetchData() {
     const res: any = await getInterfaceConfigs(params)
     list.value = res.data?.records || []
     pagination.value.total = res.data?.total || 0
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }
@@ -215,6 +233,8 @@ async function fetchLogs() {
     const res: any = await getInterfaceLogs(params)
     logList.value = res.data?.records || []
     logPagination.value.total = res.data?.total || 0
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '查询日志失败')
   } finally {
     logLoading.value = false
   }
@@ -242,13 +262,17 @@ function openDialog(row?: any) {
     form.value = { status: 1 }
   }
   dialogVisible.value = true
+  if (formRef.value) {
+    formRef.value.clearValidate()
+  }
 }
 
 async function handleSubmit() {
-  if (!form.value.interfaceCode || !form.value.interfaceName || !form.value.interfaceType) {
-    ElMessage.warning('请填写必填项')
-    return
-  }
+  if (!formRef.value) return
+  const valid = await formRef.value.validate().catch(() => false)
+  if (!valid) return
+
+  saveLoading.value = true
   try {
     if (isEdit.value) {
       await updateInterfaceConfig(form.value.id, form.value)
@@ -259,7 +283,11 @@ async function handleSubmit() {
     }
     dialogVisible.value = false
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '保存失败')
+  } finally {
+    saveLoading.value = false
+  }
 }
 
 async function handleDelete(row: any) {
@@ -268,7 +296,11 @@ async function handleDelete(row: any) {
     await deleteInterfaceConfig(row.id)
     ElMessage.success('删除成功')
     fetchData()
-  } catch (e) {}
+  } catch (e: any) {
+    if (e !== 'cancel') {
+      ElMessage.error(e?.response?.data?.message || '删除失败')
+    }
+  }
 }
 
 onMounted(() => {
