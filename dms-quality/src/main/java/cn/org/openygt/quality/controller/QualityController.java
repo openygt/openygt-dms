@@ -12,6 +12,7 @@ import cn.org.openygt.quality.entity.InspectionItem;
 import cn.org.openygt.quality.service.QualityServiceImpl;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,7 @@ import java.util.Map;
  *
  * <p>API 前缀: /api/v1/qt</p>
  */
+@Slf4j
 @RestController
 @RequestMapping(QualityController.API_PREFIX)
 @RequiredArgsConstructor
@@ -46,6 +48,7 @@ public class QualityController {
             @RequestParam(required = false) String operatorId,
             @RequestParam(required = false) String remark,
             @RequestParam(required = false) String reworkNode) {
+        log.warn("调用已废弃的质检接口 /api/v1/qt/inspect, taskId={}, result={}, operatorId={}。请使用生产模块的 POST /v1/prod/tasks/{id}/quality", taskId, result, operatorId);
         return ApiResponse.success(qualityService.inspect(taskId, result, operatorId, remark, reworkNode));
     }
 
@@ -124,10 +127,20 @@ public class QualityController {
     private LocalDateTime parseDateTime(String s) {
         if (s == null || s.trim().isEmpty()) return null;
         try {
-            return LocalDateTime.parse(s.replace(" ", "T"));
+            String trimmed = s.trim();
+            if (trimmed.contains("T")) {
+                return LocalDateTime.parse(trimmed);
+            } else if (trimmed.contains(" ")) {
+                return LocalDateTime.parse(trimmed.replace(" ", "T"));
+            } else if (trimmed.length() == 10) { // YYYY-MM-DD
+                return java.time.LocalDate.parse(trimmed).atStartOfDay();
+            } else if (trimmed.length() == 19) { // YYYY-MM-DD HH:mm:ss
+                return LocalDateTime.parse(trimmed.replace(" ", "T"));
+            }
         } catch (Exception e) {
-            return null;
+            log.warn("日期解析失败: {}", s);
         }
+        return null;
     }
 
     /**
