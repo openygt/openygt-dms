@@ -2,6 +2,7 @@ package cn.org.openygt.production.service.impl;
 
 import cn.org.openygt.common.dto.EqDeviceDTO;
 import cn.org.openygt.common.service.EquipmentService;
+import cn.org.openygt.equipment.enums.DeviceDetailStatus;
 import cn.org.openygt.production.dto.DeviceLoadDTO;
 import cn.org.openygt.production.dto.EmployeeLoadDTO;
 import cn.org.openygt.system.entity.SysUser;

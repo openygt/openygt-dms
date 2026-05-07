@@ -91,11 +91,15 @@ async function saveSettings() {
 }
 
 async function testVoice() {
-  await tts({
-    text: '煎药任务分配成功，请前往指定设备执行任务。',
-    deviceId: form.deviceId || undefined
-  })
-  ElMessage.success('语音测试已发送')
+  try {
+    await tts({
+      text: '煎药任务分配成功，请前往指定设备执行任务。',
+      deviceId: form.deviceId || undefined
+    })
+    ElMessage.success('语音测试已发送')
+  } catch (e: any) {
+    ElMessage.error('语音服务未连接：' + (e?.message || '请检查语音设备'))
+  }
 }
 
 onMounted(loadSettings)

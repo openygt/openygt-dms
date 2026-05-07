@@ -32,7 +32,7 @@ public class EmergencyDispatcher {
     private Task findInterruptibleTask() {
         return taskMapper.selectOne(
                 new LambdaQueryWrapper<Task>()
-                        .eq(Task::getStatus, "泡药中")
+                        .eq(Task::getStatus, cn.org.openygt.common.enums.TaskStatus.SOAKING.getLabel())
                         .isNotNull(Task::getDecoctDeviceId)
                         .apply("TIMESTAMPDIFF(MINUTE, soak_start_time, NOW()) < soak_duration * 0.5")
                         .orderByAsc(Task::getSoakStartTime)

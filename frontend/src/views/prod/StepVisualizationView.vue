@@ -344,7 +344,8 @@ function handleTaskChange(taskId: number | undefined) {
 
 // 聚焦任务选择框
 function focusTaskSelect() {
-  // 下拉框会自动展开
+  // 触发任务搜索加载选项并展开下拉
+  searchTasks('')
 }
 
 // 点击步骤
