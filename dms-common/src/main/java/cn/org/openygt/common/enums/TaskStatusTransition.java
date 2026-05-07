@@ -5,48 +5,55 @@ import java.util.*;
 /**
  * 任务状态转换守卫。
  * <p>定义合法的状态流转路径，禁止任意跳转。</p>
+ * <p>所有状态编码统一使用英文 UPPER_SNAKE_CASE。</p>
  */
 public class TaskStatusTransition {
 
     // 正常推进路径（不可逆）
     private static final Map<String, List<String>> NORMAL_PATH = new HashMap<>();
     static {
-        NORMAL_PATH.put("待泡药", Arrays.asList("泡药中"));
-        NORMAL_PATH.put("泡药中", Arrays.asList("待煎药"));
-        NORMAL_PATH.put("待煎药", Arrays.asList("煎药中"));
-        NORMAL_PATH.put("煎药中", Arrays.asList("待出液"));
-        NORMAL_PATH.put("待出液", Arrays.asList("出液中"));
-        NORMAL_PATH.put("出液中", Arrays.asList("待包装"));
-        NORMAL_PATH.put("待包装", Arrays.asList("包装中"));
-        NORMAL_PATH.put("包装中", Arrays.asList("待质检"));           // WAIT_LABEL 已合并，兼容旧版保留待贴标映射
-        NORMAL_PATH.put("待贴标", Arrays.asList("待质检"));           // 兼容历史数据
-        NORMAL_PATH.put("待质检", Arrays.asList("已暂存", "待煎药", "已报废", "待二次判定")); // PASS/返工/报废/FAIL
-        NORMAL_PATH.put("已暂存", Arrays.asList("待交接"));
-        NORMAL_PATH.put("待交接", Arrays.asList("已完成", "已部分完成"));
-        NORMAL_PATH.put("已部分完成", Arrays.asList("已完成"));
-        NORMAL_PATH.put("待二次判定", Arrays.asList("已暂存", "已报废", "待煎药")); // 主任判定：放行/报废/返工
+        NORMAL_PATH.put(TaskStatus.WAIT_SOAK.getCode(), Arrays.asList(TaskStatus.SOAKING.getCode()));
+        NORMAL_PATH.put(TaskStatus.SOAKING.getCode(), Arrays.asList(TaskStatus.WAIT_DECOCT.getCode()));
+        NORMAL_PATH.put(TaskStatus.WAIT_DECOCT.getCode(), Arrays.asList(TaskStatus.DECOCTING.getCode()));
+        NORMAL_PATH.put(TaskStatus.DECOCTING.getCode(), Arrays.asList(TaskStatus.WAIT_POUR.getCode()));
+        NORMAL_PATH.put(TaskStatus.WAIT_POUR.getCode(), Arrays.asList(TaskStatus.POURING.getCode()));
+        NORMAL_PATH.put(TaskStatus.POURING.getCode(), Arrays.asList(TaskStatus.WAIT_WRAP.getCode()));
+        NORMAL_PATH.put(TaskStatus.WAIT_WRAP.getCode(), Arrays.asList(TaskStatus.WRAPPING.getCode()));
+        NORMAL_PATH.put(TaskStatus.WRAPPING.getCode(), Arrays.asList(TaskStatus.WAIT_QC.getCode()));
+        NORMAL_PATH.put(TaskStatus.WAIT_LABEL.getCode(), Arrays.asList(TaskStatus.WAIT_QC.getCode()));
+        NORMAL_PATH.put(TaskStatus.WAIT_QC.getCode(), Arrays.asList(
+            TaskStatus.STORED.getCode(), TaskStatus.WAIT_DECOCT.getCode(), TaskStatus.SCRAPPED.getCode(), TaskStatus.SECOND_JUDGEMENT.getCode()));
+        NORMAL_PATH.put(TaskStatus.STORED.getCode(), Arrays.asList(TaskStatus.WAIT_HANDOVER.getCode()));
+        NORMAL_PATH.put(TaskStatus.WAIT_HANDOVER.getCode(), Arrays.asList(TaskStatus.COMPLETED.getCode(), TaskStatus.PARTIAL_COMPLETED.getCode()));
+        NORMAL_PATH.put(TaskStatus.PARTIAL_COMPLETED.getCode(), Arrays.asList(TaskStatus.COMPLETED.getCode()));
+        NORMAL_PATH.put(TaskStatus.SECOND_JUDGEMENT.getCode(), Arrays.asList(
+            TaskStatus.STORED.getCode(), TaskStatus.SCRAPPED.getCode(), TaskStatus.WAIT_DECOCT.getCode()));
     }
 
     // 回退路径（需审批）
     private static final Map<String, List<String>> ROLLBACK_PATH = new HashMap<>();
     static {
-        ROLLBACK_PATH.put("泡药中", Arrays.asList("待泡药"));
-        ROLLBACK_PATH.put("煎药中", Arrays.asList("待煎药"));
-        ROLLBACK_PATH.put("出液中", Arrays.asList("待出液"));
-        ROLLBACK_PATH.put("包装中", Arrays.asList("待包装"));
-        ROLLBACK_PATH.put("待质检", Arrays.asList("待煎药"));       // 返工
-        ROLLBACK_PATH.put("已暂存", Arrays.asList("待质检"));       // 退回质检
-        ROLLBACK_PATH.put("待交接", Arrays.asList("已暂存"));       // 退回暂存
-        ROLLBACK_PATH.put("已完成", Arrays.asList("已暂存"));       // 召回
-        ROLLBACK_PATH.put("已部分完成", Arrays.asList("已暂存"));
-        ROLLBACK_PATH.put("待二次判定", Arrays.asList("待质检"));   // 退回质检重新判定
+        ROLLBACK_PATH.put(TaskStatus.SOAKING.getCode(), Arrays.asList(TaskStatus.WAIT_SOAK.getCode()));
+        ROLLBACK_PATH.put(TaskStatus.DECOCTING.getCode(), Arrays.asList(TaskStatus.WAIT_DECOCT.getCode()));
+        ROLLBACK_PATH.put(TaskStatus.POURING.getCode(), Arrays.asList(TaskStatus.WAIT_POUR.getCode()));
+        ROLLBACK_PATH.put(TaskStatus.WRAPPING.getCode(), Arrays.asList(TaskStatus.WAIT_WRAP.getCode()));
+        ROLLBACK_PATH.put(TaskStatus.WAIT_QC.getCode(), Arrays.asList(TaskStatus.WAIT_DECOCT.getCode()));
+        ROLLBACK_PATH.put(TaskStatus.STORED.getCode(), Arrays.asList(TaskStatus.WAIT_QC.getCode()));
+        ROLLBACK_PATH.put(TaskStatus.WAIT_HANDOVER.getCode(), Arrays.asList(TaskStatus.STORED.getCode()));
+        ROLLBACK_PATH.put(TaskStatus.COMPLETED.getCode(), Arrays.asList(TaskStatus.STORED.getCode()));
+        ROLLBACK_PATH.put(TaskStatus.PARTIAL_COMPLETED.getCode(), Arrays.asList(TaskStatus.STORED.getCode()));
+        ROLLBACK_PATH.put(TaskStatus.SECOND_JUDGEMENT.getCode(), Arrays.asList(TaskStatus.WAIT_QC.getCode()));
     }
 
     // 挂起路径：运行中状态 → 已挂起
     private static final Set<String> RUNNING_STATES = Collections.unmodifiableSet(
         new HashSet<>(Arrays.asList(
-            "待泡药", "泡药中", "待煎药", "煎药中", "待出液", "出液中",
-            "待包装", "包装中", "待贴标", "待质检", "已暂存", "待交接"
+            TaskStatus.WAIT_SOAK.getCode(), TaskStatus.SOAKING.getCode(),
+            TaskStatus.WAIT_DECOCT.getCode(), TaskStatus.DECOCTING.getCode(),
+            TaskStatus.WAIT_POUR.getCode(), TaskStatus.POURING.getCode(),
+            TaskStatus.WAIT_WRAP.getCode(), TaskStatus.WRAPPING.getCode(),
+            TaskStatus.WAIT_LABEL.getCode(), TaskStatus.WAIT_QC.getCode(),
+            TaskStatus.STORED.getCode(), TaskStatus.WAIT_HANDOVER.getCode()
         ))
     );
 
@@ -110,7 +117,7 @@ public class TaskStatusTransition {
      * 校验恢复操作是否合法
      */
     public static void validateResume(String from, String suspendedFrom) {
-        if (!"已挂起".equals(from)) {
+        if (!TaskStatus.SUSPENDED.getCode().equals(from)) {
             throw new IllegalStateException("非法恢复操作：当前状态不是已挂起");
         }
         if (suspendedFrom == null || suspendedFrom.isEmpty()) {

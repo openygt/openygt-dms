@@ -165,7 +165,7 @@ function getEfficiencyColor(eff: number) {
 }
 
 function exportExcel() {
-  ElMessage.success('导出功能开发中')
+  ElMessage.info('敬请期待')
 }
 
 onMounted(() => {

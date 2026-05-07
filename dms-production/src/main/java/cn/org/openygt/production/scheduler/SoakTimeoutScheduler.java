@@ -36,7 +36,7 @@ public class SoakTimeoutScheduler {
             int timeoutMinutes = sysConfigService.getIntValue(CFG_SOAK_TIMEOUT, DEFAULT_SOAK_TIMEOUT_MINUTES);
 
             LambdaQueryWrapper<Task> wrapper = new LambdaQueryWrapper<>();
-            wrapper.eq(Task::getStatus, cn.org.openygt.common.enums.TaskStatus.SOAKING.getLabel());
+            wrapper.eq(Task::getStatus, cn.org.openygt.common.enums.TaskStatus.SOAKING.getCode());
             List<Task> tasks = taskMapper.selectList(wrapper);
 
             LocalDateTime now = LocalDateTime.now();

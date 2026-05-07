@@ -354,10 +354,10 @@ async function openReworkDialog(row: Task) {
     const steps: any[] = res.data || []
     const nodeSet = new Set<string>()
     const nodeMap: Record<string, string> = {
-      'SOAK': '待泡药',
-      'DECOCT': '待煎药',
+      'SOAK': 'WAIT_SOAK',
+      'DECOCT': 'WAIT_DECOCT',
       'POUR': '待出液',
-      'WRAP': '待包装',
+      'WRAP': 'WAIT_WRAP',
       'LABEL': '待贴标'
     }
     steps.forEach((s: any) => {
@@ -375,10 +375,10 @@ async function openReworkDialog(row: Task) {
     }))
   } catch (e) {
     reworkNodes.value = [
-      { label: '待泡药', value: '待泡药' },
-      { label: '待煎药', value: '待煎药' },
+      { label: 'WAIT_SOAK', value: 'WAIT_SOAK' },
+      { label: 'WAIT_DECOCT', value: 'WAIT_DECOCT' },
       { label: '待出液', value: '待出液' },
-      { label: '待包装', value: '待包装' },
+      { label: 'WAIT_WRAP', value: 'WAIT_WRAP' },
       { label: '待贴标', value: '待贴标' }
     ]
   }

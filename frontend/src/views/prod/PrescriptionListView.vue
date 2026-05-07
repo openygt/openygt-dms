@@ -10,7 +10,6 @@
         <div v-if="activeTab === 'list'">
           <el-button type="primary" @click="openCreateDialog()">新增处方</el-button>
           <el-button @click="importDialogVisible = true">CSV导入</el-button>
-          <el-button disabled title="OCR识别功能开发中" @click="ocrDialogVisible = true">OCR识别</el-button>
         </div>
       </div>
 

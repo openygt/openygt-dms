@@ -31,10 +31,14 @@ import java.util.stream.Collectors;
 public class TimeMonitorInitScheduler {
 
     private static final List<String> ACTIVE_TASK_STATUSES = Arrays.asList(
-            "待泡药", "泡药中",
-            "待煎药", "煎药中",
-            "待出液", "出液中",
-            "待包装", "包装中"
+            cn.org.openygt.common.enums.TaskStatus.WAIT_SOAK.getCode(),
+            cn.org.openygt.common.enums.TaskStatus.SOAKING.getCode(),
+            cn.org.openygt.common.enums.TaskStatus.WAIT_DECOCT.getCode(),
+            cn.org.openygt.common.enums.TaskStatus.DECOCTING.getCode(),
+            cn.org.openygt.common.enums.TaskStatus.WAIT_POUR.getCode(),
+            cn.org.openygt.common.enums.TaskStatus.POURING.getCode(),
+            cn.org.openygt.common.enums.TaskStatus.WAIT_WRAP.getCode(),
+            cn.org.openygt.common.enums.TaskStatus.WRAPPING.getCode()
     );
 
     private final TaskAssignmentMapper taskAssignmentMapper;

@@ -241,12 +241,12 @@
             <el-timeline-item
               v-for="item in maintenanceList"
               :key="item.id"
-              :type="item.status === 1 ? 'success' : 'warning'"
+              :type="item.status === 'COMPLETED' ? 'success' : 'warning'"
               :timestamp="item.finishDate || item.planDate"
             >
               <div class="command-item">
                 <span>{{ formatMaintenanceType(item.maintenanceType) }}</span>
-                <el-tag :type="item.status === 1 ? 'success' : 'warning'" size="small">{{ item.status === 1 ? '已完成' : '待执行' }}</el-tag>
+                <el-tag :type="item.status === 'COMPLETED' ? 'success' : 'warning'" size="small">{{ item.status === 'COMPLETED' ? '已完成' : '待执行' }}</el-tag>
               </div>
               <div style="font-size: 12px; color: #666; margin-top: 4px">{{ item.content }}</div>
             </el-timeline-item>
@@ -558,13 +558,8 @@ async function updateTempChart() {
     })
   } catch (err) {
     console.error('加载温度曲线失败', err)
-    // 降级到模拟数据
-    const hours = ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00']
-    const mockTemps = [25, 30, 45, 98, 100, 95, 85]
-    tempChart.setOption({
-      xAxis: { data: hours },
-      series: [{ data: mockTemps }]
-    })
+    // 无数据时显示空态，不再使用模拟数据
+    tempChart.clear()
   }
 }
 

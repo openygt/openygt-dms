@@ -13,49 +13,49 @@ class TaskStatusTransitionTest {
     @DisplayName("正常路径：待泡药 → 泡药中 允许")
     void testNormalSoakToSoaking() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateNormal("待泡药", "泡药中"));
+                TaskStatusTransition.validateNormal(TaskStatus.WAIT_SOAK.getCode(), TaskStatus.SOAKING.getCode()));
     }
 
     @Test
     @DisplayName("正常路径：包装中 → 待质检 允许（V30 WAIT_LABEL合并）")
     void testNormalWrapToQc() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateNormal("包装中", "待质检"));
+                TaskStatusTransition.validateNormal(TaskStatus.WRAPPING.getCode(), TaskStatus.WAIT_QC.getCode()));
     }
 
     @Test
     @DisplayName("正常路径：待质检 → 已暂存 允许（V30 新增）")
     void testNormalQcToStored() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateNormal("待质检", "已暂存"));
+                TaskStatusTransition.validateNormal(TaskStatus.WAIT_QC.getCode(), TaskStatus.STORED.getCode()));
     }
 
     @Test
     @DisplayName("正常路径：已暂存 → 待交接 允许（V30 新增）")
     void testNormalStoredToHandover() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateNormal("已暂存", "待交接"));
+                TaskStatusTransition.validateNormal(TaskStatus.STORED.getCode(), TaskStatus.WAIT_HANDOVER.getCode()));
     }
 
     @Test
     @DisplayName("正常路径：待质检 → 待二次判定 允许（V30 FAIL明确化）")
     void testNormalQcToSecondJudgement() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateNormal("待质检", "待二次判定"));
+                TaskStatusTransition.validateNormal(TaskStatus.WAIT_QC.getCode(), TaskStatus.SECOND_JUDGEMENT.getCode()));
     }
 
     @Test
     @DisplayName("正常路径：待二次判定 → 已暂存 允许")
     void testNormalSecondJudgementToStored() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateNormal("待二次判定", "已暂存"));
+                TaskStatusTransition.validateNormal(TaskStatus.SECOND_JUDGEMENT.getCode(), TaskStatus.STORED.getCode()));
     }
 
     @Test
     @DisplayName("正常路径：已完成 → 待泡药 非法（跨度太大）")
     void testNormalCompletedToSoakIllegal() {
         IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
-                TaskStatusTransition.validateNormal("已完成", "待泡药"));
+                TaskStatusTransition.validateNormal(TaskStatus.COMPLETED.getCode(), TaskStatus.WAIT_SOAK.getCode()));
         assertTrue(ex.getMessage().contains("非法状态转换"));
     }
 
@@ -63,106 +63,106 @@ class TaskStatusTransitionTest {
     @DisplayName("正常路径：待贴标 → 待交接 非法（V30 已合并）")
     void testNormalLabelToHandoverIllegal() {
         assertThrows(IllegalStateException.class, () ->
-                TaskStatusTransition.validateNormal("待贴标", "待交接"));
+                TaskStatusTransition.validateNormal(TaskStatus.WAIT_LABEL.getCode(), TaskStatus.WAIT_HANDOVER.getCode()));
     }
 
     @Test
     @DisplayName("回退路径：煎药中 → 待煎药 允许")
     void testRollbackDecoctingToWaitDecoct() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateRollback("煎药中", "待煎药"));
+                TaskStatusTransition.validateRollback(TaskStatus.DECOCTING.getCode(), TaskStatus.WAIT_DECOCT.getCode()));
     }
 
     @Test
     @DisplayName("回退路径：已暂存 → 待质检 允许（V30 新增）")
     void testRollbackStoredToQc() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateRollback("已暂存", "待质检"));
+                TaskStatusTransition.validateRollback(TaskStatus.STORED.getCode(), TaskStatus.WAIT_QC.getCode()));
     }
 
     @Test
     @DisplayName("回退路径：待交接 → 已暂存 允许（V30 新增）")
     void testRollbackHandoverToStored() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateRollback("待交接", "已暂存"));
+                TaskStatusTransition.validateRollback(TaskStatus.WAIT_HANDOVER.getCode(), TaskStatus.STORED.getCode()));
     }
 
     @Test
     @DisplayName("回退路径：已完成 → 已暂存 允许（V30 召回路径变更）")
     void testRollbackCompletedToStored() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateRollback("已完成", "已暂存"));
+                TaskStatusTransition.validateRollback(TaskStatus.COMPLETED.getCode(), TaskStatus.STORED.getCode()));
     }
 
     @Test
     @DisplayName("回退路径：待质检 → 待泡药 非法（跨度太大）")
     void testRollbackQcToSoakIllegal() {
         assertThrows(IllegalStateException.class, () ->
-                TaskStatusTransition.validateRollback("待质检", "待泡药"));
+                TaskStatusTransition.validateRollback(TaskStatus.WAIT_QC.getCode(), TaskStatus.WAIT_SOAK.getCode()));
     }
 
     @Test
     @DisplayName("状态不变：任意状态 → 自身 允许")
     void testSameStatusAllowed() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateNormal("煎药中", "煎药中"));
+                TaskStatusTransition.validateNormal(TaskStatus.DECOCTING.getCode(), TaskStatus.DECOCTING.getCode()));
     }
 
     @Test
     @DisplayName("空值校验：null 状态抛 IllegalArgumentException")
     void testNullStatusThrows() {
         assertThrows(IllegalArgumentException.class, () ->
-                TaskStatusTransition.validateNormal(null, "煎药中"));
+                TaskStatusTransition.validateNormal(null, TaskStatus.DECOCTING.getCode()));
     }
 
     @Test
     @DisplayName("挂起路径：运行中状态 → 已挂起 允许")
     void testSuspendFromRunning() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateSuspend("煎药中"));
+                TaskStatusTransition.validateSuspend(TaskStatus.DECOCTING.getCode()));
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateSuspend("已暂存"));
+                TaskStatusTransition.validateSuspend(TaskStatus.STORED.getCode()));
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateSuspend("待贴标"));
+                TaskStatusTransition.validateSuspend(TaskStatus.WAIT_LABEL.getCode()));
     }
 
     @Test
     @DisplayName("挂起路径：终态 → 已挂起 非法")
     void testSuspendFromTerminalIllegal() {
         assertThrows(IllegalStateException.class, () ->
-                TaskStatusTransition.validateSuspend("已完成"));
+                TaskStatusTransition.validateSuspend(TaskStatus.COMPLETED.getCode()));
         assertThrows(IllegalStateException.class, () ->
-                TaskStatusTransition.validateSuspend("已报废"));
+                TaskStatusTransition.validateSuspend(TaskStatus.SCRAPPED.getCode()));
     }
 
     @Test
     @DisplayName("恢复路径：已挂起 → 挂起前状态 允许")
     void testResumeFromSuspended() {
         assertDoesNotThrow(() ->
-                TaskStatusTransition.validateResume("已挂起", "煎药中"));
+                TaskStatusTransition.validateResume(TaskStatus.SUSPENDED.getCode(), TaskStatus.DECOCTING.getCode()));
     }
 
     @Test
     @DisplayName("恢复路径：非挂起状态 非法")
     void testResumeFromNonSuspendedIllegal() {
         assertThrows(IllegalStateException.class, () ->
-                TaskStatusTransition.validateResume("煎药中", "煎药中"));
+                TaskStatusTransition.validateResume(TaskStatus.DECOCTING.getCode(), TaskStatus.DECOCTING.getCode()));
     }
 
     @Test
     @DisplayName("查询正常目标：包装中 包含 待质检（V30合并后）")
     void testGetNormalTargetsFromWrapping() {
-        List<String> targets = TaskStatusTransition.getNormalTargets("包装中");
-        assertTrue(targets.contains("待质检"));
-        assertFalse(targets.contains("待贴标"));
+        List<String> targets = TaskStatusTransition.getNormalTargets(TaskStatus.WRAPPING.getCode());
+        assertTrue(targets.contains(TaskStatus.WAIT_QC.getCode()));
+        assertFalse(targets.contains(TaskStatus.WAIT_LABEL.getCode()));
         assertFalse(targets.contains("待交付"));
     }
 
     @Test
     @DisplayName("查询回退目标：已暂存 包含 待质检（V30新增）")
     void testGetRollbackTargetsFromStored() {
-        List<String> targets = TaskStatusTransition.getRollbackTargets("已暂存");
-        assertTrue(targets.contains("待质检"));
+        List<String> targets = TaskStatusTransition.getRollbackTargets(TaskStatus.STORED.getCode());
+        assertTrue(targets.contains(TaskStatus.WAIT_QC.getCode()));
     }
 
     @Test

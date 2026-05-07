@@ -94,8 +94,8 @@
           </el-table-column>
           <el-table-column label="操作" width="360" fixed="right">
             <template #default="{ row }">
-              <el-button v-if="hasTaskManage && row.status === '待泡药'" size="small" type="primary" @click="startSoak(row)">开始泡药</el-button>
-              <el-button v-if="hasTaskManage && row.status === '待煎药'" size="small" type="warning" @click="openDecoctDialog(row)">开始煎药</el-button>
+              <el-button v-if="hasTaskManage && row.status === 'WAIT_SOAK'" size="small" type="primary" @click="startSoak(row)">开始泡药</el-button>
+              <el-button v-if="hasTaskManage && row.status === 'WAIT_DECOCT'" size="small" type="warning" @click="openDecoctDialog(row)">开始煎药</el-button>
               <el-button size="small" @click="viewDetail(row)">详情</el-button>
               <el-dropdown trigger="click" @command="(c: string) => handleRowCommand(c, row)">
                 <el-button size="small">
@@ -107,7 +107,7 @@
                     <el-dropdown-item command="trace">流程跟踪</el-dropdown-item>
                     <el-dropdown-item v-if="hasTaskManage" command="herb">分组投料</el-dropdown-item>
                     <el-dropdown-item v-if="hasTaskManage && canSuspend(row)" command="suspend">挂起</el-dropdown-item>
-                    <el-dropdown-item v-if="hasTaskManage && row.status === '已挂起'" command="resume">恢复</el-dropdown-item>
+                    <el-dropdown-item v-if="hasTaskManage && row.status === 'SUSPENDED'" command="resume">恢复</el-dropdown-item>
                     <el-dropdown-item v-if="hasTaskManage" command="assign">改派操作人</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -145,8 +145,8 @@
                 <div class="kanban-card-info">操作人: {{ task.operatorName || task.operatorId || '-' }}</div>
                 <div class="kanban-card-time">{{ formatDateTime(task.updatedAt) }}</div>
                 <div class="kanban-card-actions">
-                  <el-button v-if="hasTaskManage && task.status === '待泡药'" size="small" type="primary" @click.stop="startSoak(task)">开始泡药</el-button>
-                  <el-button v-if="hasTaskManage && task.status === '待煎药'" size="small" type="warning" @click.stop="openDecoctDialog(task)">开始煎药</el-button>
+                  <el-button v-if="hasTaskManage && task.status === 'WAIT_SOAK'" size="small" type="primary" @click.stop="startSoak(task)">开始泡药</el-button>
+                  <el-button v-if="hasTaskManage && task.status === 'WAIT_DECOCT'" size="small" type="warning" @click.stop="openDecoctDialog(task)">开始煎药</el-button>
                   <el-dropdown trigger="click" @command="(c: string) => handleRowCommand(c, task)">
                     <el-button size="small" @click.stop>更多</el-button>
                     <template #dropdown>
@@ -154,7 +154,7 @@
                         <el-dropdown-item command="trace">流程跟踪</el-dropdown-item>
                         <el-dropdown-item v-if="hasTaskManage" command="herb">分组投料</el-dropdown-item>
                         <el-dropdown-item v-if="hasTaskManage && canSuspend(task)" command="suspend">挂起</el-dropdown-item>
-                        <el-dropdown-item v-if="hasTaskManage && task.status === '已挂起'" command="resume">恢复</el-dropdown-item>
+                        <el-dropdown-item v-if="hasTaskManage && task.status === 'SUSPENDED'" command="resume">恢复</el-dropdown-item>
                         <el-dropdown-item v-if="hasTaskManage" command="assign">改派</el-dropdown-item>
                       </el-dropdown-menu>
                     </template>
@@ -352,7 +352,7 @@ function usesOnlyMineDefault(): boolean {
   return !(byRole || byPerm || adminName)
 }
 
-/** 任务管理权限：管理员/主任/班组长或显式 prod:task:manage（与设备 eq:device:list 无关） */
+/** 任务管理权限：管理员/主任/班组长或显式 prod:task:manage（与设备 eq:device:view 无关） */
 const hasTaskManage = computed(() => {
   const roles: string[] = userStore.userInfo?.roles || []
   const perms: string[] = userStore.permissions || []
@@ -428,23 +428,23 @@ const pagination = ref({ page: 1, size: 100, total: 0 })
 
 /** 与后端 TaskStatusTransition 可挂起状态对齐（含待贴标） */
 const SUSPENDABLE_STATUSES = new Set([
-  '待泡药', '泡药中', '待煎药', '煎药中', '待出液', '出液中',
-  '待包装', '包装中', '待贴标', '待质检', '已暂存', '待交接'
+  'WAIT_SOAK', 'SOAKING', 'WAIT_DECOCT', 'DECOCTING', 'WAIT_POUR', 'POURING',
+  'WAIT_WRAP', 'WRAPPING', 'WAIT_LABEL', 'WAIT_QC', 'STORED', '待交接'
 ])
 
 const kanbanStatuses = [
-  { status: '待泡药', label: '待泡药' },
-  { status: '泡药中', label: '泡药中' },
-  { status: '待煎药', label: '待煎药' },
-  { status: '煎药中', label: '煎药中' },
-  { status: '待出液', label: '待出液' },
-  { status: '出液中', label: '出液中' },
-  { status: '待包装', label: '待包装' },
-  { status: '包装中', label: '包装中' },
-  { status: '待贴标', label: '待贴标' },
-  { status: '待质检', label: '待质检' },
-  { status: '待交接', label: '待交接' },
-  { status: '已完成', label: '已完成' }
+  { status: 'WAIT_SOAK', label: '待泡药' },
+  { status: 'SOAKING', label: '泡药中' },
+  { status: 'WAIT_DECOCT', label: '待煎药' },
+  { status: 'DECOCTING', label: '煎药中' },
+  { status: 'WAIT_POUR', label: '待出液' },
+  { status: 'POURING', label: '出液中' },
+  { status: 'WAIT_WRAP', label: '待包装' },
+  { status: 'WRAPPING', label: '包装中' },
+  { status: 'WAIT_LABEL', label: '待贴标' },
+  { status: 'WAIT_QC', label: '待质检' },
+  { status: 'WAIT_HANDOVER', label: '待交接' },
+  { status: 'COMPLETED', label: '已完成' }
 ]
 
 const kanbanColumns = computed(() => kanbanStatuses.map(col => ({ ...col, tasks: taskList.value.filter(t => t.status === col.status) })))
@@ -487,10 +487,10 @@ function canSuspend(row: Task) {
 
 function statusType(status: string) {
   const map: Record<string, string> = {
-    '待泡药': '', '泡药中': 'warning', '待煎药': 'info', '煎药中': 'danger',
-    '待出液': 'info', '出液中': 'warning', '待包装': 'info', '包装中': 'warning',
-    '待贴标': 'success', '待质检': 'primary', '待交接': 'success', '已完成': 'success',
-    '已挂起': 'info'
+    'WAIT_SOAK': '', 'SOAKING': 'warning', 'WAIT_DECOCT': 'info', 'DECOCTING': 'danger',
+    'WAIT_POUR': 'info', 'POURING': 'warning', 'WAIT_WRAP': 'info', 'WRAPPING': 'warning',
+    'WAIT_LABEL': 'success', 'WAIT_QC': 'primary', 'WAIT_HANDOVER': 'success', 'COMPLETED': 'success',
+    'SUSPENDED': 'info'
   }
   return map[status] || ''
 }
