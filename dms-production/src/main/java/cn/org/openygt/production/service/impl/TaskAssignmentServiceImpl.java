@@ -18,6 +18,7 @@ import cn.org.openygt.production.mapper.HrEmployeeMapper;
 import cn.org.openygt.production.mapper.TaskAssignmentMapper;
 import cn.org.openygt.production.mapper.TaskMapper;
 import cn.org.openygt.production.service.TaskAssignmentService;
+import cn.org.openygt.equipment.enums.DeviceDetailStatus;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
