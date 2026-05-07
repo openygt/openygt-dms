@@ -18,20 +18,11 @@
       </el-form>
       <el-table :data="list" v-loading="loading" border data-testid="data-table">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="deptCode" label="编码" width="120" />
-        <el-table-column prop="deptName" label="名称" />
-        <el-table-column label="所属医院" width="180">
-          <template #default="{ row }">
-            <span>{{ hospitalMap[row.hospitalId] || '-' }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="description" label="描述" />
-        <el-table-column prop="sortOrder" label="排序" width="80" />
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
-          </template>
-        </el-table-column>
+        <el-table-column prop="sourceId" label="源ID" width="180" />
+        <el-table-column prop="name" label="名称" />
+        <el-table-column prop="leader" label="负责人" width="120" />
+        <el-table-column prop="chairman" label="主管" width="120" />
+        <el-table-column prop="sort" label="排序" width="80" />
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
             <el-button size="small" v-if="userStore.hasPermission('md:dept:update')" @click="openDialog(row)">编辑</el-button>
@@ -55,28 +46,23 @@
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑科室' : '新增科室'" width="560px">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-        <el-form-item label="科室编码" prop="deptCode">
-          <el-input v-model="form.deptCode" />
+        <el-form-item label="源ID" prop="sourceId">
+          <el-input v-model="form.sourceId" />
         </el-form-item>
-        <el-form-item label="科室名称" prop="deptName">
-          <el-input v-model="form.deptName" />
+        <el-form-item label="科室名称" prop="name">
+          <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item label="所属医院" prop="hospitalId">
-          <el-select v-model="form.hospitalId" placeholder="请选择医院" clearable style="width: 100%">
-            <el-option v-for="h in hospitalList" :key="h.id" :label="h.name" :value="h.id" />
-          </el-select>
+        <el-form-item label="父节点ID">
+          <el-input v-model="form.parentId" />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="form.description" type="textarea" rows="2" />
+        <el-form-item label="负责人">
+          <el-input v-model="form.leader" />
+        </el-form-item>
+        <el-form-item label="主管">
+          <el-input v-model="form.chairman" />
         </el-form-item>
         <el-form-item label="排序">
-          <el-input v-model.number="form.sortOrder" type="number" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="form.status">
-            <el-radio :label="1">启用</el-radio>
-            <el-radio :label="0">禁用</el-radio>
-          </el-radio-group>
+          <el-input v-model.number="form.sort" type="number" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -93,7 +79,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import {
   getDepartmentList,
-  getAllHospitals,
   createDepartment,
   updateDepartment,
   deleteDepartment
@@ -104,12 +89,12 @@ const userStore = useUserStore()
 
 interface Department {
   id: number
-  deptCode: string
-  deptName: string
-  hospitalId: number
-  description: string
-  sortOrder: number
-  status: number
+  sourceId: string
+  name: string
+  parentId: string
+  leader: string
+  chairman: string
+  sort: number
 }
 
 const list = ref<Department[]>([])
@@ -122,15 +107,10 @@ const total = ref(0)
 const formRef = ref<FormInstance>()
 
 const search = reactive({ keyword: '' })
-const form = ref<Partial<Department>>({ status: 1 })
-const hospitalList = ref<any[]>([])
-const hospitalMap = ref<Record<number, string>>({})
-
+const form = ref<Partial<Department>>({})
 const rules: FormRules = {
-  deptCode: [{ required: true, message: '请输入科室编码', trigger: 'blur' }],
-  deptName: [{ required: true, message: '请输入科室名称', trigger: 'blur' }],
-  hospitalId: [{ required: true, message: '请选择所属医院', trigger: 'change' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }]
+  sourceId: [{ required: true, message: '请输入源ID', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入科室名称', trigger: 'blur' }]
 }
 
 async function fetchData() {
@@ -160,7 +140,7 @@ function resetSearch() {
 }
 
 function openDialog(row?: Department) {
-  form.value = row ? { ...row } : { status: 1 }
+  form.value = row ? { ...row } : {}
   dialogVisible.value = true
   if (formRef.value) {
     formRef.value.clearValidate()
@@ -203,20 +183,7 @@ async function handleDelete(row: Department) {
   }
 }
 
-async function loadHospitals() {
-  try {
-    const res: any = await getAllHospitals()
-    hospitalList.value = res.data || []
-    const map: Record<number, string> = {}
-    hospitalList.value.forEach((h: any) => { map[h.id] = h.name })
-    hospitalMap.value = map
-  } catch (e: any) {
-    ElMessage.error(e?.response?.data?.message || e?.message || '加载医院列表失败')
-  }
-}
-
 onMounted(() => {
-  loadHospitals()
   fetchData()
 })
 </script>
