@@ -6,6 +6,9 @@
           <template #header>选择设备</template>
           <el-input v-model="deviceSearch" placeholder="搜索设备编码" clearable />
           <el-scrollbar height="400px" class="mt-2">
+            <div v-if="filteredDevices.length === 0" class="empty-device-list">
+              <el-empty description="暂无在线设备。设备接入后自动显示，请检查设备网关连接。" :image-size="80" />
+            </div>
             <div
               v-for="d in filteredDevices"
               :key="d.deviceCode"
