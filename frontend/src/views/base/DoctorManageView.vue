@@ -18,23 +18,23 @@
       </el-form>
       <el-table :data="list" v-loading="loading" border data-testid="data-table">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="doctorCode" label="编码" width="120" />
-        <el-table-column prop="doctorName" label="姓名" />
-        <el-table-column prop="title" label="职称" width="120" />
+        <el-table-column prop="sourceId" label="源ID" width="180" />
+        <el-table-column prop="name" label="姓名" />
+        <el-table-column prop="role" label="角色" width="100">
+          <template #default="{ row }">
+            <el-tag size="small">{{ row.role === 1 ? '医生' : row.role === 2 ? '抓药师' : row.role === 3 ? '药房员工' : '-' }}</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="所属医院" width="160">
           <template #default="{ row }">
             <span>{{ hospitalMap[row.hospitalId] || '-' }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="所属科室" width="160">
-          <template #default="{ row }">
-            <span>{{ departmentMap[row.departmentId] || '-' }}</span>
-          </template>
-        </el-table-column>
-
+        <el-table-column prop="department" label="科室" width="160" />
+        <el-table-column prop="mobile" label="电话" width="120" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
+            <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '有效' : '无效' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
@@ -60,32 +60,40 @@
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑医师' : '新增医师'" width="560px">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="100px">
-        <el-form-item label="医师编码" prop="doctorCode">
-          <el-input v-model="form.doctorCode" />
+        <el-form-item label="源ID" prop="sourceId">
+          <el-input v-model="form.sourceId" />
         </el-form-item>
-        <el-form-item label="医师姓名" prop="doctorName">
-          <el-input v-model="form.doctorName" />
+        <el-form-item label="医师姓名" prop="name">
+          <el-input v-model="form.name" />
         </el-form-item>
-        <el-form-item label="职称">
-          <el-input v-model="form.title" />
+        <el-form-item label="角色">
+          <el-select v-model="form.role" placeholder="请选择角色" clearable style="width: 100%">
+            <el-option label="医生" :value="1" />
+            <el-option label="抓药师" :value="2" />
+            <el-option label="药房员工" :value="3" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="性别">
+          <el-radio-group v-model="form.sex">
+            <el-radio :label="1">男</el-radio>
+            <el-radio :label="2">女</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="所属医院" prop="hospitalId">
-          <el-select v-model="form.hospitalId" placeholder="请选择医院" clearable style="width: 100%" @change="form.departmentId = undefined">
+          <el-select v-model="form.hospitalId" placeholder="请选择医院" clearable style="width: 100%">
             <el-option v-for="h in hospitalList" :key="h.id" :label="h.name" :value="h.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="所属科室" prop="departmentId">
-          <el-select v-model="form.departmentId" placeholder="请先选择医院" clearable style="width: 100%" :disabled="!form.hospitalId">
-            <el-option v-for="d in filteredDepartments" :key="d.id" :label="d.deptName" :value="d.id" />
-          </el-select>
+        <el-form-item label="科室">
+          <el-input v-model="form.department" placeholder="请输入科室名称" />
         </el-form-item>
-        <el-form-item label="电话" prop="phone">
-          <el-input v-model="form.phone" />
+        <el-form-item label="电话" prop="mobile">
+          <el-input v-model="form.mobile" />
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="form.status">
-            <el-radio :label="1">启用</el-radio>
-            <el-radio :label="0">禁用</el-radio>
+            <el-radio :label="1">有效</el-radio>
+            <el-radio :label="2">无效</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
@@ -104,7 +112,6 @@ import type { FormInstance, FormRules } from 'element-plus'
 import {
   getDoctorList,
   getAllHospitals,
-  getAllDepartments,
   createDoctor,
   updateDoctor,
   deleteDoctor
@@ -115,12 +122,13 @@ const userStore = useUserStore()
 
 interface Doctor {
   id: number
-  doctorCode: string
-  doctorName: string
-  title: string
-  departmentId: number
+  sourceId: string
+  name: string
+  role: number
+  sex: number
   hospitalId: number
-  phone: string
+  department: string
+  mobile: string
   status: number
 }
 
@@ -134,23 +142,15 @@ const total = ref(0)
 const formRef = ref<FormInstance>()
 
 const search = reactive({ keyword: '' })
-const form = ref<Partial<Doctor>>({ status: 1 })
+const form = ref<Partial<Doctor>>({ status: 1, sex: 1 })
 const hospitalList = ref<any[]>([])
 const hospitalMap = ref<Record<number, string>>({})
-const departmentList = ref<any[]>([])
-const departmentMap = ref<Record<number, string>>({})
-
-const filteredDepartments = computed(() => {
-  if (!form.value.hospitalId) return []
-  return departmentList.value.filter((d: any) => d.hospitalId === form.value.hospitalId)
-})
 
 const rules: FormRules = {
-  doctorCode: [{ required: true, message: '请输入医师编码', trigger: 'blur' }],
-  doctorName: [{ required: true, message: '请输入医师姓名', trigger: 'blur' }],
+  sourceId: [{ required: true, message: '请输入源ID', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入医师姓名', trigger: 'blur' }],
   hospitalId: [{ required: true, message: '请选择所属医院', trigger: 'change' }],
-  departmentId: [{ required: true, message: '请选择所属科室', trigger: 'change' }],
-  phone: [{ pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }],
+  mobile: [{ pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }],
   status: [{ required: true, message: '请选择状态', trigger: 'change' }]
 }
 
@@ -181,7 +181,7 @@ function resetSearch() {
 }
 
 function openDialog(row?: Doctor) {
-  form.value = row ? { ...row } : { status: 1 }
+  form.value = row ? { ...row } : { status: 1, sex: 1 }
   dialogVisible.value = true
   if (formRef.value) {
     formRef.value.clearValidate()
@@ -236,21 +236,8 @@ async function loadHospitals() {
   }
 }
 
-async function loadDepartments() {
-  try {
-    const res: any = await getAllDepartments()
-    departmentList.value = res.data || []
-    const map: Record<number, string> = {}
-    departmentList.value.forEach((d: any) => { map[d.id] = d.deptName })
-    departmentMap.value = map
-  } catch (e: any) {
-    ElMessage.error(e?.response?.data?.message || e?.message || '加载科室列表失败')
-  }
-}
-
 onMounted(() => {
   loadHospitals()
-  loadDepartments()
   fetchData()
 })
 </script>
