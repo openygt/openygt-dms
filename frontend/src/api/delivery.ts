@@ -20,6 +20,6 @@ export function deleteDeliveryRecord(id: number | string) {
   return request.delete(`/v1/prod/delivery-records/${id}`)
 }
 
-export function confirmDelivery(id: number | string, data: { operatorId: string; receiverName: string; receiverPhone?: string; remark?: string }) {
-  return request.post(`/v1/prod/delivery-records/${id}/confirm`, null, { params: data })
+export function confirmDelivery(id: number | string, data: { operatorId: number; receiverName: string; receiverPhone?: string; remark?: string }) {
+  return request.post(`/v1/prod/delivery-records/${id}/confirm`, data)
 }

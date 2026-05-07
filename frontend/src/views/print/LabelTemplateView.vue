@@ -168,8 +168,8 @@ async function handleSearch() {
     const data = res.data || {}
     tableData.value = data.records || []
     pagination.total = data.total || 0
-  } catch (e) {
-    // handled by interceptor
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }
@@ -207,7 +207,7 @@ async function handleDelete(row: LabelTemplate) {
     }
   } catch (e: any) {
     if (e !== 'cancel') {
-      // handled by interceptor
+      ElMessage.error(e.response?.data?.message || '删除失败')
     }
   }
 }
@@ -215,6 +215,14 @@ async function handleDelete(row: LabelTemplate) {
 async function handleSave() {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
+  if (form.content) {
+    try {
+      JSON.parse(form.content)
+    } catch {
+      ElMessage.error('模板内容不是合法的 JSON 格式，请检查')
+      return
+    }
+  }
   try {
     if (isEdit.value && (form as any).id) {
       await updateLabelTemplate((form as any).id, form)
@@ -225,8 +233,8 @@ async function handleSave() {
     }
     dialogVisible.value = false
     handleSearch()
-  } catch (e) {
-    // handled by interceptor
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message || '保存失败')
   }
 }
 

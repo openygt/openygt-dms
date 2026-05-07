@@ -8,7 +8,9 @@
       </template>
       <el-form :inline="true" @submit.prevent>
         <el-form-item label="设备">
-          <el-input v-model="search.deviceId" placeholder="设备ID" clearable style="width: 140px" />
+          <el-select v-model="search.deviceId" placeholder="选择设备" clearable filterable remote :remote-method="searchDevices" :loading="deviceLoading" style="width: 180px">
+            <el-option v-for="d in deviceOptions" :key="d.deviceCode" :label="d.name || d.deviceCode" :value="d.deviceCode" />
+          </el-select>
         </el-form-item>
         <el-form-item label="维保类型">
           <el-select v-model="search.maintenanceType" placeholder="全部" clearable style="width: 140px">
@@ -69,8 +71,10 @@
 
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑维保记录' : '新增维保记录'" width="500px">
       <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
-        <el-form-item label="设备ID">
-          <el-input v-model="form.deviceId" placeholder="设备ID" />
+        <el-form-item label="设备" prop="deviceId">
+          <el-select v-model="form.deviceId" placeholder="选择设备" filterable remote :remote-method="searchDevices" :loading="deviceLoading" style="width: 100%">
+            <el-option v-for="d in deviceOptions" :key="d.deviceCode" :label="d.name || d.deviceCode" :value="d.deviceCode" />
+          </el-select>
         </el-form-item>
         <el-form-item label="维保类型">
           <el-select v-model="form.maintenanceType" placeholder="选择类型" style="width: 100%">
@@ -116,11 +120,30 @@ const pagination = reactive({ page: 1, size: 20, total: 0 })
 const form = reactive<any>({ id: null, deviceId: '', maintenanceType: '', content: '', maintenanceDate: '', nextDate: '', status: 0 })
 const formRef = ref<any>(null)
 const formRules = {
-  deviceId: [{ required: true, message: '设备ID不能为空', trigger: 'blur' }],
+  deviceId: [{ required: true, message: '请选择设备', trigger: 'change' }],
   maintenanceType: [{ required: true, message: '维保类型不能为空', trigger: 'change' }],
   content: [{ required: true, message: '维保内容不能为空', trigger: 'blur' }],
   maintenanceDate: [{ required: true, message: '维保日期不能为空', trigger: 'change' }],
   status: [{ required: true, message: '状态不能为空', trigger: 'change' }],
+}
+
+const deviceOptions = ref<any[]>([])
+const deviceLoading = ref(false)
+let deviceSearchTimer: any = null
+
+async function searchDevices(keyword: string) {
+  if (deviceSearchTimer) clearTimeout(deviceSearchTimer)
+  deviceSearchTimer = setTimeout(async () => {
+    deviceLoading.value = true
+    try {
+      const res: any = await request.get('/v1/eq/devices', { params: { keyword, page: 1, size: 20 } })
+      deviceOptions.value = res.data?.records || []
+    } catch (e) {
+      // ignore
+    } finally {
+      deviceLoading.value = false
+    }
+  }, 300)
 }
 
 async function loadData() {

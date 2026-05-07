@@ -157,8 +157,8 @@ async function handleSearch() {
     const data = res.data || {}
     tableData.value = data.records || []
     pagination.total = data.total || 0
-  } catch (e) {
-    // handled by interceptor
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }
@@ -170,7 +170,8 @@ async function handleRowClick(row: TraceRecord) {
     try {
       const res: any = await getBatchDetail(selectedBatchNo.value)
       batchDetail.value = res.data || null
-    } catch (e) {
+    } catch (e: any) {
+      ElMessage.error(e?.response?.data?.message || '获取批次详情失败')
       batchDetail.value = null
     }
   }
@@ -179,7 +180,8 @@ async function handleRowClick(row: TraceRecord) {
       const res: any = await getBatchTimeline(row.prescriptionNo)
       timelineData.value = res.data || []
       timelineVisible.value = true
-    } catch (e) {
+    } catch (e: any) {
+      ElMessage.error(e?.response?.data?.message || '获取时间线失败')
       timelineData.value = []
     }
   }
@@ -194,6 +196,7 @@ async function fetchBatchNos(queryString: string, cb: (data: any[]) => void) {
       : list.map((n) => ({ value: n }))
     cb(results)
   } catch (e) {
+    ElMessage.error('获取批次号失败')
     cb([])
   }
 }

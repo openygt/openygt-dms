@@ -2,6 +2,7 @@ package cn.org.openygt.production.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -28,6 +29,7 @@ public class DeliveryRecord {
     private String remark;
     private LocalDateTime deliveredAt;
     private String tenantId;
+    @TableLogic
     private Integer deleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

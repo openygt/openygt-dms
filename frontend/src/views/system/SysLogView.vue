@@ -72,6 +72,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import request from '@/api/request'
 
 interface SysLog {
@@ -104,6 +105,8 @@ async function fetchData() {
     const res: any = await request.get('/v1/sys/logs', { params })
     list.value = res.data?.records || []
     pagination.value.total = res.data?.total || 0
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }

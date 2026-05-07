@@ -32,13 +32,23 @@
           </template>
         </el-table-column>
       </el-table>
-      <el-empty v-if="!loading && list.length === 0" description="暂无打印任务" />
+      <el-empty v-if="!loading && allList.length === 0" description="暂无打印任务" />
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="page"
+          v-model:page-size="size"
+          :total="total"
+          layout="total, sizes, prev, pager, next"
+          :page-sizes="[10, 20, 50]"
+          @change="fetchData"
+        />
+      </div>
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
 import { useUserStore } from '@/stores/user'
@@ -53,8 +63,17 @@ interface PrintTask {
   createdAt: string
 }
 
-const list = ref<PrintTask[]>([])
+const allList = ref<PrintTask[]>([])
 const loading = ref(false)
+const page = ref(1)
+const size = ref(20)
+const total = ref(0)
+
+const list = computed(() => {
+  const start = (page.value - 1) * size.value
+  const end = start + size.value
+  return allList.value.slice(start, end)
+})
 
 function statusType(status: string) {
   const map: Record<string, string> = {
@@ -73,9 +92,10 @@ async function fetchData() {
   loading.value = true
   try {
     const res: any = await request.get('/v1/prt/queue')
-    list.value = res.data || []
-  } catch (e) {
-    // 错误已由拦截器提示，保留当前列表不变
+    allList.value = res.data || []
+    total.value = allList.value.length
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message || '加载失败')
   } finally {
     loading.value = false
   }
@@ -89,21 +109,8 @@ async function handleRetry(row: PrintTask) {
     })
     ElMessage.success('重试成功')
     fetchData()
-  } catch (e) {
-    // 错误已由拦截器提示
-  }
-}
-
-async function handleSubmit(row: PrintTask) {
-  try {
-    const userStore = useUserStore()
-    await request.post(`/v1/prt/tasks/${row.taskId}/submit`, null, {
-      params: { deviceCode: row.deviceCode, operatorId: userStore.userInfo?.username || '' }
-    })
-    ElMessage.success('提交成功')
-    fetchData()
-  } catch (e) {
-    // 错误已由拦截器提示
+  } catch (e: any) {
+    ElMessage.error(e.response?.data?.message || '重试失败')
   }
 }
 

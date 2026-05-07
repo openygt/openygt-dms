@@ -80,6 +80,9 @@
             <span v-if="row.status === 'CANCELLED'" style="color: var(--ygt-gray-400); font-size: var(--ygt-text-sm)">已取消</span>
           </template>
         </el-table-column>
+        <template #empty>
+          <el-empty description="暂无告警记录。告警由设备传感器自动触发，可在设备监控页查看实时状态。" />
+        </template>
       </el-table>
 
       <el-pagination
