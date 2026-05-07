@@ -140,8 +140,13 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         // 修改记录只需检查任务去重（已在manualAssign中处理），
         // 不再限制同一天员工/设备数量（一个煎药工一天处理多个任务）
 
-        assignment.setDeviceId(newDeviceId);
-        assignment.setEmployeeId(newEmployeeId);
+        // P0-4: 字段保护，null 时保留原值
+        if (newDeviceId != null) {
+            assignment.setDeviceId(newDeviceId);
+        }
+        if (newEmployeeId != null) {
+            assignment.setEmployeeId(newEmployeeId);
+        }
         assignment.setAssignReason((assignment.getAssignReason() != null ? assignment.getAssignReason() + "; " : "") + "重新分配: " + reason);
         assignment.setUpdatedAt(LocalDateTime.now());
         assignmentMapper.updateById(assignment);

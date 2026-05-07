@@ -10,6 +10,7 @@ import cn.org.openygt.production.dto.OccupiedIds;
 import cn.org.openygt.production.dto.ReassignRequest;
 import cn.org.openygt.production.entity.TaskAssignment;
 import cn.org.openygt.production.service.TaskAssignmentService;
+import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
@@ -29,21 +30,25 @@ public class TaskAssignmentController {
     private final TaskAssignmentService taskAssignmentService;
 
     @PostMapping("/auto")
+    @RequiresPermissions("prod:record:view")
     public ApiResponse<TaskAssignment> autoAssign(@Validated @RequestBody AutoAssignRequest req) {
         return ApiResponse.success(taskAssignmentService.autoAssign(req.getTaskId(), req.getStrategy()));
     }
 
     @PostMapping("/manual")
+    @RequiresPermissions("prod:record:view")
     public ApiResponse<TaskAssignment> manualAssign(@Validated @RequestBody ManualAssignRequest req) {
         return ApiResponse.success(taskAssignmentService.manualAssign(req.getTaskId(), req.getDeviceId(), req.getEmployeeId(), req.getReason(), req.getScheduledDate()));
     }
 
     @PostMapping("/{assignmentId}/reassign")
+    @RequiresPermissions("prod:record:view")
     public ApiResponse<TaskAssignment> reassign(@PathVariable Long assignmentId, @Validated @RequestBody ReassignRequest req) {
         return ApiResponse.success(taskAssignmentService.reassign(assignmentId, req.getNewDeviceId(), req.getNewEmployeeId(), req.getReason()));
     }
 
     @GetMapping("/schedule")
+    @RequiresPermissions("prod:record:view")
     public ApiResponse<List<GanttItemDTO>> schedule(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endTime) {
@@ -51,36 +56,42 @@ public class TaskAssignmentController {
     }
 
     @GetMapping("/employee-load")
+    @RequiresPermissions("prod:record:view")
     public ApiResponse<List<EmployeeLoadDTO>> employeeLoad(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ApiResponse.success(taskAssignmentService.getEmployeeLoad(date));
     }
 
     @GetMapping("/device-load")
+    @RequiresPermissions("prod:record:view")
     public ApiResponse<List<DeviceLoadDTO>> deviceLoad(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ApiResponse.success(taskAssignmentService.getDeviceLoad(date));
     }
 
     @GetMapping("/occupied")
+    @RequiresPermissions("prod:record:view")
     public ApiResponse<OccupiedIds> occupied(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ApiResponse.success(taskAssignmentService.getOccupiedIds(date));
     }
 
     @GetMapping("/available-tasks")
+    @RequiresPermissions("prod:record:view")
     public ApiResponse<List<cn.org.openygt.production.dto.TaskOptionDTO>> availableTasks(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ApiResponse.success(taskAssignmentService.getAvailableTasks(date));
     }
 
     @GetMapping("/available-employees")
+    @RequiresPermissions("prod:record:view")
     public ApiResponse<List<EmployeeLoadDTO>> availableEmployees(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ApiResponse.success(taskAssignmentService.getAvailableEmployees(date));
     }
 
     @GetMapping("/available-devices")
+    @RequiresPermissions("prod:record:view")
     public ApiResponse<List<DeviceLoadDTO>> availableDevices(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ApiResponse.success(taskAssignmentService.getAvailableDevices(date));
