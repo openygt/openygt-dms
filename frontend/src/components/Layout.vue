@@ -36,6 +36,8 @@
           <el-menu-item v-if="userStore.hasPermission('prod:trace:view')" index="/step-visualization">流程跟踪</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('ops:capacity:view')" index="/capacity">产能统计</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('prod:task:view')" index="/tasks">煎药任务</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:exception:manage')" index="/exception-order">异常工单</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('prod:rework:view')" index="/task-rollback">返工处理</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('prod:setting:view')" index="/production-setting">生产设置</el-menu-item>
         </el-sub-menu>
 
@@ -53,6 +55,7 @@
           <el-menu-item v-if="userStore.hasPermission('eq:alarm:view')" index="/alarms">告警中心</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:maint:view')" index="/device-maintenance">设备维保</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('eq:wash:view')" index="/wash-record">清洗记录</el-menu-item>
+          <el-menu-item v-if="userStore.hasPermission('eq:temp:view')" index="/temperature-curve">温曲查询</el-menu-item>
         </el-sub-menu>
 
         <!-- 3. 质量检验 -->
@@ -63,9 +66,6 @@
           </template>
           <el-menu-item v-if="userStore.hasPermission('qt:inspect:view')" index="/quality">质量检验</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('qt:retain:manage')" index="/retain-sample">留样管理</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('prod:exception:manage')" index="/exception-order">异常工单</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('prod:rework:view')" index="/task-rollback">返工处理</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('eq:temp:view')" index="/temperature-curve">温曲查询</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('qt:yield:view')" index="/report/qc-rate">合格统计</el-menu-item>
         </el-sub-menu>
 
