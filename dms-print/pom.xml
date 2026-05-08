@@ -16,5 +16,9 @@
             <groupId>cn.org.openygt</groupId>
             <artifactId>dms-common</artifactId>
         </dependency>
+        <dependency>
+            <groupId>cn.org.openygt</groupId>
+            <artifactId>dms-rbac</artifactId>
+        </dependency>
     </dependencies>
 </project>

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController
+@RestController("mdDepartmentController")
 @RequestMapping(MasterdataModule.API_PREFIX + "/departments")
 public class DepartmentController {
 

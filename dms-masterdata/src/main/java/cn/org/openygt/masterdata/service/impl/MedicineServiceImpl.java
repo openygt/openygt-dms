@@ -1,7 +1,7 @@
 package cn.org.openygt.masterdata.service.impl;
 
 import cn.org.openygt.masterdata.entity.Medicine;
-import cn.org.openygt.masterdata.mapper.MedicineMapper;
+import cn.org.openygt.masterdata.mapper.MdMedicineMapper;
 import cn.org.openygt.masterdata.service.MedicineService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -9,12 +9,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Service("mdMedicineService")
 public class MedicineServiceImpl implements MedicineService {
 
-    private final MedicineMapper medicineMapper;
+    private final MdMedicineMapper medicineMapper;
 
-    public MedicineServiceImpl(MedicineMapper medicineMapper) {
+    public MedicineServiceImpl(MdMedicineMapper medicineMapper) {
         this.medicineMapper = medicineMapper;
     }
 

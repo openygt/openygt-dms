@@ -28,9 +28,9 @@ public class DictController {
     private final ExpressCompanyMapper expressCompanyMapper;
     private final AlarmLevelMapper alarmLevelMapper;
     private final AlarmTypeMapper alarmTypeMapper;
-    private final DepartmentMapper departmentMapper;
+    private final MdDepartmentMapper departmentMapper;
     private final DutyMapper dutyMapper;
-    private final DoctorMapper doctorMapper;
+    private final MdDoctorMapper doctorMapper;
     private final MeasureUnitMapper measureUnitMapper;
     private final MedicineCategoryMapper medicineCategoryMapper;
     private final PrescriptionUsageMapper prescriptionUsageMapper;
@@ -42,9 +42,9 @@ public class DictController {
             ExpressCompanyMapper expressCompanyMapper,
             AlarmLevelMapper alarmLevelMapper,
             AlarmTypeMapper alarmTypeMapper,
-            DepartmentMapper departmentMapper,
+            MdDepartmentMapper departmentMapper,
             DutyMapper dutyMapper,
-            DoctorMapper doctorMapper,
+            MdDoctorMapper doctorMapper,
             MeasureUnitMapper measureUnitMapper,
             MedicineCategoryMapper medicineCategoryMapper,
             PrescriptionUsageMapper prescriptionUsageMapper,
