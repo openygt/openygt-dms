@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("t_interface_log")
+@TableName("sys_interface_log")
 public class InterfaceLog {
 
     @TableId(type = IdType.AUTO)

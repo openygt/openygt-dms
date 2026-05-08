@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("dms_patient_notify")
+@TableName("prod_patient_notify")
 public class PatientNotify {
     @TableId(type = IdType.AUTO)
     private Long id;

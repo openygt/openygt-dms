@@ -107,7 +107,7 @@ public class TaskServiceImpl implements TaskService {
         task.setCurrentStageDuration(0);
         taskMapper.updateById(task);
         recordWork(taskId, operatorId, null, "DECOCT", 0);
-        createStepLog(taskId, "DECOCT", deviceId, operatorId, null);
+        createStepLog(taskId, "DECOCT", deviceCode, operatorId, null);
         return task;
     }
 
@@ -201,7 +201,7 @@ public class TaskServiceImpl implements TaskService {
         task.setCurrentStageDuration(0);
         taskMapper.updateById(task);
         recordWork(taskId, operatorId, null, "WRAP", 0);
-        createStepLog(taskId, "WRAP", deviceId, operatorId, null);
+        createStepLog(taskId, "WRAP", deviceCode, operatorId, null);
         return task;
     }
 
@@ -690,11 +690,11 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    private void createStepLog(Long taskId, String stepType, Long deviceId, String operatorId, Long parentId) {
+    private void createStepLog(Long taskId, String stepType, String deviceCode, String operatorId, Long parentId) {
         StepLog step = new StepLog();
         step.setTaskId(taskId);
         step.setStepType(stepType);
-        step.setDeviceId(deviceId);
+        step.setDeviceId(deviceCode);
         step.setOperatorId(operatorId != null ? operatorId : "SYSTEM");
         step.setParentId(parentId);
         step.setStartedAt(LocalDateTime.now());

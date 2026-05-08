@@ -11,9 +11,9 @@ import java.util.List;
 @Mapper
 public interface TimeCheckRuleMapper extends BaseMapper<TimeCheckRule> {
 
-    @Select("SELECT * FROM time_check_rule WHERE to_step = #{toStep} AND enabled = 1 AND deleted = 0 ORDER BY sort_order")
+    @Select("SELECT * FROM eq_time_check_rule WHERE to_step = #{toStep} AND enabled = 1 AND deleted = 0 ORDER BY sort_order")
     List<TimeCheckRule> findByToStep(@Param("toStep") String toStep);
 
-    @Select("SELECT * FROM time_check_rule WHERE rule_code = #{ruleCode} AND deleted = 0")
+    @Select("SELECT * FROM eq_time_check_rule WHERE rule_code = #{ruleCode} AND deleted = 0")
     TimeCheckRule findByRuleCode(@Param("ruleCode") String ruleCode);
 }

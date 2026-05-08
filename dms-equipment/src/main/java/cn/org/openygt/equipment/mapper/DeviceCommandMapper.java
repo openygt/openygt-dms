@@ -11,15 +11,15 @@ import java.util.List;
 @Mapper
 public interface DeviceCommandMapper extends BaseMapper<DeviceCommand> {
 
-    @Select("SELECT * FROM device_command WHERE device_code = #{deviceCode} AND status = #{status} AND deleted = 0 ORDER BY created_at DESC")
+    @Select("SELECT * FROM iot_device_command WHERE device_code = #{deviceCode} AND status = #{status} AND deleted = 0 ORDER BY created_at DESC")
     List<DeviceCommand> findByDeviceCodeAndStatus(@Param("deviceCode") String deviceCode,
                                                    @Param("status") String status);
 
-    @Select("SELECT * FROM device_command WHERE device_code = #{deviceCode} AND deleted = 0 ORDER BY created_at DESC LIMIT #{limit}")
+    @Select("SELECT * FROM iot_device_command WHERE device_code = #{deviceCode} AND deleted = 0 ORDER BY created_at DESC LIMIT #{limit}")
     List<DeviceCommand> findRecentByDeviceCode(@Param("deviceCode") String deviceCode,
                                                 @Param("limit") int limit);
 
-    @Select("SELECT * FROM device_command " +
+    @Select("SELECT * FROM iot_device_command " +
             "WHERE device_code = #{deviceCode} AND command_type = #{commandType} " +
             "AND status IN ('PENDING', 'SENT') AND deleted = 0 " +
             "ORDER BY created_at DESC LIMIT 1")

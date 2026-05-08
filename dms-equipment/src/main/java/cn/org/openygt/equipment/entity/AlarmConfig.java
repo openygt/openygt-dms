@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("alarm_config")
+@TableName("eq_alarm_config")
 public class AlarmConfig extends BaseEntity {
 
     @NotBlank(message = "告警类型不能为空")

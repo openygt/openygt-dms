@@ -149,7 +149,7 @@ ALTER TABLE md_hospital
     ADD COLUMN adapter_class VARCHAR(200) COMMENT '适配器实现类' AFTER his_protocol;
 
 -- 9. 接口日志表扩展
-ALTER TABLE t_interface_log
+ALTER TABLE sys_interface_log
     ADD COLUMN hospital_id BIGINT COMMENT '来源医院ID' AFTER interface_id,
     ADD INDEX idx_hospital (hospital_id);
 

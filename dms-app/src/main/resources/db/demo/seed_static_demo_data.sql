@@ -101,9 +101,9 @@ INSERT INTO prod_task (id, prescription_id, decoct_device_id, package_device_id,
 -- --------------------------------------------------
 -- 3. 任务分配
 -- --------------------------------------------------
-DELETE FROM dms_task_assignment WHERE task_id >= 900000001;
+DELETE FROM prod_task_assignment WHERE task_id >= 900000001;
 
-INSERT INTO dms_task_assignment (id, task_id, prescription_id, device_id, employee_id, assign_type, assign_reason, scheduled_start_time, scheduled_end_time, actual_start_time, actual_end_time, status, stage_breakdown_json, created_at, updated_at) VALUES
+INSERT INTO prod_task_assignment (id, task_id, prescription_id, device_id, employee_id, assign_type, assign_reason, scheduled_start_time, scheduled_end_time, actual_start_time, actual_end_time, status, stage_breakdown_json, created_at, updated_at) VALUES
 (900000001, 900000001, 900000001, 1, 1, 1, '自动分配', NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (900000002, 900000002, 900000002, 2, 1, 1, '自动分配', NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL),
 (900000003, 900000003, 900000003, 3, 1, 1, '自动分配', NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL),
@@ -132,9 +132,9 @@ INSERT INTO dms_task_assignment (id, task_id, prescription_id, device_id, employ
 -- --------------------------------------------------
 -- 4. 时效监控
 -- --------------------------------------------------
-DELETE FROM dms_time_monitor WHERE task_id >= 900000001;
+DELETE FROM prod_time_monitor WHERE task_id >= 900000001;
 
-INSERT INTO dms_time_monitor (id, task_id, assignment_id, prescription_id, stage, planned_start, planned_end, actual_start, actual_end, remaining_seconds, status, warning_count, last_warning_time, created_at, updated_at, alert_level) VALUES
+INSERT INTO prod_time_monitor (id, task_id, assignment_id, prescription_id, stage, planned_start, planned_end, actual_start, actual_end, remaining_seconds, status, warning_count, last_warning_time, created_at, updated_at, alert_level) VALUES
 (900000001, 900000001, 900000001, 900000001, 'RECEIVE', '2026-05-06 06:00:00', '2026-05-06 07:00:00', NULL, NULL, 3600, 1, 0, NULL, NOW(), NULL, NULL),
 (900000002, 900000002, 900000002, 900000002, 'RECEIVE', '2026-05-06 07:00:00', '2026-05-06 08:00:00', NULL, NULL, 3600, 1, 0, NULL, NOW(), NULL, NULL),
 (900000003, 900000003, 900000003, 900000003, 'RECEIVE', '2026-05-06 08:00:00', '2026-05-06 09:00:00', NULL, NULL, 3600, 1, 0, NULL, NOW(), NULL, NULL),
@@ -151,9 +151,9 @@ INSERT INTO dms_time_monitor (id, task_id, assignment_id, prescription_id, stage
 -- --------------------------------------------------
 -- 5. 预警记录
 -- --------------------------------------------------
-DELETE FROM dms_alert_log WHERE task_id >= 900000001;
+DELETE FROM prod_alert_log WHERE task_id >= 900000001;
 
-INSERT INTO dms_alert_log (id, monitor_id, task_id, stage, alert_level, alert_type, alert_content, notify_channels, notify_targets, is_resolved, resolved_by, resolved_at, created_at) VALUES
+INSERT INTO prod_alert_log (id, monitor_id, task_id, stage, alert_level, alert_type, alert_content, notify_channels, notify_targets, is_resolved, resolved_by, resolved_at, created_at) VALUES
 (900000001, 900000001, 900000001, 'RECEIVE', 1, 'DELAY', '处方接收超时', 'SMS,APP', 'OPERATOR', 0, NULL, NULL, NOW()),
 (900000002, 900000003, 900000003, 'SOAK', 2, 'APPROACHING', '泡药即将超时', 'APP', 'OPERATOR', 0, NULL, NULL, NOW()),
 (900000003, 900000005, 900000005, 'DECOCT', 3, 'OVERTIME', '煎煮已超时30分钟', 'SMS,APP,PHONE', 'ADMIN,OPERATOR', 1, 9, NOW(), NOW()),
