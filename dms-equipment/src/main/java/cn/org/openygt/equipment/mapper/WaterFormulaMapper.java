@@ -9,9 +9,9 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface WaterFormulaMapper extends BaseMapper<WaterFormula> {
 
-    @Select("SELECT * FROM water_formula WHERE formula_code = #{formulaCode} AND deleted = 0")
+    @Select("SELECT * FROM md_water_formula WHERE formula_code = #{formulaCode} AND deleted = 0")
     WaterFormula findByCode(@Param("formulaCode") String formulaCode);
 
-    @Select("SELECT * FROM water_formula WHERE is_default = 1 AND enabled = 1 AND deleted = 0 LIMIT 1")
+    @Select("SELECT * FROM md_water_formula WHERE is_default = 1 AND enabled = 1 AND deleted = 0 LIMIT 1")
     WaterFormula findDefault();
 }

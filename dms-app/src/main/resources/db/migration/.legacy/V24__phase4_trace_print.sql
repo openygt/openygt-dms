@@ -7,7 +7,7 @@ ALTER TABLE decoction_trace
     ADD INDEX idx_batch_no (batch_no);
 
 -- ==================== 标签模板 ====================
-CREATE TABLE t_label_template (
+CREATE TABLE prt_label_template (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     template_code VARCHAR(32) NOT NULL UNIQUE COMMENT '模板编码',
     template_name VARCHAR(100) NOT NULL COMMENT '模板名称',
@@ -26,7 +26,7 @@ CREATE TABLE t_label_template (
 ) COMMENT='标签模板';
 
 -- 插入默认标签模板
-INSERT INTO t_label_template (template_code, template_name, template_type, width_mm, height_mm, content, status, tenant_id, deleted) VALUES
+INSERT INTO prt_label_template (template_code, template_name, template_type, width_mm, height_mm, content, status, tenant_id, deleted) VALUES
 ('LBL_SOAK_001', '泡药标签', 'SOAK', 80, 50, '[{"field":"patientName","label":"患者"},{"field":"prescriptionNo","label":"处方号"},{"field":"soakTime","label":"浸泡时间"},{"field":"createTime","label":"打印时间"}]', 1, 'default', 0),
 ('LBL_DECOCT_001', '煎煮标签', 'DECOCT', 80, 50, '[{"field":"patientName","label":"患者"},{"field":"prescriptionNo","label":"处方号"},{"field":"decoctTime","label":"煎煮时间"},{"field":"operatorName","label":"操作人"}]', 1, 'default', 0),
 ('LBL_PKG_001', '包装标签', 'PACKAGE', 80, 50, '[{"field":"patientName","label":"患者"},{"field":"prescriptionNo","label":"处方号"},{"field":"doseCount","label":"剂数"},{"field":"packageVolume","label":"容量"},{"field":"expireDate","label":"有效期"}]', 1, 'default', 0),

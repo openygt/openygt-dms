@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("dms_herb_group_rule")
+@TableName("md_herb_group_rule")
 public class HerbGroupRule {
     @TableId(type = IdType.AUTO)
     private Long id;

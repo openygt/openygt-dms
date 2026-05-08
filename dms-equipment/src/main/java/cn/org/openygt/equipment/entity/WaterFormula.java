@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("water_formula")
+@TableName("md_water_formula")
 public class WaterFormula extends BaseEntity {
 
     @NotBlank(message = "公式编码不能为空")

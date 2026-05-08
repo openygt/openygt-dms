@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("dms_shelf")
+@TableName("prod_shelf")
 public class Shelf {
     @TableId(type = IdType.AUTO)
     private Long id;

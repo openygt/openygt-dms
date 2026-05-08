@@ -24,16 +24,16 @@ DELETE FROM prod_work_record WHERE task_id = 900000001;
 DELETE FROM prod_handover_detail WHERE task_id = 900000001;
 DELETE FROM prod_step_log WHERE task_id = 900000001;
 DELETE FROM prod_task_status_history WHERE task_id = 900000001;
-DELETE FROM dms_task_assignment WHERE task_id = 900000001;
-DELETE FROM dms_time_monitor WHERE task_id = 900000001;
-DELETE FROM dms_alert_log WHERE task_id = 900000001;
+DELETE FROM prod_task_assignment WHERE task_id = 900000001;
+DELETE FROM prod_time_monitor WHERE task_id = 900000001;
+DELETE FROM prod_alert_log WHERE task_id = 900000001;
 DELETE FROM eq_wash_record WHERE task_id = 900000001;
 
 DELETE FROM qt_inspection_item WHERE inspection_id IN (SELECT id FROM qt_inspection WHERE task_id = 900000001);
 DELETE FROM qt_inspection WHERE task_id = 900000001;
 DELETE FROM qt_retain_sample WHERE task_id = 900000001;
 DELETE FROM qt_retain_sample WHERE sample_no LIKE 'DEMO-SAMPLE%';
-DELETE FROM t_delivery_record WHERE task_id = 900000001;
+DELETE FROM prod_delivery_record WHERE task_id = 900000001;
 DELETE FROM decoction_trace WHERE task_id = 900000001;
 
 DELETE FROM prod_task WHERE id = 900000001;
@@ -112,9 +112,9 @@ INSERT INTO prod_task (
 );
 
 -- --------------------------------------------------
--- 4. 任务分配 (dms_task_assignment)
+-- 4. 任务分配 (prod_task_assignment)
 -- --------------------------------------------------
-INSERT INTO dms_task_assignment (
+INSERT INTO prod_task_assignment (
     id, task_id, prescription_id, device_id, employee_id, assign_type,
     assign_reason, scheduled_start_time, scheduled_end_time,
     actual_start_time, actual_end_time, status, created_at, updated_at
@@ -255,9 +255,9 @@ INSERT INTO qt_retain_sample (
 );
 
 -- --------------------------------------------------
--- 11. 发药记录 (t_delivery_record) — 1 条
+-- 11. 发药记录 (prod_delivery_record) — 1 条
 -- --------------------------------------------------
-INSERT INTO t_delivery_record (
+INSERT INTO prod_delivery_record (
     id, task_id, prescription_no, patient_name, delivery_type,
     receiver_name, receiver_phone, receiver_address,
     bag_count, status, operator_id, remark, delivered_at, tenant_id, deleted

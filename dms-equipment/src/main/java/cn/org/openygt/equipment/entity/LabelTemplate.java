@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("t_label_template")
+@TableName("prt_label_template")
 public class LabelTemplate extends BaseEntity {
 
     private String templateCode;

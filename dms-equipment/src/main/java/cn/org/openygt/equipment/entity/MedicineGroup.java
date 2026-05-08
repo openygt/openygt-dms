@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("medicine_group")
+@TableName("md_medicine_group")
 public class MedicineGroup extends BaseEntity {
 
     private Long prescriptionId;
