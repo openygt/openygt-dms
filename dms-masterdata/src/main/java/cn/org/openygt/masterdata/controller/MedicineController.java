@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController
+@RestController("mdMedicineController")
 @RequestMapping(MasterdataModule.API_PREFIX + "/medicines")
 public class MedicineController {
 
