@@ -16,7 +16,7 @@ public class StepLog {
     private Long taskId;
     private Long parentId;
     private String stepType;
-    private Long deviceId;
+    private String deviceId;
     private String operatorId;
     private LocalDateTime startedAt;
     private LocalDateTime endedAt;

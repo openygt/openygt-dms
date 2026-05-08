@@ -11,9 +11,9 @@ import java.util.List;
 @Mapper
 public interface AlarmConfigMapper extends BaseMapper<AlarmConfig> {
 
-    @Select("SELECT * FROM alarm_config WHERE alarm_type = #{alarmType} AND enabled = 1 AND deleted = 0")
+    @Select("SELECT * FROM eq_alarm_config WHERE alarm_type = #{alarmType} AND enabled = 1 AND deleted = 0")
     List<AlarmConfig> findEnabledByType(@Param("alarmType") String alarmType);
 
-    @Select("SELECT * FROM alarm_config WHERE enabled = 1 AND deleted = 0")
+    @Select("SELECT * FROM eq_alarm_config WHERE enabled = 1 AND deleted = 0")
     List<AlarmConfig> findAllEnabled();
 }

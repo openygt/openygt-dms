@@ -1,7 +1,7 @@
 package cn.org.openygt.common.enums;
 
 /**
- * 任务分配状态枚举（dms_task_assignment.status，数值型）
+ * 任务分配状态枚举（prod_task_assignment.status，数值型）
  */
 public enum TaskAssignmentStatus {
     UNASSIGNED(0, "未分配", "任务尚未分配"),

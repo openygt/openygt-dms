@@ -97,9 +97,9 @@ INSERT INTO prod_task (
 );
 
 -- ============================================================================
--- 5. 任务分配 (dms_task_assignment)
+-- 5. 任务分配 (prod_task_assignment)
 -- ============================================================================
-INSERT INTO dms_task_assignment (
+INSERT INTO prod_task_assignment (
     id, task_id, prescription_id, device_id, employee_id, assign_type,
     assign_reason, scheduled_start_time, scheduled_end_time,
     actual_start_time, actual_end_time, status, stage_breakdown_json,
@@ -174,9 +174,9 @@ INSERT INTO qt_retain_sample (
 );
 
 -- ============================================================================
--- 10. 发药记录 (t_delivery_record)
+-- 10. 发药记录 (prod_delivery_record)
 -- ============================================================================
-INSERT INTO t_delivery_record (
+INSERT INTO prod_delivery_record (
     id, task_id, prescription_no, patient_name, delivery_type,
     receiver_name, receiver_phone, receiver_address,
     courier_company, courier_no, bag_count, status,

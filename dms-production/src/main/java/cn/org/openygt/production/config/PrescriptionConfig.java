@@ -14,7 +14,7 @@ public class PrescriptionConfig {
     /**
      * 药品目录模式：
      * FLEXIBLE - 药品目录可选，名称和单位自由输入（默认）
-     * STRICT   - 必须关联 t_medicine，按目录校验
+     * STRICT   - 必须关联 base_medicine，按目录校验
      */
     private CatalogMode catalogMode = CatalogMode.FLEXIBLE;
 

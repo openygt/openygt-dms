@@ -11,7 +11,7 @@ import java.util.List;
 public interface BatchTraceMapper {
 
     @Select("<script>"
-            + "SELECT * FROM decoction_trace WHERE deleted = 0"
+            + "SELECT * FROM trc_prescription_trace WHERE deleted = 0"
             + "<if test='batchNo != null and batchNo !=\"\"'> AND batch_no LIKE CONCAT('%',#{batchNo},'%')</if>"
             + "<if test='prescriptionNo != null and prescriptionNo !=\"\"'> AND prescription_no LIKE CONCAT('%',#{prescriptionNo},'%')</if>"
             + " ORDER BY created_at DESC LIMIT #{offset},#{size}"
@@ -20,15 +20,15 @@ public interface BatchTraceMapper {
                                  @Param("offset") int offset, @Param("size") int size);
 
     @Select("<script>"
-            + "SELECT COUNT(*) FROM decoction_trace WHERE deleted = 0"
+            + "SELECT COUNT(*) FROM trc_prescription_trace WHERE deleted = 0"
             + "<if test='batchNo != null and batchNo !=\"\"'> AND batch_no LIKE CONCAT('%',#{batchNo},'%')</if>"
             + "<if test='prescriptionNo != null and prescriptionNo !=\"\"'> AND prescription_no LIKE CONCAT('%',#{prescriptionNo},'%')</if>"
             + "</script>")
     long searchCount(@Param("batchNo") String batchNo, @Param("prescriptionNo") String prescriptionNo);
 
-    @Select("SELECT * FROM decoction_trace WHERE deleted = 0 AND batch_no = #{batchNo} ORDER BY created_at DESC")
+    @Select("SELECT * FROM trc_prescription_trace WHERE deleted = 0 AND batch_no = #{batchNo} ORDER BY created_at DESC")
     List<DecoctionTrace> findByBatchNo(@Param("batchNo") String batchNo);
 
-    @Select("SELECT DISTINCT batch_no FROM decoction_trace WHERE deleted = 0 AND batch_no IS NOT NULL AND batch_no != '' ORDER BY batch_no DESC LIMIT 50")
+    @Select("SELECT DISTINCT batch_no FROM trc_prescription_trace WHERE deleted = 0 AND batch_no IS NOT NULL AND batch_no != '' ORDER BY batch_no DESC LIMIT 50")
     List<String> findBatchNos();
 }

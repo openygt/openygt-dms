@@ -42,16 +42,16 @@ public class StepLogController {
                 .lt(StepLog::getStartedAt, dayEnd)
         );
 
-        Map<Long, List<StepLog>> byDevice = logs.stream()
+        Map<String, List<StepLog>> byDevice = logs.stream()
             .collect(Collectors.groupingBy(StepLog::getDeviceId));
 
         List<DeviceDailyDTO> result = new ArrayList<>();
-        for (Map.Entry<Long, List<StepLog>> entry : byDevice.entrySet()) {
+        for (Map.Entry<String, List<StepLog>> entry : byDevice.entrySet()) {
             DeviceDailyDTO dto = new DeviceDailyDTO();
             dto.setDeviceId(entry.getKey());
 
             try {
-                EqDeviceDTO dev = equipmentService.getDeviceById(entry.getKey());
+                EqDeviceDTO dev = equipmentService.getDeviceByCode(entry.getKey());
                 if (dev != null) {
                     dto.setDeviceCode(dev.getDeviceCode());
                     dto.setDeviceName(dev.getName());
