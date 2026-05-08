@@ -1,7 +1,7 @@
 package cn.org.openygt.masterdata.service.impl;
 
 import cn.org.openygt.masterdata.entity.Department;
-import cn.org.openygt.masterdata.mapper.DepartmentMapper;
+import cn.org.openygt.masterdata.mapper.MdDepartmentMapper;
 import cn.org.openygt.masterdata.service.DepartmentService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -9,12 +9,12 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Service
+@Service("mdDepartmentService")
 public class DepartmentServiceImpl implements DepartmentService {
 
-    private final DepartmentMapper departmentMapper;
+    private final MdDepartmentMapper departmentMapper;
 
-    public DepartmentServiceImpl(DepartmentMapper departmentMapper) {
+    public DepartmentServiceImpl(MdDepartmentMapper departmentMapper) {
         this.departmentMapper = departmentMapper;
     }
 

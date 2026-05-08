@@ -7,7 +7,7 @@ import cn.org.openygt.masterdata.service.DoctorService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
+@RestController("mdDoctorController")
 @RequestMapping(MasterdataModule.API_PREFIX + "/doctors")
 public class DoctorController {
 
