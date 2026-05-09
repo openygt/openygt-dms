@@ -30,12 +30,22 @@ public class SecurityConfig {
         http
             .csrf().disable()
             .cors().and()
-            .anonymous().disable()
             .exceptionHandling()
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType("application/json;charset=UTF-8");
                     response.getWriter().write("{\"code\":401,\"message\":\"Unauthorized\"}");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    if (request.getUserPrincipal() == null || "anonymousUser".equals(request.getUserPrincipal().getName())) {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.getWriter().write("{\"code\":401,\"message\":\"Unauthorized\"}");
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.getWriter().write("{\"code\":403,\"message\":\"Forbidden\"}");
+                    }
                 })
             .and()
             .authorizeRequests()
