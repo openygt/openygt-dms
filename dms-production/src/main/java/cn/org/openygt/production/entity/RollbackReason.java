@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("dms_rollback_reason")
+@TableName("prod_rollback_reason")
 public class RollbackReason {
     @TableId(type = IdType.AUTO)
     private Long id;

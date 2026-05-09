@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("dms_time_monitor")
+@TableName("prod_time_monitor")
 public class TimeMonitor {
     @TableId(type = IdType.AUTO)
     private Long id;

@@ -24,9 +24,9 @@ DELETE FROM prod_work_record WHERE task_id = 900000001;
 DELETE FROM prod_handover_detail WHERE task_id = 900000001;
 DELETE FROM prod_step_log WHERE task_id = 900000001;
 DELETE FROM prod_task_status_history WHERE task_id = 900000001;
-DELETE FROM dms_task_assignment WHERE task_id = 900000001;
-DELETE FROM dms_time_monitor WHERE task_id = 900000001;
-DELETE FROM dms_alert_log WHERE task_id = 900000001;
+DELETE FROM prod_task_assignment WHERE task_id = 900000001;
+DELETE FROM prod_time_monitor WHERE task_id = 900000001;
+DELETE FROM prod_alert_log WHERE task_id = 900000001;
 DELETE FROM eq_wash_record WHERE task_id = 900000001;
 
 DELETE FROM qt_inspection_item WHERE inspection_id IN (SELECT id FROM qt_inspection WHERE task_id = 900000001);
@@ -112,9 +112,9 @@ INSERT INTO prod_task (
 );
 
 -- --------------------------------------------------
--- 4. 任务分配 (dms_task_assignment)
+-- 4. 任务分配 (prod_task_assignment)
 -- --------------------------------------------------
-INSERT INTO dms_task_assignment (
+INSERT INTO prod_task_assignment (
     id, task_id, prescription_id, device_id, employee_id, assign_type,
     assign_reason, scheduled_start_time, scheduled_end_time,
     actual_start_time, actual_end_time, status, created_at, updated_at

@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("workload_stat")
+@TableName("ops_workload_stat")
 public class WorkloadStat extends BaseEntity {
 
     private LocalDate statDate;
