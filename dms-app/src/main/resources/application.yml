@@ -1,6 +1,6 @@
 # 测试环境专用配置（使用 MySQL，与生产一致）
 server:
-  port: 9092
+  port: 9091
 
 spring:
   datasource:
@@ -39,7 +39,7 @@ mqtt:
   topic-subscription: "+/+/+"
 
 jwt:
-  secret: Test-Only-JWT-Secret-Key-For-Regression-32Bytes!
+  secret: ${JWT_SECRET:}
 
 # PDA 文件上传配置
 pda:

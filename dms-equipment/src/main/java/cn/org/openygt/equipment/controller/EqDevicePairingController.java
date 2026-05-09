@@ -7,11 +7,13 @@ import cn.org.openygt.equipment.entity.EqDevicePairing;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import cn.org.openygt.equipment.service.EqDevicePairingService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequestMapping(EquipmentModule.API_PREFIX + "/pairings")
 @RequiredArgsConstructor
@@ -78,7 +80,7 @@ public class EqDevicePairingController {
                         dm.put("name", d.getName());
                         decocters.add(dm);
                     }
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException e) { log.warn("解析配对编号失败", e); }
             }
         }
         map.put("decocters", decocters);

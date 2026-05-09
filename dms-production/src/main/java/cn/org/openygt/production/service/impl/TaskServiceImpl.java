@@ -574,7 +574,7 @@ public class TaskServiceImpl implements TaskService {
                 if (!users.isEmpty()) {
                     task.setOperatorName(users.get(0).getRealName());
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) { log.error("任务操作异常", e);
             }
         }
         recordHistory(task.getId(), oldStatus, newStatus, operatorId, remark);
@@ -788,7 +788,7 @@ public class TaskServiceImpl implements TaskService {
                 if (!users.isEmpty()) {
                     task.setOperatorName(users.get(0).getRealName());
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) { log.error("任务操作异常", e);
             }
         }
         taskMapper.updateById(task);
