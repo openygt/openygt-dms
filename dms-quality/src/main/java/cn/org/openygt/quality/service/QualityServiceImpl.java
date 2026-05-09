@@ -117,7 +117,7 @@ public class QualityServiceImpl implements QualityService {
             for (String opId : opIds) {
                 try {
                     idList.add(Long.valueOf(opId));
-                } catch (NumberFormatException e) {
+                } catch (NumberFormatException e) { log.warn("质检操作异常-操作人ID非数字", e);
                     // operatorId 非数字（如用户名），跳过姓名查询
                 }
             }
@@ -131,7 +131,7 @@ public class QualityServiceImpl implements QualityService {
                     if (ins.getOperatorId() != null) {
                         try {
                             ins.setOperatorName(nameMap.getOrDefault(Long.valueOf(ins.getOperatorId()), ins.getOperatorId()));
-                        } catch (NumberFormatException e) {
+                        } catch (NumberFormatException e) { log.warn("质检操作异常-操作人ID非数字", e);
                             ins.setOperatorName(ins.getOperatorId());
                         }
                     }

@@ -24,8 +24,7 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
         if (roleIds == null || roleIds.isEmpty()) {
             return new ArrayList<>();
         }
-        String ids = roleIds.stream().map(String::valueOf).collect(Collectors.joining(","));
-        List<SysMenu> menus = baseMapper.selectMenusByRoleIds(ids);
+        List<SysMenu> menus = baseMapper.selectMenusByRoleIds(roleIds);
         // 去重并构建树
         List<SysMenu> distinct = menus.stream()
                 .collect(Collectors.toMap(SysMenu::getId, m -> m, (a, b) -> a))
