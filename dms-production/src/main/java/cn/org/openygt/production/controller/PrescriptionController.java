@@ -1,25 +1,41 @@
 package cn.org.openygt.production.controller;
 
 import cn.org.openygt.common.dto.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import cn.org.openygt.production.ProductionModule;
+import lombok.extern.slf4j.Slf4j;
 import cn.org.openygt.production.dto.*;
+import lombok.extern.slf4j.Slf4j;
 import cn.org.openygt.production.entity.Prescription;
+import lombok.extern.slf4j.Slf4j;
 import cn.org.openygt.production.service.PrescriptionService;
+import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
+import lombok.extern.slf4j.Slf4j;
 import java.io.InputStreamReader;
+import lombok.extern.slf4j.Slf4j;
 import java.nio.charset.Charset;
+import lombok.extern.slf4j.Slf4j;
 import java.nio.charset.StandardCharsets;
+import lombok.extern.slf4j.Slf4j;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping(ProductionModule.API_PREFIX + "/prescriptions")
 @RequiredArgsConstructor
+@Slf4j
 public class PrescriptionController {
 
     private final PrescriptionService prescriptionService;
@@ -211,7 +227,7 @@ public class PrescriptionController {
             if (sample.contains("�") || sample.contains("?")) {
                 return Charset.forName("GBK");
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) { log.error("处方操作异常", e);
         }
         return StandardCharsets.UTF_8;
     }
