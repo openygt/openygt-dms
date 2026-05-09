@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("decoction_trace_event")
+@TableName("trc_trace_event")
 public class DecoctionTraceEvent extends BaseEntity {
 
     private Long traceId;

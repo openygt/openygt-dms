@@ -97,9 +97,9 @@ INSERT INTO prod_task (
 );
 
 -- ============================================================================
--- 5. 任务分配 (dms_task_assignment)
+-- 5. 任务分配 (prod_task_assignment)
 -- ============================================================================
-INSERT INTO dms_task_assignment (
+INSERT INTO prod_task_assignment (
     id, task_id, prescription_id, device_id, employee_id, assign_type,
     assign_reason, scheduled_start_time, scheduled_end_time,
     actual_start_time, actual_end_time, status, stage_breakdown_json,

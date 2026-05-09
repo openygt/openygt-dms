@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("dms_patient_token")
+@TableName("prod_patient_token")
 public class PatientToken {
     @TableId(type = IdType.AUTO)
     private Long id;
