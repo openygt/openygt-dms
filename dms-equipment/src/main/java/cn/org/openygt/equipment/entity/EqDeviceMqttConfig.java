@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("iot_device_mqtt_config")
+@TableName("eq_device_mqtt_config")
 public class EqDeviceMqttConfig extends BaseEntity {
 
     /** 设备编码 */

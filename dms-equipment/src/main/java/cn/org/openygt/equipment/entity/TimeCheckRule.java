@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("eq_time_check_rule")
+@TableName("time_check_rule")
 public class TimeCheckRule extends BaseEntity {
 
     private String ruleCode;

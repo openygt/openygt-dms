@@ -11,9 +11,9 @@ import java.util.List;
 @Mapper
 public interface DecoctionTraceEventMapper extends BaseMapper<DecoctionTraceEvent> {
 
-    @Select("SELECT * FROM trc_trace_event WHERE prescription_no = #{prescriptionNo} AND deleted = 0 ORDER BY event_time")
+    @Select("SELECT * FROM decoction_trace_event WHERE prescription_no = #{prescriptionNo} AND deleted = 0 ORDER BY event_time")
     List<DecoctionTraceEvent> findByPrescriptionNo(@Param("prescriptionNo") String prescriptionNo);
 
-    @Select("SELECT * FROM trc_trace_event WHERE trace_id = #{traceId} AND deleted = 0 ORDER BY event_time")
+    @Select("SELECT * FROM decoction_trace_event WHERE trace_id = #{traceId} AND deleted = 0 ORDER BY event_time")
     List<DecoctionTraceEvent> findByTraceId(@Param("traceId") Long traceId);
 }

@@ -9,6 +9,6 @@ import org.apache.ibatis.annotations.Select;
 @Mapper
 public interface EqDeviceMqttConfigMapper extends BaseMapper<EqDeviceMqttConfig> {
 
-    @Select("SELECT * FROM iot_device_mqtt_config WHERE device_code = #{deviceCode} AND deleted = 0")
+    @Select("SELECT * FROM eq_device_mqtt_config WHERE device_code = #{deviceCode} AND deleted = 0")
     EqDeviceMqttConfig findByDeviceCode(@Param("deviceCode") String deviceCode);
 }

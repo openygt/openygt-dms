@@ -1,6 +1,6 @@
 # 测试环境专用配置（使用 MySQL，与生产一致）
 server:
-  port: 9094
+  port: 9092
 
 spring:
   datasource:

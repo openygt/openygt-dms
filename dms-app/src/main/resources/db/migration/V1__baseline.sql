@@ -213,10 +213,10 @@ CREATE TABLE `device_utilization` (
   KEY `idx_du_device_date` (`device_code`,`stat_date`)
 ) ENGINE=InnoDB AUTO_INCREMENT=900000219 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='设备利用率表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_alert_log`;
+DROP TABLE IF EXISTS `dms_alert_log`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_alert_log` (
+CREATE TABLE `dms_alert_log` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `monitor_id` bigint DEFAULT NULL COMMENT 'monitor id',
   `task_id` bigint DEFAULT NULL COMMENT '任务ID',
@@ -238,10 +238,10 @@ CREATE TABLE `prod_alert_log` (
   KEY `idx_al_resolved_monitor` (`is_resolved`,`monitor_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=900000887 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='预警记录表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_emergency_prescription`;
+DROP TABLE IF EXISTS `dms_emergency_prescription`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_emergency_prescription` (
+CREATE TABLE `dms_emergency_prescription` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `prescription_id` bigint NOT NULL COMMENT '关联处方ID',
   `emergency_level` tinyint DEFAULT '1' COMMENT '急诊级别：1普通急诊 2危重急诊 3抢救',
@@ -262,10 +262,10 @@ CREATE TABLE `prod_emergency_prescription` (
   KEY `idx_emergency_level` (`emergency_level`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='急诊处方表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_employee_barcode`;
+DROP TABLE IF EXISTS `dms_employee_barcode`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_employee_barcode` (
+CREATE TABLE `dms_employee_barcode` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `employee_id` bigint DEFAULT NULL COMMENT 'employee id',
   `barcode` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '条码内容',
@@ -282,10 +282,10 @@ CREATE TABLE `prod_employee_barcode` (
   KEY `idx_employee_id` (`employee_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='员工条码表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_employee_skill`;
+DROP TABLE IF EXISTS `dms_employee_skill`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_employee_skill` (
+CREATE TABLE `dms_employee_skill` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `employee_id` bigint NOT NULL COMMENT '员工ID',
   `skill_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '技能编码：XIE_BIAO-解表药, ZI_BU-滋补药, WAI_YONG-外用药',
@@ -296,10 +296,10 @@ CREATE TABLE `prod_employee_skill` (
   KEY `idx_employee_id` (`employee_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='员工技能标签表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_herb_group_rule`;
+DROP TABLE IF EXISTS `dms_herb_group_rule`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_herb_group_rule` (
+CREATE TABLE `dms_herb_group_rule` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `group_code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '分组编码',
   `group_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '分组名称',
@@ -316,10 +316,10 @@ CREATE TABLE `prod_herb_group_rule` (
   KEY `idx_process_type` (`process_type`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1003 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='药材分组规则表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_patient_notify`;
+DROP TABLE IF EXISTS `dms_patient_notify`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_patient_notify` (
+CREATE TABLE `dms_patient_notify` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `prescription_id` bigint DEFAULT NULL COMMENT '处方ID',
   `notify_type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '类型：START-开始, COMPLETE-完成, DELIVERY-配送, REMIND-服药提醒',
@@ -332,10 +332,10 @@ CREATE TABLE `prod_patient_notify` (
   KEY `idx_prescription_id` (`prescription_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='患者通知记录表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_patient_token`;
+DROP TABLE IF EXISTS `dms_patient_token`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_patient_token` (
+CREATE TABLE `dms_patient_token` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `token` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '查询令牌',
   `prescription_id` bigint DEFAULT NULL COMMENT '处方ID',
@@ -349,10 +349,10 @@ CREATE TABLE `prod_patient_token` (
   KEY `idx_prescription_id` (`prescription_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='患者查询令牌表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_prescription_herb_group`;
+DROP TABLE IF EXISTS `dms_prescription_herb_group`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_prescription_herb_group` (
+CREATE TABLE `dms_prescription_herb_group` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `prescription_id` bigint NOT NULL COMMENT '关联处方ID',
   `group_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '分组编码：SOAK浸泡/FIRST先煎/MAIN主煎/LAST后下/WRAP包煎',
@@ -368,10 +368,10 @@ CREATE TABLE `prod_prescription_herb_group` (
   KEY `idx_group_code` (`group_code`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1003 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='处方药材分组实例表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_rollback_reason`;
+DROP TABLE IF EXISTS `dms_rollback_reason`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_rollback_reason` (
+CREATE TABLE `dms_rollback_reason` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `reason_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '编码',
   `reason_name` varchar(200) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '名称',
@@ -384,10 +384,10 @@ CREATE TABLE `prod_rollback_reason` (
   UNIQUE KEY `reason_code` (`reason_code`)
 ) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='回退原因字典表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_shelf`;
+DROP TABLE IF EXISTS `dms_shelf`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_shelf` (
+CREATE TABLE `dms_shelf` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `shelf_code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '货架编码：A-01-03',
   `shelf_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '货架名称',
@@ -408,10 +408,10 @@ CREATE TABLE `prod_shelf` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='货架定义表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_shelf_record`;
+DROP TABLE IF EXISTS `dms_shelf_record`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_shelf_record` (
+CREATE TABLE `dms_shelf_record` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `prescription_id` bigint DEFAULT NULL COMMENT '处方ID',
   `package_barcode` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '药袋条码',
@@ -432,10 +432,10 @@ CREATE TABLE `prod_shelf_record` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='上架记录表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_task_assignment`;
+DROP TABLE IF EXISTS `dms_task_assignment`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_task_assignment` (
+CREATE TABLE `dms_task_assignment` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `task_id` bigint NOT NULL COMMENT '煎药任务ID',
   `prescription_id` bigint DEFAULT NULL COMMENT '处方ID',
@@ -459,10 +459,10 @@ CREATE TABLE `prod_task_assignment` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=900000025 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='任务智能分配表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_task_rollback`;
+DROP TABLE IF EXISTS `dms_task_rollback`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_task_rollback` (
+CREATE TABLE `dms_task_rollback` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `original_task_id` bigint NOT NULL COMMENT '原任务ID',
   `new_task_id` bigint DEFAULT NULL COMMENT '回退后生成的新任务ID',
@@ -486,10 +486,10 @@ CREATE TABLE `prod_task_rollback` (
   KEY `idx_rollback_type` (`rollback_type`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='任务回退记录表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_time_monitor`;
+DROP TABLE IF EXISTS `dms_time_monitor`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_time_monitor` (
+CREATE TABLE `dms_time_monitor` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `task_id` bigint DEFAULT NULL COMMENT '任务ID',
   `assignment_id` bigint DEFAULT NULL COMMENT '分配记录ID',
@@ -514,10 +514,10 @@ CREATE TABLE `prod_time_monitor` (
   KEY `idx_tm_actual_end` (`actual_start`,`actual_end`)
 ) ENGINE=InnoDB AUTO_INCREMENT=900000645 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='时效监控实例表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_time_rule`;
+DROP TABLE IF EXISTS `dms_time_rule`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_time_rule` (
+CREATE TABLE `dms_time_rule` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `rule_code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '规则编码',
   `rule_name` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '规则名称',
@@ -536,10 +536,10 @@ CREATE TABLE `prod_time_rule` (
   KEY `idx_stage` (`stage`)
 ) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='时效规则表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_voice_setting`;
+DROP TABLE IF EXISTS `dms_voice_setting`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_voice_setting` (
+CREATE TABLE `dms_voice_setting` (
   `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `device_id` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '设备ID（PDA设备标识）',
   `user_id` bigint DEFAULT NULL COMMENT '用户ID',
@@ -2011,10 +2011,10 @@ CREATE TABLE `sys_user_role` (
   KEY `idx_sys_user_role_role` (`role_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=37 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用户角色表';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prod_delivery_record`;
+DROP TABLE IF EXISTS `t_delivery_record`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prod_delivery_record` (
+CREATE TABLE `t_delivery_record` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `task_id` bigint NOT NULL COMMENT '关联工单ID',
   `prescription_no` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '处方号',
@@ -2040,10 +2040,10 @@ CREATE TABLE `prod_delivery_record` (
   KEY `idx_prescription_no` (`prescription_no`)
 ) ENGINE=InnoDB AUTO_INCREMENT=900000002 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='交付记录';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `base_department`;
+DROP TABLE IF EXISTS `t_department`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `base_department` (
+CREATE TABLE `t_department` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `dept_code` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '科室编码',
   `dept_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '科室名称',
@@ -2061,10 +2061,10 @@ CREATE TABLE `base_department` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='科室管理';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `base_doctor`;
+DROP TABLE IF EXISTS `t_doctor`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `base_doctor` (
+CREATE TABLE `t_doctor` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `doctor_code` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '医师编码',
   `doctor_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '医师姓名',
@@ -2084,10 +2084,10 @@ CREATE TABLE `base_doctor` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='医师管理';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `sys_interface_config`;
+DROP TABLE IF EXISTS `t_interface_config`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_interface_config` (
+CREATE TABLE `t_interface_config` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `interface_code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '接口编码',
   `interface_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '接口名称',
@@ -2106,10 +2106,10 @@ CREATE TABLE `sys_interface_config` (
   UNIQUE KEY `interface_code` (`interface_code`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='接口配置';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `sys_interface_log`;
+DROP TABLE IF EXISTS `t_interface_log`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_interface_log` (
+CREATE TABLE `t_interface_log` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `interface_id` bigint NOT NULL COMMENT '接口配置ID',
   `interface_code` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT '接口编码',
@@ -2131,10 +2131,10 @@ CREATE TABLE `sys_interface_log` (
   KEY `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='接口调用日志';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `prt_label_template`;
+DROP TABLE IF EXISTS `t_label_template`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `prt_label_template` (
+CREATE TABLE `t_label_template` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `template_code` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '模板编码',
   `template_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '模板名称',
@@ -2155,10 +2155,10 @@ CREATE TABLE `prt_label_template` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='标签模板';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `base_medicine`;
+DROP TABLE IF EXISTS `t_medicine`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `base_medicine` (
+CREATE TABLE `t_medicine` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `medicine_code` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '药材编码',
   `medicine_name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '药材名称',
@@ -2181,10 +2181,10 @@ CREATE TABLE `base_medicine` (
   KEY `idx_status` (`status`)
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='药材目录';
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `md_package_spec`;
+DROP TABLE IF EXISTS `t_package_spec`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `md_package_spec` (
+CREATE TABLE `t_package_spec` (
   `id` bigint NOT NULL AUTO_INCREMENT,
   `spec_code` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '规格编码',
   `spec_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '规格名称',

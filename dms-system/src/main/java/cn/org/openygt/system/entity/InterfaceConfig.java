@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("sys_interface_config")
+@TableName("t_interface_config")
 public class InterfaceConfig {
 
     @TableId(type = IdType.AUTO)
