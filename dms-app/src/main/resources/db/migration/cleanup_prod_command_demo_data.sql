@@ -15,7 +15,7 @@ SET FOREIGN_KEY_CHECKS = 0;
 DELETE FROM eq_alarm_notification WHERE alarm_id IN (SELECT id FROM eq_device_alarm WHERE tenant_id = 'default');
 
 -- 1.2 时效预警记录表（无 tenant_id 字段，直接清空）
-DELETE FROM prod_alert_log;
+DELETE FROM dms_alert_log;
 
 -- 1.3 煎煮追溯事件子表
 DELETE FROM decoction_trace_event WHERE tenant_id = 'default';
@@ -31,7 +31,7 @@ DELETE FROM prod_task_status_history WHERE tenant_id = 'default';
 -- --------------------------------------------------
 
 -- 2.1 时效监控实例表（无 tenant_id 字段，直接清空）
-DELETE FROM prod_time_monitor;
+DELETE FROM dms_time_monitor;
 
 -- 2.2 设备指令表（保留 V44 之前的旧数据可选清理）
 DELETE FROM device_command WHERE tenant_id = 'default';
@@ -66,7 +66,7 @@ DELETE FROM eq_wash_record WHERE tenant_id = 'default';
 -- --------------------------------------------------
 
 -- 4.1 任务智能分配表（无 tenant_id 字段，直接清空）
-DELETE FROM prod_task_assignment;
+DELETE FROM dms_task_assignment;
 
 -- 4.2 煎煮追溯主表
 DELETE FROM decoction_trace WHERE tenant_id = 'default';

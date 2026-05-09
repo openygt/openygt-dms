@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("prod_voice_setting")
+@TableName("dms_voice_setting")
 public class VoiceSetting {
     @TableId(type = IdType.AUTO)
     private Long id;

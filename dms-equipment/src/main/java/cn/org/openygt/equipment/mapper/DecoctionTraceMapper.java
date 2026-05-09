@@ -11,12 +11,12 @@ import java.util.List;
 @Mapper
 public interface DecoctionTraceMapper extends BaseMapper<DecoctionTrace> {
 
-    @Select("SELECT * FROM trc_prescription_trace WHERE prescription_no = #{prescriptionNo} AND deleted = 0")
+    @Select("SELECT * FROM decoction_trace WHERE prescription_no = #{prescriptionNo} AND deleted = 0")
     DecoctionTrace findByPrescriptionNo(@Param("prescriptionNo") String prescriptionNo);
 
-    @Select("SELECT * FROM trc_prescription_trace WHERE decoct_device_code = #{deviceCode} AND deleted = 0 ORDER BY created_at DESC LIMIT #{limit}")
+    @Select("SELECT * FROM decoction_trace WHERE decoct_device_code = #{deviceCode} AND deleted = 0 ORDER BY created_at DESC LIMIT #{limit}")
     List<DecoctionTrace> findByDeviceCode(@Param("deviceCode") String deviceCode, @Param("limit") int limit);
 
-    @Select("SELECT COUNT(*) FROM trc_prescription_trace WHERE status = #{status} AND deleted = 0 AND DATE(created_at) = CURDATE()")
+    @Select("SELECT COUNT(*) FROM decoction_trace WHERE status = #{status} AND deleted = 0 AND DATE(created_at) = CURDATE()")
     Long countByStatusToday(@Param("status") String status);
 }

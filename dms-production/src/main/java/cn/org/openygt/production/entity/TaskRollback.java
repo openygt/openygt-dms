@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("prod_task_rollback")
+@TableName("dms_task_rollback")
 public class TaskRollback {
     @TableId(type = IdType.AUTO)
     private Long id;

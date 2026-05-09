@@ -12,7 +12,7 @@ import java.math.BigDecimal;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("md_toxic_medicine")
+@TableName("base_toxic_medicine")
 public class ToxicMedicine extends BaseEntity {
 
     private Long medicineId;
