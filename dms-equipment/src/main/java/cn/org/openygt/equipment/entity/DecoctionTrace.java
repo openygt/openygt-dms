@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("trc_prescription_trace")
+@TableName("decoction_trace")
 public class DecoctionTrace extends BaseEntity {
 
     private String prescriptionNo;

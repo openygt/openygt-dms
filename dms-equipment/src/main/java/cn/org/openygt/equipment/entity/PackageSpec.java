@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("md_package_spec")
+@TableName("t_package_spec")
 public class PackageSpec extends BaseEntity {
 
     @NotBlank(message = "规格编码不能为空")

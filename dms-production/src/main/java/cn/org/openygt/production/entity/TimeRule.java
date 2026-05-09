@@ -8,7 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("prod_time_rule")
+@TableName("dms_time_rule")
 public class TimeRule {
     @TableId(type = IdType.AUTO)
     private Long id;

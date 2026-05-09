@@ -47,6 +47,6 @@ INSERT INTO sys_archive_config (table_name, retention_days, archive_strategy) VA
 ('eq_temperature_log', 365, 'MIGRATE'),
 ('sys_log', 730, 'MIGRATE'),
 ('eq_device_alarm', 365, 'DELETE'),
-('sys_interface_log', 180, 'DELETE'),
+('t_interface_log', 180, 'DELETE'),
 ('dms_alert_log', 365, 'DELETE'),
 ('pda_operation_log', 365, 'DELETE');
