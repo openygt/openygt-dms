@@ -64,6 +64,8 @@ public class Task {
     private Integer priority;
     // === 非持久化字段 ===
     @com.baomidou.mybatisplus.annotation.TableField(exist = false)
+    private String statusLabel;
+    @com.baomidou.mybatisplus.annotation.TableField(exist = false)
     private String prescriptionNumber;
     public String getPrescriptionNo() { return prescriptionNumber; }
     public void setPrescriptionNo(String prescriptionNo) { this.prescriptionNumber = prescriptionNo; }

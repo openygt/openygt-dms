@@ -5,6 +5,7 @@ import cn.org.openygt.analytics.dto.DeviceTypeDistributionDTO;
 import cn.org.openygt.analytics.dto.TaskStatusDistributionDTO;
 import cn.org.openygt.analytics.mapper.DashboardStatMapper;
 import cn.org.openygt.analytics.service.DashboardService;
+import cn.org.openygt.common.enums.TaskStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -67,7 +68,9 @@ public class DashboardServiceImpl implements DashboardService {
         List<Map<String, Object>> taskDist = statMapper.selectTaskStatusDistribution();
         dto.setTaskStatusDistribution(taskDist.stream().map(m -> {
             TaskStatusDistributionDTO d = new TaskStatusDistributionDTO();
-            d.setStatus((String) m.get("status"));
+            String statusCode = (String) m.get("status");
+            TaskStatus enumStatus = TaskStatus.fromCode(statusCode);
+            d.setStatus(enumStatus != null ? enumStatus.getLabel() : statusCode);
             d.setCount(toLong(m.get("count")));
             return d;
         }).collect(Collectors.toList()));
