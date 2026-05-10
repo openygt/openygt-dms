@@ -43,10 +43,10 @@ SET FOREIGN_KEY_CHECKS = 0;
 DELETE FROM prod_work_record WHERE task_id >= 900000000;
 DELETE FROM prod_handover_detail WHERE task_id >= 900000000;
 DELETE FROM prod_step_log WHERE task_id >= 900000000;
-DELETE FROM prod_task_status_history WHERE task_id >= 900000000;
+DELETE FROM prod_task_status_history WHERE task_id >= 900000000 OR id >= 900000000;
 DELETE FROM prod_task_assignment WHERE task_id >= 900000000;
-DELETE FROM prod_time_monitor WHERE task_id >= 900000000;
-DELETE FROM prod_alert_log WHERE task_id >= 900000000;
+DELETE FROM prod_time_monitor WHERE task_id >= 900000000 OR id >= 900000000;
+DELETE FROM prod_alert_log WHERE task_id >= 900000000 OR id >= 900000000;
 DELETE FROM eq_wash_record WHERE task_id >= 900000000 OR id >= 900000000;
 
 -- --------------------------------------------------
@@ -61,7 +61,7 @@ DELETE FROM qt_inspection WHERE task_id >= 900000000;
 
 DELETE FROM qt_retain_sample WHERE task_id >= 900000000;
 DELETE FROM prod_delivery_record WHERE task_id >= 900000000;
-DELETE FROM decoction_trace WHERE task_id >= 900000000;
+DELETE FROM decoction_trace WHERE id >= 900000000;
 
 -- --------------------------------------------------
 -- Phase 4: 删除任务与处方主链
@@ -81,7 +81,13 @@ DELETE FROM eq_alarm_notification WHERE id >= 900000000;
 DELETE FROM eq_device_maintenance WHERE id >= 900000000;
 DELETE FROM eq_device_status WHERE id >= 900000000;
 DELETE FROM workload_stat WHERE id >= 900000000;
+SELECT '【验证】ops_workload_stat 残留演示数据' AS check_item, COUNT(*) AS remain FROM ops_workload_stat WHERE id >= 900000000;
+DELETE FROM ops_workload_stat WHERE id >= 900000000;
+SELECT '【验证】ops_workload_stat 残留演示数据' AS check_item, COUNT(*) AS remain FROM ops_workload_stat WHERE id >= 900000000;
 DELETE FROM device_utilization WHERE id >= 900000000;
+SELECT '【验证】eq_device_utilization 残留演示数据' AS check_item, COUNT(*) AS remain FROM eq_device_utilization WHERE id >= 900000000;
+DELETE FROM eq_device_utilization WHERE id >= 900000000;
+SELECT '【验证】eq_device_utilization 残留演示数据' AS check_item, COUNT(*) AS remain FROM eq_device_utilization WHERE id >= 900000000;
 DELETE FROM eq_device_operator WHERE id >= 900000000;
 DELETE FROM eq_device_group_rule WHERE id >= 900000000;
 
@@ -104,7 +110,9 @@ SELECT '【验证】device_command 残留演示数据' AS check_item, COUNT(*) A
 SELECT '【验证】eq_device_alarm 残留演示数据' AS check_item, COUNT(*) AS remain FROM eq_device_alarm WHERE id >= 900000000;
 SELECT '【验证】eq_device_status 残留演示数据' AS check_item, COUNT(*) AS remain FROM eq_device_status WHERE id >= 900000000;
 SELECT '【验证】workload_stat 残留演示数据' AS check_item, COUNT(*) AS remain FROM workload_stat WHERE id >= 900000000;
+SELECT '【验证】ops_workload_stat 残留演示数据' AS check_item, COUNT(*) AS remain FROM ops_workload_stat WHERE id >= 900000000;
 SELECT '【验证】prod_alert_log 残留演示数据' AS check_item, COUNT(*) AS remain FROM prod_alert_log WHERE id >= 900000000;
 SELECT '【验证】prod_time_monitor 残留演示数据' AS check_item, COUNT(*) AS remain FROM prod_time_monitor WHERE id >= 900000000;
 SELECT '【验证】device_utilization 残留演示数据' AS check_item, COUNT(*) AS remain FROM device_utilization WHERE id >= 900000000;
+SELECT '【验证】eq_device_utilization 残留演示数据' AS check_item, COUNT(*) AS remain FROM eq_device_utilization WHERE id >= 900000000;
 -- 以上所有 remain 必须为 0

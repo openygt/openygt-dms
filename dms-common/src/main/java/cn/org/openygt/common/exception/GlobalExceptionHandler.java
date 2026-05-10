@@ -82,9 +82,6 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<?> handleGeneric(Exception e) {
         log.error("未处理异常: {} — {}", e.getClass().getName(), e.getMessage(), e);
-        String detail = e.getMessage() != null && !e.getMessage().isEmpty()
-                ? e.getClass().getSimpleName() + ": " + e.getMessage()
-                : e.getClass().getSimpleName();
-        return ApiResponse.error(500, "服务器内部错误: " + detail);
+        return ApiResponse.error(500, "系统繁忙，请稍后重试");
     }
 }

@@ -1,6 +1,6 @@
 package cn.org.openygt.rbac.interceptor;
 
-import cn.org.openygt.rbac.annotation.RequiresPermissions;
+import cn.org.openygt.common.annotation.RequiresPermissions;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -15,6 +15,7 @@ import java.util.Map;
  * 权限拦截器。
  *
  * <p>检查方法上的 {@link RequiresPermissions} 注解，验证当前用户是否拥有所需角色之一。</p>
+ * <p>兼容旧版 cn.org.openygt.rbac.annotation.RequiresPermissions 注解。</p>
  * <p>无数据权限计算，仅做角色字符串匹配。</p>
  */
 public class PermissionInterceptor implements HandlerInterceptor {
@@ -46,9 +47,18 @@ public class PermissionInterceptor implements HandlerInterceptor {
         Method method = ((HandlerMethod) handler).getMethod();
         RequiresPermissions ann = method.getAnnotation(RequiresPermissions.class);
         if (ann == null) {
-            return true;
+            // 兼容旧版注解
+            cn.org.openygt.rbac.annotation.RequiresPermissions legacyAnn =
+                    method.getAnnotation(cn.org.openygt.rbac.annotation.RequiresPermissions.class);
+            if (legacyAnn == null) {
+                return true;
+            }
+            return checkPermission(legacyAnn.value(), request, response);
         }
+        return checkPermission(ann.value(), request, response);
+    }
 
+    private boolean checkPermission(String[] requiredPermissions, HttpServletRequest request, HttpServletResponse response) throws Exception {
         @SuppressWarnings("unchecked")
         List<String> roles = (List<String>) request.getAttribute("roles");
         @SuppressWarnings("unchecked")
@@ -68,7 +78,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        for (String required : ann.value()) {
+        for (String required : requiredPermissions) {
             if (roles != null && roles.contains(required)) {
                 return true;
             }

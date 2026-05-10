@@ -33,7 +33,7 @@ DELETE FROM qt_inspection_item WHERE inspection_id IN (SELECT id FROM qt_inspect
 DELETE FROM qt_inspection WHERE task_id = 900000001;
 DELETE FROM qt_retain_sample WHERE task_id = 900000001;
 DELETE FROM qt_retain_sample WHERE sample_no LIKE 'DEMO-SAMPLE%';
-DELETE FROM prod_delivery_record WHERE task_id = 900000001;
+DELETE FROM t_delivery_record WHERE task_id = 900000001;
 DELETE FROM decoction_trace WHERE task_id = 900000001;
 
 DELETE FROM prod_task WHERE id = 900000001;
@@ -255,9 +255,9 @@ INSERT INTO qt_retain_sample (
 );
 
 -- --------------------------------------------------
--- 11. 发药记录 (prod_delivery_record) — 1 条
+-- 11. 发药记录 (t_delivery_record) — 1 条
 -- --------------------------------------------------
-INSERT INTO prod_delivery_record (
+INSERT INTO t_delivery_record (
     id, task_id, prescription_no, patient_name, delivery_type,
     receiver_name, receiver_phone, receiver_address,
     bag_count, status, operator_id, remark, delivered_at, tenant_id, deleted

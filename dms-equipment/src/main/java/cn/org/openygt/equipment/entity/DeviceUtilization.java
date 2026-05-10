@@ -10,7 +10,7 @@ import java.time.LocalDate;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("eq_device_utilization")
+@TableName("device_utilization")
 public class DeviceUtilization extends BaseEntity {
 
     private String deviceCode;

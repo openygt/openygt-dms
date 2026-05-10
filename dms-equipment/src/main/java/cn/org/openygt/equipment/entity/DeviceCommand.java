@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@TableName("iot_device_command")
+@TableName("device_command")
 public class DeviceCommand extends BaseEntity {
 
     /** 目标设备编码 */

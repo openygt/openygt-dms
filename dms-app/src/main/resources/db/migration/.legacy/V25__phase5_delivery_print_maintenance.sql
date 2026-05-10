@@ -1,7 +1,7 @@
 -- Phase 5: 交付管理 + 打印记录 + 设备维护
 
 -- ==================== 交付记录 ====================
-CREATE TABLE prod_delivery_record (
+CREATE TABLE t_delivery_record (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     task_id BIGINT NOT NULL COMMENT '关联工单ID',
     prescription_no VARCHAR(50) COMMENT '处方号',
@@ -47,7 +47,7 @@ CREATE TABLE eq_device_maintenance (
 ) COMMENT='设备维护记录';
 
 -- 插入交付记录测试数据
-INSERT INTO prod_delivery_record (task_id, prescription_no, patient_name, delivery_type, receiver_name, receiver_phone, receiver_address, status, operator_id, bag_count, tenant_id, deleted) VALUES
+INSERT INTO t_delivery_record (task_id, prescription_no, patient_name, delivery_type, receiver_name, receiver_phone, receiver_address, status, operator_id, bag_count, tenant_id, deleted) VALUES
 (1, 'P20250428001', '张三', 'SELF', '张三', '13800138001', '门诊大厅', 'DELIVERED', 'admin', 7, 'default', 0),
 (2, 'P20250428002', '李四', 'EXPRESS', '李四', '13800138002', '北京市海淀区xxx路', 'DELIVERED', 'admin', 14, 'default', 0),
 (3, 'P20250428003', '王五', 'DELIVERY', '王五', '13800138003', '住院部3楼', 'PENDING', NULL, 7, 'default', 0),

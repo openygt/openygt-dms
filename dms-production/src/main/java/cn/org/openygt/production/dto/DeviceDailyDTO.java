@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class DeviceDailyDTO {
-    private String deviceId;
+    private Long deviceId;
     private String deviceCode;
     private String deviceName;
     private Integer taskCount;
