@@ -40,6 +40,8 @@ public class Prescription {
     private Integer bagsPerRepetition;
     private Integer bagCapacity;
     private Integer decoctingType;
+    private String deliveryType;
+    private String preparationType;
     private String usageMethod;
     private Long schemeId;
     private String remark;
