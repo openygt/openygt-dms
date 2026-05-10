@@ -25,12 +25,12 @@ export default defineConfig({
     }
   },
   server: {
-    // openygt-dms-04：前端 5174，代理本实例后端 9094（协作规范 5170+NN / 9090+NN）
-    port: 5174,
+    // openygt-dms-01：前端 5171，代理本实例后端 9091（协作规范 5170+NN / 9090+NN）
+    port: 5171,
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:9094',
+        target: 'http://127.0.0.1:9091',
         changeOrigin: true
       }
     }
