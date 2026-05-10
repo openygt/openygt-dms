@@ -91,7 +91,7 @@ public class OperationLogAspect {
             try {
                 Long userId = cn.org.openygt.common.util.JwtUtil.getUserId(token);
                 if (userId != null) sysLog.setUserId(String.valueOf(userId));
-            } catch (Exception ignored) {}
+            } catch (Exception e) { log.warn("操作日志记录失败", e); }
         }
 
         // 尝试从参数中提取 targetId / targetName
@@ -116,7 +116,7 @@ public class OperationLogAspect {
                 java.lang.reflect.Method m = arg.getClass().getMethod("getId");
                 Object id = m.invoke(arg);
                 if (id != null) return id.toString();
-            } catch (Exception ignored) {}
+            } catch (Exception e) { log.warn("操作日志记录失败", e); }
         }
         return null;
     }

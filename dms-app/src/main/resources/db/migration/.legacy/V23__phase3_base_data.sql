@@ -2,7 +2,7 @@
 -- 药材目录 / 科室管理 / 医师管理 / 包装规格
 
 -- ==================== 药材目录 ====================
-CREATE TABLE base_medicine (
+CREATE TABLE t_medicine (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     medicine_code VARCHAR(32) NOT NULL UNIQUE COMMENT '药材编码',
     medicine_name VARCHAR(100) NOT NULL COMMENT '药材名称',
@@ -24,7 +24,7 @@ CREATE TABLE base_medicine (
 ) COMMENT='药材目录';
 
 -- ==================== 科室管理 ====================
-CREATE TABLE base_department (
+CREATE TABLE t_department (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     dept_code VARCHAR(32) NOT NULL UNIQUE COMMENT '科室编码',
     dept_name VARCHAR(100) NOT NULL COMMENT '科室名称',
@@ -41,7 +41,7 @@ CREATE TABLE base_department (
 ) COMMENT='科室管理';
 
 -- ==================== 医师管理 ====================
-CREATE TABLE base_doctor (
+CREATE TABLE t_doctor (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     doctor_code VARCHAR(32) NOT NULL UNIQUE COMMENT '医师编码',
     doctor_name VARCHAR(100) NOT NULL COMMENT '医师姓名',
@@ -60,7 +60,7 @@ CREATE TABLE base_doctor (
 ) COMMENT='医师管理';
 
 -- ==================== 包装规格 ====================
-CREATE TABLE md_package_spec (
+CREATE TABLE t_package_spec (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     spec_code VARCHAR(32) NOT NULL UNIQUE COMMENT '规格编码',
     spec_name VARCHAR(50) NOT NULL COMMENT '规格名称',

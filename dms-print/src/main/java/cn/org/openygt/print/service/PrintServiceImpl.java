@@ -237,7 +237,7 @@ public class PrintServiceImpl implements PrintService {
                         dto.setPrintType("未知");
                     }
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) { log.error("打印服务异常", e); }
         }
         return dto;
     }

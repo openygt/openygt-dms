@@ -25,7 +25,6 @@ export default defineConfig({
     }
   },
   server: {
-    // openygt-dms-01：前端 5171，代理本实例后端 9091（协作规范 5170+NN / 9090+NN）
     port: 5171,
     host: '0.0.0.0',
     proxy: {

@@ -107,7 +107,7 @@ public class TaskServiceImpl implements TaskService {
         task.setCurrentStageDuration(0);
         taskMapper.updateById(task);
         recordWork(taskId, operatorId, null, "DECOCT", 0);
-        createStepLog(taskId, "DECOCT", deviceCode, operatorId, null);
+        createStepLog(taskId, "DECOCT", deviceId, operatorId, null);
         return task;
     }
 
@@ -201,7 +201,7 @@ public class TaskServiceImpl implements TaskService {
         task.setCurrentStageDuration(0);
         taskMapper.updateById(task);
         recordWork(taskId, operatorId, null, "WRAP", 0);
-        createStepLog(taskId, "WRAP", deviceCode, operatorId, null);
+        createStepLog(taskId, "WRAP", deviceId, operatorId, null);
         return task;
     }
 
@@ -424,6 +424,13 @@ public class TaskServiceImpl implements TaskService {
                                 java.util.HashMap::putAll);
                 tasks.forEach(t -> t.setPrescriptionNumber(presNumMap.get(t.getPrescriptionId())));
             }
+            // 映射状态中文标签
+            tasks.forEach(t -> {
+                TaskStatus enumStatus = TaskStatus.fromCode(t.getStatus());
+                if (enumStatus != null) {
+                    t.setStatusLabel(enumStatus.getLabel());
+                }
+            });
         }
         return result;
     }
@@ -574,7 +581,7 @@ public class TaskServiceImpl implements TaskService {
                 if (!users.isEmpty()) {
                     task.setOperatorName(users.get(0).getRealName());
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) { log.error("任务操作异常", e);
             }
         }
         recordHistory(task.getId(), oldStatus, newStatus, operatorId, remark);
@@ -690,11 +697,11 @@ public class TaskServiceImpl implements TaskService {
         }
     }
 
-    private void createStepLog(Long taskId, String stepType, String deviceCode, String operatorId, Long parentId) {
+    private void createStepLog(Long taskId, String stepType, Long deviceId, String operatorId, Long parentId) {
         StepLog step = new StepLog();
         step.setTaskId(taskId);
         step.setStepType(stepType);
-        step.setDeviceId(deviceCode);
+        step.setDeviceId(deviceId);
         step.setOperatorId(operatorId != null ? operatorId : "SYSTEM");
         step.setParentId(parentId);
         step.setStartedAt(LocalDateTime.now());
@@ -788,7 +795,7 @@ public class TaskServiceImpl implements TaskService {
                 if (!users.isEmpty()) {
                     task.setOperatorName(users.get(0).getRealName());
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) { log.error("任务操作异常", e);
             }
         }
         taskMapper.updateById(task);

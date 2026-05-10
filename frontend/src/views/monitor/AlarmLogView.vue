@@ -47,7 +47,7 @@
       </el-form>
 
       <el-table :data="list" v-loading="loading" border>
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="id" label="ID" width="90" />
         <el-table-column prop="deviceCode" label="设备编码" width="120" />
         <el-table-column prop="alarmType" label="类型" width="120">
           <template #default="{ row }">
@@ -59,7 +59,7 @@
             <el-tag :type="levelType(row.alarmLevel)">{{ levelText(row.alarmLevel) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="content" label="内容" />
+        <el-table-column prop="content" label="内容" show-overflow-tooltip />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="statusType(row.status)">
@@ -67,12 +67,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="告警时间" width="160">
+        <el-table-column prop="createdAt" label="告警时间" width="170">
           <template #default="{ row }">
             {{ formatDateTime(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button v-if="row.status === 'PENDING'" size="small" type="success" @click="handleResolve(row)">标识修复</el-button>
             <el-button v-if="row.status === 'PENDING'" size="small" @click="handleCancel(row)">取消警示</el-button>

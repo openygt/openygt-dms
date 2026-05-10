@@ -69,3 +69,7 @@ frontend/test-evidence/
 .gitnexus
 docs
 tests
+
+# 本地环境配置（各实例私有，禁止提交）
+application-local.yml
+.env.local
