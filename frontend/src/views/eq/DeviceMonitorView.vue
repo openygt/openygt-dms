@@ -66,7 +66,12 @@
       >
         <!-- 卡片头部 -->
         <div class="card-header">
-          <h2 class="device-name" data-testid="device-name">{{ device.name }}</h2>
+          <div>
+            <h2 class="device-name" data-testid="device-name">{{ device.name }}</h2>
+            <div v-if="device.groupName" class="device-group">
+              <el-tag size="small" type="info">{{ device.groupName }}</el-tag>
+            </div>
+          </div>
           <div
             class="status-block"
             :class="[getStatusAnimation(device), device.status === 'OFFLINE' ? 'offline-status' : '']"
@@ -711,6 +716,10 @@ onUnmounted(() => {
     margin: 0;
     color: var(--el-text-color-primary);
     line-height: 1.3;
+  }
+
+  .device-group {
+    margin-top: 4px;
   }
 }
 

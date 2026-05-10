@@ -32,7 +32,7 @@
       </el-form>
 
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="deviceName" label="设备名称" width="120" />
         <el-table-column prop="maintenanceType" label="类型" width="100">
           <template #default="{ row }">
