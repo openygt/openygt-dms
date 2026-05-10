@@ -1,5 +1,6 @@
 package cn.org.openygt.system.controller;
 
+import cn.org.openygt.common.annotation.RequiresPermissions;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.system.SystemModule;
 import cn.org.openygt.system.entity.InterfaceLog;
@@ -15,6 +16,7 @@ public class InterfaceLogController {
 
     private final InterfaceLogService interfaceLogService;
 
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping
     public ApiResponse<Page<InterfaceLog>> list(
             @RequestParam(defaultValue = "1") int page,

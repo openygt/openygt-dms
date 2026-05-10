@@ -35,9 +35,10 @@ fi
 JVM_OPTS="-Xms128m -Xmx256m -XX:MetaspaceSize=64m -XX:MaxMetaspaceSize=128m -XX:+UseG1GC -XX:MaxGCPauseMillis=200"
 
 # 全相对路径启动
-nohup java ${JVM_OPTS} -jar ./dms-app/target/dms-app-1.0.0-SNAPSHOT.jar \
+nohup java ${JVM_OPTS} -jar ./dms-app/target/dms-app-1.0.0.jar \
     --server.port=${PORT} \
     --server.address=0.0.0.0 \
+    --spring.profiles.active=dev \
     --spring.datasource.hikari.maximum-pool-size=2 \
     --spring.datasource.hikari.minimum-idle=1 \
     --logging.level.root=WARN \

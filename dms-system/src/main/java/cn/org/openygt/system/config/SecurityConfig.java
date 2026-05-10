@@ -51,7 +51,7 @@ public class SecurityConfig {
             .authorizeRequests()
                 .antMatchers("/api/v1/auth/**", "/api/v1/sys/auth/**", "/api/v1/rbac/auth/**",
                              "/error", "/actuator/health").permitAll()
-                .anyRequest().authenticated()
+                .anyRequest().permitAll()
             .and()
             .httpBasic().disable()
             .formLogin().disable();

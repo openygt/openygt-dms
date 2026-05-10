@@ -28,6 +28,7 @@ public class TaskStatusTransition {
         NORMAL_PATH.put(TaskStatus.PARTIAL_COMPLETED.getCode(), Arrays.asList(TaskStatus.COMPLETED.getCode()));
         NORMAL_PATH.put(TaskStatus.SECOND_JUDGEMENT.getCode(), Arrays.asList(
             TaskStatus.STORED.getCode(), TaskStatus.SCRAPPED.getCode(), TaskStatus.WAIT_DECOCT.getCode()));
+        NORMAL_PATH.put(TaskStatus.REWORK.getCode(), Arrays.asList(TaskStatus.WAIT_SOAK.getCode()));
     }
 
     // 回退路径（需审批）
