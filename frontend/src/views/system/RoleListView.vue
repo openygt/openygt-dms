@@ -5,7 +5,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center">
           <el-form :inline="true" @submit.prevent style="margin-bottom: 0">
             <el-form-item label="关键词" style="margin-bottom: 0">
-              <el-input v-model="search.keyword" placeholder="角色编码/名称" clearable />
+              <el-input v-model="search.keyword" placeholder="角色名称/编码" clearable />
             </el-form-item>
             <el-form-item style="margin-bottom: 0">
               <el-button type="primary" @click="handleSearch">查询</el-button>
@@ -17,8 +17,8 @@
       </template>
       <el-table :data="filteredList" v-loading="loading" border>
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="roleCode" label="角色编码" />
         <el-table-column prop="roleName" label="角色名称" />
+        <el-table-column prop="roleCode" label="角色编码" />
         <el-table-column prop="description" label="描述" />
         <el-table-column prop="createdAt" label="创建时间" />
         <el-table-column label="操作" width="220" fixed="right">
@@ -45,11 +45,11 @@
     <!-- 新增/编辑 -->
     <el-dialog v-model="dialogVisible" :title="form.id ? '编辑角色' : '新增角色'" width="500px">
       <el-form :model="form" :rules="rules" ref="formRef" label-width="80px">
-        <el-form-item label="角色编码" prop="roleCode">
-          <el-input v-model="form.roleCode" :disabled="!!form.id" placeholder="如 ROLE_ADMIN" />
-        </el-form-item>
         <el-form-item label="角色名称" prop="roleName">
           <el-input v-model="form.roleName" placeholder="如系统管理员" />
+        </el-form-item>
+        <el-form-item label="角色编码" prop="roleCode">
+          <el-input v-model="form.roleCode" :disabled="!!form.id" placeholder="如 ROLE_ADMIN" />
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="form.description" type="textarea" rows="3" />
