@@ -52,15 +52,10 @@ INSERT INTO prod_prescription (id, hospital_id, prescription_number, patient_nam
 (900000024, 2, 'DEMO-RX-20260506-0024', '曹颖', '13800138024', 0, 'OUT0024', NULL, NULL, '风寒感冒', '刘医生', '康复科', NULL, '白术、茯苓、甘草', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
 (900000026, 2, 'DEMO-RX-20260506-0026', '吴丽', '13800138026', 0, 'OUT0026', NULL, NULL, '风寒感冒', '李医生', '外科', NULL, '当归、党参', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
 (900000027, 2, 'DEMO-RX-20260506-0027', '郑强', '13800138027', 0, 'OUT0027', NULL, NULL, '风寒感冒', '王医生', '妇科', NULL, '党参、白术', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
-<<<<<<< HEAD
 (900000028, 2, 'DEMO-RX-20260506-0028', '孙芳', '13800138028', 0, 'OUT0028', NULL, NULL, '风寒感冒', '刘医生', '儿科', NULL, '白术、茯苓', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
 (900000029, 2, 'DEMO-RX-20260506-0029', '钱伟', '13800138029', 0, 'OUT0029', NULL, NULL, '风热感冒', '张医生', '内科', NULL, '金银花、连翘、薄荷', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
 (900000030, 2, 'DEMO-RX-20260506-0030', '冯丽', '13800138030', 0, 'OUT0030', NULL, NULL, '脾胃虚弱', '李医生', '中医科', NULL, '山药、莲子、芡实', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL'),
-(900000031, 2, 'DEMO-RX-20260506-0031', '董明', '13800138031', 0, 'OUT0031', NULL, NULL, '失眠多梦', '王医生', '康复科', NULL, '酸枣仁、茯苓、知母', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL');
-=======
-(900000028, 2, 'DEMO-RX-20260506-0028', '孙芳', '13800138028', 0, 'OUT0028', NULL, NULL, '风寒感冒', '刘医生', '儿科', NULL, '白术、茯苓', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL');
->>>>>>> bf1f1bb9ff4a8c5b9f5c5f0b553587f140bb24a6
-DELETE FROM prod_task WHERE id >= 900000000;
+(900000031, 2, 'DEMO-RX-20260506-0031', '董明', '13800138031', 0, 'OUT0031', NULL, NULL, '失眠多梦', '王医生', '康复科', NULL, '酸枣仁、茯苓、知母', 7, 1, 200, 0, '水煎服', NULL, NULL, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'MANUAL');DELETE FROM prod_task WHERE id >= 900000000;
 INSERT INTO prod_task (id, prescription_id, decoct_device_id, package_device_id, scheme_id, scheme_snapshot, decoction_plan, operator_id, operator_name, status, suspended_from, suspend_reason, suspend_time, expected_resume_time, current_temp, target_temp, soak_duration, soak_start_time, soak_end_time, decoct_start_time, decoct_end_time, pour_start_time, pour_end_time, wrap_start_time, wrap_end_time, complete_time, current_stage_duration, print_device_id, print_status, print_time, deleted, created_at, updated_at, current_step, pool_id, print_copies, is_exception, is_emergency, priority, exception_reason, patient_agreement, standard_cost, actual_cost, handover_type, handover_user, handover_time, tenant_id, status_enum, barcode) VALUES
 (900000001, 900000001, 1, 5, NULL, NULL, NULL, NULL, NULL, 'WAIT_SOAK', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'WAIT_SOAK', NULL),
 (900000002, 900000002, 2, 6, NULL, NULL, NULL, NULL, NULL, 'WAIT_SOAK', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'WAIT_SOAK', NULL),
@@ -89,15 +84,10 @@ INSERT INTO prod_task (id, prescription_id, decoct_device_id, package_device_id,
 (900000025, 900000025, 5, 1, NULL, NULL, NULL, NULL, NULL, 'WAIT_DECOCT', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'WAIT_DECOCT', NULL),
 (900000026, 900000026, 6, 2, NULL, NULL, NULL, NULL, NULL, 'WAIT_POUR', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', NULL, NULL, NULL, NULL, NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'WAIT_POUR', NULL),
 (900000027, 900000027, 7, 3, NULL, NULL, NULL, NULL, NULL, 'POURING', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 08:00:00', NULL, NULL, NULL, NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'POURING', NULL),
-<<<<<<< HEAD
 (900000028, 900000028, 774, 4, NULL, NULL, NULL, NULL, NULL, 'WAIT_LABEL', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 08:00:00', '2026-05-06 08:10:00', '2026-05-06 08:10:00', '2026-05-06 08:20:00', NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'WAIT_LABEL', NULL),
 (900000029, 900000029, 1, 5, NULL, NULL, NULL, NULL, NULL, 'SUSPENDED', 'DECOCTING', '设备故障待修', '2026-05-06 09:00:00', '2026-05-06 10:00:00', 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', NULL, NULL, NULL, NULL, NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SUSPENDED', NULL),
 (900000030, 900000030, 2, 6, NULL, NULL, NULL, NULL, NULL, 'SCRAPPED', NULL, '药材配比错误', '2026-05-06 09:30:00', NULL, 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 08:00:00', '2026-05-06 08:10:00', NULL, NULL, NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'SCRAPPED', NULL),
 (900000031, 900000031, 3, 7, NULL, NULL, NULL, NULL, NULL, 'REWORK', NULL, '质检不合格返工', '2026-05-06 10:00:00', NULL, 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 08:00:00', '2026-05-06 08:10:00', '2026-05-06 08:10:00', '2026-05-06 08:20:00', NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'REWORK', NULL);
-=======
-(900000028, 900000028, 774, 4, NULL, NULL, NULL, NULL, NULL, 'WAIT_LABEL', NULL, NULL, NULL, NULL, 0.00, 100.00, 30, '2026-05-06 07:20:00', '2026-05-06 07:30:00', '2026-05-06 07:30:00', '2026-05-06 08:00:00', '2026-05-06 08:00:00', '2026-05-06 08:10:00', '2026-05-06 08:10:00', '2026-05-06 08:20:00', NULL, 0, NULL, 'WAIT_SOAK', NULL, 0, NOW(), NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'WAIT_LABEL', NULL);
->>>>>>> bf1f1bb9ff4a8c5b9f5c5f0b553587f140bb24a6
-
 -- --------------------------------------------------
 -- 3. 任务分配
 -- --------------------------------------------------
@@ -423,13 +413,8 @@ INSERT INTO prod_prescription_medicine (id, prescription_id, medicine_id, hospit
 (900000171, 900000021, 21, 'HOSP002', '市中医院', '茯苓', '10.0', 'g', '水煎服', '常规煎煮', 'BATCH20260506021', NULL, 0, 0, NULL, 1, 'default', 0, NOW()),
 (900000172, 900000022, 22, 'HOSP002', '市中医院', '甘草', '10.0', 'g', '水煎服', '常规煎煮', 'BATCH20260506022', NULL, 0, 0, NULL, 1, 'default', 0, NOW()),
 (900000173, 900000023, 23, 'HOSP002', '市中医院', '川芎', '10.0', 'g', '水煎服', '常规煎煮', 'BATCH20260506023', NULL, 0, 0, NULL, 1, 'default', 0, NOW()),
-<<<<<<< HEAD
 (900000174, 900000024, 24, 'HOSP002', '市中医院', '熟地黄', '10.0', 'g', '水煎服', '常规煎煮', 'BATCH20260506024', NULL, 0, 0, NULL, 1, 'default', 0, NOW()),
 (900000175, 900000029, 25, 'HOSP002', '市中医院', '金银花', '10.0', 'g', '水煎服', '常规煎煮', 'BATCH20260506029', NULL, 0, 0, NULL, 1, 'default', 0, NOW()),
 (900000176, 900000030, 26, 'HOSP002', '市中医院', '山药', '10.0', 'g', '水煎服', '常规煎煮', 'BATCH20260506030', NULL, 0, 0, NULL, 1, 'default', 0, NOW()),
 (900000177, 900000031, 27, 'HOSP002', '市中医院', '酸枣仁', '10.0', 'g', '水煎服', '常规煎煮', 'BATCH20260506031', NULL, 0, 0, NULL, 1, 'default', 0, NOW());
-=======
-(900000174, 900000024, 24, 'HOSP002', '市中医院', '熟地黄', '10.0', 'g', '水煎服', '常规煎煮', 'BATCH20260506024', NULL, 0, 0, NULL, 1, 'default', 0, NOW());
->>>>>>> bf1f1bb9ff4a8c5b9f5c5f0b553587f140bb24a6
-
 SET FOREIGN_KEY_CHECKS = 1;
