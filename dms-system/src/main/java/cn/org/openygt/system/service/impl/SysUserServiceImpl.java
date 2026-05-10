@@ -62,6 +62,15 @@ public class SysUserServiceImpl implements SysUserService {
             throw new IllegalArgumentException("用户不存在: " + id);
         }
         user.setId(id);
+        // 状态转换：前端传数字 0/1 或字符串，统一转为 ACTIVE/INACTIVE
+        Object status = user.getStatus();
+        if (status != null) {
+            if ("0".equals(status.toString()) || "INACTIVE".equals(status.toString())) {
+                user.setStatus("INACTIVE");
+            } else {
+                user.setStatus("ACTIVE");
+            }
+        }
         // 若更新密码，需重新加密
         if (user.getPassword() != null && !user.getPassword().isEmpty()) {
             user.setPassword(passwordEncoder.encode(user.getPassword()));
