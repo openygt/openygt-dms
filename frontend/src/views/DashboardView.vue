@@ -171,7 +171,7 @@
         >
           <div class="alarm-main">
             <div class="alarm-top">
-              <el-tag size="small" :type="alarmLevelType(alarm.alarmLevel)">{{ alarm.alarmLevel || 'INFO' }}</el-tag>
+              <el-tag size="small" :type="alarmLevelType(alarm.alarmLevel)">{{ alarmLevelLabel(alarm.alarmLevel) }}</el-tag>
               <span class="alarm-device">{{ alarm.deviceCode || '-' }}</span>
               <span class="alarm-time">{{ formatDateTime(alarm.createdAt) }}</span>
             </div>
@@ -391,6 +391,16 @@ function alarmLevelType(level?: string) {
   if (l === 'WARNING' || l === '警告') return 'warning'
   if (l === 'INFO' || l === '提示') return 'info'
   return 'info'
+}
+
+function alarmLevelLabel(level?: string): string {
+  if (!level) return '提示'
+  const l = level.toUpperCase()
+  if (l === 'CRITICAL') return '紧急'
+  if (l === 'WARNING') return '警告'
+  if (l === 'ERROR') return '错误'
+  if (l === 'INFO') return '提示'
+  return level
 }
 
 function deviceTypeName(type: string) {
