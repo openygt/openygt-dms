@@ -47,11 +47,7 @@ DELETE FROM prod_task_status_history WHERE task_id >= 900000000;
 DELETE FROM prod_task_assignment WHERE task_id >= 900000000;
 DELETE FROM prod_time_monitor WHERE task_id >= 900000000;
 DELETE FROM prod_alert_log WHERE task_id >= 900000000;
-<<<<<<< HEAD
 DELETE FROM eq_wash_record WHERE task_id >= 900000000 OR id >= 900000000;
-=======
-DELETE FROM eq_wash_record WHERE task_id >= 900000000;
->>>>>>> bf1f1bb9ff4a8c5b9f5c5f0b553587f140bb24a6
 
 -- --------------------------------------------------
 -- Phase 3: 删除质检/交接/追溯中间表（按 task_id 关联）
