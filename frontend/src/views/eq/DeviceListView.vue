@@ -31,13 +31,18 @@
             <el-option label="离线" value="OFFLINE" />
           </el-select>
         </el-form-item>
+        <el-form-item label="所属分组">
+          <el-select v-model="search.groupId" placeholder="全部" clearable style="width: 160px">
+            <el-option v-for="g in groups" :key="g.id" :label="g.groupName" :value="g.id" />
+          </el-select>
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="fetchData">查询</el-button>
-          <el-button @click="search.keyword = ''; search.deviceType = undefined; search.status = ''; fetchData()">重置</el-button>
+          <el-button @click="search.keyword = ''; search.deviceType = undefined; search.status = ''; search.groupId = undefined; fetchData()">重置</el-button>
         </el-form-item>
       </el-form>
       <el-table :data="list" v-loading="loading" border>
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="id" label="ID" width="90" />
         <el-table-column prop="deviceCode" label="设备编码" />
         <el-table-column prop="name" label="设备名称" />
         <el-table-column prop="deviceType" label="类型" width="120">
@@ -388,7 +393,7 @@ const currentDevice = ref<Device | null>(null)
 const groups = ref<Group[]>([])
 const groupMap = ref<Record<number, string>>({})
 
-const search = ref({ keyword: '', deviceType: undefined as number | undefined, status: '' })
+const search = ref({ keyword: '', deviceType: undefined as number | undefined, status: '', groupId: undefined as number | undefined })
 const pagination = ref({ page: 1, size: 10, total: 0 })
 const form = ref<Partial<Device>>({})
 
@@ -491,7 +496,8 @@ async function fetchData() {
       size: pagination.value.size,
       keyword: search.value.keyword || undefined,
       deviceType: search.value.deviceType || undefined,
-      status: search.value.status || undefined
+      status: search.value.status || undefined,
+      groupId: search.value.groupId || undefined
     }
     const res: any = await request.get('/v1/eq/devices', { params })
     list.value = res.data?.records || []

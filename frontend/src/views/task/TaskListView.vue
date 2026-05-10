@@ -57,8 +57,8 @@
 
       <template v-if="viewMode === 'list'">
         <el-table :data="taskList" v-loading="loading" border style="width: 100%">
-          <el-table-column prop="id" label="任务号" width="80" />
-          <el-table-column label="处方号" width="200">
+          <el-table-column prop="id" label="任务号" width="110" />
+          <el-table-column label="处方号" width="220">
             <template #default="{ row }">
               {{ formatPrescriptionNo(row) }}
             </template>
@@ -87,7 +87,7 @@
               <span v-else style="color: var(--el-text-color-placeholder)">否</span>
             </template>
           </el-table-column>
-          <el-table-column label="更新时间" width="170">
+          <el-table-column label="更新时间" width="190">
             <template #default="{ row }">
               {{ formatDateTime(row.updatedAt) }}
             </template>
