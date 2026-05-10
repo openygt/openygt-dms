@@ -424,6 +424,13 @@ public class TaskServiceImpl implements TaskService {
                                 java.util.HashMap::putAll);
                 tasks.forEach(t -> t.setPrescriptionNumber(presNumMap.get(t.getPrescriptionId())));
             }
+            // 映射状态中文标签
+            tasks.forEach(t -> {
+                TaskStatus enumStatus = TaskStatus.fromCode(t.getStatus());
+                if (enumStatus != null) {
+                    t.setStatusLabel(enumStatus.getLabel());
+                }
+            });
         }
         return result;
     }
