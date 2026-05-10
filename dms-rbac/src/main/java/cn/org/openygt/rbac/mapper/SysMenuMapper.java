@@ -15,9 +15,11 @@ public interface SysMenuMapper extends BaseMapper<SysMenu> {
             "ORDER BY m.sort_order")
     List<SysMenu> selectMenusByRoleId(@Param("roleId") Long roleId);
 
-    @Select("SELECT m.* FROM sys_menu m " +
+    @Select("<script>SELECT m.* FROM sys_menu m " +
             "JOIN sys_role_menu rm ON m.id = rm.menu_id " +
-            "WHERE rm.role_id IN (${roleIds}) AND m.status = 'ACTIVE' " +
-            "ORDER BY m.sort_order")
-    List<SysMenu> selectMenusByRoleIds(@Param("roleIds") String roleIds);
+            "WHERE rm.role_id IN " +
+            "<foreach collection='roleIds' item='id' open='(' separator=',' close=')'>#{id}</foreach> " +
+            "AND m.status = 'ACTIVE' " +
+            "ORDER BY m.sort_order</script>")
+    List<SysMenu> selectMenusByRoleIds(@Param("roleIds") List<Long> roleIds);
 }

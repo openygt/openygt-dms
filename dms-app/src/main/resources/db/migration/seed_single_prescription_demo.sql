@@ -174,9 +174,9 @@ INSERT INTO qt_retain_sample (
 );
 
 -- ============================================================================
--- 10. 发药记录 (prod_delivery_record)
+-- 10. 发药记录 (t_delivery_record)
 -- ============================================================================
-INSERT INTO prod_delivery_record (
+INSERT INTO t_delivery_record (
     id, task_id, prescription_no, patient_name, delivery_type,
     receiver_name, receiver_phone, receiver_address,
     courier_company, courier_no, bag_count, status,

@@ -39,7 +39,7 @@ mqtt:
   topic-subscription: "+/+/+"
 
 jwt:
-  secret: Test-Only-JWT-Secret-Key-For-Regression-32Bytes!
+  secret: ${JWT_SECRET:}
 
 # PDA 文件上传配置
 pda:

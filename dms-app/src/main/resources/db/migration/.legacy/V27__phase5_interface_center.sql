@@ -1,5 +1,5 @@
 -- ========== 接口中心 ==========
-CREATE TABLE IF NOT EXISTS sys_interface_config (
+CREATE TABLE IF NOT EXISTS t_interface_config (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     interface_code VARCHAR(50) UNIQUE NOT NULL COMMENT '接口编码',
     interface_name VARCHAR(100) NOT NULL COMMENT '接口名称',
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS sys_interface_config (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) COMMENT='接口配置';
 
-CREATE TABLE IF NOT EXISTS sys_interface_log (
+CREATE TABLE IF NOT EXISTS t_interface_log (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     interface_id BIGINT NOT NULL COMMENT '接口配置ID',
     interface_code VARCHAR(50) COMMENT '接口编码',
@@ -38,13 +38,13 @@ CREATE TABLE IF NOT EXISTS sys_interface_log (
 ) COMMENT='接口调用日志';
 
 -- E2E测试数据
-INSERT INTO sys_interface_config (interface_code, interface_name, interface_type, protocol, base_url, auth_type, status, remark) VALUES
+INSERT INTO t_interface_config (interface_code, interface_name, interface_type, protocol, base_url, auth_type, status, remark) VALUES
 ('HIS_001', 'HIS处方接口', 'HIS', 'REST', 'http://his.hospital.com/api', 'TOKEN', 1, '接收处方数据'),
 ('DEV_001', '煎药机MQTT', 'DEVICE', 'MQTT', 'mqtt://broker.local:1883', 'NONE', 1, '煎药机设备通信'),
 ('DEV_002', '包装机TCP', 'DEVICE', 'TCP', 'tcp://192.168.1.100:502', 'NONE', 1, '包装机Modbus通信'),
 ('THIRD_001', '顺丰物流接口', 'THIRD_PARTY', 'REST', 'https://api.sf-express.com', 'TOKEN', 1, '物流单号查询');
 
-INSERT INTO sys_interface_log (interface_id, interface_code, direction, method, url, result, duration_ms, status_code) VALUES
+INSERT INTO t_interface_log (interface_id, interface_code, direction, method, url, result, duration_ms, status_code) VALUES
 (1, 'HIS_001', 'REQUEST', 'POST', '/api/v1/prescription', 'SUCCESS', 120, '200'),
 (1, 'HIS_001', 'RESPONSE', 'POST', '/api/v1/prescription', 'SUCCESS', 0, '200'),
 (2, 'DEV_001', 'REQUEST', 'PUBLISH', '/device/001/start', 'SUCCESS', 45, '200'),

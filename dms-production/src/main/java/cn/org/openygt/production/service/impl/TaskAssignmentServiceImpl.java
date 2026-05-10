@@ -190,7 +190,7 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
                 try {
                     EqDeviceDTO dev = equipmentService.getDeviceById(a.getDeviceId());
                     dto.setDeviceName(dev != null ? dev.getName() : null);
-                } catch (Exception ignored) {
+                } catch (Exception e) { log.error("任务分配异常", e);
                 }
             }
             dto.setStartTime(a.getActualStartTime() != null ? a.getActualStartTime() : a.getScheduledStartTime());
@@ -266,7 +266,7 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
                     dto.setIdleCount(!isRunning ? 1 : 0);
                     dto.setRunningCount(isRunning ? 1 : 0);
                 }
-            } catch (Exception ignored) {
+            } catch (Exception e) { log.error("任务分配异常", e);
             }
             dto.setAssignedCount(entry.getValue().size());
             result.add(dto);

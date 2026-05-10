@@ -9,7 +9,7 @@
           <el-button @click="groupKeyword='';loadGroups()">重置</el-button>
         </div>
         <el-table :data="filteredGroups" style="margin-top:12px;" v-loading="groupLoading" border>
-          <el-table-column prop="id" label="ID" width="70" />
+          <el-table-column prop="id" label="ID" width="90" />
           <el-table-column prop="groupCode" label="分组编码" min-width="120" />
           <el-table-column prop="groupName" label="分组名称" min-width="140" />
           <el-table-column prop="groupType" label="分组类型" width="110">
@@ -41,7 +41,7 @@
           <el-button style="margin-left:8px;" @click="loadPairings">刷新</el-button>
         </div>
         <el-table :data="pairingList" style="margin-top:12px;" v-loading="pairingLoading" border>
-          <el-table-column prop="id" label="ID" width="70" />
+          <el-table-column prop="id" label="ID" width="90" />
           <el-table-column prop="pairingName" label="配对名称" min-width="140" />
           <el-table-column label="煎药机" min-width="180">
             <template #default="{row}">

@@ -7,6 +7,8 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+import javax.servlet.http.HttpServletResponse;
+
 /**
  * 安全配置。
  *
@@ -28,6 +30,24 @@ public class SecurityConfig {
         http
             .csrf().disable()
             .cors().and()
+            .exceptionHandling()
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"code\":401,\"message\":\"Unauthorized\"}");
+                })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    if (request.getUserPrincipal() == null || "anonymousUser".equals(request.getUserPrincipal().getName())) {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.getWriter().write("{\"code\":401,\"message\":\"Unauthorized\"}");
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json;charset=UTF-8");
+                        response.getWriter().write("{\"code\":403,\"message\":\"Forbidden\"}");
+                    }
+                })
+            .and()
             .authorizeRequests()
                 .antMatchers("/api/v1/auth/**", "/api/v1/sys/auth/**", "/api/v1/rbac/auth/**",
                              "/error", "/actuator/health").permitAll()

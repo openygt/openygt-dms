@@ -1,6 +1,7 @@
 package cn.org.openygt.system.controller;
 import cn.org.openygt.system.SystemModule;
 
+import cn.org.openygt.common.annotation.RequiresPermissions;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.common.dto.ChangePasswordRequest;
 import cn.org.openygt.system.entity.SysUser;
@@ -20,21 +21,25 @@ public class SysUserController {
         this.userService = userService;
     }
 
+    @RequiresPermissions({"ROLE_ADMIN"})
     @PostMapping
-    public ApiResponse<SysUser> create(@RequestBody SysUser user) {
+    public ApiResponse<SysUser> create(@RequestBody @Valid SysUser user) {
         return ApiResponse.success(userService.create(user));
     }
 
+    @RequiresPermissions({"ROLE_ADMIN"})
     @PutMapping("/{id}")
-    public ApiResponse<SysUser> update(@PathVariable Long id, @RequestBody SysUser user) {
+    public ApiResponse<SysUser> update(@PathVariable Long id, @RequestBody @Valid SysUser user) {
         return ApiResponse.success(userService.update(id, user));
     }
 
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping("/{id}")
     public ApiResponse<SysUser> getById(@PathVariable Long id) {
         return ApiResponse.success(userService.getById(id));
     }
 
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping
     public ApiResponse<IPage<SysUser>> list(
             @RequestParam(required = false) String keyword,
@@ -43,12 +48,14 @@ public class SysUserController {
         return ApiResponse.success(userService.list(keyword, page, size));
     }
 
+    @RequiresPermissions({"ROLE_ADMIN"})
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         userService.delete(id);
         return ApiResponse.success();
     }
 
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_WORKER"})
     @PostMapping("/change-password")
     public ApiResponse<Void> changePassword(@RequestAttribute("userId") Long userId,
                                              @RequestBody @Valid ChangePasswordRequest request) {

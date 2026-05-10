@@ -25,6 +25,8 @@ export interface DeviceState {
   printCopies?: number
   printStatus?: string
   labelMode?: string
+  groupId?: number
+  groupName?: string
   _networkOffline?: boolean
 }
 

@@ -13,13 +13,13 @@ import java.util.Map;
 @Mapper
 public interface DeviceUtilizationMapper extends BaseMapper<DeviceUtilization> {
 
-    @Select("SELECT * FROM eq_device_utilization WHERE device_code = #{deviceCode} AND stat_date BETWEEN #{start} AND #{end} AND deleted = 0 ORDER BY stat_date")
+    @Select("SELECT * FROM device_utilization WHERE device_code = #{deviceCode} AND stat_date BETWEEN #{start} AND #{end} AND deleted = 0 ORDER BY stat_date")
     List<DeviceUtilization> findByDeviceAndDateRange(@Param("deviceCode") String deviceCode, @Param("start") LocalDate start, @Param("end") LocalDate end);
 
-    @Select("SELECT * FROM eq_device_utilization WHERE stat_date = #{date} AND deleted = 0")
+    @Select("SELECT * FROM device_utilization WHERE stat_date = #{date} AND deleted = 0")
     List<DeviceUtilization> findByDate(@Param("date") LocalDate date);
 
-    @Select("SELECT device_code, AVG(utilization_rate) as utilization_rate FROM eq_device_utilization WHERE stat_date BETWEEN #{start} AND #{end} AND deleted = 0 GROUP BY device_code")
+    @Select("SELECT device_code, AVG(utilization_rate) as utilization_rate FROM device_utilization WHERE stat_date BETWEEN #{start} AND #{end} AND deleted = 0 GROUP BY device_code")
     List<DeviceUtilization> aggregateByDevice(@Param("start") LocalDate start, @Param("end") LocalDate end);
 
     @Select("SELECT d.device_code, COUNT(*) as task_count " +
