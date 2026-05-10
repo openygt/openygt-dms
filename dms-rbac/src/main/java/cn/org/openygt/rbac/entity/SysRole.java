@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.validation.constraints.NotBlank;
+
 /**
  * 系统角色实体。
  *
@@ -21,7 +23,10 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @TableName("sys_role")
 public class SysRole extends BaseEntity {
+    @NotBlank(message = "角色编码不能为空")
     private String roleCode;
+
+    @NotBlank(message = "角色名称不能为空")
     private String roleName;
     private String description;
     private Integer sortOrder;

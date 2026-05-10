@@ -1,6 +1,7 @@
 package cn.org.openygt.system.controller;
 import cn.org.openygt.system.SystemModule;
 
+import cn.org.openygt.common.annotation.RequiresPermissions;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.system.entity.SysLog;
 import cn.org.openygt.system.service.SysLogService;
@@ -18,6 +19,7 @@ public class SysLogController {
 
     private final SysLogService logService;
 
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping
     public ApiResponse<IPage<SysLog>> list(
             @RequestParam(required = false) String keyword,

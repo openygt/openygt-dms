@@ -5,7 +5,7 @@ import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.common.dto.LoginRequest;
 import cn.org.openygt.common.dto.TokenResponse;
 import cn.org.openygt.common.util.JwtUtil;
-import cn.org.openygt.rbac.annotation.RequiresPermissions;
+import cn.org.openygt.common.annotation.RequiresPermissions;
 import cn.org.openygt.rbac.entity.SysMenu;
 import cn.org.openygt.rbac.entity.SysRole;
 import cn.org.openygt.rbac.service.SysMenuService;
@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,6 +40,7 @@ public class RbacController {
 
     // ==================== 菜单管理 ====================
 
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping("/menus/tree")
     public ApiResponse<List<SysMenu>> menuTree() {
         return ApiResponse.success(menuService.getMenuTree());
@@ -46,14 +48,14 @@ public class RbacController {
 
     @PostMapping("/menus")
     @RequiresPermissions({"ROLE_ADMIN"})
-    public ApiResponse<SysMenu> createMenu(@RequestBody SysMenu menu) {
+    public ApiResponse<SysMenu> createMenu(@RequestBody @Valid SysMenu menu) {
         menuService.save(menu);
         return ApiResponse.success(menu);
     }
 
     @PutMapping("/menus/{id}")
     @RequiresPermissions({"ROLE_ADMIN"})
-    public ApiResponse<SysMenu> updateMenu(@PathVariable Long id, @RequestBody SysMenu menu) {
+    public ApiResponse<SysMenu> updateMenu(@PathVariable Long id, @RequestBody @Valid SysMenu menu) {
         menu.setId(id);
         menuService.updateById(menu);
         return ApiResponse.success(menu);
@@ -68,12 +70,13 @@ public class RbacController {
 
     // ==================== 角色管理 ====================
 
-    @GetMapping("/roles")
     @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
+    @GetMapping("/roles")
     public ApiResponse<List<SysRole>> roleList() {
         return ApiResponse.success(roleService.list());
     }
 
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping("/roles/{id}")
     public ApiResponse<SysRole> getRole(@PathVariable Long id) {
         return ApiResponse.success(roleService.getById(id));
@@ -81,14 +84,14 @@ public class RbacController {
 
     @PostMapping("/roles")
     @RequiresPermissions({"ROLE_ADMIN"})
-    public ApiResponse<SysRole> createRole(@RequestBody SysRole role) {
+    public ApiResponse<SysRole> createRole(@RequestBody @Valid SysRole role) {
         roleService.save(role);
         return ApiResponse.success(role);
     }
 
     @PutMapping("/roles/{id}")
     @RequiresPermissions({"ROLE_ADMIN"})
-    public ApiResponse<SysRole> updateRole(@PathVariable Long id, @RequestBody SysRole role) {
+    public ApiResponse<SysRole> updateRole(@PathVariable Long id, @RequestBody @Valid SysRole role) {
         role.setId(id);
         roleService.updateById(role);
         return ApiResponse.success(role);
@@ -118,11 +121,13 @@ public class RbacController {
         return ApiResponse.success();
     }
 
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping("/users/{userId}/roles")
     public ApiResponse<List<SysRole>> getUserRoles(@PathVariable Long userId) {
         return ApiResponse.success(roleService.getRolesByUserId(userId));
     }
 
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping("/users/{userId}/permissions")
     public ApiResponse<List<SysMenu>> getUserPermissions(@PathVariable Long userId) {
         List<Long> roleIds = userRoleService.getRoleIdsByUserId(userId);

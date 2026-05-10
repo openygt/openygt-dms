@@ -1,5 +1,6 @@
 package cn.org.openygt.system.controller;
 
+import cn.org.openygt.common.annotation.RequiresPermissions;
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.system.SystemModule;
 import cn.org.openygt.system.entity.InterfaceConfig;
@@ -16,6 +17,7 @@ public class InterfaceConfigController {
 
     private final InterfaceConfigService interfaceConfigService;
 
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping
     public ApiResponse<Page<InterfaceConfig>> list(
             @RequestParam(defaultValue = "1") int page,
@@ -25,18 +27,21 @@ public class InterfaceConfigController {
         return ApiResponse.success(interfaceConfigService.listConfigs(keyword, interfaceType, page, size));
     }
 
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping("/{id}")
     public ApiResponse<InterfaceConfig> getById(@PathVariable Long id) {
         InterfaceConfig config = interfaceConfigService.getById(id);
         return config == null ? ApiResponse.error(404, "接口配置不存在") : ApiResponse.success(config);
     }
 
+    @RequiresPermissions({"ROLE_ADMIN"})
     @PostMapping
     public ApiResponse<InterfaceConfig> create(@Validated @RequestBody InterfaceConfig config) {
         interfaceConfigService.save(config);
         return ApiResponse.success(config);
     }
 
+    @RequiresPermissions({"ROLE_ADMIN"})
     @PutMapping("/{id}")
     public ApiResponse<InterfaceConfig> update(@PathVariable Long id, @Validated @RequestBody InterfaceConfig config) {
         config.setId(id);
@@ -44,6 +49,7 @@ public class InterfaceConfigController {
         return ApiResponse.success(config);
     }
 
+    @RequiresPermissions({"ROLE_ADMIN"})
     @DeleteMapping("/{id}")
     public ApiResponse<Void> delete(@PathVariable Long id) {
         interfaceConfigService.removeById(id);
