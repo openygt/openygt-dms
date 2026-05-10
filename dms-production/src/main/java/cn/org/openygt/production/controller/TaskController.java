@@ -39,6 +39,15 @@ public class TaskController {
                 prescriptionNumber, startTime, endTime, page, size));
     }
 
+    @GetMapping("/{id}")
+    public ApiResponse<Task> getTaskById(@PathVariable Long id) {
+        Task task = taskService.getById(id);
+        if (task == null) {
+            return ApiResponse.error(404, "任务不存在: " + id);
+        }
+        return ApiResponse.success(task);
+    }
+
     @GetMapping("/barcode/{barcode}")
     public ApiResponse<Map<String, Object>> getByBarcode(@PathVariable String barcode) {
         Task task = taskService.getByBarcode(barcode);
@@ -138,6 +147,12 @@ public class TaskController {
         private String operatorId;
         private String reason;
         private Integer suspendType;
+    }
+
+    @lombok.Data
+    public static class RollbackRequest {
+        private String rollbackTo;
+        private String reason;
     }
 
     @lombok.Data

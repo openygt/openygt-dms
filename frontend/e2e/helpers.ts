@@ -16,9 +16,11 @@ export async function login(page: Page) {
   // Click login button
   await page.locator('.login-card .el-button--primary').click()
 
-  // Wait for navigation to dashboard
-  await page.waitForURL(/(\/dashboard|\/)/, { timeout: 10000 })
-  await page.waitForTimeout(1000)
+  // Wait for login to complete: token must be in localStorage
+  await page.waitForFunction(() => {
+    return !!localStorage.getItem('token')
+  }, { timeout: 10000 })
+  await page.waitForTimeout(500)
 }
 
 /**

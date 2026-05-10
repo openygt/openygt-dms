@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 /**
@@ -15,7 +16,10 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @TableName("sys_menu")
 public class SysMenu extends BaseEntity {
+    @NotBlank(message = "菜单名称不能为空")
     private String name;
+
+    @NotBlank(message = "菜单编码不能为空")
     private String code;
     private String path;
     private String component;
