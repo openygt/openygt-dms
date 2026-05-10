@@ -81,7 +81,7 @@ public class ProductionQueryServiceImpl implements ProductionQueryService {
             dto.setCompletedCount(toInt(row.get("completedTasks")));
             dto.setDoseCount(toInt(row.getOrDefault("doseCount", 0)));
             Double avgMinutes = toDouble(row.get("avgDurationMinutes"));
-            dto.setAvgDuration(avgMinutes != null ? avgMinutes / 60.0 : 0.0);
+            dto.setAvgDuration(avgMinutes != null ? Math.abs(avgMinutes) / 60.0 : 0.0);
             // 查询当天平均设备利用率（所有设备的平均值）
             Double avgUtilization = getAvgDeviceUtilization(statDate);
             dto.setDeviceUtilization(avgUtilization != null ? avgUtilization : 0.0);

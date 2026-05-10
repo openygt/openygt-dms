@@ -58,14 +58,14 @@
       <template v-if="viewMode === 'list'">
         <el-table :data="taskList" v-loading="loading" border style="width: 100%">
           <el-table-column prop="id" label="任务号" width="80" />
-          <el-table-column label="处方号" width="160">
+          <el-table-column label="处方号" width="200">
             <template #default="{ row }">
               {{ formatPrescriptionNo(row) }}
             </template>
           </el-table-column>
-          <el-table-column prop="status" label="状态" width="100">
+          <el-table-column prop="statusLabel" label="状态" width="100">
             <template #default="{ row }">
-              <el-tag :type="statusType(row.status)" effect="dark" disable-transitions>{{ row.status }}</el-tag>
+              <el-tag :type="statusType(row.status)" effect="dark" disable-transitions>{{ row.statusLabel || row.status }}</el-tag>
             </template>
           </el-table-column>
           <el-table-column label="操作人" width="100">
@@ -139,7 +139,7 @@
               <div v-for="task in col.tasks" :key="task.id" class="kanban-card" @click="viewDetail(task)">
                 <div class="kanban-card-top">
                   <span class="kanban-card-id">#{{ task.id }}</span>
-                  <el-tag size="small" :type="statusType(task.status)">{{ task.status }}</el-tag>
+                  <el-tag size="small" :type="statusType(task.status)">{{ task.statusLabel || task.status }}</el-tag>
                 </div>
                 <div class="kanban-card-info">处方: {{ formatPrescriptionNo(task) }}</div>
                 <div class="kanban-card-info">操作人: {{ task.operatorName || task.operatorId || '-' }}</div>
@@ -174,7 +174,7 @@
           <el-descriptions-item label="任务号" span="1">{{ selectedTask.id }}</el-descriptions-item>
           <el-descriptions-item label="条码" span="1">{{ selectedTask.barcode || '-' }}</el-descriptions-item>
           <el-descriptions-item label="状态" span="1">
-            <el-tag :type="statusType(selectedTask.status)" size="small">{{ selectedTask.status }}</el-tag>
+            <el-tag :type="statusType(selectedTask.status)" size="small">{{ selectedTask.statusLabel || selectedTask.status }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="处方号" span="2">{{ formatPrescriptionNo(selectedTask) }}</el-descriptions-item>
           <el-descriptions-item label="操作人" span="1">{{ selectedTask.operatorName || selectedTask.operatorId || '-' }}</el-descriptions-item>
@@ -312,6 +312,7 @@ interface Task {
   prescriptionId: number
   prescriptionNumber: string
   status: string
+  statusLabel: string
   currentStep: string
   operatorId: string
   operatorName: string
