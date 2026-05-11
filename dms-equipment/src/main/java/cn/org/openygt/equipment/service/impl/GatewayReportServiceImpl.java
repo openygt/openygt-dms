@@ -49,7 +49,9 @@ public class GatewayReportServiceImpl implements GatewayReportService {
         LocalDateTime reportedAt = request.getReportedAt() != null ? request.getReportedAt() : LocalDateTime.now();
         String messageType = normalize(request.getMessageType());
 
-        if ("COMMAND_ACK".equals(messageType)) {
+        if ("ALARM".equals(messageType)) {
+            handleAlarm(device, request, reportedAt);
+        } else if ("COMMAND_ACK".equals(messageType)) {
             handleCommandAck(device, request, reportedAt);
         } else {
             String oldStatus = device.getDetailStatus();
@@ -70,6 +72,26 @@ public class GatewayReportServiceImpl implements GatewayReportService {
             return device;
         }
         throw new IllegalArgumentException("设备未登记，不允许接入生产链路: " + request.getDeviceCode());
+    }
+
+    private void handleAlarm(EqDevice device, GatewayDeviceReportRequest request, LocalDateTime reportedAt) {
+        // 更新故障信息
+        if (request.getFaultCode() != null) {
+            device.setFaultCode(request.getFaultCode());
+        }
+        device.setLastHeartbeat(reportedAt);
+        device.setUpdatedAt(LocalDateTime.now());
+        deviceMapper.updateById(device);
+
+        // 创建 FAULT 告警
+        String faultMessage = request.getFaultMessage() != null ? request.getFaultMessage()
+                : (request.getFaultCode() != null ? request.getFaultCode() : "设备故障上报");
+        alarmService.createAlarm(device.getId(), "FAULT", "CRITICAL", faultMessage);
+        webSocketController.pushAlarm(defaultString(device.getTenantId(), "default"),
+                device.getDeviceCode(), "FAULT", faultMessage);
+
+        log.info("设备故障告警已创建: deviceCode={}, faultCode={}, faultMessage={}",
+                device.getDeviceCode(), request.getFaultCode(), faultMessage);
     }
 
     private void handleCommandAck(EqDevice device, GatewayDeviceReportRequest request, LocalDateTime reportedAt) {
