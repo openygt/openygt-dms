@@ -50,6 +50,8 @@ public class PrescriptionServiceImplTest {
     private HospitalMapper hospitalMapper;
     @Mock
     private PrescriptionConfig prescriptionConfig;
+    @Mock
+    private cn.org.openygt.production.mapper.TaskStatusHistoryMapper taskStatusHistoryMapper;
 
     private PrescriptionServiceImpl service;
 
@@ -74,7 +76,7 @@ public class PrescriptionServiceImplTest {
         service = new PrescriptionServiceImpl(
                 prescriptionMapper, taskMapper, prescriptionMedicineMapper,
                 toxicMedicineService, medicineMapper, hospitalMapper,
-                prescriptionConfig
+                prescriptionConfig, taskStatusHistoryMapper
         );
     }
 
@@ -127,7 +129,7 @@ public class PrescriptionServiceImplTest {
             assertEquals("测试患者A", prescriptionCaptor.getValue().getPatientName());
             verify(prescriptionMedicineMapper, times(2)).insert(any(PrescriptionMedicine.class));
             verify(taskMapper).insert(taskCaptor.capture());
-            assertEquals("待泡药", taskCaptor.getValue().getStatus());
+            assertEquals("WAIT_SOAK", taskCaptor.getValue().getStatus());
             assertEquals(100L, taskCaptor.getValue().getPrescriptionId());
         }
 
