@@ -8,6 +8,7 @@ public enum DeviceDetailStatus {
 
     // ===== 通用状态 =====
     IDLE("空闲", "IDLE", 0, "#52C41A"),
+    BUSY("执行中", "BUSY", null, "#F5222D"),
     STANDBY("待机", "IDLE", 0, "#52C41A"),
     READY("就绪", "IDLE", 0, "#52C41A"),
     RUNNING("运行中", "BUSY", null, "#1890FF"),

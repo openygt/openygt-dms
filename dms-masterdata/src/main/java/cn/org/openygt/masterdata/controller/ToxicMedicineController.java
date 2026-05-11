@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/base/toxic-medicine")
@@ -26,7 +27,7 @@ public class ToxicMedicineController {
     }
 
     @PostMapping
-    public ApiResponse<ToxicMedicine> save(@RequestBody ToxicMedicine toxicMedicine) {
+    public ApiResponse<ToxicMedicine> save(@RequestBody @Valid ToxicMedicine toxicMedicine) {
         toxicMedicineService.save(toxicMedicine);
         return ApiResponse.success(toxicMedicine);
     }

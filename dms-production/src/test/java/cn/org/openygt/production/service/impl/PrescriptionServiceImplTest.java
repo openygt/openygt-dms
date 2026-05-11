@@ -587,7 +587,7 @@ public class PrescriptionServiceImplTest {
             when(prescriptionMapper.selectList(any(Wrapper.class)))
                     .thenReturn(Collections.singletonList(p));
 
-            IPage<Prescription> result = service.list(null, null, "PENDING", null, null, null, 1, 10);
+            IPage<Prescription> result = service.list(null, null, "PENDING", null, null, null, null, null, null, 1, 10);
 
             assertEquals(1, result.getTotal());
             assertEquals("PENDING", result.getRecords().get(0).getStatus());

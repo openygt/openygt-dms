@@ -24,7 +24,13 @@ public class SignatureController {
 
     @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping
-    public ApiResponse<List<Signature>> query(@RequestParam String bizType, @RequestParam Long bizId) {
-        return ApiResponse.success(signatureService.querySignatures(bizType, bizId));
+    public ApiResponse<List<Signature>> query(
+            @RequestParam(required = false) String bizType,
+            @RequestParam(required = false) Long bizId) {
+        if (bizType != null && bizId != null) {
+            return ApiResponse.success(signatureService.querySignatures(bizType, bizId));
+        }
+        // 不带参数时返回全部列表
+        return ApiResponse.success(signatureService.list());
     }
 }

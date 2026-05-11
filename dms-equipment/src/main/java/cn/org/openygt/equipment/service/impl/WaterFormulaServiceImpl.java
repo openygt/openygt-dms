@@ -32,6 +32,11 @@ public class WaterFormulaServiceImpl implements WaterFormulaService {
     @Override
     public WaterFormula createFormula(WaterFormula formula) {
         validateExpression(formula.getExpression());
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<WaterFormula> wrapper = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+        wrapper.eq(WaterFormula::getFormulaCode, formula.getFormulaCode());
+        if (formulaMapper.selectCount(wrapper) > 0) {
+            throw new IllegalStateException("公式编码已存在: " + formula.getFormulaCode());
+        }
         formulaMapper.insert(formula);
         return formula;
     }
@@ -69,7 +74,7 @@ public class WaterFormulaServiceImpl implements WaterFormulaService {
         }
 
         try {
-            Expression exp = parser.parseExpression(formula.getExpression().replace(".", "_"));
+            Expression exp = parser.parseExpression(formula.getExpression());
             Double result = exp.getValue(context, Double.class);
             if (result == null) {
                 throw new IllegalArgumentException("公式计算结果为空");

@@ -78,6 +78,40 @@ public class GlobalExceptionHandler {
         return ApiResponse.error(400, "参数类型错误: " + e.getName() + " 的值 " + e.getValue() + " 不是有效的 " + e.getRequiredType().getSimpleName());
     }
 
+    @ExceptionHandler(org.springframework.web.bind.MissingServletRequestParameterException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<?> handleMissingParam(org.springframework.web.bind.MissingServletRequestParameterException e) {
+        return ApiResponse.error(400, "缺少必要参数: " + e.getParameterName());
+    }
+
+    @ExceptionHandler(java.lang.IndexOutOfBoundsException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<?> handleIndexOutOfBounds(java.lang.IndexOutOfBoundsException e) {
+        String msg = e.getMessage();
+        if (msg != null && msg.contains("fromIndex")) {
+            return ApiResponse.error(400, "分页参数错误: page 和 size 必须为正整数");
+        }
+        return ApiResponse.error(400, "参数范围错误: " + msg);
+    }
+
+    @ExceptionHandler(org.springframework.dao.DuplicateKeyException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ApiResponse<?> handleDuplicateKey(org.springframework.dao.DuplicateKeyException e) {
+        String msg = e.getMessage();
+        String friendly = "数据已存在，请检查唯一性约束";
+        if (msg != null) {
+            // 提取 Duplicate entry 'xxx' for key 'yyy' 中的值和键名
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("Duplicate entry '([^']+)' for key '([^']+)'").matcher(msg);
+            if (m.find()) {
+                String value = m.group(1);
+                String key = m.group(2);
+                friendly = "「" + value + "」已存在，键「" + key + "」冲突";
+            }
+        }
+        log.warn("唯一约束冲突: {}", friendly);
+        return ApiResponse.error(409, friendly);
+    }
+
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiResponse<?> handleGeneric(Exception e) {

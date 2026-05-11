@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import javax.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -13,6 +14,8 @@ public class Medicine {
     private Long id;
     private String sourceId;
     private String code;
+
+    @NotBlank(message = "药材名称不能为空")
     private String name;
     private Long categoryId;
     private String unitId;

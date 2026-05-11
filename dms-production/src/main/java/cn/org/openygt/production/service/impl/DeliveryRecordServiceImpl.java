@@ -53,6 +53,9 @@ public class DeliveryRecordServiceImpl implements DeliveryRecordService {
     @Override
     @Transactional
     public DeliveryRecord create(DeliveryRecord record) {
+        if (record.getTaskId() == null) {
+            throw new IllegalArgumentException("taskId 不能为空");
+        }
         // P0-5: 校验处方号存在性
         if (StringUtils.hasText(record.getPrescriptionNo())) {
             LambdaQueryWrapper<Prescription> pw = new LambdaQueryWrapper<>();

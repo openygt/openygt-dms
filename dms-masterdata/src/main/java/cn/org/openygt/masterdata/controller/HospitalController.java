@@ -8,6 +8,7 @@ import cn.org.openygt.masterdata.service.HospitalService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
+import javax.validation.Valid;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,7 +24,7 @@ public class HospitalController {
     }
 
     @PostMapping
-    public ApiResponse<HospitalResponse> create(@RequestBody Hospital hospital) {
+    public ApiResponse<HospitalResponse> create(@RequestBody @Valid Hospital hospital) {
         return ApiResponse.success(toResponse(hospitalService.create(hospital)));
     }
 

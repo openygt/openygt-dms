@@ -83,10 +83,12 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         assignment.setAssignType(1);
         assignment.setAssignReason("自动分配-策略:" + selectedStrategy);
         assignmentMapper.insert(assignment);
-        // 回填 decoctDeviceId 到任务表
-        if (assignment.getDeviceId() != null) {
+
+        // BUG-22: 回填 task.decoct_device_id，解锁温度推进等自动化链路
+        if (assignment.getDeviceId() != null && task.getDecoctDeviceId() == null) {
             task.setDecoctDeviceId(assignment.getDeviceId());
             taskMapper.updateById(task);
+            log.info("自动分配回填设备: taskId={}, decoctDeviceId={}", taskId, assignment.getDeviceId());
         }
         return assignment;
     }
@@ -128,10 +130,12 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         assignment.setCreatedAt(LocalDateTime.now());
         assignment.setUpdatedAt(LocalDateTime.now());
         assignmentMapper.insert(assignment);
-        // 回填 decoctDeviceId 到任务表
-        if (deviceId != null) {
+
+        // BUG-22: 回填 task.decoct_device_id，解锁温度推进等自动化链路
+        if (deviceId != null && task.getDecoctDeviceId() == null) {
             task.setDecoctDeviceId(deviceId);
             taskMapper.updateById(task);
+            log.info("手动分配回填设备: taskId={}, decoctDeviceId={}", taskId, deviceId);
         }
         return assignment;
     }

@@ -55,7 +55,7 @@ class HospitalControllerTest {
                         .content("{\"name\":\"测试医院\",\"code\":\"H001\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.hospitalName").value("测试医院"));
+                .andExpect(jsonPath("$.data.name").value("测试医院"));
     }
 
     @Test
@@ -70,7 +70,7 @@ class HospitalControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"新医院\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.hospitalName").value("新医院"));
+                .andExpect(jsonPath("$.data.name").value("新医院"));
     }
 
     @Test
@@ -83,7 +83,7 @@ class HospitalControllerTest {
 
         mockMvc.perform(get("/api/v1/md/hospitals/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.hospitalName").value("人民医院"));
+                .andExpect(jsonPath("$.data.name").value("人民医院"));
     }
 
     @Test

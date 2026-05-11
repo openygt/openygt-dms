@@ -245,7 +245,7 @@ public class GatewayReportServiceImpl implements GatewayReportService {
         if (protocolType != null && protocolType.contains("tcp")) {
             return 1;
         }
-        return 1;
+        return null;
     }
 
     private String resolveManufacturer(String protocolType) {

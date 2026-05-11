@@ -59,11 +59,14 @@ public class PrescriptionController {
             @RequestParam(required = false) Integer patientType,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String patientName,
+            @RequestParam(required = false) String prescriptionNumber,
+            @RequestParam(required = false) String patientPhone,
             @RequestParam(required = false) String startTime,
             @RequestParam(required = false) String endTime,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.success(prescriptionService.list(hospitalId, patientType, status, keyword, startTime, endTime, page, size));
+        return ApiResponse.success(prescriptionService.list(hospitalId, patientType, status, keyword, patientName, prescriptionNumber, patientPhone, startTime, endTime, page, size));
     }
 
     @GetMapping("/receive-list")
@@ -72,11 +75,14 @@ public class PrescriptionController {
             @RequestParam(required = false) Integer patientType,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String patientName,
+            @RequestParam(required = false) String prescriptionNumber,
+            @RequestParam(required = false) String patientPhone,
             @RequestParam(required = false) String startTime,
             @RequestParam(required = false) String endTime,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.success(prescriptionService.list(hospitalId, patientType, status, keyword, startTime, endTime, page, size));
+        return ApiResponse.success(prescriptionService.list(hospitalId, patientType, status, keyword, patientName, prescriptionNumber, patientPhone, startTime, endTime, page, size));
     }
 
     @PostMapping("/{id}/receive")

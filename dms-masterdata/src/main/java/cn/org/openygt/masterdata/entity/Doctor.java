@@ -2,7 +2,9 @@ package cn.org.openygt.masterdata.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
 @TableName("md_doctor")
@@ -11,6 +13,8 @@ public class Doctor {
     private Long id;
     private String sourceId;
     private Long hospitalId;
+
+    @NotBlank(message = "医师姓名不能为空")
     private String name;
     private Integer role;
     private Integer sex;
@@ -20,7 +24,8 @@ public class Doctor {
     private String phyQualification;
     private Integer status;
     private String hisDoctorId;
-    private Long deleted;
+    @TableLogic
+    private Integer deleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String tenantId;
@@ -49,8 +54,8 @@ public class Doctor {
     public void setStatus(Integer status) { this.status = status; }
     public String getHisDoctorId() { return hisDoctorId; }
     public void setHisDoctorId(String hisDoctorId) { this.hisDoctorId = hisDoctorId; }
-    public Long getDeleted() { return deleted; }
-    public void setDeleted(Long deleted) { this.deleted = deleted; }
+    public Integer getDeleted() { return deleted; }
+    public void setDeleted(Integer deleted) { this.deleted = deleted; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

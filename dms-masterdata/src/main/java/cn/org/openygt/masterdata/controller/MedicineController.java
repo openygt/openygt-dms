@@ -7,6 +7,7 @@ import cn.org.openygt.masterdata.entity.Medicine;
 import cn.org.openygt.masterdata.service.MedicineService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
+import javax.validation.Valid;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,7 +23,7 @@ public class MedicineController {
     }
 
     @PostMapping
-    public ApiResponse<MedicineResponse> create(@RequestBody Medicine medicine) {
+    public ApiResponse<MedicineResponse> create(@RequestBody @Valid Medicine medicine) {
         return ApiResponse.success(toResponse(medicineService.create(medicine)));
     }
 

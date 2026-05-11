@@ -451,7 +451,11 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
     @Override
     public IPage<Prescription> list(Long hospitalId, Integer patientType, String status, String keyword,
+                                    String patientName, String prescriptionNumber, String patientPhone,
                                     String startTime, String endTime, int page, int size) {
+        if (page < 1) page = 1;
+        if (size < 1) size = 10;
+
         LambdaQueryWrapper<Prescription> wrapper = new LambdaQueryWrapper<>();
 
         // 默认不显示异常处方（需要单独查询异常列表）
@@ -465,7 +469,17 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         }
         if (keyword != null && !keyword.isEmpty()) {
             wrapper.and(w -> w.like(Prescription::getPatientName, keyword)
-                    .or().like(Prescription::getPatientPhone, keyword));
+                    .or().like(Prescription::getPatientPhone, keyword)
+                    .or().like(Prescription::getPrescriptionNumber, keyword));
+        }
+        if (patientName != null && !patientName.isEmpty()) {
+            wrapper.like(Prescription::getPatientName, patientName);
+        }
+        if (prescriptionNumber != null && !prescriptionNumber.isEmpty()) {
+            wrapper.like(Prescription::getPrescriptionNumber, prescriptionNumber);
+        }
+        if (patientPhone != null && !patientPhone.isEmpty()) {
+            wrapper.like(Prescription::getPatientPhone, patientPhone);
         }
         if (startTime != null && !startTime.isEmpty()) {
             wrapper.ge(Prescription::getCreatedAt, startTime);
