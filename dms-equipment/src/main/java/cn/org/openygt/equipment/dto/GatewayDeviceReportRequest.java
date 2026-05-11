@@ -4,6 +4,8 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,6 +31,21 @@ public class GatewayDeviceReportRequest {
     private Long commandId;
     private String commandResult;
     private String rawPayload;
-    private LocalDateTime reportedAt;
+    private String reportedAt;
     private Map<String, Object> payload = new HashMap<>();
+
+    /**
+     * 获取解析后的 LocalDateTime，兼容带时区偏移的 ISO 格式。
+     */
+    public LocalDateTime getReportedAt() {
+        if (reportedAt == null || reportedAt.trim().isEmpty()) {
+            return null;
+        }
+        String text = reportedAt.trim();
+        try {
+            return ZonedDateTime.parse(text).toLocalDateTime();
+        } catch (DateTimeParseException e) {
+            return LocalDateTime.parse(text);
+        }
+    }
 }
