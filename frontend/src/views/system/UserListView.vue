@@ -23,7 +23,7 @@
         <el-table-column prop="phone" label="手机号" />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'">{{ row.status === 1 ? '启用' : '禁用' }}</el-tag>
+            <el-tag :type="isActiveStatus(row.status) ? 'success' : 'danger'">{{ isActiveStatus(row.status) ? '启用' : '禁用' }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" label="创建时间" />
@@ -168,8 +168,17 @@ async function fetchData() {
   }
 }
 
+function isActiveStatus(status: any): boolean {
+  return status === 1 || status === '1' || status === 'ACTIVE'
+}
+
 function openDialog(row?: User) {
-  form.value = row ? { ...row } : { status: 1 }
+  if (row) {
+    const statusNum = isActiveStatus(row.status) ? 1 : 0
+    form.value = { ...row, status: statusNum }
+  } else {
+    form.value = { status: 1 }
+  }
   dialogVisible.value = true
   if (formRef.value) {
     formRef.value.clearValidate()
