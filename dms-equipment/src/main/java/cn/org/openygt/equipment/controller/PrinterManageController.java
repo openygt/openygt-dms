@@ -4,6 +4,7 @@ import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.EquipmentModule;
 import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.mapper.PrinterMapper;
+import cn.org.openygt.common.annotation.RequiresPermissions;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,6 +18,7 @@ public class PrinterManageController {
     private final PrinterMapper printerMapper;
 
     @GetMapping("/list")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Map<String, Object>> list(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer deviceType,
@@ -33,11 +35,13 @@ public class PrinterManageController {
     }
 
     @GetMapping("/{id}")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<EqDevice> getById(@PathVariable Long id) {
         return ApiResponse.success(printerMapper.selectById(id));
     }
 
     @PostMapping("/{id}/test")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<String> testPrint(@PathVariable Long id) {
         EqDevice printer = printerMapper.selectById(id);
         if (printer == null) {
