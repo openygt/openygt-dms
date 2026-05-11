@@ -1,5 +1,7 @@
 package cn.org.openygt.print.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
@@ -9,6 +11,7 @@ import java.time.LocalDateTime;
 @TableName("prt_record")
 public class PrintRecord {
 
+    @TableId(type = IdType.AUTO)
     private Long id;
 
     private String tenantId;

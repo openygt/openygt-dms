@@ -71,9 +71,13 @@ public class SysUserServiceImpl implements SysUserService {
                 user.setStatus("ACTIVE");
             }
         }
-        // 若更新密码，需重新加密
-        if (user.getPassword() != null && !user.getPassword().isEmpty()) {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
+        // 若更新密码，需重新加密（防御：若已是 bcrypt 哈希则跳过，避免前端误传哈希导致二次加密）
+        String pwd = user.getPassword();
+        if (pwd != null && !pwd.isEmpty() && !pwd.startsWith("$2a$") && !pwd.startsWith("$2b$") && !pwd.startsWith("$2y$")) {
+            user.setPassword(passwordEncoder.encode(pwd));
+        } else if (pwd != null && (pwd.startsWith("$2a$") || pwd.startsWith("$2b$") || pwd.startsWith("$2y$"))) {
+            // 前端误传了旧哈希，清空密码字段避免 updateById 覆盖原值
+            user.setPassword(null);
         }
         userMapper.updateById(user);
         return userMapper.selectById(id);

@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 /**
@@ -15,7 +17,10 @@ import java.math.BigDecimal;
 @TableName("md_toxic_medicine")
 public class ToxicMedicine extends BaseEntity {
 
+    @NotNull(message = "关联药材ID不能为空")
     private Long medicineId;
+
+    @NotBlank(message = "药材名称不能为空")
     private String medicineName;
     /** 1小毒 2有毒 3大毒 */
     private Integer toxicityLevel;

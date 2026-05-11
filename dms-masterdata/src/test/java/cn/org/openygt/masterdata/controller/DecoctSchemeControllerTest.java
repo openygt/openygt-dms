@@ -56,13 +56,18 @@ class DecoctSchemeControllerTest {
 
         SchemeCreateRequest request = new SchemeCreateRequest();
         request.setName("测试方案");
+        request.setCode("TEST001");
+        request.setSchemeType(1);
+        request.setFirstDecoctTime(30);
+        request.setSecondDecoctTime(20);
+        request.setStatus(1);
 
         mockMvc.perform(post("/api/v1/md/schemes")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(200))
-                .andExpect(jsonPath("$.data.name").value("测试方案"));
+                .andExpect(jsonPath("$.data.schemeName").value("测试方案"));
     }
 
     @Test
@@ -75,12 +80,13 @@ class DecoctSchemeControllerTest {
 
         SchemeUpdateRequest request = new SchemeUpdateRequest();
         request.setName("新方案");
+        request.setCode("NEW001");
 
         mockMvc.perform(put("/api/v1/md/schemes/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.name").value("新方案"));
+                .andExpect(jsonPath("$.data.schemeName").value("新方案"));
     }
 
     @Test
@@ -93,7 +99,7 @@ class DecoctSchemeControllerTest {
 
         mockMvc.perform(get("/api/v1/md/schemes/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.name").value("方案A"));
+                .andExpect(jsonPath("$.data.schemeName").value("方案A"));
     }
 
     @Test

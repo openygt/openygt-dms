@@ -149,6 +149,10 @@ interface Scheme {
   id: number
   schemeName: string
   schemeCode: string
+  schemeType: number
+  decoctTimes: number
+  pressure: number
+  upperWater: number
   soakTime: number
   firstDecoctTime: number
   secondDecoctTime: number
@@ -230,6 +234,10 @@ async function handleSave() {
     const payload = {
       name: form.value.schemeName,
       code: form.value.schemeCode,
+      schemeType: form.value.schemeType,
+      decoctTimes: form.value.decoctTimes,
+      pressure: form.value.pressure,
+      upperWater: form.value.upperWater,
       description: form.value.remark,
       preHeatingTime: form.value.soakTime,
       heatingTime: totalHeatingTime > 0 ? totalHeatingTime : undefined,

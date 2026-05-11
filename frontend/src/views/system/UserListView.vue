@@ -175,7 +175,9 @@ function isActiveStatus(status: any): boolean {
 function openDialog(row?: User) {
   if (row) {
     const statusNum = isActiveStatus(row.status) ? 1 : 0
-    form.value = { ...row, status: statusNum }
+    // 编辑时剔除 password，避免把后端 bcrypt 哈希带到表单再次加密
+    const { password: _, ...rest } = row as any
+    form.value = { ...rest, status: statusNum }
   } else {
     form.value = { status: 1 }
   }

@@ -3,6 +3,7 @@ package cn.org.openygt.masterdata.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
 @TableName("md_department")
@@ -10,6 +11,8 @@ public class Department {
     @TableId(type = IdType.AUTO)
     private Long id;
     private String sourceId;
+
+    @NotBlank(message = "科室名称不能为空")
     private String name;
     private String parentId;
     private Integer sort;

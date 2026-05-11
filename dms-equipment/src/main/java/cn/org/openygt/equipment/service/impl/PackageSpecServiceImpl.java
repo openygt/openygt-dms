@@ -30,6 +30,11 @@ public class PackageSpecServiceImpl extends ServiceImpl<PackageSpecMapper, Packa
         if (packageSpec.getStatus() == null) {
             packageSpec.setStatus(1);
         }
+        com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<PackageSpec> wrapper = new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<>();
+        wrapper.eq(PackageSpec::getSpecCode, packageSpec.getSpecCode());
+        if (baseMapper.selectCount(wrapper) > 0) {
+            throw new IllegalStateException("规格编码已存在: " + packageSpec.getSpecCode());
+        }
         baseMapper.insert(packageSpec);
         return packageSpec;
     }

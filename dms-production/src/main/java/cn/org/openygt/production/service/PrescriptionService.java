@@ -17,7 +17,8 @@ public interface PrescriptionService {
     Prescription getById(Long id);
 
     IPage<Prescription> list(Long hospitalId, Integer patientType, String status,
-                            String keyword, String startTime, String endTime,
+                            String keyword, String patientName, String prescriptionNumber, String patientPhone,
+                            String startTime, String endTime,
                             int page, int size);
 
     Prescription receive(Long id, Long operatorId, String operatorName);
