@@ -88,6 +88,7 @@ public class HeartbeatCheckScheduler {
             case "FAULT":
                 return idleTimeout;
             case "RUNNING":
+            case "BUSY":
                 return runningTimeout;
             default:
                 return idleTimeout;
