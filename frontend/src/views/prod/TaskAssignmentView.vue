@@ -5,8 +5,9 @@
       <div class="toolbar">
         <div class="toolbar-left">
           <el-button type="primary" @click="openAddRecordDialog">
-            <el-icon><Edit /></el-icon> 添加记录
+            <el-icon><Edit /></el-icon> 补录记录
           </el-button>
+          <el-text type="info" size="small">日常任务由员工领取自动记录，此处仅用于异常补录</el-text>
           <el-date-picker
             v-model="selectedDate"
             type="date"
@@ -17,7 +18,7 @@
           />
         </div>
         <div class="toolbar-right">
-          <el-statistic title="工作记录" :value="summary.totalAssignments" />
+          <el-statistic title="任务记录" :value="summary.totalAssignments" />
           <el-statistic title="涉及设备" :value="summary.deviceAssignments" />
           <el-statistic title="涉及员工" :value="summary.employeeAssignments" />
         </div>
@@ -32,10 +33,10 @@
           </template>
           <el-table :data="employeeLoad" size="small" border>
             <el-table-column prop="employeeName" label="员工" min-width="120" />
-            <el-table-column prop="assignedCount" label="已分配" width="90" />
+            <el-table-column prop="assignedCount" label="已领取" width="90" />
             <el-table-column prop="completedCount" label="已完成" width="90" />
-            <el-table-column prop="pendingCount" label="待执行" width="90" />
-            <el-table-column prop="loadRate" label="负载率" width="120">
+            <el-table-column prop="pendingCount" label="进行中" width="90" />
+            <el-table-column prop="loadRate" label="饱和度" width="120">
               <template #default="{ row }">
                 <el-progress :percentage="row.loadRate" :color="loadColor" />
               </template>
@@ -50,9 +51,9 @@
           </template>
           <el-table :data="deviceLoad" size="small" border>
             <el-table-column prop="deviceName" label="设备" min-width="140" />
-            <el-table-column prop="assignedCount" label="已分配" width="90" />
-            <el-table-column prop="runningCount" label="运行中" width="90" />
-            <el-table-column prop="idleCount" label="空闲数" width="90" />
+            <el-table-column prop="assignedCount" label="已领取" width="90" />
+            <el-table-column prop="runningCount" label="进行中" width="90" />
+            <el-table-column prop="idleCount" label="待领取" width="90" />
             <el-table-column prop="utilization" label="利用率" width="120">
               <template #default="{ row }">
                 <el-progress :percentage="row.utilization" :color="loadColor" />
@@ -65,10 +66,10 @@
 
     <el-card shadow="never">
       <template #header>
-        <span>任务排程</span>
+        <span>今日任务流水</span>
       </template>
       <div v-if="!ganttRows.length" class="empty-wrap">
-        <el-empty description="暂无排程数据" :image-size="72" />
+        <el-empty description="暂无任务流水" :image-size="72" />
       </div>
       <div v-else class="gantt-wrapper">
         <div class="gantt-header">
@@ -94,38 +95,7 @@
       </div>
     </el-card>
 
-    <el-card shadow="never">
-      <template #header>
-        <div class="record-header">
-          <span>工作记录</span>
-          <el-button size="small" @click="fetchAssignments">刷新</el-button>
-        </div>
-      </template>
-      <el-table :data="assignments" v-loading="loading" border>
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="taskName" label="任务" min-width="120" />
-        <el-table-column prop="deviceName" label="设备" min-width="140" />
-        <el-table-column prop="employeeName" label="员工" min-width="120" />
-        <el-table-column prop="assignTypeLabel" label="记录类型" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.assignTypeTag">{{ row.assignTypeLabel }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="assignedAt" label="记录时间" min-width="170" />
-        <el-table-column prop="statusLabel" label="状态" width="100">
-          <template #default="{ row }">
-            <el-tag :type="row.statusTag">{{ row.statusLabel }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" @click="openReassignDialog(row)">修改</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-    </el-card>
-
-    <el-dialog v-model="addRecordDialogVisible" title="添加记录" width="520px">
+    <el-dialog v-model="addRecordDialogVisible" title="补录记录" width="520px">
       <el-form ref="addRecordFormRef" :model="addRecordForm" :rules="addRecordRules" label-width="100px">
         <el-form-item label="任务" prop="taskId">
           <el-select
@@ -496,11 +466,11 @@ async function handleAddRecord() {
       reason: addRecordForm.reason || '',
       scheduledDate: selectedDate.value
     })
-    ElMessage.success('添加记录成功')
+    ElMessage.success('补录记录成功')
     addRecordDialogVisible.value = false
     await reloadAll()
   } catch (e: any) {
-    const msg = e?.response?.data?.message || e?.message || '添加失败'
+    const msg = e?.response?.data?.message || e?.message || '补录失败'
     if (msg !== '取消') ElMessage.error(msg)
   }
 }
