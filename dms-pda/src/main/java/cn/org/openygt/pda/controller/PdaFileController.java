@@ -43,6 +43,10 @@ public class PdaFileController {
             @RequestAttribute("username") String username,
             HttpServletRequest request) {
 
+        if (!java.util.Arrays.asList("REVIEW", "WEIGHING", "EXCEPTION").contains(photoType)) {
+            return ApiResponse.error(400, "photoType 必须是 REVIEW、WEIGHING 或 EXCEPTION");
+        }
+
         if (file.isEmpty()) {
             return ApiResponse.error(400, "上传文件为空");
         }

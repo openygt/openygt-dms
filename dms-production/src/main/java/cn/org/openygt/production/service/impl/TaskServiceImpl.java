@@ -342,8 +342,11 @@ public class TaskServiceImpl implements TaskService {
     @Override
     @Transactional
     public Task bindDevice(Long taskId, String deviceCode) {
+        if (deviceCode == null || deviceCode.trim().isEmpty()) {
+            throw new IllegalArgumentException("设备编码不能为空");
+        }
         Task task = taskMapper.selectByIdForUpdate(taskId);
-        if (task == null) throw new IllegalArgumentException("任务不存在");
+        if (task == null) throw new IllegalArgumentException("任务不存在: ID=" + taskId);
         if (!TaskStatus.WAIT_SOAK.getCode().equals(task.getStatus()) && !TaskStatus.WAIT_DECOCT.getCode().equals(task.getStatus())) {
             throw new IllegalStateException("任务状态不允许绑定设备");
         }
@@ -573,6 +576,8 @@ public class TaskServiceImpl implements TaskService {
     private void transition(Task task, String newStatus, String operatorId, String remark) {
         String oldStatus = task.getStatus();
         task.setStatus(newStatus);
+        // BUG-PDA-03: status_enum 与 status 同步
+        task.setStatusEnum(newStatus);
         if (operatorId != null) {
             task.setOperatorId(operatorId);
             try {
@@ -664,6 +669,11 @@ public class TaskServiceImpl implements TaskService {
                 if (task.getPackageDeviceId() != null) {
                     equipmentService.reserveDevice(task.getId(), task.getPackageDeviceId());
                 }
+                break;
+            case FAIL:
+                transition(task, TaskStatus.SECOND_JUDGEMENT.getCode(), operatorId, "质检不合格，进入二次判定" + (remark != null ? ": " + remark : ""));
+                task.setIsException(1);
+                task.setExceptionReason(remark);
                 break;
             case SCRAP:
                 transition(task, TaskStatus.SCRAPPED.getCode(), operatorId, "质检报废" + (remark != null ? ": " + remark : ""));

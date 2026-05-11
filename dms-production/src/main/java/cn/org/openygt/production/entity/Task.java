@@ -23,6 +23,7 @@ public class Task {
     private String operatorId;
     private String operatorName;
     private String status;
+    private String statusEnum;
     private BigDecimal currentTemp;
     private BigDecimal targetTemp;
     private Integer soakDuration;
