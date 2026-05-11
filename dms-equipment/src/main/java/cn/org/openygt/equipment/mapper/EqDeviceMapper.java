@@ -31,7 +31,7 @@ public interface EqDeviceMapper extends BaseMapper<EqDevice> {
      * 必须在 @Transactional 内调用。
      * SQLite 忽略 FOR UPDATE（不报错），仅 MySQL 生产环境生效。
      */
-    @Select("SELECT * FROM eq_device WHERE id = #{id} AND deleted = 0")
+    @Select("SELECT * FROM eq_device WHERE id = #{id} AND deleted = 0 FOR UPDATE")
     EqDevice selectForUpdate(@Param("id") Long id);
 
     /**

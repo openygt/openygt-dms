@@ -6,6 +6,7 @@ import cn.org.openygt.masterdata.entity.Doctor;
 import cn.org.openygt.masterdata.service.DoctorService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
+import javax.validation.Valid;
 
 @RestController("mdDoctorController")
 @RequestMapping(MasterdataModule.API_PREFIX + "/doctors")
@@ -18,7 +19,7 @@ public class DoctorController {
     }
 
     @PostMapping
-    public ApiResponse<Doctor> create(@RequestBody Doctor doctor) {
+    public ApiResponse<Doctor> create(@RequestBody @Valid Doctor doctor) {
         return ApiResponse.success(doctorService.create(doctor));
     }
 

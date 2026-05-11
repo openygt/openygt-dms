@@ -77,10 +77,10 @@
             {{ formatDateTime(row.lastHeartbeat) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="340" fixed="right">
+        <el-table-column label="操作" width="400" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" @click="goToMonitor(row)">监控</el-button>
-            <el-button size="small" v-if="userStore.hasPermission('eq:device:update')" @click="openDialog(row)">编辑</el-button>
+            <el-button size="small" type="default" v-if="userStore.hasPermission('eq:device:update')" @click="openDialog(row)">编辑</el-button>
             <el-button size="small" @click="viewDetail(row)">详情</el-button>
             <el-button size="small" type="info" @click="openPrintLabel(row)">标签</el-button>
             <el-button size="small" type="danger" v-if="userStore.hasPermission('eq:device:delete')" @click="handleDelete(row)">删除</el-button>

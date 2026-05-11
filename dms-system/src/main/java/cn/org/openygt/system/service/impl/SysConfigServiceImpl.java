@@ -23,6 +23,11 @@ public class SysConfigServiceImpl implements SysConfigService, cn.org.openygt.co
     @Override
     @Transactional
     public SysConfig create(SysConfig config) {
+        LambdaQueryWrapper<SysConfig> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SysConfig::getConfigKey, config.getConfigKey());
+        if (configMapper.selectCount(wrapper) > 0) {
+            throw new IllegalStateException("配置Key已存在: " + config.getConfigKey());
+        }
         configMapper.insert(config);
         configCache.invalidate(config.getConfigKey());
         return config;
@@ -34,6 +39,13 @@ public class SysConfigServiceImpl implements SysConfigService, cn.org.openygt.co
         SysConfig existing = configMapper.selectById(id);
         if (existing == null) {
             throw new IllegalArgumentException("配置不存在: " + id);
+        }
+        if (config.getConfigKey() != null && !config.getConfigKey().equals(existing.getConfigKey())) {
+            LambdaQueryWrapper<SysConfig> wrapper = new LambdaQueryWrapper<>();
+            wrapper.eq(SysConfig::getConfigKey, config.getConfigKey());
+            if (configMapper.selectCount(wrapper) > 0) {
+                throw new IllegalStateException("配置Key已存在: " + config.getConfigKey());
+            }
         }
         config.setId(id);
         configMapper.updateById(config);

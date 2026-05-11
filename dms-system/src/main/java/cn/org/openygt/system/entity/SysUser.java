@@ -18,7 +18,6 @@ public class SysUser extends BaseEntity {
     @Size(min = 3, max = 20, message = "用户名长度3-20位")
     private String username;
 
-    @NotBlank(message = "密码不能为空")
     private String password;
 
     @NotBlank(message = "姓名不能为空")

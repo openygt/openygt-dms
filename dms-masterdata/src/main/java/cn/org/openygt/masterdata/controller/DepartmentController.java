@@ -6,6 +6,7 @@ import cn.org.openygt.masterdata.entity.Department;
 import cn.org.openygt.masterdata.service.DepartmentService;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
+import javax.validation.Valid;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,7 +22,7 @@ public class DepartmentController {
     }
 
     @PostMapping
-    public ApiResponse<Department> create(@RequestBody Department department) {
+    public ApiResponse<Department> create(@RequestBody @Valid Department department) {
         return ApiResponse.success(departmentService.create(department));
     }
 

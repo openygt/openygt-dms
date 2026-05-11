@@ -15,7 +15,6 @@ public class SchemeUpdateRequest {
     @NotBlank(message = "方案编码不能为空")
     private String code;
 
-    @NotNull(message = "煎煮类型不能为空")
     private Integer schemeType;
     private Integer decoctTimes;
     private Integer pressure;
@@ -26,10 +25,8 @@ public class SchemeUpdateRequest {
     private String description;
 
     // Phase 1 扩展字段
-    @NotNull(message = "一煎时长不能为空")
     private Integer firstDecoctTime;
 
-    @NotNull(message = "二煎时长不能为空")
     private Integer secondDecoctTime;
     private Integer soakTime;
     private Integer drainTime;
@@ -45,7 +42,6 @@ public class SchemeUpdateRequest {
     private BigDecimal alarmLowTemp;
 
     /** 状态: 1启用 0禁用 */
-    @NotNull(message = "状态不能为空")
     private Integer status;
 
     public String getName() {

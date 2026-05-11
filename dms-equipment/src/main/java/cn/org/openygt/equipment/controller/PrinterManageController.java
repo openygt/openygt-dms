@@ -39,6 +39,10 @@ public class PrinterManageController {
 
     @PostMapping("/{id}/test")
     public ApiResponse<String> testPrint(@PathVariable Long id) {
+        EqDevice printer = printerMapper.selectById(id);
+        if (printer == null) {
+            throw new IllegalArgumentException("打印机不存在: " + id);
+        }
         return ApiResponse.success("测试打印任务已发送");
     }
 }

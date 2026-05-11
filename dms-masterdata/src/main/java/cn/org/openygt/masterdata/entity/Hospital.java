@@ -5,12 +5,15 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 
+import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 
 @TableName("md_hospital")
 public class Hospital {
     @TableId(type = IdType.AUTO)
     private Long id;
+
+    @NotBlank(message = "医院名称不能为空")
     private String name;
     private String code;
     private String contactPerson;
