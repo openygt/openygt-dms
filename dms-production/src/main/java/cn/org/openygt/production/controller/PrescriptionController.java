@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import cn.org.openygt.production.entity.Prescription;
 import lombok.extern.slf4j.Slf4j;
 import cn.org.openygt.production.service.PrescriptionService;
+import cn.org.openygt.common.annotation.RequiresPermissions;
 import lombok.extern.slf4j.Slf4j;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.extern.slf4j.Slf4j;
@@ -43,17 +44,20 @@ public class PrescriptionController {
     // ==================== 原有方式（兼容） ====================
 
     @PostMapping
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<Prescription> create(@Validated @RequestBody PrescriptionCreateRequest request) {
         return ApiResponse.success(prescriptionService.create(request));
     }
 
     @GetMapping("/{id}")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Prescription> getById(@PathVariable Long id) {
         Prescription p = prescriptionService.getDetail(id);
         return p == null ? ApiResponse.error(404, "处方不存在") : ApiResponse.success(p);
     }
 
     @GetMapping
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<IPage<Prescription>> list(
             @RequestParam(required = false) Long hospitalId,
             @RequestParam(required = false) Integer patientType,
@@ -70,6 +74,7 @@ public class PrescriptionController {
     }
 
     @GetMapping("/receive-list")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<IPage<Prescription>> receiveList(
             @RequestParam(required = false) Long hospitalId,
             @RequestParam(required = false) Integer patientType,
@@ -86,6 +91,7 @@ public class PrescriptionController {
     }
 
     @PostMapping("/{id}/receive")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Prescription> receive(@PathVariable Long id,
                                               @RequestParam Long operatorId,
                                               @RequestParam String operatorName) {
@@ -97,6 +103,7 @@ public class PrescriptionController {
     }
 
     @PostMapping("/{id}/reject")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Prescription> reject(@PathVariable Long id,
                                              @Validated @RequestBody PrescriptionRejectRequest request,
                                              @RequestParam Long operatorId,
@@ -109,6 +116,7 @@ public class PrescriptionController {
     }
 
     @GetMapping("/{id}/detail")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Prescription> detail(@PathVariable Long id) {
         Prescription p = prescriptionService.getDetail(id);
         return p == null ? ApiResponse.error(404, "处方不存在") : ApiResponse.success(p);
@@ -117,6 +125,7 @@ public class PrescriptionController {
     // ==================== 结构化创建 ====================
 
     @PostMapping("/structured")
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<Prescription> createStructured(@Validated @RequestBody PrescriptionStructuredCreateRequest request) {
         try {
             return ApiResponse.success(prescriptionService.createStructured(request));
@@ -128,6 +137,7 @@ public class PrescriptionController {
     // ==================== CSV 导入 ====================
 
     @PostMapping("/import")
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<List<Prescription>> importCsv(
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) Long hospitalId,
@@ -153,6 +163,7 @@ public class PrescriptionController {
     // ==================== HIS 推送 ====================
 
     @PostMapping("/push")
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<List<Prescription>> pushFromHis(@Validated @RequestBody PrescriptionPushRequest request) {
         try {
             List<Prescription> created = request.getPrescriptions().stream()
@@ -165,6 +176,7 @@ public class PrescriptionController {
     }
 
     @PostMapping("/push-single")
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<Prescription> pushSingleFromHis(
             @RequestParam String hospitalCode,
             @Validated @RequestBody PrescriptionPushRequest.PushPrescription prescription) {
@@ -178,6 +190,7 @@ public class PrescriptionController {
     // ==================== OCR 确认 ====================
 
     @PostMapping("/ocr")
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<Prescription> createFromOcr(@Validated @RequestBody OcrPrescriptionRequest request) {
         try {
             return ApiResponse.success(prescriptionService.createFromOcr(request));
@@ -187,6 +200,7 @@ public class PrescriptionController {
     }
 
     @PostMapping("/ocr/upload")
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<String> uploadOcrImage(@RequestParam("file") MultipartFile file) {
         try {
             // 保存图片，返回URL供OCR识别和确认页面使用
@@ -204,6 +218,7 @@ public class PrescriptionController {
     // ==================== 异常处方管理 ====================
 
     @GetMapping("/exceptions")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<IPage<Prescription>> listExceptions(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -211,6 +226,7 @@ public class PrescriptionController {
     }
 
     @PostMapping("/{id}/resolve-exception")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Prescription> resolveException(
             @PathVariable Long id,
             @Validated @RequestBody PrescriptionStructuredCreateRequest correctedData) {

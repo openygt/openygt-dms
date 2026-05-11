@@ -5,6 +5,7 @@ import cn.org.openygt.masterdata.MasterdataModule;
 import cn.org.openygt.masterdata.dto.MedicineResponse;
 import cn.org.openygt.masterdata.entity.Medicine;
 import cn.org.openygt.masterdata.service.MedicineService;
+import cn.org.openygt.common.annotation.RequiresPermissions;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
@@ -23,21 +24,25 @@ public class MedicineController {
     }
 
     @PostMapping
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<MedicineResponse> create(@RequestBody @Valid Medicine medicine) {
         return ApiResponse.success(toResponse(medicineService.create(medicine)));
     }
 
     @PutMapping("/{id}")
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<MedicineResponse> update(@PathVariable Long id, @RequestBody Medicine medicine) {
         return ApiResponse.success(toResponse(medicineService.update(id, medicine)));
     }
 
     @GetMapping("/{id}")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<MedicineResponse> getById(@PathVariable Long id) {
         return ApiResponse.success(toResponse(medicineService.getById(id)));
     }
 
     @GetMapping
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<IPage<MedicineResponse>> list(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
@@ -48,12 +53,14 @@ public class MedicineController {
     }
 
     @GetMapping("/all")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<List<MedicineResponse>> all() {
         IPage<Medicine> entityPage = medicineService.list(null, 1, 9999);
         return ApiResponse.success(entityPage.getRecords().stream().map(this::toResponse).collect(Collectors.toList()));
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<Void> delete(@PathVariable Long id) {
         medicineService.delete(id);
         return ApiResponse.success();

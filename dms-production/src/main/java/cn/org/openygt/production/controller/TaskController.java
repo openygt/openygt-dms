@@ -6,6 +6,7 @@ import cn.org.openygt.production.entity.Prescription;
 import cn.org.openygt.production.entity.Task;
 import cn.org.openygt.production.mapper.PrescriptionMapper;
 import cn.org.openygt.production.service.TaskService;
+import cn.org.openygt.common.annotation.RequiresPermissions;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ public class TaskController {
     private final PrescriptionMapper prescriptionMapper;
 
     @GetMapping
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<IPage<Task>> list(
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long deviceId,
@@ -40,6 +42,7 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Task> getTaskById(@PathVariable Long id) {
         Task task = taskService.getById(id);
         if (task == null) {
@@ -49,6 +52,7 @@ public class TaskController {
     }
 
     @GetMapping("/barcode/{barcode}")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Map<String, Object>> getByBarcode(@PathVariable String barcode) {
         Task task = taskService.getByBarcode(barcode);
         if (task == null) {
@@ -69,6 +73,7 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/soak/start")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Task> startSoak(@PathVariable Long id,
                                        @RequestBody(required = false) SoakStartRequest request,
                                        @RequestAttribute(value = "userId", required = false) Long userId) {
@@ -76,6 +81,7 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/decoct/start")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Task> startDecoct(@PathVariable Long id,
                                          @RequestBody(required = false) DecoctStartRequest request,
                                          @RequestAttribute(value = "userId", required = false) Long userId) {
@@ -84,6 +90,7 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/quality")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER", "ROLE_INSPECTOR"})
     public ApiResponse<Task> qualityInspect(@PathVariable Long id,
                                             @RequestBody QualityRequest request,
                                             @RequestAttribute(value = "userId", required = false) Long userId) {
@@ -96,6 +103,7 @@ public class TaskController {
      * 详细质检（含检查项明细）：后端原子接口，统一完成 任务推进 + 台账写入 + 留样创建。
      */
     @PostMapping("/{id}/quality-detail")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER", "ROLE_INSPECTOR"})
     public ApiResponse<Task> qualityInspectWithItems(@PathVariable Long id,
                                                       @RequestBody QualityDetailRequest request,
                                                       @RequestAttribute(value = "userId", required = false) Long userId) {
@@ -105,6 +113,7 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/suspend")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Task> suspend(@PathVariable Long id,
                                      @RequestBody(required = false) SuspendRequest request,
                                      @RequestAttribute(value = "userId", required = false) Long userId) {
@@ -113,6 +122,7 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/resume")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Task> resume(@PathVariable Long id,
                                     @RequestBody(required = false) ResumeRequest request,
                                     @RequestAttribute(value = "userId", required = false) Long userId) {
@@ -120,6 +130,7 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/assign-operator")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<Task> assignOperator(@PathVariable Long id,
                                             @RequestBody AssignOperatorRequest request,
                                             @RequestAttribute(value = "userId", required = false) Long userId) {
