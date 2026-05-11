@@ -84,6 +84,12 @@ public class GlobalExceptionHandler {
         return ApiResponse.error(400, "缺少必要参数: " + e.getParameterName());
     }
 
+    @ExceptionHandler(org.springframework.web.multipart.support.MissingServletRequestPartException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiResponse<?> handleMissingPart(org.springframework.web.multipart.support.MissingServletRequestPartException e) {
+        return ApiResponse.error(400, "缺少必要上传项: " + e.getRequestPartName());
+    }
+
     @ExceptionHandler(java.lang.IndexOutOfBoundsException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiResponse<?> handleIndexOutOfBounds(java.lang.IndexOutOfBoundsException e) {
