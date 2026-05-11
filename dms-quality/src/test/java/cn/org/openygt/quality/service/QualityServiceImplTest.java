@@ -64,7 +64,7 @@ class QualityServiceImplTest {
 
         InspectionResult result = qualityService.inspect(1L, InspectionResultType.PASS, "QC001", null, null);
 
-        assertThat(result.getNextStatus()).isEqualTo("待交接");
+        assertThat(result.getNextStatus()).isEqualTo("WAIT_HANDOVER");
         assertThat(result.getIsException()).isEqualTo(0);
         assertThat(result.getExceptionReason()).isNull();
     }
@@ -79,9 +79,24 @@ class QualityServiceImplTest {
 
         InspectionResult result = qualityService.inspect(1L, InspectionResultType.CONCESSION, "QC001", "颜色偏差", null);
 
-        assertThat(result.getNextStatus()).isEqualTo("待交接");
+        assertThat(result.getNextStatus()).isEqualTo("WAIT_HANDOVER");
         assertThat(result.getIsException()).isEqualTo(1);
         assertThat(result.getExceptionReason()).isEqualTo("颜色偏差");
+    }
+
+    @Test
+    @DisplayName("质检 FAIL：返回 nextStatus=SECOND_JUDGEMENT, isException=1")
+    void inspect_fail() {
+        ProdTaskDTO task = new ProdTaskDTO();
+        task.setId(1L);
+        task.setStatus("待质检");
+        when(productionQueryService.getTaskById(1L)).thenReturn(task);
+
+        InspectionResult result = qualityService.inspect(1L, InspectionResultType.FAIL, "QC001", "不合格", null);
+
+        assertThat(result.getNextStatus()).isEqualTo("SECOND_JUDGEMENT");
+        assertThat(result.getIsException()).isEqualTo(1);
+        assertThat(result.getExceptionReason()).isEqualTo("不合格");
     }
 
     @Test
@@ -94,7 +109,7 @@ class QualityServiceImplTest {
 
         InspectionResult result = qualityService.inspect(1L, InspectionResultType.REWORK, "QC001", "浓度不足", null);
 
-        assertThat(result.getNextStatus()).isEqualTo("待煎药");
+        assertThat(result.getNextStatus()).isEqualTo("WAIT_DECOCT");
         assertThat(result.getIsException()).isEqualTo(1);
         assertThat(result.getExceptionReason()).isEqualTo("浓度不足");
     }
@@ -109,7 +124,7 @@ class QualityServiceImplTest {
 
         InspectionResult result = qualityService.inspect(1L, InspectionResultType.SCRAP, "QC001", "污染", null);
 
-        assertThat(result.getNextStatus()).isEqualTo("已报废");
+        assertThat(result.getNextStatus()).isEqualTo("SCRAPPED");
         assertThat(result.getIsException()).isEqualTo(1);
         assertThat(result.getExceptionReason()).isEqualTo("污染");
     }
