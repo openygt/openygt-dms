@@ -56,8 +56,9 @@ public class GatewayReportServiceImpl implements GatewayReportService {
             applyRealtimeState(device, request, reportedAt);
             saveSnapshot(device, request, reportedAt);
             pushRealtimeState(device);
-            // BUG-10: 发布设备状态变化事件，由生产模块监听处理任务推进
-            if (oldStatus != null && !oldStatus.equals(device.getDetailStatus())) {
+            // BUG-10/BUG-21: 发布设备状态变化事件，由生产模块监听处理任务推进
+            // 使用 Objects.equals 确保首次上报（oldStatus=null）也能触发事件
+            if (!java.util.Objects.equals(oldStatus, device.getDetailStatus())) {
                 eventPublisher.publishEvent(new DeviceStatusChangedEvent(this, device.getId(), device.getDeviceCode(), oldStatus, device.getDetailStatus()));
             }
         }
@@ -190,6 +191,14 @@ public class GatewayReportServiceImpl implements GatewayReportService {
     private String resolveDetailStatus(GatewayDeviceReportRequest request, EqDevice device) {
         String detailStatus = normalize(request.getDetailStatus());
         if (detailStatus != null) {
+            // BUG-26: 校验 detailStatus 枚举有效性
+            try {
+                DeviceDetailStatus.valueOf(detailStatus);
+            } catch (IllegalArgumentException e) {
+                log.warn("非法 detailStatus: deviceCode={}, detailStatus={}，使用默认值 IDLE",
+                        request.getDeviceCode(), detailStatus);
+                detailStatus = "IDLE";
+            }
             return detailStatus;
         }
 
