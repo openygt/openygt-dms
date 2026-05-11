@@ -100,7 +100,7 @@ public class MessageRouter {
         request.put("deviceCode", message.getDeviceCode());
         request.put("messageType", message.getMessageType());
         request.put("rawPayload", message.getRawPayload());
-        request.put("reportedAt", message.getTimestamp() != null ? message.getTimestamp() : LocalDateTime.now());
+        request.put("reportedAt", message.getTimestamp() != null ? message.getTimestamp().toString() : LocalDateTime.now().toString());
         request.put("payload", message.getPayload());
 
         Map<String, Object> payload = message.getPayload() != null ? message.getPayload() : new HashMap<>();
