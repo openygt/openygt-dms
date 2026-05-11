@@ -649,8 +649,6 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 log.info("处方拒收连带取消任务: prescriptionId={}, taskId={}, oldStatus={}", id, task.getId(), oldStatus);
             }
         }
-            }
-        }
 
         return prescription;
     }
