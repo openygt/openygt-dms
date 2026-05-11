@@ -102,6 +102,14 @@ public class GatewayReportServiceImpl implements GatewayReportService {
 
     private void applyRealtimeState(EqDevice device, GatewayDeviceReportRequest request, LocalDateTime reportedAt) {
         String detailStatus = resolveDetailStatus(request, device);
+        // BUG-26: 校验 detailStatus 枚举有效性
+        if (detailStatus != null) {
+            try {
+                DeviceDetailStatus.valueOf(detailStatus);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("未知设备状态: " + detailStatus);
+            }
+        }
         String legacyStatus = DeviceDetailStatus.mapToLegacyStatus(detailStatus);
 
         device.setTenantId(defaultString(request.getTenantId(), device.getTenantId()));

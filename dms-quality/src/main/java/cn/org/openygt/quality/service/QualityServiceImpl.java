@@ -257,6 +257,8 @@ public class QualityServiceImpl implements QualityService {
             case PASS:
             case CONCESSION:
                 return cn.org.openygt.common.enums.TaskStatus.WAIT_HANDOVER.getCode();
+            case FAIL:
+                return cn.org.openygt.common.enums.TaskStatus.SECOND_JUDGEMENT.getCode();
             case REWORK:
                 return reworkNode != null && !reworkNode.isEmpty() ? reworkNode : cn.org.openygt.common.enums.TaskStatus.WAIT_DECOCT.getCode();
             case SCRAP:
@@ -360,6 +362,7 @@ public class QualityServiceImpl implements QualityService {
     private boolean isExceptionResult(InspectionResultType result) {
         return result == InspectionResultType.CONCESSION
                 || result == InspectionResultType.REWORK
-                || result == InspectionResultType.SCRAP;
+                || result == InspectionResultType.SCRAP
+                || result == InspectionResultType.FAIL;
     }
 }
