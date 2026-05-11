@@ -652,6 +652,11 @@ public class TaskServiceImpl implements TaskService {
                     equipmentService.reserveDevice(task.getId(), task.getPackageDeviceId());
                 }
                 break;
+            case FAIL:
+                transition(task, TaskStatus.SECOND_JUDGEMENT.getCode(), operatorId, "质检不合格，进入二次判定" + (remark != null ? ": " + remark : ""));
+                task.setIsException(1);
+                task.setExceptionReason(remark);
+                break;
             case SCRAP:
                 transition(task, TaskStatus.SCRAPPED.getCode(), operatorId, "质检报废" + (remark != null ? ": " + remark : ""));
                 task.setIsException(1);
