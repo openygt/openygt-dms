@@ -5,6 +5,7 @@ import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.masterdata.dto.HospitalResponse;
 import cn.org.openygt.masterdata.entity.Hospital;
 import cn.org.openygt.masterdata.service.HospitalService;
+import cn.org.openygt.common.annotation.RequiresPermissions;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.*;
@@ -24,21 +25,25 @@ public class HospitalController {
     }
 
     @PostMapping
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<HospitalResponse> create(@RequestBody @Valid Hospital hospital) {
         return ApiResponse.success(toResponse(hospitalService.create(hospital)));
     }
 
     @PutMapping("/{id}")
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<HospitalResponse> update(@PathVariable Long id, @RequestBody Hospital hospital) {
         return ApiResponse.success(toResponse(hospitalService.update(id, hospital)));
     }
 
     @GetMapping("/{id}")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<HospitalResponse> getById(@PathVariable Long id) {
         return ApiResponse.success(toResponse(hospitalService.getById(id)));
     }
 
     @GetMapping
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<IPage<HospitalResponse>> list(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
@@ -50,12 +55,14 @@ public class HospitalController {
     }
 
     @GetMapping("/all")
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER"})
     public ApiResponse<List<HospitalResponse>> all() {
         IPage<Hospital> entityPage = hospitalService.list(null, 1, 9999);
         return ApiResponse.success(entityPage.getRecords().stream().map(this::toResponse).collect(Collectors.toList()));
     }
 
     @DeleteMapping("/{id}")
+    @RequiresPermissions({"ROLE_ADMIN"})
     public ApiResponse<Void> delete(@PathVariable Long id) {
         hospitalService.delete(id);
         return ApiResponse.success();
