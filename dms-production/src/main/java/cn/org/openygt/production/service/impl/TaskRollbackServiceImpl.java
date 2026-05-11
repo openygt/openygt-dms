@@ -75,6 +75,7 @@ public class TaskRollbackServiceImpl implements TaskRollbackService {
 
         Task newTask = createReworkTask(task, rollbackTo);
         taskMapper.insert(newTask);
+        createHistory(newTask.getId(), null, newTask.getStatus(), operatorId, "返工创建新任务: 回退到 " + rollbackTo);
 
         rollback.setNewTaskId(newTask.getId());
         rollbackMapper.updateById(rollback);
@@ -113,6 +114,7 @@ public class TaskRollbackServiceImpl implements TaskRollbackService {
                 // 2. 创建新任务（复制原任务处方信息）
                 Task newTask = createReworkTask(originalTask, rollback.getRollbackTo());
                 taskMapper.insert(newTask);
+                createHistory(newTask.getId(), null, newTask.getStatus(), approverId, "返工创建新任务: 回退到 " + rollback.getRollbackTo());
 
                 // 3. 更新回退记录关联新任务
                 rollback.setNewTaskId(newTask.getId());

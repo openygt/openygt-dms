@@ -45,7 +45,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     private final MedicineMapper medicineMapper;
     private final HospitalMapper hospitalMapper;
     private final PrescriptionConfig prescriptionConfig;
-    private final TaskStatusHistoryMapper historyMapper;
+    private final cn.org.openygt.production.mapper.TaskStatusHistoryMapper taskStatusHistoryMapper;
 
     // ==================== 原有方式兼容 ====================
 
@@ -66,6 +66,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         task.setTargetTemp(BigDecimal.valueOf(100));
         task.setSoakDuration(30);
         taskMapper.insert(task);
+        recordTaskHistory(task.getId(), null, task.getStatus(), "SYSTEM", "处方创建自动生成任务");
 
         return prescription;
     }
@@ -121,6 +122,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             task.setSchemeId(request.getSchemeId());
         }
         taskMapper.insert(task);
+        recordTaskHistory(task.getId(), null, task.getStatus(), "SYSTEM", "结构化处方创建自动生成任务");
 
         prescription.setMedicineItems(prescriptionMedicineMapper.selectByPrescriptionId(prescription.getId()));
         return prescription;
@@ -333,6 +335,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             task.setTargetTemp(BigDecimal.valueOf(100));
             task.setSoakDuration(30);
             taskMapper.insert(task);
+            recordTaskHistory(task.getId(), null, task.getStatus(), "SYSTEM", "HIS推送自动生成任务");
         }
 
         log.info("HIS推送处方: hospitalCode={}, prescriptionNo={}, exception={}",
@@ -440,6 +443,7 @@ public class PrescriptionServiceImpl implements PrescriptionService {
             task.setTargetTemp(BigDecimal.valueOf(100));
             task.setSoakDuration(30);
             taskMapper.insert(task);
+            recordTaskHistory(task.getId(), null, task.getStatus(), "SYSTEM", "异常处方纠正自动生成任务");
         }
 
         log.info("异常处方已纠正: id={}", id);
@@ -603,6 +607,8 @@ public class PrescriptionServiceImpl implements PrescriptionService {
                 task.setSchemeId(prescription.getSchemeId());
             }
             taskMapper.insert(task);
+            recordTaskHistory(task.getId(), null, task.getStatus(),
+                    operatorId != null ? String.valueOf(operatorId) : "SYSTEM", "处方接收自动生成任务");
         }
 
         return prescription;
@@ -627,18 +633,22 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         prescription.setOperatorName(operatorName);
         prescriptionMapper.updateById(prescription);
 
-        // BUG-23: 处方拒收后连带取消关联任务
+        // BUG-23: 处方拒收后连带取消已生成的 task
         List<Task> tasks = taskMapper.selectList(
                 new LambdaQueryWrapper<Task>().eq(Task::getPrescriptionId, id));
         for (Task task : tasks) {
-            if (task.getStatus() != null && !TaskStatus.COMPLETED.getCode().equals(task.getStatus())
-                    && !TaskStatus.CANCELLED.getCode().equals(task.getStatus())) {
-                String oldStatus = task.getStatus();
-                task.setStatus(TaskStatus.CANCELLED.getCode());
+            String oldStatus = task.getStatus();
+            if (!cn.org.openygt.common.enums.TaskStatus.CANCELLED.getCode().equals(oldStatus)
+                    && !cn.org.openygt.common.enums.TaskStatus.COMPLETED.getCode().equals(oldStatus)
+                    && !cn.org.openygt.common.enums.TaskStatus.SCRAPPED.getCode().equals(oldStatus)) {
+                task.setStatus(cn.org.openygt.common.enums.TaskStatus.CANCELLED.getCode());
                 taskMapper.updateById(task);
-                recordHistory(task.getId(), oldStatus, TaskStatus.CANCELLED.getCode(),
-                        String.valueOf(operatorId), "处方拒收连带取消");
-                log.info("处方拒收连带取消任务: prescriptionId={}, taskId={}", id, task.getId());
+                recordTaskHistory(task.getId(), oldStatus, task.getStatus(),
+                        operatorId != null ? String.valueOf(operatorId) : "SYSTEM",
+                        "处方拒收连带取消");
+                log.info("处方拒收连带取消任务: prescriptionId={}, taskId={}, oldStatus={}", id, task.getId(), oldStatus);
+            }
+        }
             }
         }
 
@@ -689,6 +699,17 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         }
 
         prescriptionMedicineMapper.insert(pm);
+    }
+
+    private void recordTaskHistory(Long taskId, String fromStatus, String toStatus, String operatorId, String remark) {
+        cn.org.openygt.production.entity.TaskStatusHistory history = new cn.org.openygt.production.entity.TaskStatusHistory();
+        history.setTaskId(taskId);
+        history.setFromStatus(fromStatus);
+        history.setToStatus(toStatus);
+        history.setOperatorId(operatorId != null ? operatorId : "SYSTEM");
+        history.setOperateTime(java.time.LocalDateTime.now());
+        history.setRemark(remark);
+        taskStatusHistoryMapper.insert(history);
     }
 
     private String calcPrescriptionStatus(List<Task> tasks) {
@@ -864,18 +885,4 @@ public class PrescriptionServiceImpl implements PrescriptionService {
         }
     }
 
-    private void recordHistory(Long taskId, String fromStatus, String toStatus, String operatorId, String remark) {
-        try {
-            TaskStatusHistory history = new TaskStatusHistory();
-            history.setTaskId(taskId);
-            history.setFromStatus(fromStatus);
-            history.setToStatus(toStatus);
-            history.setOperatorId(operatorId);
-            history.setOperateTime(LocalDateTime.now());
-            history.setRemark(remark);
-            historyMapper.insert(history);
-        } catch (Exception e) {
-            log.error("记录任务状态历史失败: taskId={}", taskId, e);
-        }
-    }
 }
