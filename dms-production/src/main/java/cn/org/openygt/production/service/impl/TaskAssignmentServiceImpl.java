@@ -83,6 +83,11 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         assignment.setAssignType(1);
         assignment.setAssignReason("自动分配-策略:" + selectedStrategy);
         assignmentMapper.insert(assignment);
+        // 回填 decoctDeviceId 到任务表
+        if (assignment.getDeviceId() != null) {
+            task.setDecoctDeviceId(assignment.getDeviceId());
+            taskMapper.updateById(task);
+        }
         return assignment;
     }
 
@@ -123,6 +128,11 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         assignment.setCreatedAt(LocalDateTime.now());
         assignment.setUpdatedAt(LocalDateTime.now());
         assignmentMapper.insert(assignment);
+        // 回填 decoctDeviceId 到任务表
+        if (deviceId != null) {
+            task.setDecoctDeviceId(deviceId);
+            taskMapper.updateById(task);
+        }
         return assignment;
     }
 
@@ -150,6 +160,14 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
         assignment.setAssignReason((assignment.getAssignReason() != null ? assignment.getAssignReason() + "; " : "") + "重新分配: " + reason);
         assignment.setUpdatedAt(LocalDateTime.now());
         assignmentMapper.updateById(assignment);
+        // 同步更新任务表的 decoctDeviceId
+        if (newDeviceId != null) {
+            Task task = taskMapper.selectById(assignment.getTaskId());
+            if (task != null) {
+                task.setDecoctDeviceId(newDeviceId);
+                taskMapper.updateById(task);
+            }
+        }
         return assignment;
     }
 

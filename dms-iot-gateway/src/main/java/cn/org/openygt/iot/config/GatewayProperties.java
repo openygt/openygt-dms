@@ -15,6 +15,14 @@ public class GatewayProperties {
     private final Http http = new Http();
     private final Lifecycle lifecycle = new Lifecycle();
     private final DeviceSession deviceSession = new DeviceSession();
+    private final Mqtt mqtt = new Mqtt();
+
+    @Data
+    public static class Mqtt {
+        private String broker = "tcp://localhost:1883";
+        private String clientId = "openygt-iot-gateway";
+        private int qos = 1;
+    }
 
     @Data
     public static class Retry {

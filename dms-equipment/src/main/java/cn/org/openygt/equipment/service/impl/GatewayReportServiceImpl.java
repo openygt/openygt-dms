@@ -11,10 +11,12 @@ import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import cn.org.openygt.equipment.mapper.EqTemperatureLogMapper;
 import cn.org.openygt.equipment.service.EqDeviceAlarmService;
 import cn.org.openygt.equipment.service.EqDeviceStatusService;
+import cn.org.openygt.common.event.DeviceStatusChangedEvent;
 import cn.org.openygt.equipment.service.GatewayReportService;
 import cn.org.openygt.equipment.websocket.DeviceWebSocketController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +36,7 @@ public class GatewayReportServiceImpl implements GatewayReportService {
     private final EqDeviceAlarmService alarmService;
     private final DeviceCommandMapper deviceCommandMapper;
     private final DeviceWebSocketController webSocketController;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -49,9 +52,14 @@ public class GatewayReportServiceImpl implements GatewayReportService {
         if ("COMMAND_ACK".equals(messageType)) {
             handleCommandAck(device, request, reportedAt);
         } else {
+            String oldStatus = device.getDetailStatus();
             applyRealtimeState(device, request, reportedAt);
             saveSnapshot(device, request, reportedAt);
             pushRealtimeState(device);
+            // BUG-10: 发布设备状态变化事件，由生产模块监听处理任务推进
+            if (oldStatus != null && !oldStatus.equals(device.getDetailStatus())) {
+                eventPublisher.publishEvent(new DeviceStatusChangedEvent(this, device.getId(), device.getDeviceCode(), oldStatus, device.getDetailStatus()));
+            }
         }
     }
 
@@ -107,7 +115,12 @@ public class GatewayReportServiceImpl implements GatewayReportService {
         device.setWaterLevel(firstNonNull(request.getWaterLevel(), device.getWaterLevel()));
         device.setRemainingTime(firstNonNull(request.getRemainingTime(), device.getRemainingTime()));
         device.setProgressPercent(firstNonNull(request.getProgressPercent(), device.getProgressPercent()));
-        device.setFaultCode(request.getFaultCode());
+        // BUG-09: 故障恢复后清除 faultCode
+        if (request.getFaultCode() != null) {
+            device.setFaultCode(request.getFaultCode());
+        } else if (!"FAULT".equals(detailStatus)) {
+            device.setFaultCode("");
+        }
         device.setUpdatedAt(LocalDateTime.now());
         deviceMapper.updateById(device);
 
