@@ -44,21 +44,23 @@
 
     <!-- 处方列表 -->
     <el-card style="margin-top: 12px">
-      <el-table v-if="activeTab === 'list'" :data="list" v-loading="loading" border>
-        <el-table-column prop="prescriptionNumber" label="处方号" width="100" />
+      <el-table v-if="activeTab === 'list'" :data="list" v-loading="loading" border style="width: 100%" scrollbar-always-on>
+        <el-table-column label="处方号" width="120">
+          <template #default="{row}">{{ row.prescriptionNumber || row.id || '—' }}</template>
+        </el-table-column>
         <el-table-column prop="patientName" label="患者姓名" width="100" />
         <el-table-column prop="patientPhone" label="电话" width="120" />
         <el-table-column label="医院" width="120"><template #default="{row}">{{ hospitalMap[row.hospitalId] || '-' }}</template></el-table-column>
         <el-table-column prop="doctorName" label="医师" width="100" />
-        <el-table-column prop="repetition" label="付数" width="60" />
-        <el-table-column label="配送" width="80"><template #default="{row}">{{ DELIVERY_TYPES.find(d => d.value === row.deliveryType)?.label || '-' }}</template></el-table-column>
-        <el-table-column label="制剂" width="100"><template #default="{row}">{{ PREPARATION_TYPES.find(p => p.value === row.preparationType)?.label || '-' }}</template></el-table-column>
-        <el-table-column label="服用" width="100"><template #default="{row}">{{ USAGE_METHODS.find(u => u.value === row.usageMethod)?.label || '-' }}</template></el-table-column>
+        <el-table-column prop="repetition" label="付数" width="70" />
+        <el-table-column label="配送" width="90"><template #default="{row}">{{ DELIVERY_TYPES.find(d => d.value === row.deliveryType)?.label || '-' }}</template></el-table-column>
+        <el-table-column label="制剂" width="110"><template #default="{row}">{{ PREPARATION_TYPES.find(p => p.value === row.preparationType)?.label || '-' }}</template></el-table-column>
+        <el-table-column label="服用" width="110"><template #default="{row}">{{ USAGE_METHODS.find(u => u.value === row.usageMethod)?.label || '-' }}</template></el-table-column>
         <el-table-column label="状态" width="100">
           <template #default="{row}"><el-tag :type="statusType(row.status)">{{ statusLabel(row.status) }}</el-tag></template>
         </el-table-column>
         <el-table-column label="创建时间" width="160"><template #default="{row}">{{ formatTime(row.createdAt) }}</template></el-table-column>
-        <el-table-column label="操作" width="220" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button size="small" @click="openCreateDialog(row)">编辑</el-button>
             <el-button size="small" @click="viewDetail(row)">详情</el-button>
