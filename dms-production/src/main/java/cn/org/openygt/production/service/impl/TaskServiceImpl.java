@@ -641,6 +641,19 @@ public class TaskServiceImpl implements TaskService {
                 task.setIsException(1);
                 task.setExceptionReason(remark);
                 break;
+            case FAIL:
+                String failTarget = reworkNode != null && !reworkNode.isEmpty() ? reworkNode : TaskStatus.WAIT_DECOCT.getCode();
+                transition(task, failTarget, operatorId, "质检不合格→返工" + (remark != null ? ": " + remark : ""));
+                task.setIsException(1);
+                task.setExceptionReason(remark);
+                // 返工预留设备
+                if (task.getDecoctDeviceId() != null) {
+                    equipmentService.reserveDevice(task.getId(), task.getDecoctDeviceId());
+                }
+                if (task.getPackageDeviceId() != null) {
+                    equipmentService.reserveDevice(task.getId(), task.getPackageDeviceId());
+                }
+                break;
             case REWORK:
                 String targetStatus = reworkNode != null && !reworkNode.isEmpty() ? reworkNode : TaskStatus.WAIT_DECOCT.getCode();
                 transition(task, targetStatus, operatorId, "质检返工→" + targetStatus + (remark != null ? ": " + remark : ""));

@@ -13,6 +13,7 @@ import cn.org.openygt.production.entity.Task;
 import cn.org.openygt.production.mapper.PrescriptionMapper;
 import cn.org.openygt.production.mapper.PrescriptionMedicineMapper;
 import cn.org.openygt.production.mapper.TaskMapper;
+import cn.org.openygt.production.mapper.TaskStatusHistoryMapper;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
@@ -50,6 +51,8 @@ public class PrescriptionServiceImplTest {
     private HospitalMapper hospitalMapper;
     @Mock
     private PrescriptionConfig prescriptionConfig;
+    @Mock
+    private TaskStatusHistoryMapper historyMapper;
 
     private PrescriptionServiceImpl service;
 
@@ -74,7 +77,7 @@ public class PrescriptionServiceImplTest {
         service = new PrescriptionServiceImpl(
                 prescriptionMapper, taskMapper, prescriptionMedicineMapper,
                 toxicMedicineService, medicineMapper, hospitalMapper,
-                prescriptionConfig
+                prescriptionConfig, historyMapper
         );
     }
 

@@ -100,6 +100,7 @@ public class HeartbeatCheckScheduler {
                 device.getDeviceCode(), device.getStatus(), device.getLastHeartbeat());
 
         device.setStatus("OFFLINE");
+        device.setDetailStatus("OFFLINE");
         device.setCurrentTemp(null);
         device.setUpdatedAt(now);
         eqDeviceMapper.updateById(device);
