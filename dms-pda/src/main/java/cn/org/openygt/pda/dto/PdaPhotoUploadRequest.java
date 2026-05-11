@@ -17,6 +17,7 @@ public class PdaPhotoUploadRequest {
     private String photoUrl;
 
     @NotBlank(message = "照片类型不能为空")
+    @javax.validation.constraints.Pattern(regexp = "REVIEW|WEIGHING|EXCEPTION", message = "照片类型必须是 REVIEW、WEIGHING 或 EXCEPTION")
     private String photoType;
 
     private Long fileSize;
