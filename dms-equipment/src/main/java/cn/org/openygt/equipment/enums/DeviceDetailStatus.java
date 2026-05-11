@@ -10,6 +10,7 @@ public enum DeviceDetailStatus {
     IDLE("空闲", "IDLE", 0, "#52C41A"),
     STANDBY("待机", "IDLE", 0, "#52C41A"),
     READY("就绪", "IDLE", 0, "#52C41A"),
+    RUNNING("运行中", "BUSY", null, "#1890FF"),
 
     // ===== 煎药机状态 =====
     SOAKING("浸泡中", "BUSY", 1, "#722ED1"),

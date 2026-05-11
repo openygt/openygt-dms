@@ -8,7 +8,7 @@ spring:
 iot:
   gateway:
     name: ${spring.application.name}
-    backend-url: ${IOT_GATEWAY_BACKEND_URL:http://localhost:8080}
+    backend-url: ${IOT_GATEWAY_BACKEND_URL:http://localhost:9091}
     api-key: ${IOT_GATEWAY_API_KEY:}
     retry:
       max-attempts: ${IOT_GATEWAY_RETRY_MAX_ATTEMPTS:3}
