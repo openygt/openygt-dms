@@ -141,7 +141,7 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getVoiceSettings, updateVoiceSettings, tts } from '@/api/newModules'
+import { getVoiceSettings, updateVoiceSettings, deleteVoiceSetting, tts } from '@/api/newModules'
 import request from '@/api/request'
 
 const defaultForm = reactive({
@@ -175,7 +175,7 @@ const editForm = reactive({
 
 async function loadSettings() {
   try {
-    const res: any = await request.get('/v1/eq/voice-settings/list')
+    const res: any = await request.get('/v1/prod/voice/settings/list')
     const all = res.data || []
     const def = all.find((s: any) => !s.deviceId || s.deviceType === 'DEFAULT')
     if (def) Object.assign(defaultForm, def)
@@ -233,7 +233,7 @@ function openEditDialog(row: any) {
 
 async function saveEdit() {
   try {
-    await request.post('/v1/eq/voice-settings/save', { ...editForm })
+    await updateVoiceSettings({ ...editForm })
     ElMessage.success(isEdit.value ? '已更新' : '已添加')
     dialogVisible.value = false
     loadSettings()
@@ -244,7 +244,7 @@ async function saveEdit() {
 
 async function handleDelete(row: any) {
   try {
-    await request.delete(`/v1/eq/voice-settings/${row.id}`)
+    await deleteVoiceSetting(row.id)
     ElMessage.success('已删除')
     loadSettings()
   } catch (e: any) {
