@@ -10,6 +10,8 @@ public class EmergencyPrescriptionDTO {
     private Long prescriptionId;
     private String prescriptionNumber;
     private String patientName;
+    private String hospitalName;
+    private String department;
     private Integer emergencyLevel;
     private LocalDateTime requestTime;
     private LocalDateTime promisedFinishTime;

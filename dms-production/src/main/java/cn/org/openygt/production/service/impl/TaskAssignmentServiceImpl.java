@@ -2,7 +2,6 @@ package cn.org.openygt.production.service.impl;
 
 import cn.org.openygt.common.dto.EqDeviceDTO;
 import cn.org.openygt.common.service.EquipmentService;
-import cn.org.openygt.equipment.enums.DeviceDetailStatus;
 import cn.org.openygt.production.dto.DeviceLoadDTO;
 import cn.org.openygt.production.dto.EmployeeLoadDTO;
 import cn.org.openygt.system.entity.SysUser;
@@ -18,7 +17,6 @@ import cn.org.openygt.production.mapper.HrEmployeeMapper;
 import cn.org.openygt.production.mapper.TaskAssignmentMapper;
 import cn.org.openygt.production.mapper.TaskMapper;
 import cn.org.openygt.production.service.TaskAssignmentService;
-import cn.org.openygt.equipment.enums.DeviceDetailStatus;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -244,8 +242,8 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
             dto.setEmployeeId(entry.getKey());
             dto.setEmployeeName(userNameMap.getOrDefault(entry.getKey(), "员工-" + entry.getKey()));
             dto.setAssignedCount(entry.getValue().size());
-            dto.setCompletedCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && a.getStatus() == 3).count());
-            dto.setPendingCount((int) entry.getValue().stream().filter(a -> a.getStatus() == null || a.getStatus() == 0 || a.getStatus() == 1).count());
+            dto.setCompletedCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && a.getStatus() == 0).count());
+            dto.setPendingCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && (a.getStatus() == 1 || a.getStatus() == 2)).count());
             result.add(dto);
         }
         return result;
@@ -283,14 +281,12 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
                 if (dev != null) {
                     dto.setDeviceCode(dev.getDeviceCode());
                     dto.setDeviceName(dev.getName());
-                    // 使用 DeviceDetailStatus.isRunning() 判断运行状态
-                    boolean isRunning = DeviceDetailStatus.isRunning(dev.getStatus());
-                    dto.setIdleCount(!isRunning ? 1 : 0);
-                    dto.setRunningCount(isRunning ? 1 : 0);
                 }
             } catch (Exception e) { log.error("任务分配异常", e);
             }
             dto.setAssignedCount(entry.getValue().size());
+            dto.setRunningCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && a.getStatus() == 2).count());
+            dto.setIdleCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && a.getStatus() == 0).count());
             result.add(dto);
         }
         return result;

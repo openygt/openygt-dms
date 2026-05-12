@@ -13,7 +13,7 @@
       <el-descriptions :column="3">
         <el-descriptions-item label="患者">{{ prescriptionInfo.patientName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="剂数">{{ prescriptionInfo.doseCount || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="煎法">{{ prescriptionInfo.schemeName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="煎法">{{ decoctionMethodText }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
 
@@ -92,16 +92,28 @@ function mapGroupType(processType?: string, groupCode?: string) {
   if (key.includes('POST')) return 'post'
   if (key.includes('WRAP')) return 'wrap'
   if (key.includes('MELT')) return 'melt'
-  if (key.includes('DIRECT')) return 'infuse'
+  if (key.includes('DIRECT') || key.includes('INFUSE')) return 'infuse'
+  if (key.includes('SEPARATE') || key.includes('SEP')) return 'separate'
   return 'main'
+}
+
+const GROUP_TYPE_LABELS: Record<string, string> = {
+  pre: '先煎',
+  post: '后下',
+  wrap: '包煎',
+  separate: '另煎',
+  melt: '烊化',
+  infuse: '冲服',
+  main: '正常煎煮'
 }
 
 function normalizeGroup(item: any): HerbGroupItem {
   const confirmed = Number(item.processStatus || 0) === 1
+  const type = mapGroupType(item.processType, item.groupCode)
   return {
     id: item.id,
-    type: mapGroupType(item.processType, item.groupCode),
-    name: item.groupName || item.groupCode || `分组-${item.id}`,
+    type,
+    name: item.groupName || GROUP_TYPE_LABELS[type] || item.groupCode || `分组-${item.id}`,
     confirmed,
     herbs: (item.herbs || []).map((herb: any, index: number) => ({
       id: index + 1,
@@ -110,6 +122,17 @@ function normalizeGroup(item: any): HerbGroupItem {
     }))
   }
 }
+
+const decoctionMethodText = computed(() => {
+  if (!groupList.value.length) return prescriptionInfo.value.schemeName || '正常煎煮'
+  const specialGroups = groupList.value.filter(g => g.type !== 'main')
+  if (!specialGroups.length) return '正常煎煮'
+  const parts = specialGroups.map(g => {
+    const herbs = g.herbs.map(h => h.name).join('、')
+    return `${herbs}需要${GROUP_TYPE_LABELS[g.type] || g.type}`
+  })
+  return parts.join('；')
+})
 
 async function loadPrescriptionInfo() {
   if (!prescriptionId.value) return

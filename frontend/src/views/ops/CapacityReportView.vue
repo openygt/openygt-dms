@@ -65,9 +65,9 @@
         <el-table-column prop="completedCount" label="已完成" />
         <el-table-column prop="doseCount" label="付数" />
         <el-table-column prop="avgDuration" label="平均耗时(小时)" />
-        <el-table-column prop="deviceUtilization" label="设备利用率">
+        <el-table-column prop="avgDuration" label="设备利用率">
           <template #default="{ row }">
-            <el-progress :percentage="Math.round(row.deviceUtilization * 100)" />
+            <el-progress :percentage="Math.min(100, Math.round((row.avgDuration || 0) / 8 * 100))" />
           </template>
         </el-table-column>
       </el-table>

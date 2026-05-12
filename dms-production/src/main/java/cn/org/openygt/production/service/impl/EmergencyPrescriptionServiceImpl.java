@@ -2,8 +2,10 @@ package cn.org.openygt.production.service.impl;
 
 import cn.org.openygt.production.dto.EmergencyPrescriptionDTO;
 import cn.org.openygt.production.entity.EmergencyPrescription;
+import cn.org.openygt.masterdata.entity.Hospital;
 import cn.org.openygt.production.entity.Prescription;
 import cn.org.openygt.production.mapper.EmergencyPrescriptionMapper;
+import cn.org.openygt.masterdata.mapper.HospitalMapper;
 import cn.org.openygt.production.mapper.PrescriptionMapper;
 import cn.org.openygt.production.service.EmergencyPrescriptionService;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -27,6 +29,7 @@ public class EmergencyPrescriptionServiceImpl implements EmergencyPrescriptionSe
 
     private final EmergencyPrescriptionMapper emergencyPrescriptionMapper;
     private final PrescriptionMapper prescriptionMapper;
+    private final HospitalMapper hospitalMapper;
 
     @Override
     public IPage<EmergencyPrescriptionDTO> listEmergencyPrescriptions(Integer emergencyLevel, String status, int page, int size) {
@@ -158,6 +161,11 @@ public class EmergencyPrescriptionServiceImpl implements EmergencyPrescriptionSe
         if (prescription != null) {
             dto.setPrescriptionNumber(prescription.getPrescriptionNumber());
             dto.setPatientName(prescription.getPatientName());
+            dto.setDepartment(prescription.getDepartment());
+            if (prescription.getHospitalId() != null) {
+                Hospital hospital = hospitalMapper.selectById(prescription.getHospitalId());
+                dto.setHospitalName(hospital != null ? hospital.getName() : "");
+            }
         }
 
         if (emergency.getNurseSignTime() != null) {
