@@ -27,6 +27,10 @@
         </div>
       </template>
       <el-table :data="list" v-loading="loading">
+        <el-table-column prop="id" label="ID" width="90" />
+        <el-table-column label="设备名称" width="140">
+          <template #default="{ row }">{{ resolveDeviceName(row.deviceCode) }}</template>
+        </el-table-column>
         <el-table-column prop="deviceCode" label="设备编码" width="120" />
         <el-table-column prop="washType" label="清洗类型" width="100">
           <template #default="{row}">
@@ -44,7 +48,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="startTime" label="开始时间" width="160" />
+        <el-table-column prop="startTime" label="开始时间" width="170" />
         <el-table-column prop="operatorName" label="操作人" width="100" />
         <el-table-column prop="remark" label="备注" show-overflow-tooltip />
         <template #empty>
@@ -73,6 +77,21 @@ const query = ref({ deviceCode: '', washType: null as number | null, result: nul
 const list = ref([])
 const loading = ref(false)
 const pagination = ref({ page: 1, size: 20, total: 0 })
+const deviceMap = ref<Record<string, string>>({})
+
+function resolveDeviceName(code: string) {
+  if (!code) return '-'
+  return deviceMap.value[code] || code
+}
+
+async function loadDeviceMap() {
+  try {
+    const res: any = await request.get('/v1/eq/devices', { params: { page: 1, size: 200 } })
+    const map: Record<string, string> = {}
+    ;(res.data?.records || []).forEach((d: any) => { map[d.deviceCode] = d.name || d.deviceCode })
+    deviceMap.value = map
+  } catch {}
+}
 
 const fetchList = async () => {
   loading.value = true
@@ -97,7 +116,7 @@ function resetQuery() {
   fetchList()
 }
 
-onMounted(fetchList)
+onMounted(() => { loadDeviceMap(); fetchList() })
 </script>
 
 <style scoped>

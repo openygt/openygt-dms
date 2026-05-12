@@ -361,9 +361,9 @@ const statusMap: Record<string, { label: string; color: string }> = {
 const deviceColorMap: Record<string, string> = {
   '1': 'var(--ygt-primary-500)',   // 煎药机
   '2': 'var(--ygt-success)',       // 包装机
-  '3': 'var(--ygt-warning)',       // 标签打印机
-  '4': 'var(--ygt-info)',          // 激光打印机
-  '5': 'var(--ygt-herb-500)',      // PDA
+  '3': 'var(--ygt-info)',          // 激光打印机
+  '4': 'var(--ygt-warning)',       // PDA
+  '5': 'var(--ygt-herb-500)',      // 标签打印机
 }
 
 function statusLabel(s: string) {
@@ -406,7 +406,7 @@ function alarmLevelLabel(level?: string): string {
 function deviceTypeName(type: string) {
   const t = String(type || '').trim()
   if (!t) return '未知类型'
-  const map: Record<string, string> = { '1': '煎药机', '2': '包装机', '3': '标签打印机', '4': '激光打印机', '5': 'PDA' }
+  const map: Record<string, string> = { '1': '煎药机', '2': '包装机', '3': '激光打印机', '4': 'PDA', '5': '标签打印机' }
   return map[t] || `类型 ${t}`
 }
 

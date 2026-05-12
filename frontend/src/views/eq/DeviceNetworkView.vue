@@ -160,7 +160,7 @@ const filteredDevices = computed(() => {
 })
 
 function deviceTypeText(type: number) {
-  const map: Record<number, string> = { 1: '煎药机', 2: '包装机', 3: '标签打印机', 4: '激光打印机', 5: 'PDA' }
+  const map: Record<number, string> = { 1: '煎药机', 2: '包装机', 3: '激光打印机', 4: 'PDA', 5: '标签打印机' }
   return map[type] || '未知'
 }
 

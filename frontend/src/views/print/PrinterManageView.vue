@@ -7,8 +7,8 @@
         </el-form-item>
         <el-form-item label="设备类型">
           <el-select v-model="searchForm.deviceType" clearable placeholder="全部" style="width: 160px" @change="handleSearch">
-            <el-option label="标签打印机" :value="3" />
-            <el-option label="激光打印机" :value="4" />
+            <el-option label="激光打印机" :value="3" />
+            <el-option label="标签打印机" :value="5" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -85,8 +85,8 @@ const pagination = reactive({
 })
 
 function formatDeviceType(type: number) {
-  if (type === 3) return '标签打印机'
-  if (type === 4) return '激光打印机'
+  if (type === 3) return '激光打印机'
+  if (type === 5) return '标签打印机'
   return String(type)
 }
 

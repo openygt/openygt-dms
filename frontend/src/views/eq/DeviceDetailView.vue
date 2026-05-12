@@ -50,8 +50,42 @@
           </el-card>
         </template>
 
-        <!-- 标签打印机：打印统计 -->
+        <!-- 激光打印机：打印状态 + 耗材 -->
         <template v-else-if="device?.deviceType === 3">
+          <el-card class="detail-card">
+            <template #header><span class="card-title">打印状态</span></template>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <div class="stat-value">{{ device?.printCopies || 0 }}</div>
+                <div class="stat-label">已打印(份)</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value" :class="printStatusTag(device?.printStatus)">{{ printStatusText(device?.printStatus) }}</div>
+                <div class="stat-label">状态</div>
+              </div>
+            </div>
+          </el-card>
+        </template>
+
+        <!-- PDA：电量 + 信号 -->
+        <template v-else-if="device?.deviceType === 4">
+          <el-card class="detail-card">
+            <template #header><span class="card-title">设备状态</span></template>
+            <div class="stat-grid">
+              <div class="stat-item">
+                <div class="stat-value">{{ device?.currentTemp || 0 }}%</div>
+                <div class="stat-label">电量</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">{{ device?.status === 'ONLINE' ? '在线' : '离线' }}</div>
+                <div class="stat-label">网络</div>
+              </div>
+            </div>
+          </el-card>
+        </template>
+
+        <!-- 标签打印机：打印统计 -->
+        <template v-else-if="device?.deviceType === 5">
           <el-card class="detail-card">
             <template #header><span class="card-title">打印统计</span></template>
             <div class="stat-grid">
@@ -71,24 +105,7 @@
           </el-card>
         </template>
 
-        <!-- 激光打印机：打印状态 + 耗材 -->
-        <template v-else-if="device?.deviceType === 4">
-          <el-card class="detail-card">
-            <template #header><span class="card-title">打印状态</span></template>
-            <div class="stat-grid">
-              <div class="stat-item">
-                <div class="stat-value">{{ device?.printCopies || 0 }}</div>
-                <div class="stat-label">已打印(份)</div>
-              </div>
-              <div class="stat-item">
-                <div class="stat-value" :class="printStatusTag(device?.printStatus)">{{ printStatusText(device?.printStatus) }}</div>
-                <div class="stat-label">状态</div>
-              </div>
-            </div>
-          </el-card>
-        </template>
-
-        <!-- PDA：电量 + 信号 -->
+        <!-- 未知类型 / PDA -->
         <template v-else>
           <el-card class="detail-card">
             <template #header><span class="card-title">设备状态</span></template>
@@ -154,7 +171,7 @@
         </template>
 
         <!-- 打印机：打印队列 -->
-        <template v-else-if="device?.deviceType === 3 || device?.deviceType === 4">
+        <template v-else-if="device?.deviceType === 3 || device?.deviceType === 5">
           <el-card class="detail-card">
             <template #header><span class="card-title">打印队列</span></template>
             <div v-if="device?.currentPrescriptionCode" class="task-info">
@@ -414,7 +431,7 @@ function formatStatusName(deviceObj: any) {
 }
 
 function formatDeviceType(type: number) {
-  const map: Record<number, string> = { 1: '煎药机', 2: '包装机', 3: '标签打印机', 4: '激光打印机', 5: 'PDA' }
+  const map: Record<number, string> = { 1: '煎药机', 2: '包装机', 3: '激光打印机', 4: 'PDA', 5: '标签打印机' }
   return map[type] || '未知'
 }
 

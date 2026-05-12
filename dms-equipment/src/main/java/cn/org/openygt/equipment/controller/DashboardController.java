@@ -51,4 +51,10 @@ public class DashboardController {
             @RequestParam(required = false) String date) {
         return ApiResponse.success(dashboardService.getDeviceUtilization(date));
     }
+
+    @GetMapping("/abnormal-stats")
+    @RequiresPermissions({"ops:dashboard:view", "eq:device:monitor"})
+    public ApiResponse<List<Map<String, Object>>> getAbnormalStats() {
+        return ApiResponse.success(dashboardService.getAbnormalStats());
+    }
 }

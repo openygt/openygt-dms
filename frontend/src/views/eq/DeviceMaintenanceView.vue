@@ -32,8 +32,10 @@
       </el-form>
 
       <el-table :data="tableData" stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="deviceName" label="设备名称" width="120" />
+        <el-table-column prop="id" label="ID" width="100" />
+        <el-table-column label="设备名称" width="140">
+          <template #default="{ row }">{{ resolveDeviceName(row.deviceId) }}</template>
+        </el-table-column>
         <el-table-column prop="maintenanceType" label="类型" width="100">
           <template #default="{ row }">
             <el-tag v-if="row.maintenanceType === 'DAILY'">日常保养</el-tag>
@@ -41,9 +43,9 @@
             <el-tag v-else type="danger">故障维修</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="content" label="维保内容" min-width="200" />
-        <el-table-column prop="maintenanceDate" label="维保日期" width="120" />
-        <el-table-column prop="nextDate" label="下次保养" width="120" />
+        <el-table-column prop="content" label="维保内容" min-width="120" />
+        <el-table-column prop="planDate" label="维保日期" width="120" />
+        <el-table-column prop="finishDate" label="下次保养" width="120" />
         <el-table-column prop="status" label="状态" width="80">
           <template #default="{ row }">
             <el-tag v-if="row.status === 1" type="success">已完成</el-tag>
@@ -128,8 +130,15 @@ const formRules = {
 }
 
 const deviceOptions = ref<any[]>([])
+const allDevices = ref<any[]>([])
 const deviceLoading = ref(false)
 let deviceSearchTimer: any = null
+
+function resolveDeviceName(deviceId: number | undefined) {
+  if (!deviceId) return '-'
+  const d = allDevices.value.find((x: any) => x.id === deviceId)
+  return d ? (d.name || d.deviceCode) : String(deviceId)
+}
 
 async function searchDevices(keyword: string) {
   if (deviceSearchTimer) clearTimeout(deviceSearchTimer)
@@ -207,7 +216,14 @@ async function handleDelete(id: number) {
   }
 }
 
-onMounted(loadData)
+async function loadAllDevices() {
+  try {
+    const res: any = await request.get('/v1/eq/devices', { params: { page: 1, size: 200 } })
+    allDevices.value = res.data?.records || []
+  } catch { allDevices.value = [] }
+}
+
+onMounted(() => { loadData(); loadAllDevices() })
 </script>
 
 <style scoped>
