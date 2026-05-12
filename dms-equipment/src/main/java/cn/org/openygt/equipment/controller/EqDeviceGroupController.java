@@ -25,23 +25,7 @@ public class EqDeviceGroupController {
     private final EqDeviceGroupService groupService;
     private final EqPairingSpecMapper specMapper;
 
-    // ---- 规格 ----    @PostMapping
-    public ApiResponse<Long> create(@RequestBody EqDeviceGroup group) {
-        groupService.save(group);
-        return ApiResponse.success(group.getId());
-    }
-
-    @PutMapping("/{id}")
-    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody EqDeviceGroup group) {
-        group.setId(id);
-        groupService.updateById(group);
-        return ApiResponse.success();
-    }
-
-    @GetMapping("/{id}")
-    public ApiResponse<EqDeviceGroup> getById(@PathVariable Long id) {
-        return ApiResponse.success(groupService.getById(id));
-    }
+    // ---- 列表与特殊路由（必须在 /{id} 前） ----
 
     @GetMapping
     @RequiresPermissions("eq:group:view")
@@ -56,23 +40,41 @@ public class EqDeviceGroupController {
         return ApiResponse.success(groupService.page(new Page<>(page, size), wrapper));
     }
 
-    @DeleteMapping("/{id}")
-    public ApiResponse<Void> delete(@PathVariable Long id) {
-        groupService.removeById(id);
-        return ApiResponse.success();
-    }
-
     @GetMapping("/all")
     @RequiresPermissions("eq:group:view")
     public ApiResponse<List<EqDeviceGroup>> all() {
         return ApiResponse.success(groupService.list());
     }
 
-    // ---- 规格 ----
-
     @GetMapping("/specs")
     @RequiresPermissions("eq:group:view")
     public ApiResponse<List<EqPairingSpec>> specs() {
         return ApiResponse.success(specMapper.selectList(null));
+    }
+
+    // ---- 单个资源 CRUD ----
+
+    @PostMapping
+    public ApiResponse<Long> create(@RequestBody EqDeviceGroup group) {
+        groupService.save(group);
+        return ApiResponse.success(group.getId());
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<EqDeviceGroup> getById(@PathVariable Long id) {
+        return ApiResponse.success(groupService.getById(id));
+    }
+
+    @PutMapping("/{id}")
+    public ApiResponse<Void> update(@PathVariable Long id, @RequestBody EqDeviceGroup group) {
+        group.setId(id);
+        groupService.updateById(group);
+        return ApiResponse.success();
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> delete(@PathVariable Long id) {
+        groupService.removeById(id);
+        return ApiResponse.success();
     }
 }

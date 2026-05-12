@@ -3,8 +3,10 @@ package cn.org.openygt.equipment.service.impl;
 import cn.org.openygt.equipment.entity.DecoctionTrace;
 import cn.org.openygt.equipment.entity.DeviceUtilization;
 import cn.org.openygt.equipment.entity.EqDevice;
+import cn.org.openygt.equipment.entity.EqDeviceAlarm;
 import cn.org.openygt.equipment.mapper.DecoctionTraceMapper;
 import cn.org.openygt.equipment.mapper.DeviceUtilizationMapper;
+import cn.org.openygt.equipment.mapper.EqDeviceAlarmMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import cn.org.openygt.equipment.service.DashboardService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -30,6 +32,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final DecoctionTraceMapper traceMapper;
     private final EqDeviceMapper deviceMapper;
     private final DeviceUtilizationMapper utilizationMapper;
+    private final EqDeviceAlarmMapper alarmMapper;
 
     @Override
     public Map<String, Object> getMetrics() {
@@ -107,22 +110,23 @@ public class DashboardServiceImpl implements DashboardService {
     @Override
     public List<Map<String, Object>> getWorkerEfficiency(String date) {
         List<Map<String, Object>> result = new ArrayList<>();
-        Map<String, Object> w1 = new HashMap<>();
-        w1.put("operatorName", "王师傅");
-        w1.put("prescriptionCount", 25);
-        w1.put("efficiency", 3.2);
-        result.add(w1);
-        Map<String, Object> w2 = new HashMap<>();
-        w2.put("operatorName", "李师傅");
-        w2.put("prescriptionCount", 22);
-        w2.put("efficiency", 2.8);
-        result.add(w2);
-        Map<String, Object> w3 = new HashMap<>();
-        w3.put("operatorName", "张师傅");
-        w3.put("prescriptionCount", 18);
-        w3.put("efficiency", 2.3);
-        result.add(w3);
-        return result;
+        QueryWrapper<DecoctionTrace> wrapper = new QueryWrapper<>();
+        wrapper.select("decoct_operator AS operatorName", "COUNT(*) AS prescriptionCount")
+               .eq("deleted", 0)
+               .isNotNull("decoct_operator")
+               .ne("decoct_operator", "")
+               .groupBy("decoct_operator")
+               .orderByDesc("prescriptionCount");
+        if (date != null && !date.isEmpty()) {
+            wrapper.eq("DATE(created_at)", date);
+        }
+        List<Map<String, Object>> rows = traceMapper.selectMaps(wrapper);
+        int total = rows.stream().mapToInt(r -> ((Number) r.get("prescriptionCount")).intValue()).sum();
+        double avg = total > 0 && !rows.isEmpty() ? (double) total / rows.size() : 20.0;
+        for (Map<String, Object> row : rows) {
+            row.put("efficiency", Math.round(((Number) row.get("prescriptionCount")).doubleValue() / avg * 3.0 * 10.0) / 10.0);
+        }
+        return rows;
     }
 
     @Override
@@ -170,6 +174,11 @@ public class DashboardServiceImpl implements DashboardService {
             result.add(item);
         }
         return result;
+    }
+
+    @Override
+    public List<Map<String, Object>> getAbnormalStats() {
+        return alarmMapper.selectAlarmStatsGrouped();
     }
 
     private String mapStatusToStage(String status) {

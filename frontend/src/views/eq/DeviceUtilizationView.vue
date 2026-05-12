@@ -28,7 +28,7 @@
     <el-row :gutter="16">
       <el-col :xs="24">
         <el-card>
-          <template #header><span class="card-title">利用率趋势</span></template>
+          <template #header><span class="card-title">设备效能趋势</span></template>
           <div ref="trendChartRef" class="chart-container"></div>
         </el-card>
       </el-col>

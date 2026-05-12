@@ -157,6 +157,10 @@ export function getDashboardDeviceUtilization(date?: string) {
   return request.get('/v1/eq/dashboard/device-utilization', { params: { date } })
 }
 
+export function getDashboardAbnormalStats() {
+  return request.get('/v1/eq/dashboard/abnormal-stats')
+}
+
 // ========== 工作量统计 ==========
 export function getWorkloadStats(params: any) {
   return request.get('/v1/eq/workload/stats', { params })

@@ -37,6 +37,7 @@ import { ref, reactive, nextTick, onMounted, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
 import { getTraceTemperatureCurve } from '@/api/equipment'
 import { ElMessage } from 'element-plus'
+import request from '@/api/request'
 
 const searchForm = reactive({
   barcode: '',
@@ -150,8 +151,34 @@ function handleResize() {
   chartInstance?.resize()
 }
 
+async function loadLatest() {
+  try {
+    // Load temperature logs for DECOCT_01 (device ID 1) which has the most data
+    const res: any = await request.get('/v1/eq/devices/1/temperature-logs', { params: { page: 1, size: 50 } })
+    const records = (res.data?.records || [])
+    if (records.length > 0) {
+      const sorted = [...records].sort((a: any, b: any) =>
+        new Date(a.recordedAt || a.createdAt).getTime() - new Date(b.recordedAt || b.createdAt).getTime()
+      )
+      const temps = sorted.map((r: any) => r.temperature)
+      curveData.value = {
+        maxTemp: Math.max(...temps).toFixed(1),
+        avgTemp: (temps.reduce((s: number, t: number) => s + t, 0) / temps.length).toFixed(1),
+        points: sorted.map((r: any) => ({
+          time: r.recordedAt || r.createdAt,
+          temperature: r.temperature
+        }))
+      }
+      searchForm.barcode = ''
+      searchForm.prescriptionNo = ''
+      nextTick(() => renderChart())
+    }
+  } catch {}
+}
+
 onMounted(() => {
   window.addEventListener('resize', handleResize)
+  loadLatest()
 })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)

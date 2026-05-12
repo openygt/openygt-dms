@@ -35,11 +35,10 @@
           <template #header><span class="card-title">工人效率排行</span></template>
           <el-table :data="workerList" size="small" max-height="300">
             <el-table-column prop="operatorName" label="操作人" />
-            <el-table-column prop="taskCount" label="任务数" width="80" />
-            <el-table-column prop="avgDuration" label="平均耗时" width="100" />
+            <el-table-column prop="prescriptionCount" label="处方数" width="80" />
             <el-table-column label="效率" width="100">
               <template #default="{ row }">
-                <el-progress :percentage="Math.min(row.efficiencyScore * 10, 100)" :stroke-width="8" />
+                <el-progress :percentage="Math.min((row.efficiency || 0) * 10, 100)" :stroke-width="8" />
               </template>
             </el-table-column>
           </el-table>
@@ -86,7 +85,7 @@ import { useRouter } from 'vue-router'
 import * as echarts from 'echarts'
 import {
   getDashboardMetrics, getStageDistribution, getWorkerEfficiency,
-  getHourlyTrend, getDashboardDeviceUtilization
+  getHourlyTrend, getDashboardDeviceUtilization, getDashboardAbnormalStats
 } from '@/api/equipment'
 
 const router = useRouter()
@@ -130,6 +129,9 @@ async function loadAll() {
 
     const utilRes: any = await getDashboardDeviceUtilization()
     updateUtilChart(utilRes.data || [])
+
+    const abnormalRes: any = await getDashboardAbnormalStats()
+    abnormalList.value = abnormalRes.data || []
   } catch (err) {
     ElMessage.error('加载看板数据失败')
   } finally {
@@ -161,8 +163,8 @@ function updateHourlyChart(data: any[]) {
     xAxis: { type: 'category', data: data.map(d => d.hour + '时') },
     yAxis: { type: 'value' },
     series: [
-      { name: '处方数', type: 'bar', data: data.map(d => d.prescriptionCount), itemStyle: { color: '#409EFF' } },
-      { name: '完成数', type: 'line', data: data.map(d => d.completedCount), smooth: true, itemStyle: { color: '#67C23A' } }
+      { name: '处方数', type: 'bar', data: data.map(d => d.started), itemStyle: { color: '#409EFF' } },
+      { name: '完成数', type: 'line', data: data.map(d => d.completed), smooth: true, itemStyle: { color: '#67C23A' } }
     ]
   })
 }

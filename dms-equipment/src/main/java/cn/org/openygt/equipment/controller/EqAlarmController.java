@@ -83,10 +83,13 @@ public class EqAlarmController {
                 .distinct()
                 .collect(Collectors.toList());
         Map<Long, String> deviceCodeMap = new HashMap<>();
+        Map<Long, String> deviceNameMap = new HashMap<>();
         if (!deviceIds.isEmpty()) {
-            for (EqDevice d : deviceMapper.selectBatchIds(deviceIds)) {
+            List<EqDevice> devices = deviceMapper.selectBatchIds(deviceIds);
+            for (EqDevice d : devices) {
                 if (d != null && d.getId() != null) {
                     deviceCodeMap.put(d.getId(), d.getDeviceCode());
+                    deviceNameMap.put(d.getId(), d.getName());
                 }
             }
         }
@@ -96,6 +99,7 @@ public class EqAlarmController {
             AlarmLogDTO dto = new AlarmLogDTO();
             dto.setId(alarm.getId());
             dto.setDeviceCode(deviceCodeMap.getOrDefault(alarm.getDeviceId(), "-"));
+            dto.setDeviceName(deviceNameMap.getOrDefault(alarm.getDeviceId(), "-"));
             dto.setAlarmType(alarm.getAlarmType());
             dto.setAlarmLevel(alarm.getAlarmLevel());
             dto.setContent(alarm.getMessage());

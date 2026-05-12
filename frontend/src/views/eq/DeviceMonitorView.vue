@@ -25,14 +25,10 @@
       <div class="toolbar-right">
         <el-button-group class="quick-links">
           <el-button size="large" @click="$router.push('/eq-dashboard')">数据看板</el-button>
-          <el-button size="large" @click="$router.push('/device-utilization')">利用率</el-button>
+          <el-button size="large" @click="$router.push('/device-utilization')">设备效能</el-button>
         </el-button-group>
-        <el-radio-group v-model="activeType" size="large">
-          <el-radio-button :label="1">煎药机</el-radio-button>
-          <el-radio-button :label="2">包装机</el-radio-button>
-          <el-radio-button :label="3">标签打印机</el-radio-button>
-          <el-radio-button :label="4">激光打印机</el-radio-button>
-          <el-radio-button :label="5">PDA</el-radio-button>
+        <el-radio-group v-model="activeGroup" size="large">
+          <el-radio-button v-for="g in monitorGroups" :key="g.id" :label="g.id">{{ g.groupName }}</el-radio-button>
           <el-radio-button :label="0">全部</el-radio-button>
         </el-radio-group>
         <el-button
@@ -164,44 +160,8 @@
           </div>
         </template>
 
-        <!-- ====== 标签打印机卡片内容 ====== -->
-        <template v-else-if="device.deviceType === 3">
-          <div class="temp-section">
-            <div class="metric-value" :class="{ 'metric-offline': isOffline(device) }">
-              <template v-if="isOffline(device)">--</template>
-              <template v-else>{{ device.printCopies || 0 }}<span class="metric-unit">张</span></template>
-            </div>
-            <div class="metric-label">待打印</div>
-          </div>
-          <div class="info-section">
-            <div class="info-row">
-              <span class="info-label">打印状态:</span>
-              <span class="info-value">
-                <el-tag :type="printStatusTag(device.printStatus)" size="small">{{ printStatusText(device.printStatus) }}</el-tag>
-              </span>
-            </div>
-            <div class="info-row" v-if="device.currentPrescriptionCode">
-              <span class="info-label">当前标签:</span>
-              <span class="info-value">{{ device.currentPrescriptionCode }}</span>
-            </div>
-            <div class="info-row" v-if="device.labelMode">
-              <span class="info-label">模式:</span>
-              <span class="info-value">{{ device.labelMode }}</span>
-            </div>
-          </div>
-          <!-- 标签打印机操作按钮 -->
-          <div class="action-section">
-            <template v-if="!isOffline(device)">
-              <el-button v-if="isIdle(device) || device.printStatus === 'PENDING'" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'REPRINT_LABEL')">补打</el-button>
-              <el-button v-if="isRunning(device)" type="warning" size="large" @click.stop="sendDeviceCommand(device, 'PAUSE_PRINT')">暂停</el-button>
-              <el-button v-if="isPaused(device)" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'RESUME')">继续</el-button>
-            </template>
-            <el-button size="large" @click.stop="goToDetail(device)">查看详情</el-button>
-          </div>
-        </template>
-
         <!-- ====== 激光打印机卡片内容 ====== -->
-        <template v-else-if="device.deviceType === 4">
+        <template v-else-if="device.deviceType === 3">
           <div class="temp-section">
             <div class="metric-value" :class="{ 'metric-offline': isOffline(device) }">
               <template v-if="isOffline(device)">--</template>
@@ -229,6 +189,42 @@
           <div class="action-section">
             <template v-if="!isOffline(device)">
               <el-button v-if="isIdle(device) || device.printStatus === 'PENDING'" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'START_PRINT')">开始打印</el-button>
+              <el-button v-if="isRunning(device)" type="warning" size="large" @click.stop="sendDeviceCommand(device, 'PAUSE_PRINT')">暂停</el-button>
+              <el-button v-if="isPaused(device)" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'RESUME')">继续</el-button>
+            </template>
+            <el-button size="large" @click.stop="goToDetail(device)">查看详情</el-button>
+          </div>
+        </template>
+
+        <!-- ====== 标签打印机卡片内容 ====== -->
+        <template v-else-if="device.deviceType === 5">
+          <div class="temp-section">
+            <div class="metric-value" :class="{ 'metric-offline': isOffline(device) }">
+              <template v-if="isOffline(device)">--</template>
+              <template v-else>{{ device.printCopies || 0 }}<span class="metric-unit">张</span></template>
+            </div>
+            <div class="metric-label">待打印</div>
+          </div>
+          <div class="info-section">
+            <div class="info-row">
+              <span class="info-label">打印状态:</span>
+              <span class="info-value">
+                <el-tag :type="printStatusTag(device.printStatus)" size="small">{{ printStatusText(device.printStatus) }}</el-tag>
+              </span>
+            </div>
+            <div class="info-row" v-if="device.currentPrescriptionCode">
+              <span class="info-label">当前标签:</span>
+              <span class="info-value">{{ device.currentPrescriptionCode }}</span>
+            </div>
+            <div class="info-row" v-if="device.labelMode">
+              <span class="info-label">模式:</span>
+              <span class="info-value">{{ device.labelMode }}</span>
+            </div>
+          </div>
+          <!-- 标签打印机操作按钮 -->
+          <div class="action-section">
+            <template v-if="!isOffline(device)">
+              <el-button v-if="isIdle(device) || device.printStatus === 'PENDING'" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'REPRINT_LABEL')">补打</el-button>
               <el-button v-if="isRunning(device)" type="warning" size="large" @click.stop="sendDeviceCommand(device, 'PAUSE_PRINT')">暂停</el-button>
               <el-button v-if="isPaused(device)" type="primary" size="large" @click.stop="sendDeviceCommand(device, 'RESUME')">继续</el-button>
             </template>
@@ -319,11 +315,11 @@
         <p><strong>当前状态:</strong> {{ formatStatusName(currentDevice) }}</p>
         <p v-if="currentDevice.deviceType === 1"><strong>处方:</strong> {{ currentDevice.currentPrescriptionCode || '无' }}</p>
         <p v-else-if="currentDevice.deviceType === 2"><strong>当前任务:</strong> {{ currentDevice.currentPrescriptionCode || '无' }}</p>
-        <p v-else-if="currentDevice.deviceType === 3 || currentDevice.deviceType === 4"><strong>当前文档:</strong> {{ currentDevice.currentPrescriptionCode || '无' }}</p>
+        <p v-else-if="currentDevice.deviceType === 3 || currentDevice.deviceType === 5"><strong>当前文档:</strong> {{ currentDevice.currentPrescriptionCode || '无' }}</p>
         <el-alert type="error" :closable="false">
           <template v-if="currentDevice.deviceType === 1">急停将中断当前煎药进程</template>
           <template v-else-if="currentDevice.deviceType === 2">急停将中断当前包装任务</template>
-          <template v-else-if="currentDevice.deviceType === 3 || currentDevice.deviceType === 4">急停将中断当前打印任务</template>
+          <template v-else-if="currentDevice.deviceType === 3 || currentDevice.deviceType === 5">急停将中断当前打印任务</template>
           <template v-else>确认执行急停操作</template>
         </el-alert>
       </div>
@@ -355,8 +351,9 @@ const { connect, disconnect } = useDeviceWebSocket('default')
 
 const loading = ref(false)
 const refreshing = ref(false)
-const activeType = ref(0)
+const activeGroup = ref(0)
 const isFullscreen = ref(false)
+const monitorGroups = ref<any[]>([])
 
 // 弹窗相关
 const shiftDialogVisible = ref(false)
@@ -381,8 +378,8 @@ const statusPriority: Record<string, number> = {
 
 const filteredDevices = computed(() => {
   let list = deviceStore.deviceList
-  if (activeType.value > 0) {
-    list = list.filter((d: any) => d.deviceType === activeType.value)
+  if (activeGroup.value > 0) {
+    list = list.filter((d: any) => d.groupId === activeGroup.value)
   }
   // 按设备编码稳定排序，避免状态变化时卡片跳动
   return [...list].sort((a: any, b: any) => {
@@ -502,6 +499,9 @@ function getStatusAnimation(device: any) {
   if (status === 'FAULT') {
     return 'blink'
   }
+  if (status === 'MAINTENANCE') {
+    return 'maintenance-status'
+  }
   return 'breath'
 }
 
@@ -597,8 +597,17 @@ async function confirmEmergencyStop() {
   }
 }
 
+async function loadMonitorGroups() {
+  try {
+    const { default: request } = await import('@/api/request')
+    const res: any = await request.get('/v1/eq/groups/all')
+    monitorGroups.value = res.data || []
+  } catch { monitorGroups.value = [] }
+}
+
 onMounted(() => {
   loadDevices()
+  loadMonitorGroups()
   connect()
   // 模拟加载操作人列表（实际应从用户API获取）
   operatorOptions.value = [
@@ -746,6 +755,10 @@ onUnmounted(() => {
   &.blink {
     animation: status-blink 1s infinite;
     background: #CF1322;
+  }
+
+  &.maintenance-status {
+    background: #8B6914;
   }
 
   &.breath {

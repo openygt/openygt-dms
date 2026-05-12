@@ -228,7 +228,7 @@ const devices = ref<any[]>([])
 
 const decoctDevices = computed(() => devices.value.filter((d: any) => d.deviceType === 1))
 const packDevices = computed(() => devices.value.filter((d: any) => d.deviceType === 2))
-const printerDevices = computed(() => devices.value.filter((d: any) => d.deviceType === 3))
+const printerDevices = computed(() => devices.value.filter((d: any) => d.deviceType === 5))
 
 async function loadDevices() {
   try {
@@ -420,25 +420,42 @@ function resolveGroupName(groupId: number) {
 
 function formatActionType(type: string) {
   const map: Record<string, string> = {
-    START: '启动', STOP: '停止', ALARM: '告警', NOTIFY: '通知', EMERGENCY_STOP: '急停',
+    BIND: '自动绑定', START: '启动', STOP: '停止', ALARM: '告警', NOTIFY: '通知', EMERGENCY_STOP: '急停',
   }
   return map[type] || type
 }
 
 function actionTag(type: string) {
   const map: Record<string, string> = {
-    ALARM: 'danger', NOTIFY: 'primary', START: 'success', STOP: 'warning', EMERGENCY_STOP: 'danger',
+    BIND: 'info', ALARM: 'danger', NOTIFY: 'primary', START: 'success', STOP: 'warning', EMERGENCY_STOP: 'danger',
   }
   return map[type] || 'info'
 }
 
 function formatTriggerCondition(row: any) {
+  const eventMap: Record<string, string> = {
+    AUTO: '自动绑定',
+    DECOCT_STAGE_COMPLETE: '煎药完成',
+    DECOCT_TIMEOUT: '煎药超时',
+    PACKAGE_STAGE_COMPLETE: '包装完成',
+    DEVICE_FAULT: '设备故障',
+    TEMP_HIGH: '温度过高',
+    TEMP_LOW: '温度过低',
+    OFFLINE: '设备离线',
+  }
   try {
     const obj = typeof row.triggerCondition === 'string' ? JSON.parse(row.triggerCondition) : row.triggerCondition
-    return obj?.event || obj?.condition || row.triggerCondition
-  } catch {
-    return row.triggerCondition
+    if (obj && typeof obj === 'object') {
+      const event = obj.event || obj.condition
+      const base = eventMap[event] || event
+      if (obj.threshold) return `${base}(≥${obj.threshold}分钟)`
+      return base
+    }
+  } catch {}
+  if (typeof row.triggerCondition === 'string') {
+    return eventMap[row.triggerCondition] || row.triggerCondition
   }
+  return row.triggerCondition || '-'
 }
 
 function formatTargetDevices(row: any) {
