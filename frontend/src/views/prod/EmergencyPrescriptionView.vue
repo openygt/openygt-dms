@@ -178,7 +178,7 @@
           <span v-else>-</span>
         </el-descriptions-item>
         <el-descriptions-item label="延迟原因">{{ detail.delayReason || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="送达方式">{{ detail.deliveryType || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="送达方式">{{ DELIVERY_TYPES.find(d => d.value === detail.deliveryType)?.label || detail.deliveryType || '-' }}</el-descriptions-item>
         <el-descriptions-item label="送达位置">{{ detail.deliveryLocation || '-' }}</el-descriptions-item>
         <el-descriptions-item label="护士姓名">{{ detail.nurseName || '-' }}</el-descriptions-item>
         <el-descriptions-item label="护士签收时间">{{ formatTime(detail.nurseSignTime) }}</el-descriptions-item>
@@ -192,6 +192,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { FirstAidKit } from '@element-plus/icons-vue'
 import { getEmergencyPrescriptions, markEmergency, signEmergency } from '@/api/newModules'
+import { DELIVERY_TYPES } from '@/constants/dictionary'
 
 interface EmergencyItem {
   id: number
