@@ -14,6 +14,8 @@ public class EqDeviceGroup extends BaseEntity {
     private String groupName;
     /** 分组类型: PRODUCTION_LINE/WORKSHOP/AREA/OTHER */
     private String groupType;
+    private Long specId;
+    private String decocterIds;
     private Long packageDeviceId;
     private Long printerDeviceId;
     private String status;

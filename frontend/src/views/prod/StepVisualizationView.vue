@@ -478,7 +478,7 @@ onMounted(async () => {
     loadTaskSteps()
   } else {
     // 无 URL 参数时默认加载一个已完成的任务
-    selectedTaskId.value = 900000001
+    selectedTaskId.value = 1
     loadTaskSteps()
   }
 })

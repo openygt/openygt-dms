@@ -4,7 +4,6 @@
       <template #header>
         <div style="display: flex; justify-content: space-between; align-items: center">
           <div>
-            <el-button v-if="userStore.hasPermission('eq:device:pair')" @click="pairingDialogVisible = true">生产线配对</el-button>
             <el-button type="primary" v-if="userStore.hasPermission('eq:device:create')" @click="openDialog()">新增设备</el-button>
           </div>
         </div>
@@ -256,72 +255,11 @@
       </el-descriptions>
     </el-dialog>
 
-    <!-- 生产线配对管理 -->
-    <el-dialog v-model="pairingDialogVisible" title="生产线配对" width="800px">
-      <div style="margin-bottom: 16px">
-        <el-button type="primary" @click="openPairingForm()">新增配对</el-button>
-      </div>
-      <el-table :data="pairingList" border>
-        <el-table-column prop="pairingName" label="配对名称" />
-        <el-table-column label="煎药机（最多4台）">
-          <template #default="{ row }">
-            <el-tag v-for="(d, idx) in row.decocters" :key="idx" size="small" style="margin-right: 4px">
-              {{ d.name || d.deviceCode }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="包装机" width="140">
-          <template #default="{ row }">
-            {{ row.packer?.name || row.packer?.deviceCode || '-' }}
-          </template>
-        </el-table-column>
-        <el-table-column label="标签打印机" width="140">
-          <template #default="{ row }">
-            {{ row.labeler?.name || row.labeler?.deviceCode || '-' }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="120" fixed="right">
-          <template #default="{ row }">
-            <el-button size="small" @click="openPairingForm(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDeletePairing(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-empty v-if="!pairingLoading && pairingList.length === 0" description="暂无配对记录" />
-    </el-dialog>
-
-    <!-- 配对表单 -->
-    <el-dialog v-model="pairingFormVisible" :title="pairingForm.id ? '编辑配对' : '新增配对'" width="600px">
-      <el-form :model="pairingForm" label-width="120px">
-        <el-form-item label="配对名称" required>
-          <el-input v-model="pairingForm.pairingName" placeholder="如：生产线A" />
-        </el-form-item>
-        <el-form-item label="煎药机" required>
-          <el-select v-model="pairingForm.decocterIds" multiple :multiple-limit="4" placeholder="请选择1-4台煎药机" style="width: 100%">
-            <el-option v-for="d in availableDecocters" :key="d.id" :label="d.name || d.deviceCode" :value="d.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="包装机" required>
-          <el-select v-model="pairingForm.packerId" placeholder="请选择包装机" style="width: 100%">
-            <el-option v-for="d in availablePackers" :key="d.id" :label="d.name || d.deviceCode" :value="d.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="标签打印机" required>
-          <el-select v-model="pairingForm.labelerId" placeholder="请选择标签打印机" style="width: 100%">
-            <el-option v-for="d in availableLabelers" :key="d.id" :label="d.name || d.deviceCode" :value="d.id" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="pairingFormVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSavePairing">保存</el-button>
-      </template>
-    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
@@ -369,19 +307,7 @@ interface Group {
   groupName: string
 }
 
-interface Pairing {
-  id?: number
-  pairingName: string
-  decocterIds: number[]
-  packerId: number
-  labelerId: number
-  decocters?: Device[]
-  packer?: Device
-  labeler?: Device
-}
-
 const list = ref<Device[]>([])
-const allDevices = ref<Device[]>([])
 const loading = ref(false)
 const dialogVisible = ref(false)
 const detailVisible = ref(false)
@@ -396,45 +322,6 @@ const groupMap = ref<Record<number, string>>({})
 const search = ref({ keyword: '', deviceType: undefined as number | undefined, status: '', groupId: undefined as number | undefined })
 const pagination = ref({ page: 1, size: 10, total: 0 })
 const form = ref<Partial<Device>>({})
-
-// 配对相关
-const pairingDialogVisible = ref(false)
-const pairingFormVisible = ref(false)
-const pairingList = ref<Pairing[]>([])
-const pairingLoading = ref(false)
-const pairingForm = ref<Partial<Pairing>>({ decocterIds: [] })
-
-// 已配对设备ID集合（排除当前编辑的配对组）
-const pairedDeviceIds = computed(() => {
-  const ids = new Set<number>()
-  const currentId = pairingForm.value.id
-  pairingList.value.forEach(p => {
-    if (currentId && p.id === currentId) return // 当前编辑组中的设备仍可选
-    p.decocterIds?.forEach((id: number) => ids.add(id))
-    if (p.packerId) ids.add(p.packerId)
-    if (p.labelerId) ids.add(p.labelerId)
-  })
-  return ids
-})
-
-// 全部设备按类型
-const allDecocters = computed(() => allDevices.value.filter(d => d.deviceType === 1))
-const allPackers = computed(() => allDevices.value.filter(d => d.deviceType === 2))
-const allLabelers = computed(() => allDevices.value.filter(d => d.deviceType === 3))
-
-// 尚未配对的设备（当前编辑组中的除外）
-const availableDecocters = computed(() => {
-  const currentIds = new Set(pairingForm.value.decocterIds || [])
-  return allDecocters.value.filter(d => !pairedDeviceIds.value.has(d.id) || currentIds.has(d.id))
-})
-const availablePackers = computed(() => {
-  const currentId = pairingForm.value.packerId
-  return allPackers.value.filter(d => !pairedDeviceIds.value.has(d.id) || d.id === currentId)
-})
-const availableLabelers = computed(() => {
-  const currentId = pairingForm.value.labelerId
-  return allLabelers.value.filter(d => !pairedDeviceIds.value.has(d.id) || d.id === currentId)
-})
 
 function deviceTypeText(type?: number) {
   const map: Record<number, string> = {
@@ -486,7 +373,6 @@ function formatDateTime(dt?: string) {
   })
 }
 
-const pairingMap = ref<Record<number, string>>({})
 
 async function fetchData() {
   loading.value = true
@@ -502,22 +388,9 @@ async function fetchData() {
     const res: any = await request.get('/v1/eq/devices', { params })
     list.value = res.data?.records || []
     pagination.value.total = res.data?.total || 0
-    // 缓存全部设备用于配对选择
-    if (allDevices.value.length === 0) {
-      await fetchAllDevices()
-    }
-    // 构建设备ID到配对名称的映射
-    await buildPairingMap()
   } finally {
     loading.value = false
   }
-}
-
-async function fetchAllDevices() {
-  try {
-    const res: any = await request.get('/v1/eq/devices', { params: { page: 1, size: 999 } })
-    allDevices.value = res.data?.records || []
-  } catch (e) {}
 }
 
 function openDialog(row?: Device) {
@@ -575,99 +448,6 @@ async function fetchGroups() {
     groupMap.value = map
   } catch (e) {}
 }
-
-// 配对管理
-async function fetchPairings() {
-  pairingLoading.value = true
-  try {
-    const res: any = await request.get('/v1/eq/pairings')
-    pairingList.value = res.data || []
-  } catch (e) {
-    // 后端可能还未实现，显示空列表
-    pairingList.value = []
-  } finally {
-    pairingLoading.value = false
-  }
-}
-
-function openPairingForm(row?: Pairing) {
-  if (row) {
-    // 将后端返回的 decocterIds 转为数字数组，确保 el-select 正确匹配
-    const decocterIds = Array.isArray(row.decocterIds)
-      ? row.decocterIds.map((id: any) => typeof id === 'string' ? parseInt(id, 10) : id)
-      : []
-    pairingForm.value = {
-      id: row.id,
-      pairingName: row.pairingName,
-      decocterIds,
-      packerId: row.packerId,
-      labelerId: row.labelerId
-    }
-  } else {
-    pairingForm.value = { pairingName: '', decocterIds: [], packerId: undefined, labelerId: undefined }
-  }
-  pairingFormVisible.value = true
-}
-
-async function handleSavePairing() {
-  try {
-    const data = pairingForm.value
-    if (!data.pairingName || !data.decocterIds?.length || !data.packerId || !data.labelerId) {
-      ElMessage.warning('请填写完整的配对信息')
-      return
-    }
-    // decocterIds 前端是数组，后端期望逗号分隔字符串
-    const payload = {
-      pairingName: data.pairingName,
-      decocterIds: Array.isArray(data.decocterIds) ? data.decocterIds.join(',') : data.decocterIds,
-      packerId: data.packerId,
-      labelerId: data.labelerId
-    }
-    if (data.id) {
-      await request.put(`/v1/eq/pairings/${data.id}`, payload)
-      ElMessage.success('更新成功')
-    } else {
-      await request.post('/v1/eq/pairings', payload)
-      ElMessage.success('创建成功')
-    }
-    pairingFormVisible.value = false
-    fetchPairings()
-  } catch (e) {}
-}
-
-async function handleDeletePairing(row: Pairing) {
-  try {
-    await ElMessageBox.confirm('确认删除该配对？', '提示', { type: 'warning' })
-    await request.delete(`/v1/eq/pairings/${row.id}`)
-    ElMessage.success('删除成功')
-    fetchPairings()
-    fetchData()
-  } catch (e) {}
-}
-
-async function buildPairingMap() {
-  try {
-    const res: any = await request.get('/v1/eq/pairings')
-    const pairings: Pairing[] = res.data || []
-    const map: Record<number, string> = {}
-    pairings.forEach((p: Pairing) => {
-      p.decocterIds?.forEach((id: number) => {
-        map[id] = p.pairingName
-      })
-      if (p.packerId) map[p.packerId] = p.pairingName
-      if (p.labelerId) map[p.labelerId] = p.pairingName
-    })
-    pairingMap.value = map
-    // 强制刷新列表触发 el-table 重新渲染
-    list.value = [...list.value]
-  } catch (e) {
-    pairingMap.value = {}
-  }
-}
-
-watch(pairingDialogVisible, (val) => {
-  if (val) fetchPairings()
-})
 
 onMounted(() => {
   fetchData()
