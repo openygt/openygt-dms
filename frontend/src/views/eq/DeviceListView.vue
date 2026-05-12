@@ -16,9 +16,9 @@
           <el-select v-model="search.deviceType" placeholder="全部" clearable style="width: 140px">
             <el-option label="煎药机" :value="1" />
             <el-option label="包装机" :value="2" />
-            <el-option label="标签打印机" :value="3" />
-            <el-option label="激光打印机" :value="4" />
-            <el-option label="PDA" :value="5" />
+            <el-option label="激光打印机" :value="3" />
+            <el-option label="PDA" :value="4" />
+            <el-option label="标签打印机" :value="5" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
@@ -81,7 +81,7 @@
             <el-button size="small" type="primary" @click="goToMonitor(row)">监控</el-button>
             <el-button size="small" type="default" v-if="userStore.hasPermission('eq:device:update')" @click="openDialog(row)">编辑</el-button>
             <el-button size="small" @click="viewDetail(row)">详情</el-button>
-            <el-button size="small" type="info" @click="openPrintLabel(row)">标签</el-button>
+            <el-button size="small" type="info" @click="openPrintLabel(row)">打印条码</el-button>
             <el-button size="small" type="danger" v-if="userStore.hasPermission('eq:device:delete')" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
@@ -110,9 +110,9 @@
           <el-select v-model="form.deviceType" placeholder="请选择" style="width: 100%">
             <el-option label="煎药机" :value="1" />
             <el-option label="包装机" :value="2" />
-            <el-option label="标签打印机" :value="3" />
-            <el-option label="激光打印机" :value="4" />
-            <el-option label="PDA" :value="5" />
+            <el-option label="激光打印机" :value="3" />
+            <el-option label="PDA" :value="4" />
+            <el-option label="标签打印机" :value="5" />
           </el-select>
         </el-form-item>
         <el-form-item label="所属分组">
@@ -181,8 +181,16 @@
           </el-form-item>
         </template>
 
+        <!-- PDA专属 -->
+        <template v-if="form.deviceType === 4">
+          <el-divider content-position="left">PDA参数</el-divider>
+          <el-form-item label="通信ID">
+            <el-input v-model="form.communicationId" placeholder="PDA设备通信识别码" />
+          </el-form-item>
+        </template>
+
         <!-- 标签打印机专属 -->
-        <template v-if="form.deviceType === 3">
+        <template v-if="form.deviceType === 5">
           <el-divider content-position="left">标签打印参数</el-divider>
           <el-form-item label="标签模式">
             <el-select v-model="form.labelMode" placeholder="请选择" clearable style="width: 100%">
@@ -190,14 +198,6 @@
               <el-option label="药品标签" value="MEDICINE" />
               <el-option label="物流标签" value="LOGISTICS" />
             </el-select>
-          </el-form-item>
-        </template>
-
-        <!-- PDA专属 -->
-        <template v-if="form.deviceType === 5">
-          <el-divider content-position="left">PDA参数</el-divider>
-          <el-form-item label="通信ID">
-            <el-input v-model="form.communicationId" placeholder="PDA设备通信识别码" />
           </el-form-item>
         </template>
 
@@ -254,6 +254,9 @@
         <el-descriptions-item label="创建时间">{{ formatDateTime(detail?.createdAt) }}</el-descriptions-item>
       </el-descriptions>
     </el-dialog>
+
+    <!-- 打印设备标签 -->
+    <DeviceLabelPrint v-model="printVisible" :device="currentDevice" />
 
   </div>
 </template>
@@ -325,7 +328,7 @@ const form = ref<Partial<Device>>({})
 
 function deviceTypeText(type?: number) {
   const map: Record<number, string> = {
-    1: '煎药机', 2: '包装机', 3: '标签打印机', 4: '激光打印机', 5: 'PDA'
+    1: '煎药机', 2: '包装机', 3: '激光打印机', 4: 'PDA', 5: '标签打印机'
   }
   return map[type || 0] || '未知'
 }
@@ -333,8 +336,9 @@ function deviceTypeText(type?: number) {
 function deviceTypeTag(type?: number) {
   if (type === 1) return 'primary'
   if (type === 2) return 'success'
-  if (type === 3) return 'warning'
-  if (type === 4) return 'danger'
+  if (type === 3) return 'danger'
+  if (type === 4) return 'warning'
+  if (type === 5) return 'info'
   return 'info'
 }
 
@@ -441,7 +445,7 @@ function openPrintLabel(row: Device) {
 async function fetchGroups() {
   try {
     const res: any = await request.get('/v1/eq/groups/all')
-    const list = res.data?.records || []
+    const list = res.data || []
     groups.value = list
     const map: Record<number, string> = {}
     list.forEach((g: any) => { map[g.id] = g.groupName })

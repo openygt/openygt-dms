@@ -14,4 +14,6 @@ public interface DashboardService {
     List<Map<String, Object>> getHourlyTrend(String date);
 
     List<Map<String, Object>> getDeviceUtilization(String date);
+
+    List<Map<String, Object>> getAbnormalStats();
 }

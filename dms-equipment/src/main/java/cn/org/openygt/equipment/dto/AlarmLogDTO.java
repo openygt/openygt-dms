@@ -12,6 +12,7 @@ public class AlarmLogDTO {
 
     private Long id;
     private String deviceCode;
+    private String deviceName;
     private String alarmType;
     private String alarmLevel;
     private String content;
