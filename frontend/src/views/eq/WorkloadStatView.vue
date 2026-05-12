@@ -2,10 +2,6 @@
   <div class="workload-stat">
     <el-button :icon="ArrowLeft" @click="router.back()">返回</el-button>
     <div style="height: 16px"></div>
-    <div class="page-header">
-
-      <el-button type="primary" @click="exportExcel">导出Excel</el-button>
-    </div>
 
     <el-card class="filter-card">
       <el-form :inline="true" :model="filterForm">
@@ -23,13 +19,15 @@
           <el-input v-model="filterForm.operatorName" placeholder="操作人姓名" clearable />
         </el-form-item>
         <el-form-item label="工作类型">
-          <el-select v-model="filterForm.workType" placeholder="全部" clearable>
+          <el-select v-model="filterForm.workType" placeholder="全部" clearable style="width: 140px">
+            <el-option label="审方" value="AUDIT" />
             <el-option label="调剂" value="DISPENSE" />
             <el-option label="复核" value="REVIEW" />
             <el-option label="泡药" value="SOAK" />
             <el-option label="煎药" value="DECOCT" />
+            <el-option label="质检" value="QC" />
             <el-option label="包装" value="PACKAGE" />
-            <el-option label="发货" value="DELIVER" />
+            <el-option label="发药" value="DELIVER" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -90,12 +88,14 @@ const router = useRouter()
 const loading = ref(false)
 const statList = ref<any[]>([])
 const summaryList = ref<any[]>([
+  { type: 'AUDIT', name: '审方', count: 0 },
   { type: 'DISPENSE', name: '调剂', count: 0 },
   { type: 'REVIEW', name: '复核', count: 0 },
   { type: 'SOAK', name: '泡药', count: 0 },
   { type: 'DECOCT', name: '煎药', count: 0 },
+  { type: 'QC', name: '质检', count: 0 },
   { type: 'PACKAGE', name: '包装', count: 0 },
-  { type: 'DELIVER', name: '发货', count: 0 },
+  { type: 'DELIVER', name: '发药', count: 0 },
 ])
 
 const filterForm = reactive({
@@ -134,6 +134,7 @@ async function loadStats() {
     const res: any = await getWorkloadStats(params)
     statList.value = res.data.records || []
     pagination.total = res.data.total || 0
+    loadSummary()
   } catch (err) {
     ElMessage.error('加载统计数据失败')
   } finally {
@@ -141,10 +142,29 @@ async function loadStats() {
   }
 }
 
+async function loadSummary() {
+  try {
+    const params: any = { page: 1, size: 5000 }
+    if (filterForm.dateRange?.length === 2) {
+      params.startDate = filterForm.dateRange[0]
+      params.endDate = filterForm.dateRange[1]
+    }
+    const res: any = await getWorkloadStats(params)
+    const all: any[] = res.data.records || []
+    const typeMap: Record<string, number> = {}
+    for (const r of all) {
+      typeMap[r.workType] = (typeMap[r.workType] || 0) + (r.prescriptionCount || 0)
+    }
+    for (const s of summaryList.value) {
+      s.count = typeMap[s.type] || 0
+    }
+  } catch { /* ignore */ }
+}
+
 function workTypeText(type: string) {
   const map: Record<string, string> = {
-    DISPENSE: '调剂', REVIEW: '复核', SOAK: '泡药',
-    DECOCT: '煎药', PACKAGE: '包装', DELIVER: '发货'
+    AUDIT: '审方', DISPENSE: '调剂', REVIEW: '复核', SOAK: '泡药',
+    DECOCT: '煎药', QC: '质检', PACKAGE: '包装', DELIVER: '发药'
   }
   return map[type] || type
 }
@@ -162,10 +182,6 @@ function getEfficiencyColor(eff: number) {
   if (eff >= 3.0) return '#52C41A'
   if (eff >= 2.0) return '#1890FF'
   return '#FAAD14'
-}
-
-function exportExcel() {
-  ElMessage.info('敬请期待')
 }
 
 onMounted(() => {

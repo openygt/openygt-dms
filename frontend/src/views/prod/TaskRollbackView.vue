@@ -34,12 +34,17 @@
             <span v-else>-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="rollbackTo" label="回退阶段" min-width="120" />
-        <el-table-column prop="reasonCode" label="原因编码" width="120" />
-        <el-table-column prop="remark" label="回退说明" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="operatorId" label="操作人" width="100" />
+        <el-table-column label="回退阶段" min-width="120">
+          <template #default="{ row }">{{ stageText(row.rollbackTo) }}</template>
+        </el-table-column>
+        <el-table-column prop="rollbackReason" label="回退原因" min-width="160" show-overflow-tooltip />
+        <el-table-column label="操作人" width="100">
+          <template #default="{ row }">{{ getUserName(row.operatorId) }}</template>
+        </el-table-column>
         <el-table-column prop="createdAt" label="申请时间" min-width="160" />
-        <el-table-column prop="approverId" label="审批人" width="100" />
+        <el-table-column label="审批人" width="100">
+          <template #default="{ row }">{{ getUserName(row.approverId) }}</template>
+        </el-table-column>
         <el-table-column prop="approvedAt" label="审批时间" min-width="160" />
         <el-table-column prop="approvalStatus" label="审批状态" width="110" fixed="right">
           <template #default="{ row }">
@@ -117,7 +122,7 @@
           <span>{{ currentRow?.originalTaskId }}</span>
         </el-form-item>
         <el-form-item label="回退阶段">
-          <span>{{ currentRow?.rollbackTo }}</span>
+          <span>{{ stageText(currentRow?.rollbackTo) }}</span>
         </el-form-item>
         <el-form-item label="审批意见">
           <el-input v-model="approveForm.comment" type="textarea" rows="3" placeholder="请输入审批意见" />
@@ -136,12 +141,12 @@
       <el-descriptions :column="1" border>
         <el-descriptions-item label="原任务ID">{{ currentRow?.originalTaskId }}</el-descriptions-item>
         <el-descriptions-item label="新任务ID">{{ currentRow?.newTaskId || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="回退阶段">{{ currentRow?.rollbackTo }}</el-descriptions-item>
-        <el-descriptions-item label="回退原因">{{ currentRow?.reasonCode }}</el-descriptions-item>
-        <el-descriptions-item label="详细说明">{{ currentRow?.remark || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="操作人">{{ currentRow?.operatorId }}</el-descriptions-item>
+        <el-descriptions-item label="回退阶段">{{ stageText(currentRow?.rollbackTo) }}</el-descriptions-item>
+        <el-descriptions-item label="回退原因">{{ currentRow?.rollbackReason }}</el-descriptions-item>
+        <el-descriptions-item label="详细说明">{{ currentRow?.remark || currentRow?.rollbackReason || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="操作人">{{ getUserName(currentRow?.operatorId) }}</el-descriptions-item>
         <el-descriptions-item label="申请时间">{{ currentRow?.createdAt }}</el-descriptions-item>
-        <el-descriptions-item label="审批人">{{ currentRow?.approverId || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="审批人">{{ getUserName(currentRow?.approverId) }}</el-descriptions-item>
         <el-descriptions-item label="审批时间">{{ currentRow?.approvedAt || '-' }}</el-descriptions-item>
         <el-descriptions-item label="审批意见">{{ currentRow?.approvalComment || '-' }}</el-descriptions-item>
         <el-descriptions-item label="状态">
@@ -178,6 +183,39 @@ const statusText = (status?: number) => {
   if (status === 1) return '已通过'
   if (status === 2) return '已拒绝'
   return '-'
+}
+
+const stageDisplayMap: Record<string, string> = {
+  RECEIVE: '接收', ADJUST: '调配', SOAK: '泡药', DECOCT: '煎药',
+  POUR: '出液', WRAP: '包装', QC: '质检', PACKAGE: '包装',
+  DELIVER: '交付', HANDOVER: '交接', WAIT_SOAK: '待泡药',
+  WAIT_DECOCT: '待煎药', WAIT_POUR: '待出液', WAIT_WRAP: '待包装',
+  WAIT_QC: '待质检', WAIT_HANDOVER: '待交接', COMPLETED: '已完成',
+  SOAKING: '泡药中', DECOCTING: '煎药中', POURING: '出液中',
+  WRAPPING: '包装中', REWORK: '返工中'
+}
+
+function stageText(key: string) {
+  if (!key) return '-'
+  return stageDisplayMap[key] || stageMap[key] || key
+}
+
+const userNames = ref<Record<number, string>>({})
+
+async function loadUserNames() {
+  try {
+    const res: any = await request.get('/v1/sys/users', { params: { page: 1, size: 500 } })
+    const users = res.data?.records || []
+    for (const u of users) {
+      userNames.value[u.id] = u.realName || u.username || `用户-${u.id}`
+    }
+  } catch { /* ignore */ }
+}
+
+function getUserName(id: number | string) {
+  if (id == null) return '-'
+  const nid = typeof id === 'string' ? Number(id) : id
+  return userNames.value[nid] || String(id)
 }
 
 async function handleSearch() {
@@ -318,6 +356,7 @@ function viewDetail(row: any) {
 }
 
 onMounted(() => {
+  loadUserNames()
   handleSearch()
 })
 </script>

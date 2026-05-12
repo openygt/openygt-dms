@@ -72,4 +72,6 @@ public class Prescription {
     private String exceptionReason;
     /** V34: 原始导入数据(JSON) */
     private String rawImportData;
+    /** V34: 处方来源（接口导入/手工录入/CSV导入） */
+    private String source;
 }

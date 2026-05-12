@@ -425,7 +425,7 @@ const queryForm = ref({
   dateRange: null as [string, string] | null
 })
 
-const pagination = ref({ page: 1, size: 100, total: 0 })
+const pagination = ref({ page: 1, size: 20, total: 0 })
 
 /** 与后端 TaskStatusTransition 可挂起状态对齐（含待贴标） */
 const SUSPENDABLE_STATUSES = new Set([

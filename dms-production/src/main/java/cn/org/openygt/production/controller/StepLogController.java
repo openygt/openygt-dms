@@ -59,19 +59,22 @@ public class StepLogController {
                 .lt(StepLog::getStartedAt, dayEnd)
         );
 
-        Map<Long, List<StepLog>> byDevice = logs.stream()
+        Map<String, List<StepLog>> byDevice = logs.stream()
             .collect(Collectors.groupingBy(StepLog::getDeviceId));
 
         List<DeviceDailyDTO> result = new ArrayList<>();
-        for (Map.Entry<Long, List<StepLog>> entry : byDevice.entrySet()) {
+        for (Map.Entry<String, List<StepLog>> entry : byDevice.entrySet()) {
             DeviceDailyDTO dto = new DeviceDailyDTO();
-            dto.setDeviceId(entry.getKey());
+            Long devId = parseLong(entry.getKey());
 
             try {
-                EqDeviceDTO dev = equipmentService.getDeviceById(entry.getKey());
-                if (dev != null) {
-                    dto.setDeviceCode(dev.getDeviceCode());
-                    dto.setDeviceName(dev.getName());
+                if (devId != null) {
+                    EqDeviceDTO dev = equipmentService.getDeviceById(devId);
+                    if (dev != null) {
+                        dto.setDeviceId(devId);
+                        dto.setDeviceCode(dev.getDeviceCode());
+                        dto.setDeviceName(dev.getName());
+                    }
                 }
             } catch (Exception e) { log.error("步骤日志记录异常", e); }
 
@@ -92,5 +95,14 @@ public class StepLogController {
 
         result.sort(Comparator.comparingInt(DeviceDailyDTO::getRunningMinutes).reversed());
         return ApiResponse.success(result);
+    }
+
+    private static Long parseLong(String s) {
+        if (s == null) return null;
+        try {
+            return Long.valueOf(s);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

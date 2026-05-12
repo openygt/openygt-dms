@@ -7,7 +7,6 @@
           <el-button type="primary" @click="openAddRecordDialog">
             <el-icon><Edit /></el-icon> 补录记录
           </el-button>
-          <el-text type="info" size="small">日常任务由员工领取自动记录，此处仅用于异常补录</el-text>
           <el-date-picker
             v-model="selectedDate"
             type="date"
@@ -252,11 +251,16 @@ const loadColor = [
   { color: '#f56c6c', percentage: 100 }
 ]
 
-const summary = computed(() => ({
-  totalAssignments: assignments.value.length,
-  deviceAssignments: assignments.value.filter(item => item.deviceName !== '-').length,
-  employeeAssignments: assignments.value.filter(item => item.employeeName !== '-').length
-}))
+const summary = computed(() => {
+  const taskIds = new Set(assignments.value.map(a => a.taskId).filter(Boolean))
+  const deviceNames = new Set(assignments.value.filter(a => a.deviceName !== '-').map(a => a.deviceName))
+  const employeeNames = new Set(assignments.value.filter(a => a.employeeName !== '-').map(a => a.employeeName))
+  return {
+    totalAssignments: taskIds.size,
+    deviceAssignments: deviceNames.size,
+    employeeAssignments: employeeNames.size
+  }
+})
 
 const timeSlots = computed(() => {
   if (!ganttRows.value.length) return []
@@ -298,18 +302,21 @@ function barStyle(task: GanttTaskView) {
 }
 
 function normalizeEmployeeLoad(items: any[]) {
+  // 标准日处理能力：8张处方/人
+  const STANDARD_CAPACITY = 8
   return items.map((item) => {
     const assignedCount = Number(item.assignedCount || 0)
     const completedCount = Number(item.completedCount || 0)
     const pendingCount = Number(item.pendingCount || 0)
-    const total = Math.max(1, assignedCount + pendingCount)
+    // 饱和度 = 已领取 / 标准能力，超过100%封顶
+    const loadRate = Math.min(100, Math.round((assignedCount / STANDARD_CAPACITY) * 100))
     return {
       employeeId: item.employeeId,
       employeeName: item.employeeName || `员工-${item.employeeId ?? '-'}`,
       assignedCount,
       completedCount,
       pendingCount,
-      loadRate: Math.min(100, Math.round((assignedCount / total) * 100))
+      loadRate
     }
   })
 }

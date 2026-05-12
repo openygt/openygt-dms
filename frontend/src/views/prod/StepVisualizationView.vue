@@ -476,6 +476,10 @@ onMounted(async () => {
   if (urlTaskId) {
     selectedTaskId.value = Number(urlTaskId)
     loadTaskSteps()
+  } else {
+    // 无 URL 参数时默认加载一个已完成的任务
+    selectedTaskId.value = 900000001
+    loadTaskSteps()
   }
 })
 
