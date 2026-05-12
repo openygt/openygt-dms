@@ -3,6 +3,8 @@ import cn.org.openygt.equipment.EquipmentModule;
 
 import cn.org.openygt.common.dto.ApiResponse;
 import cn.org.openygt.equipment.entity.EqDeviceGroup;
+import cn.org.openygt.equipment.entity.EqPairingSpec;
+import cn.org.openygt.equipment.mapper.EqPairingSpecMapper;
 import cn.org.openygt.rbac.annotation.RequiresPermissions;
 import cn.org.openygt.equipment.service.EqDeviceGroupService;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -21,8 +23,9 @@ import java.util.List;
 public class EqDeviceGroupController {
 
     private final EqDeviceGroupService groupService;
+    private final EqPairingSpecMapper specMapper;
 
-    @PostMapping
+    // ---- 规格 ----    @PostMapping
     public ApiResponse<Long> create(@RequestBody EqDeviceGroup group) {
         groupService.save(group);
         return ApiResponse.success(group.getId());
@@ -63,5 +66,13 @@ public class EqDeviceGroupController {
     @RequiresPermissions("eq:group:view")
     public ApiResponse<List<EqDeviceGroup>> all() {
         return ApiResponse.success(groupService.list());
+    }
+
+    // ---- 规格 ----
+
+    @GetMapping("/specs")
+    @RequiresPermissions("eq:group:view")
+    public ApiResponse<List<EqPairingSpec>> specs() {
+        return ApiResponse.success(specMapper.selectList(null));
     }
 }
