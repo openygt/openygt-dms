@@ -25,7 +25,10 @@ export function useDeviceWebSocket(tenantId: string = 'default') {
 
     // 能力探测
     try {
-      const res = await fetch('/api/v1/eq/ws/capability')
+      const token = localStorage.getItem('token') || ''
+      const res = await fetch('/api/v1/eq/ws/capability', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
       const capability = await res.json()
       console.log('WebSocket capability:', capability.data)
     } catch (e) {

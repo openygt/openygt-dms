@@ -221,7 +221,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, markRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import request from '@/api/request'
@@ -243,10 +243,10 @@ const refreshInFlight = ref(false)
 
 function defaultKpis() {
   return [
-    { label: '总任务数', value: 0, sub: '今日任务', trend: 0, icon: Document, type: 'primary' as const },
-    { label: '已完成', value: 0, sub: '占比 0%', trend: 0, icon: SuccessFilled, type: 'success' as const },
-    { label: '进行中', value: 0, sub: '占比 0%', trend: 0, icon: Clock, type: 'warning' as const },
-    { label: '正在报警', value: 0, sub: '需干预', trend: 0, icon: WarningFilled, type: 'danger' as const }
+    { label: '总任务数', value: 0, sub: '今日任务', trend: 0, icon: markRaw(Document), type: 'primary' as const },
+    { label: '已完成', value: 0, sub: '占比 0%', trend: 0, icon: markRaw(SuccessFilled), type: 'success' as const },
+    { label: '进行中', value: 0, sub: '占比 0%', trend: 0, icon: markRaw(Clock), type: 'warning' as const },
+    { label: '正在报警', value: 0, sub: '需干预', trend: 0, icon: markRaw(WarningFilled), type: 'danger' as const }
   ]
 }
 
@@ -263,11 +263,11 @@ const maxDeviceCount = computed(() => Math.max(1, ...deviceDist.value.map((d: an
 
 const quickActions = computed(() => {
   const actions = [
-    { label: '任务管理', path: '/tasks', icon: List, bg: 'var(--ygt-primary-500)', perm: 'prod:task:view' },
-    { label: '设备管理', path: '/devices', icon: Cpu, bg: 'var(--ygt-success)', perm: 'eq:device:view' },
-    { label: '打印管理', path: '/print-center', icon: Printer, bg: 'var(--ygt-warning)', perm: 'prt:queue:view' },
-    { label: '产能报表', path: '/capacity', icon: TrendCharts, bg: 'var(--ygt-info)', perm: 'ops:capacity:view' },
-    { label: '温度曲线', path: '/temperature-curve', icon: Odometer, bg: '#e91e63', perm: 'eq:temp:view' },
+    { label: '任务管理', path: '/tasks', icon: markRaw(List), bg: 'var(--ygt-primary-500)', perm: 'prod:task:view' },
+    { label: '设备管理', path: '/devices', icon: markRaw(Cpu), bg: 'var(--ygt-success)', perm: 'eq:device:view' },
+    { label: '打印管理', path: '/print-center', icon: markRaw(Printer), bg: 'var(--ygt-warning)', perm: 'prt:queue:view' },
+    { label: '产能报表', path: '/capacity', icon: markRaw(TrendCharts), bg: 'var(--ygt-info)', perm: 'ops:capacity:view' },
+    { label: '温度曲线', path: '/temperature-curve', icon: markRaw(Odometer), bg: '#e91e63', perm: 'eq:temp:view' },
   ]
   return actions.filter(a => userStore.hasPermission(a.perm))
 })
@@ -433,14 +433,14 @@ async function fetchDashboard() {
     const totalTasks = safeInt(data.todayTotalTasks, 0)
     const ended = safeInt(data.todayEndedTasks, 0)
     const inProgress = safeInt(data.todayInProgressTasks, 0)
-    const alerting = safeInt(data.todayAlertingTasks, 0)
+    const alerting = safeInt(data.activeDeviceAlarmCount, 0)
     const endedRate = totalTasks > 0 ? Math.round((ended / totalTasks) * 100) : 0
     const inProgressRate = totalTasks > 0 ? Math.round((inProgress / totalTasks) * 100) : 0
     kpis.value = [
-      { label: '总任务数', value: totalTasks, sub: '今日任务', trend: safeTrend(data.taskTrend), icon: Document, type: 'primary' },
-      { label: '已完成', value: ended, sub: '占比 ' + endedRate + '%', trend: safeTrend(data.endedTrend), icon: SuccessFilled, type: 'success' },
-      { label: '进行中', value: inProgress, sub: '占比 ' + inProgressRate + '%', trend: safeTrend(data.inProgressTrend), icon: Clock, type: 'warning' },
-      { label: '正在报警', value: alerting, sub: '需干预', trend: safeTrend(data.alertingTrend), icon: WarningFilled, type: 'danger' }
+      { label: '总任务数', value: totalTasks, sub: '今日任务', trend: safeTrend(data.taskTrend), icon: markRaw(Document), type: 'primary' },
+      { label: '已完成', value: ended, sub: '占比 ' + endedRate + '%', trend: safeTrend(data.endedTrend), icon: markRaw(SuccessFilled), type: 'success' },
+      { label: '进行中', value: inProgress, sub: '占比 ' + inProgressRate + '%', trend: safeTrend(data.inProgressTrend), icon: markRaw(Clock), type: 'warning' },
+      { label: '正在报警', value: alerting, sub: '需干预', trend: safeTrend(data.alertingTrend), icon: markRaw(WarningFilled), type: 'danger' }
     ]
     taskDist.value = (Array.isArray(data.taskStatusDistribution) ? data.taskStatusDistribution : []).map((d: any) => ({
       status: String(d?.status ?? '').trim() || '（未命名状态）',

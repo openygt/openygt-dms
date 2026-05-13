@@ -58,6 +58,7 @@ public class DashboardServiceImpl implements DashboardService {
         // 设备统计
         dto.setOnlineDeviceCount(statMapper.selectOnlineDeviceCount());
         dto.setOfflineDeviceCount(statMapper.selectOfflineDeviceCount());
+        dto.setActiveDeviceAlarmCount(statMapper.selectActiveAlarmCount());
 
         // 质检统计
         Long inspectionCount = statMapper.selectTodayInspectionCount();
