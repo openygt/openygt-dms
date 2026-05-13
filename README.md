@@ -110,6 +110,20 @@ cp dms-app/src/main/resources/application.yml.example dms-app/src/main/resources
 # - jwt.secret: 至少 32 位的随机字符串（用于 JWT 签名）
 ```
 
+#### 数据库初始化
+
+```bash
+# 1. 创建数据库
+mysql -uroot -p -e "CREATE DATABASE openygt_dms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# 2. 启动后端（Flyway 会自动创建表结构）
+export JWT_SECRET="your-secret-key-at-least-32-characters"
+java -jar dms-app/target/dms-app-1.0.0.jar --server.port=8080
+
+# 3. 【可选】导入演示数据
+mysql -uroot -p openygt_dms < dms-app/src/main/resources/db/demo/init.sql
+```
+
 #### Windows
 
 ```powershell
@@ -121,22 +135,27 @@ cd openygt-dms
 copy dms-app\src\main\resources\application.yml.example dms-app\src\main\resources\application.yml
 # 用编辑器修改 application.yml 中的数据库密码和 JWT_SECRET
 
-# 3. 创建数据库（使用 MySQL 客户端或工具）
+# 3. 创建数据库（使用 MySQL 客户端或工具执行）
 # CREATE DATABASE openygt_dms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-# 4. 编译并启动后端
-$env:JWT_SECRET="your-secret-key-at-least-32-characters"
+# 4. 编译后端
 mvn clean package -DskipTests
+
+# 5. 启动后端（Flyway 会自动创建表结构）
+$env:JWT_SECRET="your-secret-key-at-least-32-characters"
 cd dms-app
 java -jar target\dms-app-1.0.0.jar --server.port=8080
 # 或使用 Maven: mvn spring-boot:run -pl dms-app
 
-# 5. 启动前端（新开 PowerShell 窗口）
+# 6. 【可选】导入演示数据（在 MySQL 客户端中执行）
+# mysql -uroot -p openygt_dms < dms-app\src\main\resources\db\demo\init.sql
+
+# 7. 启动前端（新开 PowerShell 窗口）
 cd frontend
 npm install
 npm run dev
 
-# 6. 访问 http://localhost:5173
+# 8. 访问 http://localhost:5173
 ```
 
 #### macOS / Linux
@@ -156,18 +175,21 @@ mysql -uroot -p -e "CREATE DATABASE openygt_dms CHARACTER SET utf8mb4 COLLATE ut
 # 4. 编译后端
 mvn clean package -DskipTests
 
-# 5. 启动后端
+# 5. 启动后端（Flyway 会自动创建表结构）
 export JWT_SECRET="your-secret-key-at-least-32-characters"
 export DB_PASSWORD="你的MySQL密码"
 export REDIS_PASSWORD="你的Redis密码"
 java -jar dms-app/target/dms-app-1.0.0.jar --server.port=8080
 
-# 6. 启动前端（新开终端窗口）
+# 6. 【可选】导入演示数据
+mysql -uroot -p openygt_dms < dms-app/src/main/resources/db/demo/init.sql
+
+# 7. 启动前端（新开终端窗口）
 cd frontend
 npm install
 npm run dev
 
-# 7. 访问 http://localhost:5173
+# 8. 访问 http://localhost:5173
 ```
 
 ---
