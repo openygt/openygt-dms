@@ -59,9 +59,25 @@
         <el-table-column prop="durationMinutes" label="工作时长" width="120">
           <template #default="{ row }">{{ formatDuration(row.durationMinutes) }}</template>
         </el-table-column>
-        <el-table-column prop="efficiency" label="效率" width="100">
+        <el-table-column prop="efficiency" width="100">
+          <template #header>
+            <el-tooltip
+              content="效率 = (个人处方数 ÷ 人均处方数) × 3.0，基准值 3.0 表示达到平均水平"
+              placement="top"
+            >
+              <span style="cursor: help; border-bottom: 1px dashed #999">效率</span>
+            </el-tooltip>
+          </template>
           <template #default="{ row }">
-            <span :style="{ color: getEfficiencyColor(row.efficiency) }">{{ row.efficiency || '--' }}</span>
+            <el-tooltip
+              :content="`效率 = (${row.prescriptionCount || 0} ÷ 人均) × 3.0 = ${row.efficiency || '--'}`"
+              placement="top"
+              :disabled="!row.efficiency"
+            >
+              <span :style="{ color: getEfficiencyColor(row.efficiency) }">
+                {{ row.efficiency != null ? row.efficiency + ' 分' : '--' }}
+              </span>
+            </el-tooltip>
           </template>
         </el-table-column>
       </el-table>

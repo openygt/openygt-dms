@@ -159,7 +159,7 @@ async function handleSearch() {
       dateEnd: params.dateEnd
     })
     const s = summaryRes.data || {}
-    summary.total = s.totalCount || 0
+    summary.total = s.total || 0
     summary.passCount = s.passCount || 0
   } catch (e: any) {
     summary.total = 0

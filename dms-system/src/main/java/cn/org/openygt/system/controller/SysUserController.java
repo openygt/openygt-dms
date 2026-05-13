@@ -55,7 +55,7 @@ public class SysUserController {
         return ApiResponse.success();
     }
 
-    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_WORKER"})
+    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR", "ROLE_LEADER", "ROLE_WORKER", "ROLE_INSPECTOR", "ROLE_SHIPPER"})
     @PostMapping("/change-password")
     public ApiResponse<Void> changePassword(@RequestAttribute("userId") Long userId,
                                              @RequestBody @Valid ChangePasswordRequest request) {

@@ -9,7 +9,7 @@
       <el-form :inline="true" @submit.prevent>
         <el-form-item label="设备">
           <el-select v-model="search.deviceId" placeholder="选择设备" clearable filterable remote :remote-method="searchDevices" :loading="deviceLoading" style="width: 180px">
-            <el-option v-for="d in deviceOptions" :key="d.deviceCode" :label="d.name || d.deviceCode" :value="d.deviceCode" />
+            <el-option v-for="d in deviceOptions" :key="d.id" :label="d.name || d.deviceCode" :value="d.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="维保类型">
@@ -75,7 +75,7 @@
       <el-form ref="formRef" :model="form" :rules="formRules" label-width="100px">
         <el-form-item label="设备" prop="deviceId">
           <el-select v-model="form.deviceId" placeholder="选择设备" filterable remote :remote-method="searchDevices" :loading="deviceLoading" style="width: 100%">
-            <el-option v-for="d in deviceOptions" :key="d.deviceCode" :label="d.name || d.deviceCode" :value="d.deviceCode" />
+            <el-option v-for="d in deviceOptions" :key="d.id" :label="d.name || d.deviceCode" :value="d.id" />
           </el-select>
         </el-form-item>
         <el-form-item label="维保类型">
@@ -182,6 +182,11 @@ function resetSearch() {
 function openDialog(row?: any) {
   if (row) {
     Object.assign(form, row)
+    // 编辑时确保当前设备出现在可选项中
+    const d = allDevices.value.find((x: any) => x.id === row.deviceId)
+    if (d && !deviceOptions.value.find((o: any) => o.id === row.deviceId)) {
+      deviceOptions.value = [d, ...deviceOptions.value]
+    }
   } else {
     Object.assign(form, { id: null, deviceId: '', maintenanceType: '', content: '', maintenanceDate: '', nextDate: '', status: 0 })
   }
@@ -220,7 +225,7 @@ async function loadAllDevices() {
   try {
     const res: any = await request.get('/v1/eq/devices', { params: { page: 1, size: 200 } })
     allDevices.value = res.data?.records || []
-  } catch { allDevices.value = [] }
+  } catch (e) { console.warn('加载设备列表失败', e); allDevices.value = [] }
 }
 
 onMounted(() => { loadData(); loadAllDevices() })

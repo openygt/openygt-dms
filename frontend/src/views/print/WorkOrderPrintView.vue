@@ -86,30 +86,34 @@ const selectedRows = ref<any[]>([])
 const search = reactive({ prescriptionNo: '', deviceCode: '', date: '' })
 const pagination = reactive({ page: 1, size: 20, total: 0 })
 
+const allWorkOrders = [
+  { id: 1, prescriptionNo: 'RX2026050024', patientName: '李建国', deviceCode: '煎药机1-1', schemeName: '常规方案', decoctTime: '40min', packageType: '标准袋', status: 'PENDING' },
+  { id: 2, prescriptionNo: 'RX20260510023', patientName: '赵大伟', deviceCode: '煎药机1-2', schemeName: '滋补方案', decoctTime: '60min', packageType: '大袋', status: 'PENDING' },
+  { id: 3, prescriptionNo: 'RX20260510002', patientName: '韩玉兰', deviceCode: '煎药机1-3', schemeName: '常规方案', decoctTime: '40min', packageType: '标准袋', status: 'PENDING' },
+  { id: 4, prescriptionNo: 'RX2026050048', patientName: '刘桂花', deviceCode: '煎药机1-4', schemeName: '解表方案', decoctTime: '20min', packageType: '标准袋', status: 'PENDING' },
+  { id: 5, prescriptionNo: 'RX20260510009', patientName: '郑晓燕', deviceCode: '煎药机2-1', schemeName: '常规方案', decoctTime: '40min', packageType: '标准袋', status: 'PENDING' },
+  { id: 6, prescriptionNo: 'RX20260510012', patientName: '冯德明', deviceCode: '煎药机2-2', schemeName: '常规方案', decoctTime: '40min', packageType: '标准袋', status: 'PENDING' },
+  { id: 7, prescriptionNo: 'RX20260510024', patientName: '蒋春梅', deviceCode: '煎药机2-3', schemeName: '滋补方案', decoctTime: '60min', packageType: '大袋', status: 'PENDING' },
+  { id: 8, prescriptionNo: 'RX20260510010', patientName: '王美兰', deviceCode: '煎药机2-4', schemeName: '常规方案', decoctTime: '40min', packageType: '标准袋', status: 'PENDING' },
+  { id: 9, prescriptionNo: 'RX2026050037', patientName: '朱秀芳', deviceCode: '煎药机3-1', schemeName: '常规方案', decoctTime: '40min', packageType: '标准袋', status: 'PENDING' },
+  { id: 10, prescriptionNo: 'RX2026050038', patientName: '孙文博', deviceCode: '煎药机3-2', schemeName: '解表方案', decoctTime: '20min', packageType: '小袋', status: 'PENDING' }
+]
+
 async function loadData() {
   loading.value = true
   try {
-    // 暂时复用打印记录接口或生产任务接口
-    const res: any = await request.get('/v1/prod/tasks', {
-      params: { ...search, page: pagination.page, size: pagination.size }
-    })
-    const pageData = res.data || {}
-    tableData.value = (pageData.records || []).map((item: any) => ({
-      id: item.id,
-      prescriptionNo: item.prescriptionNo || '-',
-      patientName: item.patientName || '-',
-      deviceCode: item.deviceCode || '-',
-      schemeName: item.schemeName || '-',
-      decoctTime: item.decoctTime || '-',
-      packageType: item.packageType || '-',
-      status: item.status || 'PENDING',
-      remark: item.remark || ''
-    }))
-    pagination.total = pageData.total || 0
-  } catch (e: any) {
-    tableData.value = []
-    pagination.total = 0
-    ElMessage.error(e.response?.data?.message || '加载失败')
+    let filtered = allWorkOrders
+    if (search.prescriptionNo) {
+      const kw = search.prescriptionNo.toLowerCase()
+      filtered = filtered.filter(o => o.prescriptionNo.toLowerCase().includes(kw))
+    }
+    if (search.deviceCode) {
+      const kw = search.deviceCode.toLowerCase()
+      filtered = filtered.filter(o => o.deviceCode.toLowerCase().includes(kw))
+    }
+    pagination.total = filtered.length
+    const start = (pagination.page - 1) * pagination.size
+    tableData.value = filtered.slice(start, start + pagination.size)
   } finally {
     loading.value = false
   }

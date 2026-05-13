@@ -92,7 +92,7 @@
         <el-timeline-item
           v-for="(item, index) in timelineData"
           :key="index"
-          :timestamp="item.eventTime"
+          :timestamp="formatTime(item.eventTime)"
         >
           {{ item.eventName }}
           <div v-if="item.operatorName" class="timeline-operator">操作人：{{ item.operatorName }}</div>
@@ -106,7 +106,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { searchBatchTrace, getBatchDetail, getBatchTimeline, getBatchNos } from '@/api/trace'
+import { searchBatchTrace, getBatchDetail, getBatchTimeline, getBatchNos } from '@/api/equipment'
 
 interface TraceRecord {
   prescriptionNo: string
@@ -211,6 +211,7 @@ function statusTagType(status: string) {
     case 'SOAKING': return 'warning'
     case 'FIRST_DECOCTING': return 'primary'
     case 'SECOND_DECOCTING': return 'primary'
+    case 'PROCESSING': return 'warning'
     case 'PACKAGING': return 'primary'
     case 'ABNORMAL': return 'danger'
     default: return 'info'
@@ -227,9 +228,13 @@ function statusText(status: string) {
     SOAKING: '浸泡中',
     FIRST_DECOCTING: '一煎中',
     SECOND_DECOCTING: '二煎中',
+    PROCESSING: '处理中',
     PACKAGING: '包装中',
     COMPLETED: '已完成',
-    ABNORMAL: '异常'
+    REJECTED: '已拒收',
+    ABNORMAL: '异常',
+    QUALITY: '质量异常',
+    DEVICE: '设备异常'
   }
   return map[status] || status
 }

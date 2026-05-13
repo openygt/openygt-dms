@@ -127,6 +127,23 @@ export function updateTraceStep(prescriptionNo: string, stepCode: string, data: 
   return request.put(`/v1/eq/traces/${prescriptionNo}/step/${stepCode}`, data)
 }
 
+// ========== 批次追溯 ==========
+export function searchBatchTrace(params: any) {
+  return request.get('/v1/eq/trace/batch/search', { params })
+}
+
+export function getBatchDetail(batchNo: string) {
+  return request.get('/v1/eq/trace/batch/detail', { params: { batchNo } })
+}
+
+export function getBatchTimeline(prescriptionNo: string) {
+  return request.get(`/v1/eq/trace/batch/timeline/${prescriptionNo}`)
+}
+
+export function getBatchNos() {
+  return request.get('/v1/eq/trace/batch/batch-nos')
+}
+
 // ========== 时间校验 ==========
 export function getTimeCheckRules() {
   return request.get('/v1/eq/time-check/rules')

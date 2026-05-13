@@ -409,7 +409,7 @@ public class TaskServiceImpl implements TaskService {
         }
         if (startTime != null && !startTime.isEmpty()) wrapper.ge(Task::getCreatedAt, startTime);
         if (endTime != null && !endTime.isEmpty()) wrapper.le(Task::getCreatedAt, endTime);
-        wrapper.orderByDesc(Task::getCreatedAt);
+        wrapper.orderByAsc(Task::getId);
         IPage<Task> result = taskMapper.selectPage(new Page<>(page, size), wrapper);
         // 批量补充处方号
         List<Task> tasks = result.getRecords();

@@ -52,12 +52,12 @@ public class ProductionQueryServiceImpl implements ProductionQueryService {
     }
 
     @Override
-    public List<CapacityDailyDTO> getDailyCapacity(LocalDate startDate, LocalDate endDate) {
+    public List<CapacityDailyDTO> getDailyCapacity(LocalDate startDate, LocalDate endDate, Long hospitalId) {
         if (startDate == null || endDate == null) {
             return Collections.emptyList();
         }
 
-        List<Map<String, Object>> rows = taskMapper.selectDailyCapacity(startDate.toString(), endDate.toString());
+        List<Map<String, Object>> rows = taskMapper.selectDailyCapacity(startDate.toString(), endDate.toString(), hospitalId);
         if (rows == null || rows.isEmpty()) {
             return Collections.emptyList();
         }

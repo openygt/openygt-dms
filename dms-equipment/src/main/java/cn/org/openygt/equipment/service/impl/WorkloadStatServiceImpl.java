@@ -47,7 +47,15 @@ public class WorkloadStatServiceImpl implements WorkloadStatService {
 
     @Override
     public void generateDailyStats(LocalDate date) {
-        // 简化实现：实际应从追溯数据中聚合统计
-        log.info("生成工作量统计: {}", date);
+        QueryWrapper<WorkloadStat> deleteWrapper = new QueryWrapper<>();
+        deleteWrapper.eq("stat_date", date);
+        statMapper.delete(deleteWrapper);
+
+        List<WorkloadStat> stats = statMapper.aggregateDailyFromTraces(date);
+        for (WorkloadStat stat : stats) {
+            stat.setStatDate(date);
+            statMapper.insert(stat);
+        }
+        log.info("生成工作量统计完成: {}, 记录数={}", date, stats.size());
     }
 }

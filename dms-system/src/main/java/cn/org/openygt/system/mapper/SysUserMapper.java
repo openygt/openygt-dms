@@ -23,4 +23,13 @@ public interface SysUserMapper extends BaseMapper<SysUser> {
             "INNER JOIN sys_user_role ur ON r.id = ur.role_id " +
             "WHERE ur.user_id = #{userId}")
     List<String> selectPermissionCodesByUserId(@Param("userId") Long userId);
+
+    /**
+     * 查询用户拥有的菜单权限码（如 ops:dashboard:view）。
+     */
+    @Select("SELECT DISTINCT m.permission FROM sys_menu m " +
+            "INNER JOIN sys_role_menu rm ON m.id = rm.menu_id " +
+            "INNER JOIN sys_user_role ur ON rm.role_id = ur.role_id " +
+            "WHERE ur.user_id = #{userId} AND m.permission IS NOT NULL AND m.permission != ''")
+    List<String> selectMenuPermissionCodesByUserId(@Param("userId") Long userId);
 }

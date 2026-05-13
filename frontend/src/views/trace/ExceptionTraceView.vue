@@ -14,7 +14,15 @@
           />
         </el-form-item>
         <el-form-item label="异常类型">
-          <el-select v-model="searchForm.exceptionType" clearable placeholder="全部" style="width: 140px" @change="handleSearch">
+          <el-select v-model="searchForm.exceptionType" clearable placeholder="全部" style="width: 160px" @change="handleSearch">
+            <el-option label="数据不完整" value="DATA_INCOMPLETE" />
+            <el-option label="编码缺失" value="CODE_MISSING" />
+            <el-option label="剂量超限" value="DOSE_EXCEED" />
+            <el-option label="煎法冲突" value="METHOD_CONFLICT" />
+            <el-option label="格式异常" value="FORMAT_ERROR" />
+            <el-option label="药材名无法识别" value="NAME_UNRECOGNIZED" />
+            <el-option label="重复处方" value="DUPLICATE" />
+            <el-option label="配伍禁忌" value="INCOMPATIBILITY" />
             <el-option label="设备异常" value="DEVICE" />
             <el-option label="工艺异常" value="PROCESS" />
             <el-option label="物料异常" value="MATERIAL" />
@@ -49,13 +57,9 @@
         <el-table-column prop="exceptionNo" label="异常编号" min-width="140" />
         <el-table-column prop="patientName" label="患者姓名" min-width="100" />
         <el-table-column prop="prescriptionNo" label="处方编号" min-width="140" />
-        <el-table-column prop="exceptionType" label="异常类型" min-width="100">
+        <el-table-column prop="exceptionType" label="异常类型" min-width="120">
           <template #default="{ row }">
-            <el-tag v-if="row.exceptionType === 'DEVICE'" type="danger">设备异常</el-tag>
-            <el-tag v-else-if="row.exceptionType === 'PROCESS'" type="warning">工艺异常</el-tag>
-            <el-tag v-else-if="row.exceptionType === 'MATERIAL'" type="info">物料异常</el-tag>
-            <el-tag v-else-if="row.exceptionType === 'ENVIRONMENT'" type="primary">环境异常</el-tag>
-            <el-tag v-else>{{ row.exceptionType }}</el-tag>
+            <el-tag :type="exceptionTypeTag(row.exceptionType)">{{ exceptionTypeText(row.exceptionType) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="exceptionLevel" label="异常等级" min-width="100">
@@ -212,8 +216,27 @@ async function handleRowClick(row: ExceptionRecord) {
 }
 
 function exceptionTypeText(type: string) {
-  const map: Record<string, string> = { DEVICE: '设备异常', PROCESS: '工艺异常', MATERIAL: '物料异常', ENVIRONMENT: '环境异常' }
+  const map: Record<string, string> = {
+    DATA_INCOMPLETE: '数据不完整', CODE_MISSING: '编码缺失',
+    DOSE_EXCEED: '剂量超限', METHOD_CONFLICT: '煎法冲突',
+    FORMAT_ERROR: '格式异常', NAME_UNRECOGNIZED: '药材名无法识别',
+    DUPLICATE: '重复处方', INCOMPATIBILITY: '配伍禁忌',
+    DEVICE: '设备异常', PROCESS: '工艺异常', QUALITY: '质量异常',
+    MATERIAL: '物料异常', ENVIRONMENT: '环境异常'
+  }
   return map[type] || type
+}
+
+function exceptionTypeTag(type: string) {
+  const dangerTypes = ['DOSE_EXCEED', 'INCOMPATIBILITY', 'DEVICE']
+  const warningTypes = ['DATA_INCOMPLETE', 'METHOD_CONFLICT', 'PROCESS', 'DUPLICATE']
+  const infoTypes = ['CODE_MISSING', 'FORMAT_ERROR', 'MATERIAL']
+  const primaryTypes = ['NAME_UNRECOGNIZED', 'ENVIRONMENT']
+  if (dangerTypes.includes(type)) return 'danger'
+  if (warningTypes.includes(type)) return 'warning'
+  if (infoTypes.includes(type)) return 'info'
+  if (primaryTypes.includes(type)) return 'primary'
+  return ''
 }
 
 function exceptionLevelText(level: string) {
