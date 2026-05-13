@@ -157,3 +157,8 @@ application-prod.yml
 *spec*.js
 playwright.config.*
 system-module-test-checklist.md
+
+# Local configuration (copy from application.yml.example)
+application.yml
+application-*.yml
+!application.yml.example

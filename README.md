@@ -96,6 +96,20 @@ docker compose -f docker-compose.oss.yml down -v
 | Redis | 7+ | [redis.io](https://redis.io/download/) |
 | Maven | 3.8+ | [maven.apache.org](https://maven.apache.org/download.cgi) |
 
+#### 配置说明
+
+首次源码安装时，需要复制示例配置文件并修改数据库连接：
+
+```bash
+# 复制示例配置
+cp dms-app/src/main/resources/application.yml.example dms-app/src/main/resources/application.yml
+
+# 编辑 application.yml，修改以下配置：
+# - spring.datasource.password: 你的 MySQL 密码
+# - spring.redis.password: 你的 Redis 密码（如无密码可留空）
+# - jwt.secret: 至少 32 位的随机字符串（用于 JWT 签名）
+```
+
 #### Windows
 
 ```powershell
@@ -103,22 +117,26 @@ docker compose -f docker-compose.oss.yml down -v
 git clone https://gitee.com/openygt/openygt-dms.git
 cd openygt-dms
 
-# 2. 创建数据库（使用 MySQL 客户端或工具）
+# 2. 复制配置文件并修改
+copy dms-app\src\main\resources\application.yml.example dms-app\src\main\resources\application.yml
+# 用编辑器修改 application.yml 中的数据库密码和 JWT_SECRET
+
+# 3. 创建数据库（使用 MySQL 客户端或工具）
 # CREATE DATABASE openygt_dms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
-# 3. 启动后端
-# 设置环境变量：JWT_SECRET=your-secret-key-at-least-32-characters
+# 4. 编译并启动后端
 $env:JWT_SECRET="your-secret-key-at-least-32-characters"
+mvn clean package -DskipTests
 cd dms-app
-target\dms-app-1.0.0.jar --server.port=8080
+java -jar target\dms-app-1.0.0.jar --server.port=8080
 # 或使用 Maven: mvn spring-boot:run -pl dms-app
 
-# 4. 启动前端（新开 PowerShell 窗口）
+# 5. 启动前端（新开 PowerShell 窗口）
 cd frontend
 npm install
 npm run dev
 
-# 5. 访问 http://localhost:5173
+# 6. 访问 http://localhost:5173
 ```
 
 #### macOS / Linux
@@ -128,22 +146,28 @@ npm run dev
 git clone https://gitee.com/openygt/openygt-dms.git
 cd openygt-dms
 
-# 2. 创建数据库
+# 2. 复制配置文件并修改
+cp dms-app/src/main/resources/application.yml.example dms-app/src/main/resources/application.yml
+# 用编辑器修改 application.yml 中的数据库密码和 JWT_SECRET
+
+# 3. 创建数据库
 mysql -uroot -p -e "CREATE DATABASE openygt_dms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
-# 3. 编译后端
+# 4. 编译后端
 mvn clean package -DskipTests
 
-# 4. 启动后端
+# 5. 启动后端
 export JWT_SECRET="your-secret-key-at-least-32-characters"
+export DB_PASSWORD="你的MySQL密码"
+export REDIS_PASSWORD="你的Redis密码"
 java -jar dms-app/target/dms-app-1.0.0.jar --server.port=8080
 
-# 5. 启动前端（新开终端窗口）
+# 6. 启动前端（新开终端窗口）
 cd frontend
 npm install
 npm run dev
 
-# 6. 访问 http://localhost:5173
+# 7. 访问 http://localhost:5173
 ```
 
 ---
