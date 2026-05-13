@@ -150,3 +150,10 @@ application-prod.yml
 *.iml
 .vscode/
 *.swp
+
+# 测试文件（演示环境专用，不进主仓库）
+*test*.js
+*test*.mjs
+*spec*.js
+playwright.config.*
+system-module-test-checklist.md
