@@ -1,0 +1,29 @@
+# OpenYGT-DMS 后端 Dockerfile
+# 构建: docker build -f Dockerfile.backend -t openygt-dms-backend .
+
+FROM maven:3.9.6-eclipse-temurin-8 AS builder
+WORKDIR /app
+COPY pom.xml .
+COPY dms-analytics/pom.xml dms-analytics/
+COPY dms-app/pom.xml dms-app/
+COPY dms-common/pom.xml dms-common/
+COPY dms-equipment/pom.xml dms-equipment/
+COPY dms-inventory/pom.xml dms-inventory/
+COPY dms-iot-gateway/pom.xml dms-iot-gateway/
+COPY dms-masterdata/pom.xml dms-masterdata/
+COPY dms-pda/pom.xml dms-pda/
+COPY dms-print/pom.xml dms-print/
+COPY dms-production/pom.xml dms-production/
+COPY dms-quality/pom.xml dms-quality/
+COPY dms-rbac/pom.xml dms-rbac/
+COPY dms-system/pom.xml dms-system/
+RUN mvn dependency:go-offline -B -q
+COPY . .
+RUN mvn clean package -B -q -DskipTests
+
+FROM eclipse-temurin:8-jre-alpine
+WORKDIR /app
+COPY --from=builder /app/dms-app/target/dms-app-1.0.0.jar app.jar
+EXPOSE 8080
+ENV JWT_SECRET=""
+ENTRYPOINT ["sh", "-c", "java -jar app.jar --server.port=8080 --spring.profiles.active=docker"]
