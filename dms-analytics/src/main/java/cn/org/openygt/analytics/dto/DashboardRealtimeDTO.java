@@ -20,6 +20,7 @@ public class DashboardRealtimeDTO {
     // 设备统计
     private Long onlineDeviceCount;
     private Long offlineDeviceCount;
+    private Long activeDeviceAlarmCount;
 
     // 质检统计
     private Long todayInspectionCount;

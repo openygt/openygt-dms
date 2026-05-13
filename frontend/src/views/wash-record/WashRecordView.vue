@@ -14,9 +14,10 @@
               </el-select>
             </el-form-item>
             <el-form-item label="结果">
-              <el-select v-model="query.result" placeholder="全部" clearable style="width: 100px">
+              <el-select v-model="query.result" placeholder="全部" clearable style="width: 120px">
                 <el-option label="合格" :value="1" />
                 <el-option label="不合格" :value="0" />
+                <el-option label="超时" :value="2" />
               </el-select>
             </el-form-item>
             <el-form-item>
@@ -43,8 +44,8 @@
         <el-table-column prop="durationMin" label="实际时长(分)" width="110" />
         <el-table-column prop="result" label="结果" width="80">
           <template #default="{row}">
-            <el-tag :type="row.result === 1 ? 'success' : row.result === 0 ? 'danger' : 'info'">
-              {{ row.result === 1 ? '合格' : row.result === 0 ? '不合格' : '-' }}
+            <el-tag :type="row.result === 1 ? 'success' : row.result === 0 ? 'danger' : 'warning'">
+              {{ row.result === 1 ? '合格' : row.result === 0 ? '不合格' : '超时' }}
             </el-tag>
           </template>
         </el-table-column>

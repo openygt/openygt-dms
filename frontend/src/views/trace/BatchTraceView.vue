@@ -204,10 +204,10 @@ async function fetchBatchNos(queryString: string, cb: (data: any[]) => void) {
 function statusTagType(status: string) {
   switch (status) {
     case 'COMPLETED': return 'success'
-    case 'RECEIVED': return ''
-    case 'AUDIT_PASS': return ''
-    case 'DISPENSED': return ''
-    case 'REVIEWED': return ''
+    case 'RECEIVED': return 'info'
+    case 'AUDIT_PASS': return 'info'
+    case 'DISPENSED': return 'info'
+    case 'REVIEWED': return 'info'
     case 'SOAKING': return 'warning'
     case 'FIRST_DECOCTING': return 'primary'
     case 'SECOND_DECOCTING': return 'primary'

@@ -1,7 +1,5 @@
 <template>
   <div class="login-container">
-    <div class="page-header-title">登录</div>
-
     <div class="login-card">
       <h1 class="login-title">智能煎药管理系统</h1>
       <p class="login-subtitle">OpenYGT · 开源医共体</p>
@@ -35,7 +33,7 @@
         </el-button>
       </el-form>
       <div class="login-footer">
-        <a href="http://dms.openygt.net.cn" target="_blank">v1.0.0 开源代码</a>
+        <span class="version-text">v1.0.0</span>
       </div>
     </div>
   </div>

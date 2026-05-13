@@ -236,7 +236,7 @@ function exceptionTypeTag(type: string) {
   if (warningTypes.includes(type)) return 'warning'
   if (infoTypes.includes(type)) return 'info'
   if (primaryTypes.includes(type)) return 'primary'
-  return ''
+  return 'info'
 }
 
 function exceptionLevelText(level: string) {
