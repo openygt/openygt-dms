@@ -73,3 +73,28 @@ tests
 # 本地环境配置（各实例私有，禁止提交）
 application-local.yml
 .env.local
+# 本地备份
+backup/
+backup_before_*
+*.sql.backup
+test.txt
+test01.txt
+
+# 演示环境专用（生产勿用）
+scripts/demo/
+demo_cleanup*.sql
+demo_daily*.sh
+
+# 内部文档
+AGENTS.md
+CLAUDE.md
+.codex
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# 日志
+*.log
+logs/
