@@ -123,3 +123,30 @@ CLAUDE.md
 # 日志
 *.log
 logs/
+
+# 日志和运行时文件
+*.log
+logs/
+*.pid
+*.out
+
+# 上传文件
+uploads/
+uploads/*
+
+# 构建输出
+target/
+dist/
+node_modules/
+
+# 本地配置（含密码）
+.env
+.env.local
+application-local.yml
+application-prod.yml
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
