@@ -67,7 +67,7 @@
         <el-table-column label="操作" width="180">
           <template #default="{ row }">
             <el-button link type="primary" @click="viewDetail(row)">详情</el-button>
-            <el-button link type="primary" @click="viewTempCurve(row)">温度曲线</el-button>
+            <el-button v-if="row.decoctDeviceCode && row.decoctDeviceCode !== '-'" link type="primary" @click="viewTempCurve(row)">温度曲线</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -182,10 +182,10 @@ async function loadTraces() {
 function statusTagType(status: string) {
   switch (status) {
     case 'COMPLETED': return 'success'
-    case 'RECEIVED': return ''
-    case 'AUDIT_PASS': return ''
-    case 'DISPENSED': return ''
-    case 'REVIEWED': return ''
+    case 'RECEIVED': return 'info'
+    case 'AUDIT_PASS': return 'info'
+    case 'DISPENSED': return 'info'
+    case 'REVIEWED': return 'info'
     case 'SOAKING': return 'warning'
     case 'FIRST_DECOCTING': return 'primary'
     case 'SECOND_DECOCTING': return 'primary'

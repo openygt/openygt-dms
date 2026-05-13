@@ -308,7 +308,7 @@ function resultType(result?: string) {
   if (result === 'CONCESSION') return 'danger'
   if (result === 'REWORK') return 'warning'
   if (result === 'SCRAP') return 'info'
-  return ''
+  return 'info'
 }
 
 function formatDateTime(dt?: string) {

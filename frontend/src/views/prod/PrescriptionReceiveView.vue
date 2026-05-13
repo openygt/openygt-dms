@@ -216,9 +216,13 @@ async function handleReject(row: Prescription) {
 
 async function handleReactivate(row: Prescription) {
   try {
-    await ElMessageBox.confirm(`确认重新激活处方 #${row.prescriptionNo || row.id}？`, '重新激活', { type: 'warning' })
+    await ElMessageBox.confirm(
+      `重新激活处方 #${row.prescriptionNo || row.id} 将退回接方审核流程，需重新审核通过后方可进入生产。确认继续？`,
+      '重新激活',
+      { type: 'warning', confirmButtonText: '确认重新激活', cancelButtonText: '取消' }
+    )
     await reactivatePrescription(row.id)
-    ElMessage.success('重新激活成功')
+    ElMessage.success('重新激活成功，处方已退回接方审核')
     fetchData()
   } catch (e) {}
 }

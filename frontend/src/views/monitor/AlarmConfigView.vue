@@ -115,8 +115,8 @@ function alarmLevelText(level: string) {
 }
 
 function alarmLevelTag(level: string) {
-  const map: Record<string, string> = { URGENT: 'danger', CRITICAL: 'danger', WARNING: 'warning', INFO: '' }
-  return map[level] || ''
+  const map: Record<string, string> = { URGENT: 'danger', CRITICAL: 'danger', WARNING: 'warning', INFO: 'info' }
+  return map[level] || 'info'
 }
 
 function notifyTypeText(types: string) {
