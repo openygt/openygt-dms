@@ -185,7 +185,6 @@ openygt-dms/
 ├── dms-inventory/          # 库存管理模块
 ├── dms-iot-gateway/        # IoT 网关模块
 ├── dms-masterdata/         # 主数据模块
-├── dms-outpatient/         # 门诊模块
 ├── dms-pda/                # PDA 移动端
 ├── dms-print/              # 打印中心模块
 ├── dms-production/         # 生产管理模块
