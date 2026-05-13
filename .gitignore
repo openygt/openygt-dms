@@ -161,4 +161,5 @@ system-module-test-checklist.md
 # Local configuration (copy from application.yml.example)
 application.yml
 application-*.yml
+!application-docker.yml
 !application.yml.example
