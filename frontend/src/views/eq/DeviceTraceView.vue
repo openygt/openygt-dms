@@ -207,7 +207,9 @@ function statusText(status: string) {
     SECOND_DECOCTING: '二煎中',
     PACKAGING: '包装中',
     COMPLETED: '已完成',
-    ABNORMAL: '异常'
+    REJECTED: '已拒收',
+    ABNORMAL: '异常',
+    PROCESSING: '处理中'
   }
   return map[status] || status
 }

@@ -52,14 +52,14 @@ public class StepVisualizationServiceImpl implements StepVisualizationService {
      */
     private static final Map<String, String> DISPLAY_TO_LOG_CODE = new HashMap<>();
     static {
+        DISPLAY_TO_LOG_CODE.put("ADJUST", "DISPENSE");
         DISPLAY_TO_LOG_CODE.put("SOAK", "SOAK");
-        DISPLAY_TO_LOG_CODE.put("FIRST_DECOCTION", "DECOCT");
-        DISPLAY_TO_LOG_CODE.put("SECOND_DECOCTION", "DECOCT");
+        DISPLAY_TO_LOG_CODE.put("FIRST_DECOCTION", "DECOCT_1");
+        DISPLAY_TO_LOG_CODE.put("SECOND_DECOCTION", "DECOCT_2");
         DISPLAY_TO_LOG_CODE.put("POUR", "POUR");
         DISPLAY_TO_LOG_CODE.put("WRAP", "WRAP");
-        DISPLAY_TO_LOG_CODE.put("QC", "INSPECT");
+        DISPLAY_TO_LOG_CODE.put("QC", "QC");
         DISPLAY_TO_LOG_CODE.put("DELIVER", "HANDOVER");
-        // RECEIVE / ADJUST 无写库记录，保持虚拟
     }
 
     /** 将展示码转换为写库码；无映射时返回自身（兼容直接以写库码查询的场景） */

@@ -26,9 +26,9 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="search.status" placeholder="全部" clearable style="width: 120px">
-            <el-option label="待处理" value="PENDING" />
-            <el-option label="处理中" value="PROCESSING" />
-            <el-option label="处理完毕" value="COMPLETED" />
+            <el-option label="待接收" value="PENDING" />
+            <el-option label="已接收" value="RECEIVED" />
+            <el-option label="已拒收" value="REJECTED" />
           </el-select>
         </el-form-item>
         <el-form-item label="时间">
@@ -57,7 +57,7 @@
         <el-table-column label="制剂" width="110"><template #default="{row}">{{ PREPARATION_TYPES.find(p => p.value === row.preparationType)?.label || '-' }}</template></el-table-column>
         <el-table-column label="服用" width="110"><template #default="{row}">{{ USAGE_METHODS.find(u => u.value === row.usageMethod)?.label || '-' }}</template></el-table-column>
         <el-table-column label="状态" width="100">
-          <template #default="{row}"><el-tag :type="statusType(row.status)">{{ statusLabel(row.status) }}</el-tag></template>
+          <template #default="{row}"><el-tag :type="receiveStatusType(row.receiveStatus)">{{ receiveStatusLabel(row.receiveStatus) }}</el-tag></template>
         </el-table-column>
         <el-table-column label="创建时间" width="160"><template #default="{row}">{{ formatTime(row.createdAt) }}</template></el-table-column>
         <el-table-column label="操作" width="420" fixed="right">

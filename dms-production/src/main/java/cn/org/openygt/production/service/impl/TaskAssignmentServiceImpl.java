@@ -242,7 +242,7 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
             dto.setEmployeeId(entry.getKey());
             dto.setEmployeeName(userNameMap.getOrDefault(entry.getKey(), "员工-" + entry.getKey()));
             dto.setAssignedCount(entry.getValue().size());
-            dto.setCompletedCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && a.getStatus() == 0).count());
+            dto.setCompletedCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && a.getStatus() == 3).count());
             dto.setPendingCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && (a.getStatus() == 1 || a.getStatus() == 2)).count());
             result.add(dto);
         }
@@ -286,7 +286,7 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
             }
             dto.setAssignedCount(entry.getValue().size());
             dto.setRunningCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && a.getStatus() == 2).count());
-            dto.setIdleCount((int) entry.getValue().stream().filter(a -> a.getStatus() != null && a.getStatus() == 0).count());
+            dto.setIdleCount(entry.getValue().size() - dto.getRunningCount());
             result.add(dto);
         }
         return result;
@@ -319,7 +319,7 @@ public class TaskAssignmentServiceImpl implements TaskAssignmentService {
     public List<TaskOptionDTO> getAvailableTasks(LocalDate date) {
         List<Task> all = taskMapper.selectList(new LambdaQueryWrapper<>());
         List<Long> assignedTaskIds = assignmentMapper.selectList(new LambdaQueryWrapper<>()).stream()
-                .filter(a -> a.getStatus() == null || a.getStatus() == 0)
+                .filter(a -> a.getStatus() != null && (a.getStatus() == 1 || a.getStatus() == 2))
                 .map(TaskAssignment::getTaskId).collect(Collectors.toList());
         return all.stream()
                 .filter(t -> !assignedTaskIds.contains(t.getId()))

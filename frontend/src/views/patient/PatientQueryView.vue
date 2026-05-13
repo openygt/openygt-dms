@@ -104,11 +104,11 @@
           v-for="(item, idx) in traceList"
           :key="idx"
           :type="idx === traceList.length - 1 ? 'success' : 'primary'"
-          :timestamp="item.operateTime"
+          :timestamp="formatTraceTime(item.operateTime)"
           placement="top"
         >
           <el-card shadow="hover" size="small">
-            <div style="font-weight: 600">{{ item.stage }}</div>
+            <div style="font-weight: 600">{{ stageLabel(item.stage) }}</div>
             <div style="color: var(--el-text-color-secondary); margin-top: 4px">{{ item.remark || '-' }}</div>
             <div v-if="item.operatorName" style="color: var(--el-text-color-secondary); margin-top: 4px; font-size: 12px">
               操作人：{{ item.operatorName }}
@@ -128,7 +128,7 @@ import { FullScreen, Phone, Camera } from '@element-plus/icons-vue'
 import { queryByCode, queryByPhone, getPatientProgress, getPrescriptionTrace } from '@/api/newModules'
 
 const codeQuery = ref('')
-const phoneForm = reactive({ phone: '' })
+const phoneForm = reactive({ phone: '13800000001' })
 const resultVisible = ref(false)
 const queryType = ref<'code' | 'phone'>('code')
 
@@ -164,6 +164,30 @@ const activeStep = computed(() => {
 
 const traceDialogVisible = ref(false)
 const traceList = ref<any[]>([])
+
+function formatTraceTime(time?: string) {
+  if (!time) return '--'
+  return time.replace('T', ' ').substring(0, 19)
+}
+
+function stageLabel(stage?: string) {
+  const map: Record<string, string> = {
+    WAIT_SOAK: '待浸泡', SOAKING: '浸泡中',
+    WAIT_DECOCT: '待煎煮', DECOCTING: '煎煮中',
+    FIRST_DECOCTING: '一煎中', SECOND_DECOCTING: '二煎中',
+    WAIT_POUR: '待出液', POURING: '出液中',
+    WAIT_WRAP: '待包装', WRAPPING: '包装中',
+    PACKAGING: '包装中',
+    WAIT_LABEL: '待贴标',
+    WAIT_QC: '待质检',
+    WAIT_HANDOVER: '待交接',
+    COMPLETED: '已完成', PARTIAL_COMPLETED: '部分完成',
+    RECEIVED: '已接方', AUDIT_PASS: '审方通过',
+    DISPENSED: '调剂完成', REVIEWED: '复核通过',
+    PENDING: '待处理', ABNORMAL: '异常'
+  }
+  return map[stage || ''] || stage || '--'
+}
 
 async function handleCodeQuery() {
   if (!codeQuery.value.trim()) { ElMessage.warning('请输入条码'); return }

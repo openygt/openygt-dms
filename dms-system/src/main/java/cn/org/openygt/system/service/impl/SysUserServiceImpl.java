@@ -189,18 +189,24 @@ public class SysUserServiceImpl implements SysUserService {
     }
 
     private List<String> resolvePermissionCodes(SysUser user, List<String> roleCodes) {
-        List<String> permissions = userMapper.selectPermissionCodesByUserId(user.getId());
-        if (permissions != null && !permissions.isEmpty()) {
-            return permissions;
+        // 合并角色码 + 菜单权限码，去重
+        java.util.LinkedHashSet<String> set = new java.util.LinkedHashSet<>();
+        if (roleCodes != null) {
+            set.addAll(roleCodes);
         }
-        return roleCodes == null ? Collections.emptyList() : new ArrayList<>(roleCodes);
+        List<String> menuPerms = userMapper.selectMenuPermissionCodesByUserId(user.getId());
+        if (menuPerms != null) {
+            set.addAll(menuPerms);
+        }
+        return new ArrayList<>(set);
     }
 
     private String mapLegacyRoleCode(String legacyRole) {
         if (legacyRole == null || legacyRole.trim().isEmpty()) {
             return null;
         }
-        switch (legacyRole.trim()) {
+        String trimmed = legacyRole.trim();
+        switch (trimmed) {
             case "管理员":
             case "系统管理员":
                 return "ROLE_ADMIN";
@@ -212,8 +218,15 @@ public class SysUserServiceImpl implements SysUserService {
                 return "ROLE_WORKER";
             case "质检员":
                 return "ROLE_INSPECTOR";
+            case "发货员":
+                return "ROLE_SHIPPER";
             default:
-                return null;
+                break;
         }
+        // 若已经是标准角色码，直接返回
+        if (trimmed.startsWith("ROLE_")) {
+            return trimmed;
+        }
+        return null;
     }
 }

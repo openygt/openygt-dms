@@ -18,13 +18,8 @@
       </el-form>
       <el-table :data="list" v-loading="loading" border data-testid="data-table">
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="sourceId" label="源ID" width="180" />
+        <el-table-column prop="sourceId" label="源ID" width="120" />
         <el-table-column prop="name" label="姓名" />
-        <el-table-column prop="role" label="角色" width="100">
-          <template #default="{ row }">
-            <el-tag size="small">{{ row.role === 1 ? '医生' : row.role === 2 ? '抓药师' : row.role === 3 ? '药房员工' : '-' }}</el-tag>
-          </template>
-        </el-table-column>
         <el-table-column label="所属医院" width="160">
           <template #default="{ row }">
             <span>{{ hospitalMap[row.hospitalId] || '-' }}</span>
@@ -65,13 +60,6 @@
         </el-form-item>
         <el-form-item label="医师姓名" prop="name">
           <el-input v-model="form.name" />
-        </el-form-item>
-        <el-form-item label="角色">
-          <el-select v-model="form.role" placeholder="请选择角色" clearable style="width: 100%">
-            <el-option label="医生" :value="1" />
-            <el-option label="抓药师" :value="2" />
-            <el-option label="药房员工" :value="3" />
-          </el-select>
         </el-form-item>
         <el-form-item label="性别">
           <el-radio-group v-model="form.sex">
@@ -124,7 +112,6 @@ interface Doctor {
   id: number
   sourceId: string
   name: string
-  role: number
   sex: number
   hospitalId: number
   department: string

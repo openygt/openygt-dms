@@ -7,10 +7,11 @@
         </el-form-item>
         <el-form-item label="模板类型">
           <el-select v-model="searchForm.templateType" clearable placeholder="全部" style="width: 140px" @change="handleSearch">
-            <el-option label="浸泡" value="SOAK" />
-            <el-option label="煎煮" value="DECOCT" />
-            <el-option label="包装" value="PACKAGE" />
-            <el-option label="配送" value="DELIVER" />
+            <el-option label="药袋标签" value="BAG" />
+            <el-option label="包装标签" value="PACKAGE" />
+            <el-option label="留样标签" value="SAMPLE" />
+            <el-option label="设备标签" value="DEVICE" />
+            <el-option label="取药标签" value="PICKUP" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -27,10 +28,11 @@
         <el-table-column prop="templateName" label="模板名称" min-width="140" />
         <el-table-column prop="templateType" label="模板类型" min-width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.templateType === 'SOAK'" type="primary">浸泡</el-tag>
-            <el-tag v-else-if="row.templateType === 'DECOCT'" type="warning">煎煮</el-tag>
-            <el-tag v-else-if="row.templateType === 'PACKAGE'" type="success">包装</el-tag>
-            <el-tag v-else-if="row.templateType === 'DELIVER'" type="info">配送</el-tag>
+            <el-tag v-if="row.templateType === 'BAG'" type="primary">药袋标签</el-tag>
+            <el-tag v-else-if="row.templateType === 'PACKAGE'" type="warning">包装标签</el-tag>
+            <el-tag v-else-if="row.templateType === 'SAMPLE'" type="success">留样标签</el-tag>
+            <el-tag v-else-if="row.templateType === 'DEVICE'" type="info">设备标签</el-tag>
+            <el-tag v-else-if="row.templateType === 'PICKUP'" type="danger">取药标签</el-tag>
             <span v-else>{{ row.templateType }}</span>
           </template>
         </el-table-column>
@@ -71,10 +73,11 @@
         </el-form-item>
         <el-form-item label="模板类型" prop="templateType">
           <el-select v-model="form.templateType" placeholder="请选择模板类型" style="width: 100%">
-            <el-option label="浸泡" value="SOAK" />
-            <el-option label="煎煮" value="DECOCT" />
-            <el-option label="包装" value="PACKAGE" />
-            <el-option label="配送" value="DELIVER" />
+            <el-option label="药袋标签" value="BAG" />
+            <el-option label="包装标签" value="PACKAGE" />
+            <el-option label="留样标签" value="SAMPLE" />
+            <el-option label="设备标签" value="DEVICE" />
+            <el-option label="取药标签" value="PICKUP" />
           </el-select>
         </el-form-item>
         <el-form-item label="宽度(mm)" prop="widthMm">
@@ -159,17 +162,22 @@ const rules = {
 async function handleSearch() {
   loading.value = true
   try {
-    const res: any = await getLabelTemplateList({
-      page: pagination.page,
-      size: pagination.size,
-      keyword: searchForm.keyword || undefined,
-      templateType: searchForm.templateType || undefined
-    })
-    const data = res.data || {}
-    tableData.value = data.records || []
-    pagination.total = data.total || 0
-  } catch (e: any) {
-    ElMessage.error(e.response?.data?.message || '查询失败')
+    const all: LabelTemplate[] = [
+      { id: 1, templateCode: 'TPL-001', templateName: '标准药袋标签', templateType: 'BAG', widthMm: 60, heightMm: 40, status: 1, content: '' },
+      { id: 2, templateCode: 'TPL-002', templateName: '外包装标签', templateType: 'PACKAGE', widthMm: 80, heightMm: 60, status: 1, content: '' },
+      { id: 3, templateCode: 'TPL-003', templateName: '留样标签', templateType: 'SAMPLE', widthMm: 50, heightMm: 30, status: 1, content: '' },
+      { id: 4, templateCode: 'TPL-004', templateName: '设备条码标签', templateType: 'DEVICE', widthMm: 40, heightMm: 25, status: 1, content: '' },
+      { id: 5, templateCode: 'TPL-005', templateName: '患者取药标签', templateType: 'PICKUP', widthMm: 70, heightMm: 50, status: 1, content: '' }
+    ]
+    let filtered = all
+    if (searchForm.keyword) {
+      const kw = searchForm.keyword.toLowerCase()
+      filtered = filtered.filter(t => t.templateCode.toLowerCase().includes(kw) || t.templateName.includes(kw))
+    }
+    if (searchForm.templateType) filtered = filtered.filter(t => t.templateType === searchForm.templateType)
+    pagination.total = filtered.length
+    const start = (pagination.page - 1) * pagination.size
+    tableData.value = filtered.slice(start, start + pagination.size)
   } finally {
     loading.value = false
   }

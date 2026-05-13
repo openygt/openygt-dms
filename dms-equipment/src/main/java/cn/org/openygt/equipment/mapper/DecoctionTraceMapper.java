@@ -19,4 +19,9 @@ public interface DecoctionTraceMapper extends BaseMapper<DecoctionTrace> {
 
     @Select("SELECT COUNT(*) FROM trc_prescription_trace WHERE status = #{status} AND deleted = 0 AND DATE(created_at) = CURDATE()")
     Long countByStatusToday(@Param("status") String status);
+
+    @Select("SELECT COALESCE(AVG(TIMESTAMPDIFF(MINUTE, created_at, complete_time)), 0) " +
+            "FROM trc_prescription_trace " +
+            "WHERE status = 'COMPLETED' AND deleted = 0 AND complete_time IS NOT NULL")
+    Double selectAvgProcessTimeMinutes();
 }

@@ -21,4 +21,17 @@ public interface WorkloadStatMapper extends BaseMapper<WorkloadStat> {
 
     @Select("SELECT * FROM ops_workload_stat WHERE operator_id = #{operatorId} AND stat_date = #{date} AND deleted = 0")
     List<WorkloadStat> findByOperatorAndDate(@Param("operatorId") Long operatorId, @Param("date") LocalDate date);
+
+    @Select("SELECT t.decoct_operator AS operatorName, " +
+            "'DECOCT' AS workType, " +
+            "COUNT(DISTINCT t.task_id) AS taskCount, " +
+            "COUNT(*) AS prescriptionCount, " +
+            "COALESCE(SUM(t.sample_count), 0) AS packageCount, " +
+            "COALESCE(SUM(TIMESTAMPDIFF(MINUTE, t.created_at, t.complete_time)), 0) AS durationMinutes " +
+            "FROM trc_prescription_trace t " +
+            "WHERE t.deleted = 0 AND t.status = 'COMPLETED' " +
+            "AND DATE(t.complete_time) = #{date} " +
+            "AND t.decoct_operator IS NOT NULL AND t.decoct_operator != '' " +
+            "GROUP BY t.decoct_operator")
+    List<WorkloadStat> aggregateDailyFromTraces(@Param("date") LocalDate date);
 }

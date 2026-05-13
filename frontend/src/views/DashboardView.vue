@@ -146,7 +146,7 @@
           <div>
             <el-tag v-if="alarmLoading" size="small" type="info">加载中</el-tag>
             <el-tag v-else-if="alarmError" size="small" type="warning">告警未加载</el-tag>
-            <el-tag v-else-if="alarmList.length > 0" size="small" type="danger">{{ alarmList.length }} 条待处理</el-tag>
+            <el-tag v-else-if="alarmList.length > 0" size="small" type="danger">{{ alarmTotal }} 条待处理</el-tag>
             <el-tag v-else size="small" type="success">无异常</el-tag>
             <el-button size="small" type="primary" style="margin-left: 8px" @click="$router.push('/alarms')">查看全部</el-button>
           </div>

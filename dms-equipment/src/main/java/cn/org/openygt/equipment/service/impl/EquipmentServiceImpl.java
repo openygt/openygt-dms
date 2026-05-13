@@ -6,8 +6,10 @@ import cn.org.openygt.common.dto.EqDeviceDTO;
 import cn.org.openygt.common.dto.TemperatureThresholdDTO;
 import cn.org.openygt.common.service.EquipmentService;
 import cn.org.openygt.common.service.SysConfigService;
+import cn.org.openygt.equipment.entity.DeviceUtilization;
 import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.entity.EqDeviceAlarm;
+import cn.org.openygt.equipment.mapper.DeviceUtilizationMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceAlarmMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import cn.org.openygt.equipment.service.EqDeviceAlarmService;
@@ -21,9 +23,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * EquipmentService SPI 实现。
@@ -40,17 +49,20 @@ public class EquipmentServiceImpl implements EquipmentService {
     private final DecoctSchemeService decoctSchemeService;
     private final EqDeviceAlarmMapper alarmMapper;
     private final EqDeviceAlarmService alarmService;
+    private final DeviceUtilizationMapper utilizationMapper;
 
     public EquipmentServiceImpl(EqDeviceMapper deviceMapper,
                                 SysConfigService sysConfigService,
                                 DecoctSchemeService decoctSchemeService,
                                 EqDeviceAlarmMapper alarmMapper,
-                                EqDeviceAlarmService alarmService) {
+                                EqDeviceAlarmService alarmService,
+                                DeviceUtilizationMapper utilizationMapper) {
         this.deviceMapper = deviceMapper;
         this.sysConfigService = sysConfigService;
         this.decoctSchemeService = decoctSchemeService;
         this.alarmMapper = alarmMapper;
         this.alarmService = alarmService;
+        this.utilizationMapper = utilizationMapper;
     }
 
     // ========== 常量：系统默认阈值配置键 ==========
@@ -333,20 +345,78 @@ public class EquipmentServiceImpl implements EquipmentService {
 
     @Override
     public Integer getOnlineDeviceCount() {
-        log.warn("getOnlineDeviceCount 尚未实现");
-        return 0;
+        Long count = deviceMapper.selectCount(
+                new QueryWrapper<EqDevice>().eq("deleted", 0).ne("status", "OFFLINE"));
+        return count != null ? count.intValue() : 0;
     }
 
     @Override
     public List<DeviceFaultStatDTO> getFaultStats(LocalDateTime from, LocalDateTime to) {
-        log.warn("getFaultStats 尚未实现");
-        return Collections.emptyList();
+        QueryWrapper<EqDeviceAlarm> wrapper = new QueryWrapper<>();
+        wrapper.eq("deleted", 0);
+        if (from != null) {
+            wrapper.ge("created_at", from);
+        }
+        if (to != null) {
+            wrapper.le("created_at", to);
+        }
+        List<EqDeviceAlarm> alarms = alarmMapper.selectList(wrapper);
+
+        Map<Long, List<EqDeviceAlarm>> grouped = alarms.stream()
+                .collect(Collectors.groupingBy(EqDeviceAlarm::getDeviceId));
+
+        List<DeviceFaultStatDTO> result = new ArrayList<>();
+        for (Map.Entry<Long, List<EqDeviceAlarm>> entry : grouped.entrySet()) {
+            DeviceFaultStatDTO dto = new DeviceFaultStatDTO();
+            dto.setDeviceId(entry.getKey());
+            EqDevice device = deviceMapper.selectById(entry.getKey());
+            if (device != null) {
+                dto.setDeviceCode(device.getDeviceCode());
+                dto.setDeviceName(device.getName());
+            }
+            dto.setFaultCount(entry.getValue().size());
+            entry.getValue().stream()
+                    .max(Comparator.comparing(EqDeviceAlarm::getCreatedAt))
+                    .ifPresent(latest -> {
+                        dto.setLatestFaultCode(latest.getAlarmType());
+                        dto.setLatestFaultMessage(latest.getMessage());
+                    });
+            result.add(dto);
+        }
+        return result;
     }
 
     @Override
     public DeviceUtilizationDTO getDeviceUtilization(Long deviceId, LocalDateTime from, LocalDateTime to) {
-        log.warn("getDeviceUtilization 尚未实现");
-        return new DeviceUtilizationDTO();
+        EqDevice device = deviceMapper.selectById(deviceId);
+        if (device == null) {
+            return new DeviceUtilizationDTO();
+        }
+
+        LocalDate startDate = from != null ? from.toLocalDate() : LocalDate.now().minusDays(7);
+        LocalDate endDate = to != null ? to.toLocalDate() : LocalDate.now();
+
+        List<DeviceUtilization> list = utilizationMapper.findByDeviceAndDateRange(
+                device.getDeviceCode(), startDate, endDate);
+
+        DeviceUtilizationDTO dto = new DeviceUtilizationDTO();
+        dto.setDeviceId(deviceId);
+        dto.setDeviceCode(device.getDeviceCode());
+        dto.setDeviceName(device.getName());
+
+        if (!list.isEmpty()) {
+            dto.setUtilizationRate(list.stream()
+                    .map(DeviceUtilization::getUtilizationRate)
+                    .filter(Objects::nonNull)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .divide(BigDecimal.valueOf(list.size()), 2, RoundingMode.HALF_UP));
+            dto.setTotalMinutes(list.stream().mapToInt(u -> u.getTotalMinutes() != null ? u.getTotalMinutes() : 0).sum());
+            dto.setRunningMinutes(list.stream().mapToInt(u -> u.getRunMinutes() != null ? u.getRunMinutes() : 0).sum());
+            dto.setIdleMinutes(list.stream().mapToInt(u -> u.getIdleMinutes() != null ? u.getIdleMinutes() : 0).sum());
+            dto.setFaultMinutes(list.stream().mapToInt(u -> u.getFaultMinutes() != null ? u.getFaultMinutes() : 0).sum());
+        }
+
+        return dto;
     }
 
     private EqDeviceDTO toDTO(EqDevice entity) {

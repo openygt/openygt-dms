@@ -5,6 +5,7 @@ import cn.org.openygt.common.dto.TemperatureThresholdDTO;
 import cn.org.openygt.common.service.SysConfigService;
 import cn.org.openygt.equipment.entity.EqDevice;
 import cn.org.openygt.equipment.entity.EqDeviceAlarm;
+import cn.org.openygt.equipment.mapper.DeviceUtilizationMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceAlarmMapper;
 import cn.org.openygt.equipment.mapper.EqDeviceMapper;
 import cn.org.openygt.equipment.service.EqDeviceAlarmService;
@@ -59,6 +60,9 @@ class EquipmentServiceImplTest {
     @Mock
     private EqDeviceAlarmService alarmService;
 
+    @Mock
+    private DeviceUtilizationMapper utilizationMapper;
+
     @Captor
     private ArgumentCaptor<EqDeviceAlarm> alarmCaptor;
 
@@ -66,7 +70,7 @@ class EquipmentServiceImplTest {
 
     @BeforeEach
     void setUp() {
-        service = new EquipmentServiceImpl(deviceMapper, sysConfigService, decoctSchemeService, alarmMapper, alarmService);
+        service = new EquipmentServiceImpl(deviceMapper, sysConfigService, decoctSchemeService, alarmMapper, alarmService, utilizationMapper);
     }
 
     @Nested
@@ -664,24 +668,32 @@ class EquipmentServiceImplTest {
     }
 
     @Nested
-    @DisplayName("桩方法 / 待实现接口")
-    class StubMethods {
+    @DisplayName("统计方法")
+    class StatsMethods {
 
         @Test
-        @DisplayName("getOnlineDeviceCount 返回 0")
+        @DisplayName("getOnlineDeviceCount 查询非 OFFLINE 设备数")
         void testGetOnlineDeviceCount() {
-            assertThat(service.getOnlineDeviceCount()).isEqualTo(0);
+            when(deviceMapper.selectCount(any(com.baomidou.mybatisplus.core.conditions.query.QueryWrapper.class)))
+                    .thenReturn(3L);
+
+            assertThat(service.getOnlineDeviceCount()).isEqualTo(3);
         }
 
         @Test
-        @DisplayName("getFaultStats 返回空列表")
+        @DisplayName("getFaultStats 按设备分组统计告警")
         void testGetFaultStats() {
+            when(alarmMapper.selectList(any(com.baomidou.mybatisplus.core.conditions.query.QueryWrapper.class)))
+                    .thenReturn(Collections.emptyList());
+
             assertThat(service.getFaultStats(null, null)).isEmpty();
         }
 
         @Test
-        @DisplayName("getDeviceUtilization 返回空 DTO")
-        void testGetDeviceUtilization() {
+        @DisplayName("getDeviceUtilization 设备不存在返回空 DTO")
+        void testGetDeviceUtilization_deviceNotFound() {
+            when(deviceMapper.selectById(1L)).thenReturn(null);
+
             assertThat(service.getDeviceUtilization(1L, null, null)).isNotNull();
         }
 

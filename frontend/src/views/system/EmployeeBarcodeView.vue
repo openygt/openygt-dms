@@ -2,16 +2,8 @@
   <div class="page-container">
     <el-card class="search-card" shadow="never">
       <el-form :model="searchForm" inline @submit.prevent>
-        <el-form-item label="部门">
-          <el-select v-model="searchForm.dept" clearable placeholder="全部" style="width: 140px" @change="handleSearch">
-            <el-option label="调剂部" value="DISPENSE" />
-            <el-option label="煎煮部" value="DECOCT" />
-            <el-option label="包装部" value="PACKAGE" />
-            <el-option label="质检部" value="QC" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="姓名/工号">
-          <el-input v-model="searchForm.keyword" clearable placeholder="姓名或工号" style="width: 180px" />
+          <el-input v-model="searchForm.keyword" clearable placeholder="姓名或工号" style="width: 200px" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">查询</el-button>
@@ -120,7 +112,7 @@ import { getEmployeeBarcode, printEmployeeBarcode } from '@/api/newModules'
 
 const loading = ref(false)
 const historyLoading = ref(false)
-const searchForm = reactive({ dept: '', keyword: '' })
+const searchForm = reactive({ keyword: '' })
 const tableData = ref<any[]>([])
 const pagination = reactive({ page: 1, size: 10, total: 0 })
 
@@ -135,11 +127,18 @@ async function handleSearch() {
   try {
     tableData.value = [
       { id: 1, employeeNo: 'EMP001', name: '张三', deptName: '调剂部', roleName: '调剂员' },
-      { id: 2, employeeNo: 'EMP002', name: '李四', deptName: '煎煮部', roleName: '煎煮员' },
-      { id: 3, employeeNo: 'EMP003', name: '王五', deptName: '包装部', roleName: '包装员' },
-      { id: 4, employeeNo: 'EMP004', name: '赵六', deptName: '质检部', roleName: '质检员' }
+      { id: 2, employeeNo: 'EMP002', name: '李四', deptName: '调剂部', roleName: '调剂组长' },
+      { id: 3, employeeNo: 'EMP003', name: '王五', deptName: '煎煮部', roleName: '煎煮员' },
+      { id: 4, employeeNo: 'EMP004', name: '赵六', deptName: '煎煮部', roleName: '煎煮组长' },
+      { id: 5, employeeNo: 'EMP005', name: '孙七', deptName: '包装部', roleName: '包装员' },
+      { id: 6, employeeNo: 'EMP006', name: '周八', deptName: '包装部', roleName: '包装组长' },
+      { id: 7, employeeNo: 'EMP007', name: '吴九', deptName: '质检部', roleName: '质检员' },
+      { id: 8, employeeNo: 'EMP008', name: '郑十', deptName: '质检部', roleName: '质检组长' },
+      { id: 9, employeeNo: 'EMP009', name: '钱十一', deptName: '调剂部', roleName: '调剂员' },
+      { id: 10, employeeNo: 'EMP010', name: '冯十二', deptName: '煎煮部', roleName: '煎煮员' },
+      { id: 11, employeeNo: 'EMP011', name: '陈十三', deptName: '包装部', roleName: '包装员' },
+      { id: 12, employeeNo: 'EMP012', name: '褚十四', deptName: '质检部', roleName: '质检员' }
     ].filter(item => {
-      if (searchForm.dept && item.deptName !== { DISPENSE: '调剂部', DECOCT: '煎煮部', PACKAGE: '包装部', QC: '质检部' }[searchForm.dept]) return false
       if (searchForm.keyword && !item.name.includes(searchForm.keyword) && !item.employeeNo.includes(searchForm.keyword)) return false
       return true
     })
@@ -150,7 +149,6 @@ async function handleSearch() {
 }
 
 function resetSearch() {
-  searchForm.dept = ''
   searchForm.keyword = ''
   pagination.page = 1
   handleSearch()

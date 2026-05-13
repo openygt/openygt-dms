@@ -95,10 +95,11 @@
         </el-table-column>
         <el-table-column label="时效对比" min-width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.status === 'SIGNED'" :type="row.isOnTime === 1 ? 'success' : 'danger'">
+            <el-tag v-if="row.status === 'SIGNED' || row.status === 'COMPLETED'" :type="row.isOnTime === 1 ? 'success' : 'danger'">
               {{ row.isOnTime === 1 ? '按时' : '超时' }}
             </el-tag>
-            <el-tag v-else-if="isOverdue(row)" type="danger">已超时</el-tag>
+            <el-tag v-else-if="isOverdue(row)" type="danger">超时</el-tag>
+            <el-tag v-else-if="row.status === 'PENDING'" type="warning">待处理</el-tag>
             <el-tag v-else type="info">进行中</el-tag>
           </template>
         </el-table-column>

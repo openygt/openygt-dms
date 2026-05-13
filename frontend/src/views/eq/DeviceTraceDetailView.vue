@@ -1,25 +1,27 @@
 <template>
   <div class="device-trace-detail" v-loading="loading">
-    <el-page-header title="追溯详情" content="单张处方全链路追溯明细" class="mb-4" />
-
-    <div class="page-header">
-      <h2>追溯详情 - {{ prescriptionNo }}</h2>
-      <el-button @click="router.back()">返回</el-button>
-    </div>
+    <el-page-header class="mb-4" @back="router.back()">
+      <template #content>
+        <span class="page-title">追溯详情 - {{ prescriptionNo }}</span>
+      </template>
+    </el-page-header>
 
     <el-card class="info-card">
       <el-descriptions :column="3" border>
         <el-descriptions-item label="处方号">{{ trace?.prescriptionNo }}</el-descriptions-item>
         <el-descriptions-item label="患者">{{ trace?.patientName }}</el-descriptions-item>
         <el-descriptions-item label="患者电话">{{ trace?.patientPhone }}</el-descriptions-item>
-        <el-descriptions-item label="煎药设备">{{ trace?.decoctDeviceCode }}</el-descriptions-item>
-        <el-descriptions-item label="包装设备">{{ trace?.packerDeviceCode }}</el-descriptions-item>
-        <el-descriptions-item label="方案">{{ trace?.schemeName }}</el-descriptions-item>
+        <el-descriptions-item label="煎药设备">{{ trace?.decoctDeviceName || trace?.decoctDeviceCode || '--' }}</el-descriptions-item>
+        <el-descriptions-item label="包装设备">{{ trace?.packerDeviceCode || '--' }}</el-descriptions-item>
+        <el-descriptions-item label="方案">{{ trace?.schemeName || '--' }}</el-descriptions-item>
         <el-descriptions-item label="状态">
           <el-tag :type="statusTagType(trace?.status)">{{ statusText(trace?.status) }}</el-tag>
         </el-descriptions-item>
+        <el-descriptions-item label="接方时间">{{ formatTime(trace?.receiveTime) }}</el-descriptions-item>
+        <el-descriptions-item label="完成时间">{{ formatTime(trace?.completeTime) }}</el-descriptions-item>
         <el-descriptions-item label="留样">{{ trace?.sampleCount || 0 }} 袋</el-descriptions-item>
         <el-descriptions-item label="包装容量">{{ trace?.packageVolume || '--' }} ml</el-descriptions-item>
+        <el-descriptions-item label="快递单号">{{ trace?.deliveryNo || '--' }}</el-descriptions-item>
       </el-descriptions>
     </el-card>
 
@@ -56,7 +58,9 @@
           <el-table-column prop="eventName" label="事件" width="150">
             <template #default="{ row }">{{ row.eventName || row.eventCode }}</template>
           </el-table-column>
-          <el-table-column prop="eventType" label="类型" width="100" />
+          <el-table-column label="类型" width="100">
+            <template #default="{ row }">{{ eventTypeLabel(row.eventType) }}</template>
+          </el-table-column>
           <el-table-column prop="operatorName" label="操作人" width="120" />
           <el-table-column prop="deviceCode" label="设备" width="120" />
           <el-table-column prop="remark" label="备注" />
@@ -101,9 +105,17 @@ function statusText(status?: string) {
     PENDING: '待处理', RECEIVED: '已接方', AUDIT_PASS: '审方通过',
     DISPENSED: '调剂完成', REVIEWED: '复核通过', SOAKING: '浸泡中',
     FIRST_DECOCTING: '一煎中', SECOND_DECOCTING: '二煎中',
-    PACKAGING: '包装中', COMPLETED: '已完成', ABNORMAL: '异常'
+    PROCESSING: '处理中', PACKAGING: '包装中', COMPLETED: '已完成',
+    REJECTED: '已拒收', ABNORMAL: '异常'
   }
   return map[status || ''] || status || '--'
+}
+
+function eventTypeLabel(type?: string) {
+  const map: Record<string, string> = {
+    PROCESS: '工序', MANUAL: '手动', ERROR: '异常', SYSTEM: '系统'
+  }
+  return map[type || ''] || type || '--'
 }
 
 function formatTime(time?: string) {
@@ -201,15 +213,7 @@ onUnmounted(() => {
 .device-trace-detail {
   padding: 16px;
 
-  .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-
-    h2 { margin: 0; font-size: 20px; }
-  }
-
+  .page-title { font-size: 18px; font-weight: 600; }
   .info-card { margin-bottom: 16px; }
 
   .detail-tabs {

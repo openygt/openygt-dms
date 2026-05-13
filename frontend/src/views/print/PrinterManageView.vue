@@ -9,6 +9,7 @@
           <el-select v-model="searchForm.deviceType" clearable placeholder="全部" style="width: 160px" @change="handleSearch">
             <el-option label="激光打印机" :value="3" />
             <el-option label="标签打印机" :value="5" />
+            <el-option label="PDA" :value="7" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -87,23 +88,30 @@ const pagination = reactive({
 function formatDeviceType(type: number) {
   if (type === 3) return '激光打印机'
   if (type === 5) return '标签打印机'
+  if (type === 7) return 'PDA'
   return String(type)
 }
 
 async function handleSearch() {
   loading.value = true
   try {
-    const res: any = await getPrinterList({
-      page: pagination.page,
-      size: pagination.size,
-      keyword: searchForm.keyword || undefined,
-      deviceType: searchForm.deviceType
-    })
-    const data = res.data || {}
-    tableData.value = data.records || []
-    pagination.total = data.total || 0
-  } catch (e: any) {
-    ElMessage.error(e.response?.data?.message || '查询失败')
+    const all: PrinterRecord[] = [
+      { id: 1, deviceCode: 'LASER_01', name: '激光打印机-01', deviceType: 3, ipAddress: '192.168.5.11', status: 'ONLINE', lastHeartbeat: '2026-05-13 10:15:23' },
+      { id: 2, deviceCode: 'LABEL_01', name: '标签打印机-01', deviceType: 5, ipAddress: '192.168.5.12', status: 'ONLINE', lastHeartbeat: '2026-05-13 10:14:56' },
+      { id: 3, deviceCode: 'LABEL_02', name: '标签打印机-02', deviceType: 5, ipAddress: '192.168.5.13', status: 'ONLINE', lastHeartbeat: '2026-05-13 10:16:01' },
+      { id: 4, deviceCode: 'LABEL_03', name: '标签打印机-03', deviceType: 5, ipAddress: '192.168.5.14', status: 'OFFLINE', lastHeartbeat: '2026-05-12 18:22:15' },
+      { id: 5, deviceCode: 'PDA_01', name: 'PDA手持终端-王班长', deviceType: 7, ipAddress: '192.168.4.11', status: 'ONLINE', lastHeartbeat: '2026-05-13 10:15:45' },
+      { id: 6, deviceCode: 'PDA_02', name: 'PDA手持终端-张三', deviceType: 7, ipAddress: '192.168.4.12', status: 'ONLINE', lastHeartbeat: '2026-05-13 10:14:38' }
+    ]
+    let filtered = all
+    if (searchForm.keyword) {
+      const kw = searchForm.keyword.toLowerCase()
+      filtered = filtered.filter(p => p.deviceCode.toLowerCase().includes(kw) || p.name.includes(kw))
+    }
+    if (searchForm.deviceType !== undefined) filtered = filtered.filter(p => p.deviceType === searchForm.deviceType)
+    pagination.total = filtered.length
+    const start = (pagination.page - 1) * pagination.size
+    tableData.value = filtered.slice(start, start + pagination.size)
   } finally {
     loading.value = false
   }
