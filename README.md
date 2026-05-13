@@ -40,9 +40,11 @@
 
 ## 📦 快速开始
 
-### 方式一：Docker 一键部署（推荐）
+### 方式一：Docker 一键部署（推荐 ⭐）
 
-> 支持 Windows、macOS、Linux
+> 适合：想最快体验系统的用户，无需安装 JDK、Node.js、MySQL
+>
+> 支持：Windows、macOS、Linux
 
 **前置要求**
 - [Docker](https://www.docker.com/products/docker-desktop) 20.10+
@@ -55,36 +57,44 @@
 git clone https://gitee.com/openygt/openygt-dms.git
 cd openygt-dms
 
-# 2. 启动全部服务（MySQL + Redis + 后端 + 前端）
-docker compose -f docker-compose.oss.yml up -d
+# 2. 设置 JWT 密钥（至少 32 位随机字符串，不能包含 "Test"）
+export JWT_SECRET="YourRandomSecretKeyAtLeast32CharactersLong"
 
-# 3. 等待服务就绪（首次启动约 60 秒）
-docker compose -f docker-compose.oss.yml logs -f backend
+# 3. 启动全部服务（MySQL + Redis + 后端 + 前端）
+docker compose up -d
 
-# 4. 访问系统
+# 4. 等待服务就绪（首次启动约 60-90 秒）
+docker compose logs -f backend
+
+# 5. 访问系统
 # Web 管理端：http://localhost
 # 默认账号：admin / admin123
 ```
+
+> **Windows 用户注意**：`export` 命令请替换为 `set JWT_SECRET=你的密钥`
 
 **常用命令**
 
 ```bash
 # 查看服务状态
-docker compose -f docker-compose.oss.yml ps
+docker compose ps
 
 # 查看日志
-docker compose -f docker-compose.oss.yml logs -f backend
+docker compose logs -f backend
+docker compose logs -f frontend
 
 # 停止服务
-docker compose -f docker-compose.oss.yml down
+docker compose down
 
-# 完全清理（包括数据卷）
-docker compose -f docker-compose.oss.yml down -v
+# 完全清理（包括数据库数据）
+docker compose down -v
 ```
 
 ---
 
 ### 方式二：源码安装
+
+> 适合：开发者、需要二次定制、想深入了解系统的用户
 
 #### 前置环境
 
@@ -96,101 +106,68 @@ docker compose -f docker-compose.oss.yml down -v
 | Redis | 7+ | [redis.io](https://redis.io/download/) |
 | Maven | 3.8+ | [maven.apache.org](https://maven.apache.org/download.cgi) |
 
-#### 配置说明
-
-首次源码安装时，需要复制示例配置文件并修改数据库连接：
-
-```bash
-# 复制示例配置
-cp dms-app/src/main/resources/application.yml.example dms-app/src/main/resources/application.yml
-
-# 编辑 application.yml，修改以下配置：
-# - spring.datasource.password: 你的 MySQL 密码
-# - spring.redis.password: 你的 Redis 密码（如无密码可留空）
-# - jwt.secret: 至少 32 位的随机字符串（用于 JWT 签名）
-```
-
-#### 数据库初始化
-
-```bash
-# 1. 创建数据库
-mysql -uroot -p -e "CREATE DATABASE openygt_dms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-# 2. 启动后端（Flyway 会自动创建表结构）
-export JWT_SECRET="your-secret-key-at-least-32-characters"
-java -jar dms-app/target/dms-app-1.0.0.jar --server.port=8080
-
-# 3. 【可选】导入演示数据
-mysql -uroot -p openygt_dms < dms-app/src/main/resources/db/demo/init.sql
-```
-
-#### Windows
-
-```powershell
-# 1. 克隆仓库
-git clone https://gitee.com/openygt/openygt-dms.git
-cd openygt-dms
-
-# 2. 复制配置文件并修改
-copy dms-app\src\main\resources\application.yml.example dms-app\src\main\resources\application.yml
-# 用编辑器修改 application.yml 中的数据库密码和 JWT_SECRET
-
-# 3. 创建数据库（使用 MySQL 客户端或工具执行）
-# CREATE DATABASE openygt_dms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-# 4. 编译后端
-mvn clean package -DskipTests
-
-# 5. 启动后端（Flyway 会自动创建表结构）
-$env:JWT_SECRET="your-secret-key-at-least-32-characters"
-cd dms-app
-java -jar target\dms-app-1.0.0.jar --server.port=8080
-# 或使用 Maven: mvn spring-boot:run -pl dms-app
-
-# 6. 【可选】导入演示数据（在 MySQL 客户端中执行）
-# mysql -uroot -p openygt_dms < dms-app\src\main\resources\db\demo\init.sql
-
-# 7. 启动前端（新开 PowerShell 窗口）
-cd frontend
-npm install
-npm run dev
-
-# 8. 访问 http://localhost:5173
-```
-
-#### macOS / Linux
+#### 第一步：配置后端
 
 ```bash
 # 1. 克隆仓库
 git clone https://gitee.com/openygt/openygt-dms.git
 cd openygt-dms
 
-# 2. 复制配置文件并修改
-cp dms-app/src/main/resources/application.yml.example dms-app/src/main/resources/application.yml
-# 用编辑器修改 application.yml 中的数据库密码和 JWT_SECRET
+# 2. 复制示例配置文件
+cp dms-app/src/main/resources/application.yml.example \
+   dms-app/src/main/resources/application.yml
 
-# 3. 创建数据库
+# 3. 编辑 application.yml，修改以下配置：
+#    - spring.datasource.password: 你的 MySQL 密码
+#    - spring.redis.password: 你的 Redis 密码（如无密码可留空）
+#    - jwt.secret: 至少 32 位的随机字符串（不能包含 "Test"）
+```
+
+#### 第二步：创建数据库
+
+```bash
+# 使用 MySQL 客户端创建数据库
 mysql -uroot -p -e "CREATE DATABASE openygt_dms CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+```
 
-# 4. 编译后端
+#### 第三步：启动后端
+
+```bash
+# 编译后端
 mvn clean package -DskipTests
 
-# 5. 启动后端（Flyway 会自动创建表结构）
-export JWT_SECRET="your-secret-key-at-least-32-characters"
-export DB_PASSWORD="你的MySQL密码"
-export REDIS_PASSWORD="你的Redis密码"
+# 设置环境变量并启动
+export JWT_SECRET="YourRandomSecretKeyAtLeast32CharactersLong"
 java -jar dms-app/target/dms-app-1.0.0.jar --server.port=8080
+```
 
-# 6. 【可选】导入演示数据
+启动后，Flyway 会自动运行 `db/migration/` 下的 SQL 脚本创建表结构。
+
+> 看到 `Started DmsApplication` 即表示启动成功。
+
+#### 第四步：导入演示数据（可选）
+
+```bash
+# 导入演示数据，方便体验完整功能
 mysql -uroot -p openygt_dms < dms-app/src/main/resources/db/demo/init.sql
+```
 
-# 7. 启动前端（新开终端窗口）
+#### 第五步：启动前端
+
+```bash
+# 新开一个终端窗口
 cd frontend
 npm install
 npm run dev
-
-# 8. 访问 http://localhost:5173
 ```
+
+#### 第六步：访问系统
+
+打开浏览器访问：http://localhost:5173
+
+默认账号：`admin` / `admin123`
+
+> **Windows 用户**：命令中的 `export` 请替换为 `set`
 
 ---
 
@@ -221,8 +198,9 @@ openygt-dms/
 │       ├── views/          # 页面组件
 │       └── router/         # 路由配置
 ├── pda-uniapp/             # PDA 移动端（uni-app）
-├── docs/                   # 文档目录
-└── tests/                  # 测试目录
+├── docker-compose.yml      # Docker 一键部署配置
+├── Dockerfile.backend      # 后端镜像构建
+└── frontend/Dockerfile.frontend  # 前端镜像构建
 ```
 
 ---
@@ -246,6 +224,7 @@ openygt-dms/
 
 - **用户手册 & 部署指南** → [openygt-docs](https://gitee.com/openygt/openygt-docs)
 - **在线阅读** → https://openygt.org.cn/docs
+- **架构设计** → [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ---
 
