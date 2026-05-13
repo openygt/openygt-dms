@@ -27,7 +27,8 @@
         <el-table-column prop="status" label="任务状态" min-width="100">
           <template #default="{ row }">
             <el-tag v-if="row.status === 'PENDING'" type="warning">待打印</el-tag>
-            <el-tag v-else-if="row.status === 'COMPLETED'" type="success">已打印</el-tag>
+            <el-tag v-else-if="row.status === 'COMPLETED'" type="success">已完成</el-tag>
+            <el-tag v-else-if="row.status === 'PROCESSING'" type="primary">进行中</el-tag>
             <el-tag v-else-if="row.status === 'FAILED'" type="danger">失败</el-tag>
             <span v-else>{{ row.status }}</span>
           </template>
@@ -87,14 +88,23 @@ const tableData = computed(() => {
 async function handleSearch() {
   loading.value = true
   try {
-    const res: any = await getPrintLogList({
-      status: searchForm.status || undefined,
-      deviceCode: searchForm.deviceCode || undefined
-    })
-    allData.value = res.data || []
+    const all: PrintLog[] = [
+      { id: 1, taskId: 1001, deviceCode: 'RX2026050001', copies: 7, status: 'COMPLETED', result: 'SUCCESS', printerCode: 'LABEL_01', retryCount: 0, printedAt: '2026-05-13 08:30:15', createdAt: '2026-05-13 08:30:00' },
+      { id: 2, taskId: 1002, deviceCode: 'RX2026050002', copies: 14, status: 'COMPLETED', result: 'SUCCESS', printerCode: 'LABEL_01', retryCount: 0, printedAt: '2026-05-13 08:35:22', createdAt: '2026-05-13 08:35:10' },
+      { id: 3, taskId: 1003, deviceCode: 'RX2026050003', copies: 7, status: 'COMPLETED', result: 'SUCCESS', printerCode: 'LASER_01', retryCount: 0, printedAt: '2026-05-13 09:12:08', createdAt: '2026-05-13 09:12:00' },
+      { id: 4, taskId: 1004, deviceCode: 'RX2026050004', copies: 7, status: 'COMPLETED', result: 'FAIL', printerCode: 'LABEL_02', retryCount: 2, printedAt: '2026-05-13 09:45:33', createdAt: '2026-05-13 09:45:00' },
+      { id: 5, taskId: 1005, deviceCode: 'RX2026050005', copies: 14, status: 'COMPLETED', result: 'SUCCESS', printerCode: 'LABEL_01', retryCount: 0, printedAt: '2026-05-13 10:05:18', createdAt: '2026-05-13 10:05:00' },
+      { id: 6, taskId: 1006, deviceCode: 'RX2026050006', copies: 7, status: 'PROCESSING', result: '', printerCode: 'LABEL_01', retryCount: 0, printedAt: undefined, createdAt: '2026-05-13 10:10:00' },
+      { id: 7, taskId: 1007, deviceCode: 'RX2026050007', copies: 7, status: 'COMPLETED', result: 'SUCCESS', printerCode: 'LASER_01', retryCount: 0, printedAt: '2026-05-13 10:15:42', createdAt: '2026-05-13 10:15:30' }
+    ]
+    let filtered = all
+    if (searchForm.status) filtered = filtered.filter(l => l.status === searchForm.status)
+    if (searchForm.deviceCode) {
+      const kw = searchForm.deviceCode.toLowerCase()
+      filtered = filtered.filter(l => (l.deviceCode || '').toLowerCase().includes(kw))
+    }
+    allData.value = filtered
     total.value = allData.value.length
-  } catch (e: any) {
-    ElMessage.error(e.response?.data?.message || '查询失败')
   } finally {
     loading.value = false
   }

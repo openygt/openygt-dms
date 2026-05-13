@@ -56,11 +56,16 @@ async function queryCurve() {
   try {
     let prescriptionNo = searchForm.prescriptionNo
     if (!prescriptionNo && searchForm.barcode) {
-      // 通过 PC 只读接口查询任务获取处方号
-      const taskRes: any = await import('@/api/request').then(m => m.default.get(`/v1/prod/tasks/barcode/${searchForm.barcode}`))
-      prescriptionNo = taskRes.data?.prescriptionNumber || ''
+      try {
+        const taskRes: any = await request.get(`/v1/prod/tasks/barcode/${searchForm.barcode}`)
+        prescriptionNo = taskRes.data?.prescriptionNumber || ''
+      } catch {
+        ElMessage.warning('未找到该条码对应的任务')
+        return
+      }
     }
     if (!prescriptionNo) {
+      ElMessage.warning('未找到对应的处方号')
       return
     }
     const res: any = await getTraceTemperatureCurve(prescriptionNo)
@@ -80,6 +85,7 @@ async function queryCurve() {
     nextTick(() => renderChart())
   } catch (e) {
     console.error(e)
+    ElMessage.error('温度曲线查询失败')
   }
 }
 
@@ -151,34 +157,8 @@ function handleResize() {
   chartInstance?.resize()
 }
 
-async function loadLatest() {
-  try {
-    // Load temperature logs for DECOCT_01 (device ID 1) which has the most data
-    const res: any = await request.get('/v1/eq/devices/1/temperature-logs', { params: { page: 1, size: 50 } })
-    const records = (res.data?.records || [])
-    if (records.length > 0) {
-      const sorted = [...records].sort((a: any, b: any) =>
-        new Date(a.recordedAt || a.createdAt).getTime() - new Date(b.recordedAt || b.createdAt).getTime()
-      )
-      const temps = sorted.map((r: any) => r.temperature)
-      curveData.value = {
-        maxTemp: Math.max(...temps).toFixed(1),
-        avgTemp: (temps.reduce((s: number, t: number) => s + t, 0) / temps.length).toFixed(1),
-        points: sorted.map((r: any) => ({
-          time: r.recordedAt || r.createdAt,
-          temperature: r.temperature
-        }))
-      }
-      searchForm.barcode = ''
-      searchForm.prescriptionNo = ''
-      nextTick(() => renderChart())
-    }
-  } catch {}
-}
-
 onMounted(() => {
   window.addEventListener('resize', handleResize)
-  loadLatest()
 })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)

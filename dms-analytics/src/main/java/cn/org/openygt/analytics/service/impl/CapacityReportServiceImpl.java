@@ -23,11 +23,7 @@ public class CapacityReportServiceImpl implements CapacityReportService {
 
     @Override
     public List<CapacityDailyDTO> getDailyCapacity(LocalDate startDate, LocalDate endDate, Long hospitalId) {
-        List<CapacityDailyDTO> list = productionQueryService.getDailyCapacity(startDate, endDate);
-        // 若按医院筛选，前端做二次过滤（简化实现）
-        if (hospitalId != null && list != null) {
-            // TODO: 按医院过滤
-        }
+        List<CapacityDailyDTO> list = productionQueryService.getDailyCapacity(startDate, endDate, hospitalId);
         return list != null ? list : Collections.emptyList();
     }
 }

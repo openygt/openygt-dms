@@ -1,6 +1,6 @@
 # 测试环境专用配置（使用 MySQL，与生产一致）
 server:
-  port: 9091
+  port: 9094
   tomcat:
     uri-encoding: UTF-8
 

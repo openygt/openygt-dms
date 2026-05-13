@@ -65,13 +65,16 @@ public class DashboardServiceImpl implements DashboardService {
         );
 
         List<DeviceUtilization> todayUtil = utilizationMapper.findByDate(today);
+        Long totalDevices = deviceMapper.selectCount(
+            new QueryWrapper<EqDevice>().eq("deleted", 0)
+        );
         BigDecimal utilizationRate = BigDecimal.ZERO;
-        if (!todayUtil.isEmpty()) {
-            utilizationRate = todayUtil.stream()
+        if (totalDevices > 0) {
+            BigDecimal sum = todayUtil.stream()
                 .map(DeviceUtilization::getUtilizationRate)
                 .filter(u -> u != null)
-                .reduce(BigDecimal.ZERO, BigDecimal::add)
-                .divide(BigDecimal.valueOf(todayUtil.size()), 2, RoundingMode.HALF_UP);
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            utilizationRate = sum.divide(BigDecimal.valueOf(totalDevices), 2, RoundingMode.HALF_UP);
         }
 
         Map<String, Object> result = new HashMap<>();
@@ -80,7 +83,8 @@ public class DashboardServiceImpl implements DashboardService {
         result.put("todayCompleted", todayCompleted != null ? todayCompleted.intValue() : 0);
         result.put("deviceUtilization", utilizationRate);
         result.put("faultCount", faultCount != null ? faultCount.intValue() : 0);
-        result.put("avgProcessTime", 145);
+        Double avgMinutes = traceMapper.selectAvgProcessTimeMinutes();
+        result.put("avgProcessTime", avgMinutes != null ? avgMinutes.intValue() : 0);
         return result;
     }
 
@@ -124,9 +128,11 @@ public class DashboardServiceImpl implements DashboardService {
         int total = rows.stream().mapToInt(r -> ((Number) r.get("prescriptionCount")).intValue()).sum();
         double avg = total > 0 && !rows.isEmpty() ? (double) total / rows.size() : 20.0;
         for (Map<String, Object> row : rows) {
-            row.put("efficiency", Math.round(((Number) row.get("prescriptionCount")).doubleValue() / avg * 3.0 * 10.0) / 10.0);
+            Map<String, Object> enriched = new HashMap<>(row);
+            enriched.put("efficiency", Math.round(((Number) row.get("prescriptionCount")).doubleValue() / avg * 3.0 * 10.0) / 10.0);
+            result.add(enriched);
         }
-        return rows;
+        return result;
     }
 
     @Override

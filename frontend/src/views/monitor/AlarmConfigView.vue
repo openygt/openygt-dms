@@ -7,17 +7,19 @@
 
     <el-card>
       <el-table :data="configList" v-loading="loading">
-        <el-table-column prop="alarmType" label="告警类型" width="150" />
-        <el-table-column label="级别" width="100">
+        <el-table-column label="告警类型" width="140">
+          <template #default="{ row }">{{ alarmTypeText(row.alarmType) }}</template>
+        </el-table-column>
+        <el-table-column label="级别" width="80">
           <template #default="{ row }">
-            <el-tag :type="row.alarmLevel === 'CRITICAL' ? 'danger' : (row.alarmLevel === 'WARNING' ? 'warning' : 'info')">
-              {{ row.alarmLevel }}
-            </el-tag>
+            <el-tag :type="alarmLevelTag(row.alarmLevel)">{{ alarmLevelText(row.alarmLevel) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="thresholdValue" label="阈值" width="120" />
-        <el-table-column prop="durationSeconds" label="持续时间(秒)" width="120" />
-        <el-table-column prop="notifyType" label="通知方式" width="150" />
+        <el-table-column prop="thresholdValue" label="阈值" width="80" />
+        <el-table-column prop="durationSeconds" label="持续时间(秒)" width="110" />
+        <el-table-column label="通知方式" width="170">
+          <template #default="{ row }">{{ notifyTypeText(row.notifyType) }}</template>
+        </el-table-column>
         <el-table-column label="状态" width="80">
           <template #default="{ row }">
             <el-switch v-model="row.enabled" @change="(v: boolean) => handleEnableChange(row, v)" />
@@ -36,17 +38,22 @@
       <el-form ref="formRef" :model="form" :rules="formRules" label-width="120px">
         <el-form-item label="告警类型">
           <el-select v-model="form.alarmType">
-            <el-option label="温度超限" value="TEMP_HIGH" />
-            <el-option label="温度过低" value="TEMP_LOW" />
-            <el-option label="超时" value="TIMEOUT" />
-            <el-option label="设备故障" value="DEVICE_FAULT" />
+            <el-option label="温度超高" value="TEMP_OVER_105" />
+            <el-option label="温度偏高" value="TEMP_OVER_100" />
+            <el-option label="温度异常" value="TEMP_ABNORMAL" />
+            <el-option label="煎药超时" value="DECOCT_TIMEOUT" />
+            <el-option label="设备离线" value="DEVICE_OFFLINE" />
+            <el-option label="包装机卡袋" value="PACKER_JAM" />
+            <el-option label="标签缺纸" value="LABEL_LOW" />
+            <el-option label="急停触发" value="EMERGENCY_STOP" />
           </el-select>
         </el-form-item>
         <el-form-item label="告警级别">
           <el-radio-group v-model="form.alarmLevel">
-            <el-radio-button label="INFO">信息</el-radio-button>
+            <el-radio-button label="INFO">一般</el-radio-button>
             <el-radio-button label="WARNING">警告</el-radio-button>
-            <el-radio-button label="CRITICAL">紧急</el-radio-button>
+            <el-radio-button label="CRITICAL">严重</el-radio-button>
+            <el-radio-button label="URGENT">紧急</el-radio-button>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="阈值">
@@ -57,10 +64,10 @@
         </el-form-item>
         <el-form-item label="通知方式">
           <el-checkbox-group v-model="notifyTypes">
-            <el-checkbox label="WEB">Web通知</el-checkbox>
-            <el-checkbox label="PUSH">推送</el-checkbox>
-            <el-checkbox label="SMS">短信</el-checkbox>
+            <el-checkbox label="POPUP">弹窗</el-checkbox>
             <el-checkbox label="VOICE">语音</el-checkbox>
+            <el-checkbox label="SMS">短信</el-checkbox>
+            <el-checkbox label="PHONE">电话</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
       </el-form>
@@ -91,6 +98,32 @@ const form = reactive({
   durationSeconds: 10,
   notifyType: ''
 })
+
+function alarmTypeText(type: string) {
+  const map: Record<string, string> = {
+    TEMP_OVER_105: '温度超高', TEMP_OVER_100: '温度偏高', TEMP_ABNORMAL: '温度异常',
+    DECOCT_TIMEOUT: '煎药超时', DEVICE_OFFLINE: '设备离线', PACKER_JAM: '包装机卡袋',
+    LABEL_LOW: '标签缺纸', EMERGENCY_STOP: '急停触发',
+    TEMP_HIGH: '温度超限', TEMP_LOW: '温度过低', TIMEOUT: '超时', DEVICE_FAULT: '设备故障'
+  }
+  return map[type] || type
+}
+
+function alarmLevelText(level: string) {
+  const map: Record<string, string> = { INFO: '一般', WARNING: '警告', CRITICAL: '严重', URGENT: '紧急' }
+  return map[level] || level
+}
+
+function alarmLevelTag(level: string) {
+  const map: Record<string, string> = { URGENT: 'danger', CRITICAL: 'danger', WARNING: 'warning', INFO: '' }
+  return map[level] || ''
+}
+
+function notifyTypeText(types: string) {
+  if (!types) return '-'
+  const map: Record<string, string> = { VOICE: '语音', POPUP: '弹窗', SMS: '短信', PHONE: '电话', PUSH: '推送', WEB: 'Web通知' }
+  return types.split(',').map((t) => map[t.trim()] || t.trim()).join(' + ')
+}
 
 const formRef = ref<any>(null)
 const formRules = {

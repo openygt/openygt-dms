@@ -90,7 +90,7 @@ async function loadDeviceMap() {
     const map: Record<string, string> = {}
     ;(res.data?.records || []).forEach((d: any) => { map[d.deviceCode] = d.name || d.deviceCode })
     deviceMap.value = map
-  } catch {}
+  } catch (e) { console.warn('加载设备列表失败', e) }
 }
 
 const fetchList = async () => {

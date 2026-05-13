@@ -115,7 +115,6 @@
           <el-menu-item v-if="userStore.hasPermission('md:herb:view')" index="/base/medicine">药材管理</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('md:shelf:view')" index="/base/finished-shelf">成品货架管理</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('base:toxic:manage')" index="/toxic-medicine">毒性药材管理</el-menu-item>
-          <el-menu-item v-if="userStore.hasPermission('sys:user:view')" index="/users">人员管理</el-menu-item>
           <el-menu-item v-if="userStore.hasPermission('sys:barcode:view')" index="/employee-barcode">身份条码</el-menu-item>
         </el-sub-menu>
 

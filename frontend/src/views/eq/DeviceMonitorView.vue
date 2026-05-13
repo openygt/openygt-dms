@@ -344,6 +344,7 @@ import { getDeviceList, shiftHandover, createCommand } from '@/api/equipment'
 import { useDeviceStore } from '@/stores/device'
 import { useDeviceWebSocket } from '@/composables/useDeviceWebSocket'
 import EmptyState from '@/components/states/EmptyState.vue'
+import request from '@/api/request'
 
 const router = useRouter()
 const deviceStore = useDeviceStore()
@@ -398,12 +399,13 @@ function formatStatusName(device: any) {
   const status = device.detailStatus || device.status
   const map: Record<string, string> = {
     IDLE: '空闲', STANDBY: '待机', READY: '就绪',
+    RUNNING: '运行中', WORKING: '运行中', BUSY: '运行中',
     SOAKING: '浸泡中', PRE_DECOCTING: '预热中',
     FIRST_DECOCTING: '一煎中', SECOND_DECOCTING: '二煎中',
     ADD_LATE: '后下提醒', DRAINING: '出液中',
     PACKAGING: '包装中', PAUSED: '暂停',
-    FAULT: '故障', OFFLINE: '离线',
-    BUSY: '运行中', MAINTENANCE: '维护中',
+    FAULT: '故障', ERROR: '故障', OFFLINE: '离线',
+    ONLINE: '在线', MAINTENANCE: '维护中',
     PACKER_IDLE: '空闲', PACKER_READY: '就绪',
     PRINTING: '打印中', PENDING: '待打印',
   }
@@ -599,22 +601,28 @@ async function confirmEmergencyStop() {
 
 async function loadMonitorGroups() {
   try {
-    const { default: request } = await import('@/api/request')
     const res: any = await request.get('/v1/eq/groups/all')
     monitorGroups.value = res.data || []
-  } catch { monitorGroups.value = [] }
+  } catch (e) { console.warn('加载分组列表失败', e); monitorGroups.value = [] }
+}
+
+async function loadOperators() {
+  try {
+    const res: any = await request.get('/v1/sys/users', { params: { page: 1, size: 200 } })
+    const records = res.data?.records || []
+    operatorOptions.value = records.map((u: any) => ({
+      id: u.id,
+      username: u.username,
+      realName: u.name || u.realName || u.username,
+    }))
+  } catch (e) { console.warn('加载操作人列表失败', e); operatorOptions.value = [] }
 }
 
 onMounted(() => {
   loadDevices()
   loadMonitorGroups()
+  loadOperators()
   connect()
-  // 模拟加载操作人列表（实际应从用户API获取）
-  operatorOptions.value = [
-    { id: 1, username: 'zhangsan', realName: '张三' },
-    { id: 2, username: 'lisi', realName: '李四' },
-    { id: 3, username: 'wangwu', realName: '王五' },
-  ]
 })
 
 onUnmounted(() => {

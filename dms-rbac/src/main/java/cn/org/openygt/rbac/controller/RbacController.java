@@ -17,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -40,10 +42,24 @@ public class RbacController {
 
     // ==================== 菜单管理 ====================
 
-    @RequiresPermissions({"ROLE_ADMIN", "ROLE_DIRECTOR"})
     @GetMapping("/menus/tree")
-    public ApiResponse<List<SysMenu>> menuTree() {
-        return ApiResponse.success(menuService.getMenuTree());
+    public ApiResponse<List<SysMenu>> menuTree(HttpServletRequest request) {
+        Long userId = (Long) request.getAttribute("userId");
+        if (userId == null) {
+            return ApiResponse.success(Collections.emptyList());
+        }
+        List<Long> roleIds = userRoleService.getRoleIdsByUserId(userId);
+        if (roleIds == null || roleIds.isEmpty()) {
+            return ApiResponse.success(Collections.emptyList());
+        }
+        // ROLE_ADMIN 看全部菜单
+        List<SysRole> roles = roleService.getRolesByUserId(userId);
+        boolean isAdmin = roles != null && roles.stream()
+                .anyMatch(r -> "ROLE_ADMIN".equals(r.getRoleCode()));
+        if (isAdmin) {
+            return ApiResponse.success(menuService.getMenuTree());
+        }
+        return ApiResponse.success(menuService.getMenusByRoleIds(roleIds));
     }
 
     @PostMapping("/menus")

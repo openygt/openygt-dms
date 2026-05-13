@@ -344,8 +344,9 @@ function deviceTypeTag(type?: number) {
 
 function statusText(status?: string) {
   const map: Record<string, string> = {
-    'IDLE': '空闲', 'ONLINE': '空闲', 'OFFLINE': '离线',
-    'FAULT': '故障', 'MAINTENANCE': '维护中', 'BUSY': '运行中'
+    'IDLE': '空闲', 'ONLINE': '在线', 'OFFLINE': '离线',
+    'FAULT': '故障', 'ERROR': '故障', 'MAINTENANCE': '维护中',
+    'BUSY': '运行中', 'RUNNING': '运行中', 'WORKING': '运行中'
   }
   return map[status || ''] || status || '未知'
 }
@@ -353,7 +354,7 @@ function statusText(status?: string) {
 function statusTag(status?: string) {
   if (status === 'IDLE' || status === 'ONLINE') return 'success'
   if (status === 'OFFLINE') return 'info'
-  if (status === 'BUSY') return 'warning'
+  if (status === 'BUSY' || status === 'RUNNING' || status === 'WORKING') return 'warning'
   if (status === 'MAINTENANCE') return 'warning'
   return 'danger'
 }

@@ -10,9 +10,8 @@
         </el-form-item>
         <el-form-item label="交付方式">
           <el-select v-model="searchForm.deliveryType" clearable placeholder="全部" style="width: 140px" @change="handleSearch">
-            <el-option label="自取" value="SELF" />
-            <el-option label="快递" value="EXPRESS" />
-            <el-option label="配送" value="DELIVERY" />
+            <el-option label="自取" value="SELF_PICKUP" />
+            <el-option label="院内配送" value="HOSPITAL_DELIVERY" />
           </el-select>
         </el-form-item>
         <el-form-item label="关键词">
@@ -32,10 +31,14 @@
         <el-table-column prop="patientName" label="患者姓名" min-width="100" />
         <el-table-column prop="deliveryType" label="交付方式" min-width="100">
           <template #default="{ row }">
-            <el-tag v-if="row.deliveryType === 'SELF'">自取</el-tag>
-            <el-tag v-else-if="row.deliveryType === 'EXPRESS'" type="warning">快递</el-tag>
-            <el-tag v-else-if="row.deliveryType === 'DELIVERY'" type="success">配送</el-tag>
-            <span v-else>{{ row.deliveryType }}</span>
+            {{ getDictLabel(row.deliveryType, DELIVERY_TYPES) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" min-width="90">
+          <template #default="{ row }">
+            <el-tag :type="row.status === 'DELIVERED' ? 'success' : 'warning'">
+              {{ row.status === 'DELIVERED' ? '已交付' : '待交付' }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="bagCount" label="袋数" min-width="80" />
@@ -72,15 +75,14 @@
         </el-form-item>
         <el-form-item label="交付方式" prop="deliveryType">
           <el-select v-model="form.deliveryType" placeholder="请选择交付方式" style="width: 100%">
-            <el-option label="自取" value="SELF" />
-            <el-option label="快递" value="EXPRESS" />
-            <el-option label="配送" value="DELIVERY" />
+            <el-option label="自取" value="SELF_PICKUP" />
+            <el-option label="院内配送" value="HOSPITAL_DELIVERY" />
           </el-select>
         </el-form-item>
-        <el-form-item label="接收人">
+        <el-form-item label="接收人" prop="receiverName">
           <el-input v-model="form.receiverName" placeholder="请输入接收人" />
         </el-form-item>
-        <el-form-item label="联系电话">
+        <el-form-item label="联系电话" prop="receiverPhone">
           <el-input v-model="form.receiverPhone" placeholder="请输入联系电话" />
         </el-form-item>
         <el-form-item label="接收地址">
@@ -92,8 +94,11 @@
         <el-form-item label="快递单号">
           <el-input v-model="form.courierNo" placeholder="请输入快递单号" />
         </el-form-item>
-        <el-form-item label="袋数">
-          <el-input-number v-model="form.bagCount" :min="0" style="width: 100%" />
+        <el-form-item label="袋数" prop="bagCount">
+          <el-select v-model="form.bagCount" placeholder="请选择袋数" style="width: 100%">
+            <el-option label="7 袋" :value="7" />
+            <el-option label="14 袋" :value="14" />
+          </el-select>
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.remark" type="textarea" rows="2" placeholder="请输入备注" />
@@ -114,7 +119,7 @@
         <el-form-item label="接收人" prop="receiverName">
           <el-input v-model="confirmForm.receiverName" placeholder="请输入接收人姓名" />
         </el-form-item>
-        <el-form-item label="联系电话">
+        <el-form-item label="联系电话" prop="receiverPhone">
           <el-input v-model="confirmForm.receiverPhone" placeholder="请输入联系电话" />
         </el-form-item>
         <el-form-item label="备注">
@@ -133,6 +138,7 @@
 import { ref, reactive } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import { getDictLabel, DELIVERY_TYPES } from '@/constants/dictionary'
 import {
   getDeliveryRecordList,
   createDeliveryRecord,
@@ -179,7 +185,10 @@ const form = ref<Partial<DeliveryRecord>>({})
 const rules = {
   prescriptionNo: [{ required: true, message: '请输入处方号', trigger: 'blur' }],
   patientName: [{ required: true, message: '请输入患者姓名', trigger: 'blur' }],
-  deliveryType: [{ required: true, message: '请选择交付方式', trigger: 'change' }]
+  deliveryType: [{ required: true, message: '请选择交付方式', trigger: 'change' }],
+  receiverName: [{ required: true, message: '请输入接收人', trigger: 'blur' }],
+  receiverPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }],
+  bagCount: [{ required: true, message: '请选择袋数', trigger: 'change' }]
 }
 
 const confirmVisible = ref(false)
@@ -192,7 +201,8 @@ const confirmForm = reactive({
   remark: ''
 })
 const confirmRules = {
-  receiverName: [{ required: true, message: '请输入接收人姓名', trigger: 'blur' }]
+  receiverName: [{ required: true, message: '请输入接收人姓名', trigger: 'blur' }],
+  receiverPhone: [{ required: true, message: '请输入联系电话', trigger: 'blur' }]
 }
 
 async function handleSearch() {
@@ -250,6 +260,12 @@ async function handleDelete(row: DeliveryRecord) {
     const msg = e?.response?.data?.message || e?.message || '操作失败'
     if (msg !== '取消') ElMessage.error(msg)
   }
+}
+
+function deliveryTypeLabel(type?: string) {
+  if (type === 'SELF_PICKUP') return '自取'
+  if (type === 'HOSPITAL_DELIVERY') return '院内配送'
+  return type || '-'
 }
 
 function openConfirmDialog(row: DeliveryRecord) {

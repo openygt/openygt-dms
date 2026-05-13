@@ -201,17 +201,18 @@ public class DeviceUtilizationServiceImpl implements DeviceUtilizationService {
                 }
             }
 
-            // 利用率 = 运行分钟 / 1440
+            // 利用率 = 运行分钟 / 480（8小时标准工作班次）
+            int workMinutesPerDay = 8 * 60;
             BigDecimal utilizationRate = totalMinutesPerDay > 0
                     ? BigDecimal.valueOf(runMinutes * 100L)
-                        .divide(BigDecimal.valueOf(totalMinutesPerDay), 2, RoundingMode.HALF_UP)
+                        .divide(BigDecimal.valueOf(workMinutesPerDay), 2, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO;
 
-            // 可用率 = (运行 + 空闲) / 1440
+            // 可用率 = (运行 + 空闲) / 480
             int availableMinutes = runMinutes + idleMinutes;
             BigDecimal availabilityRate = totalMinutesPerDay > 0
                     ? BigDecimal.valueOf(availableMinutes * 100L)
-                        .divide(BigDecimal.valueOf(totalMinutesPerDay), 2, RoundingMode.HALF_UP)
+                        .divide(BigDecimal.valueOf(workMinutesPerDay), 2, RoundingMode.HALF_UP)
                     : BigDecimal.ZERO;
 
             // 先删除旧记录（幂等）

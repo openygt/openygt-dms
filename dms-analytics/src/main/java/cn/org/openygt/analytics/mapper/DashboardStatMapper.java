@@ -13,17 +13,17 @@ import java.util.Map;
 public interface DashboardStatMapper {
 
     @Select("SELECT COUNT(*) as total, " +
-            "SUM(CASE WHEN status = '已完成' OR status = '已部分完成' THEN 1 ELSE 0 END) as ended, " +
-            "SUM(CASE WHEN status != '已完成' AND status != '已部分完成' THEN 1 ELSE 0 END) as inProgress, " +
-            "SUM(CASE WHEN is_exception = 1 AND status != '已完成' AND status != '已部分完成' THEN 1 ELSE 0 END) as alertingNow, " +
+            "SUM(CASE WHEN status = 'COMPLETED' OR status = 'PARTIAL_COMPLETED' THEN 1 ELSE 0 END) as ended, " +
+            "SUM(CASE WHEN status NOT IN ('COMPLETED', 'PARTIAL_COMPLETED', 'CANCELLED', 'SCRAPPED') THEN 1 ELSE 0 END) as inProgress, " +
+            "SUM(CASE WHEN is_exception = 1 AND status NOT IN ('COMPLETED', 'PARTIAL_COMPLETED', 'CANCELLED', 'SCRAPPED') THEN 1 ELSE 0 END) as alertingNow, " +
             "SUM(CASE WHEN is_exception = 1 THEN 1 ELSE 0 END) as everAlerted " +
             "FROM prod_task WHERE deleted = 0 AND DATE(created_at) = CURDATE()")
     Map<String, Object> selectTodayTaskStats();
 
     @Select("SELECT COUNT(*) as total, " +
-            "SUM(CASE WHEN status = '已完成' OR status = '已部分完成' THEN 1 ELSE 0 END) as completed, " +
-            "SUM(CASE WHEN status IN ('泡药中','煎药中','出液中','包装中') THEN 1 ELSE 0 END) as inProgress, " +
-            "SUM(CASE WHEN status = '待泡药' THEN 1 ELSE 0 END) as pending " +
+            "SUM(CASE WHEN status = 'COMPLETED' OR status = 'PARTIAL_COMPLETED' THEN 1 ELSE 0 END) as ended, " +
+            "SUM(CASE WHEN status IN ('SOAKING','DECOCTING','POURING','WRAPPING') THEN 1 ELSE 0 END) as inProgress, " +
+            "SUM(CASE WHEN status = 'WAIT_SOAK' THEN 1 ELSE 0 END) as pending " +
             "FROM prod_task WHERE deleted = 0 AND DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY)")
     Map<String, Object> selectYesterdayTaskStats();
 

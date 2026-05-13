@@ -40,7 +40,6 @@ const router = createRouter({
         { path: 'work-order-print', name: 'WorkOrderPrint', component: () => import('@/views/print/WorkOrderPrintView.vue'), meta: { title: '工单打印', perm: 'prt:workorder:view' } },
 
         { path: 'base/finished-shelf', name: 'FinishedShelfManage', component: () => import('@/views/base/FinishedShelfManageView.vue'), meta: { title: '成品货架管理', perm: 'md:shelf:view' } },
-        { path: 'users', name: 'Users', component: () => import('@/views/system/UserListView.vue'), meta: { title: '人员管理', perm: 'sys:user:view' } },
         { path: 'sys/users', name: 'SysUsers', component: () => import('@/views/system/UserListView.vue'), meta: { title: '用户管理', perm: 'sys:user:view' } },
         { path: 'roles', name: 'Roles', component: () => import('@/views/system/RoleListView.vue'), meta: { title: '权限管理', perm: 'sys:role:view' } },
         { path: 'menus', name: 'Menus', component: () => import('@/views/system/MenuManageView.vue'), meta: { title: '菜单管理', perm: 'sys:menu:view' } },

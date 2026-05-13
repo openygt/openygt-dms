@@ -18,7 +18,7 @@ public interface ProductionQueryService {
 
     List<ProdTaskDTO> getTasksByIds(List<Long> taskIds);
 
-    List<CapacityDailyDTO> getDailyCapacity(LocalDate startDate, LocalDate endDate);
+    List<CapacityDailyDTO> getDailyCapacity(LocalDate startDate, LocalDate endDate, Long hospitalId);
 
     List<TaskStatusHistoryDTO> getTaskStatusHistory(Long taskId);
 }

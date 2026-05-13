@@ -10,40 +10,24 @@ export const DELIVERY_TYPES = [
   { label: '自取', value: 'SELF_PICKUP' },
   { label: '配送', value: 'DELIVERY' },
   { label: '院内配送', value: 'IN_HOUSE_DELIVERY' },
+  { label: '院内配送', value: 'HOSPITAL_DELIVERY' },
 ]
 
-// ==================== 制剂类型 ====================
+// ==================== 制剂类型（仅煎药相关） ====================
 export const PREPARATION_TYPES = [
   { label: '汤剂', value: 'DECOCTION' },
+  { label: '汤剂', value: '汤剂' },
   { label: '浓煎剂', value: 'CONCENTRATED_DECOCTION' },
-  { label: '普通散剂', value: 'COARSE_POWDER' },
-  { label: '细粉', value: 'FINE_POWDER' },
-  { label: '破壁粉', value: 'CELL_BROKEN_POWDER' },
-  { label: '水丸', value: 'WATER_PILL' },
-  { label: '蜜丸', value: 'HONEY_PILL' },
-  { label: '浓缩丸', value: 'CONCENTRATED_PILL' },
-  { label: '糊丸', value: 'PASTE_PILL' },
   { label: '膏方', value: 'MEDICINAL_PASTE' },
   { label: '配方颗粒', value: 'GRANULES' },
-  { label: '酒剂（内服）', value: 'TINCTURE_INTERNAL' },
-  { label: '酒剂（外用）', value: 'TINCTURE_EXTERNAL' },
-  { label: '酊剂（内服）', value: 'SPIRIT_INTERNAL' },
-  { label: '酊剂（外用）', value: 'SPIRIT_EXTERNAL' },
   { label: '茶剂', value: 'MEDICINAL_TEA' },
-  { label: '丹剂', value: 'DAN_MEDICINE' },
-  { label: '硬胶囊', value: 'HARD_CAPSULE' },
-  { label: '软胶囊', value: 'SOFT_CAPSULE' },
-  { label: '片剂', value: 'TABLET' },
-  { label: '糖浆剂', value: 'SYRUP' },
   { label: '露剂', value: 'AROMATIC_WATER' },
-  { label: '栓剂', value: 'SUPPOSITORY' },
-  { label: '洗剂', value: 'WASH_SOLUTION' },
-  { label: '其他', value: 'OTHER' },
 ]
 
 // ==================== 服用方法 ====================
 export const USAGE_METHODS = [
   { label: '内服', value: 'ORAL_INTERNAL' },
+  { label: '内服', value: '内服' },
   { label: '外用', value: 'TOPICAL' },
   { label: '泡酒', value: 'WINE_SOAK' },
   { label: '熏蒸', value: 'FUMIGATION' },
