@@ -49,7 +49,11 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="startTime" label="开始时间" width="170" />
+        <el-table-column label="开始时间" width="170">
+          <template #default="{ row }">
+            {{ formatDateTime(row.startTime) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="operatorName" label="操作人" width="100" />
         <el-table-column prop="remark" label="备注" show-overflow-tooltip />
         <template #empty>
@@ -115,6 +119,16 @@ function resetQuery() {
   query.value = { deviceCode: '', washType: null, result: null }
   pagination.value.page = 1
   fetchList()
+}
+
+function formatDateTime(dt: string) {
+  if (!dt) return '-'
+  const d = new Date(dt)
+  if (isNaN(d.getTime())) return dt
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  })
 }
 
 onMounted(() => { loadDeviceMap(); fetchList() })

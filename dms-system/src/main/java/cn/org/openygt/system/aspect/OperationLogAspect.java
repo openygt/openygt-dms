@@ -91,7 +91,11 @@ public class OperationLogAspect {
             try {
                 Long userId = cn.org.openygt.common.util.JwtUtil.getUserId(token);
                 if (userId != null) sysLog.setUserId(String.valueOf(userId));
-            } catch (Exception e) { log.warn("操作日志记录失败", e); }
+            } catch (Exception e) { /* token 无效，回退到请求参数 */ }
+        }
+        // 登录接口无 JWT，从请求体中提取 username 作为操作人
+        if (sysLog.getUserId() == null && action.endsWith(".login")) {
+            sysLog.setUserId(extractLoginUsername(joinPoint.getArgs()));
         }
 
         // 尝试从参数中提取 targetId / targetName
@@ -117,6 +121,19 @@ public class OperationLogAspect {
                 Object id = m.invoke(arg);
                 if (id != null) return id.toString();
             } catch (Exception e) { log.warn("操作日志记录失败", e); }
+        }
+        return null;
+    }
+
+    /** 从登录请求参数中提取 username，用于无 JWT 时记录操作人。 */
+    private String extractLoginUsername(Object[] args) {
+        for (Object arg : args) {
+            if (arg == null) continue;
+            try {
+                java.lang.reflect.Method m = arg.getClass().getMethod("getUsername");
+                Object username = m.invoke(arg);
+                if (username != null) return username.toString();
+            } catch (Exception e) { /* ignore */ }
         }
         return null;
     }

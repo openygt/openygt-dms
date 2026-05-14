@@ -71,7 +71,7 @@
             <span v-else class="ygt-num" style="color: var(--ygt-gray-400)">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="最后心跳" width="160">
+        <el-table-column label="最后心跳" width="180">
           <template #default="{ row }">
             {{ formatDateTime(row.lastHeartbeat) }}
           </template>

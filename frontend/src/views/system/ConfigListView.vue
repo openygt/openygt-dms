@@ -21,7 +21,11 @@
         <el-table-column prop="configKey" label="配置键" />
         <el-table-column prop="configValue" label="配置值" />
         <el-table-column prop="description" label="说明" />
-        <el-table-column prop="createdAt" label="创建时间" />
+        <el-table-column prop="createdAt" label="创建时间" width="170">
+          <template #default="{ row }">
+            {{ formatDateTime(row.createdAt) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
             <el-button size="small" v-if="userStore.hasPermission('sys:config:update')" @click="openDialog(row)">编辑</el-button>
@@ -150,6 +154,16 @@ async function handleDelete(row: SysConfig) {
       ElMessage.error(e?.response?.data?.message || '删除失败')
     }
   }
+}
+
+function formatDateTime(dt: string) {
+  if (!dt) return '-'
+  const d = new Date(dt)
+  if (isNaN(d.getTime())) return dt
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  })
 }
 
 onMounted(fetchData)
