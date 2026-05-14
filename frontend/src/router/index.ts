@@ -76,6 +76,14 @@ const router = createRouter({
         { path: 'wash-record', name: 'WashRecord', component: () => import('@/views/wash-record/WashRecordView.vue'), meta: { title: '清洗记录', perm: 'eq:wash:view' } },
         { path: 'device-network', name: 'DeviceNetwork', component: () => import('@/views/eq/DeviceNetworkView.vue'), meta: { title: '设备联网', perm: 'eq:network:view' } },
         { path: 'device-group-manage', name: 'DeviceGroupManage', component: () => import('@/views/eq/DeviceGroupManageView.vue'), meta: { title: '分组配对', perm: 'eq:group:view' } },
+
+        // 设备模拟
+        { path: 'simulator', name: 'SimulatorHub', component: () => import('@/views/simulator/SimulatorHubView.vue'), meta: { title: '模拟总览' } },
+        { path: 'simulator/decoction', name: 'SimDecoction', component: () => import('@/views/simulator/DecoctionSimulatorView.vue'), meta: { title: '煎药机模拟' } },
+        { path: 'simulator/packaging', name: 'SimPackaging', component: () => import('@/views/simulator/PackagingSimulatorView.vue'), meta: { title: '包装机模拟' } },
+        { path: 'simulator/label-printer', name: 'SimLabelPrinter', component: () => import('@/views/simulator/LabelPrinterSimulatorView.vue'), meta: { title: '标签打印机模拟' } },
+        { path: 'simulator/printer', name: 'SimPrinter', component: () => import('@/views/simulator/PrinterSimulatorView.vue'), meta: { title: '打印机模拟' } },
+        { path: 'simulator/pda', name: 'SimPda', component: () => import('@/views/simulator/PdaSimulatorView.vue'), meta: { title: 'PDA模拟' } },
       ]
     },
     { path: '/:pathMatch(.*)*', redirect: '/' }

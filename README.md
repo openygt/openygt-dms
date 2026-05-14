@@ -1,5 +1,7 @@
 # OpenYGT-DMS 智能煎药管理系统
 
+中文 | [English](README_EN.md)
+
 [![License](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-1.0.0-green.svg)]()
 [![Docker](https://img.shields.io/badge/docker--compose-ready-2496ED.svg)]()
