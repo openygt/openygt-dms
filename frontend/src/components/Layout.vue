@@ -130,7 +130,21 @@
           <el-menu-item v-if="userStore.hasPermission('prt:workorder:view')" index="/work-order-print">工单打印</el-menu-item>
         </el-sub-menu>
 
-        <!-- 9. 系统管理 -->
+        <!-- 9. 设备模拟 -->
+        <el-sub-menu index="/simulator">
+          <template #title>
+            <el-icon><Cpu /></el-icon>
+            <span>设备模拟</span>
+          </template>
+          <el-menu-item index="/simulator">模拟总览</el-menu-item>
+          <el-menu-item index="/simulator/decoction">煎药机</el-menu-item>
+          <el-menu-item index="/simulator/packaging">包装机</el-menu-item>
+          <el-menu-item index="/simulator/label-printer">标签打印机</el-menu-item>
+          <el-menu-item index="/simulator/printer">打印机</el-menu-item>
+          <el-menu-item index="/simulator/pda">PDA</el-menu-item>
+        </el-sub-menu>
+
+        <!-- 10. 系统管理 -->
         <el-sub-menu index="/system">
           <template #title>
             <el-icon><Lock /></el-icon>
