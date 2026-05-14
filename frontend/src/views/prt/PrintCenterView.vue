@@ -24,7 +24,11 @@
         </el-table-column>
         <el-table-column prop="retryCount" label="重试次数" width="100" />
         <el-table-column prop="deviceCode" label="打印机" />
-        <el-table-column prop="createdAt" label="创建时间" />
+        <el-table-column label="创建时间" width="170">
+          <template #default="{ row }">
+            {{ formatDateTime(row.createdAt) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
             <el-button size="small" type="primary" :disabled="row.status !== 'FAILED'" @click="handleRetry(row)">重试</el-button>
@@ -125,6 +129,16 @@ async function handleSubmit(row: PrintTask) {
   } catch (e: any) {
     ElMessage.error(e.response?.data?.message || '提交失败')
   }
+}
+
+function formatDateTime(dt: string) {
+  if (!dt) return '-'
+  const d = new Date(dt)
+  if (isNaN(d.getTime())) return dt
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  })
 }
 
 onMounted(fetchData)

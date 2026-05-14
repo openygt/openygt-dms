@@ -20,7 +20,11 @@
         <el-table-column prop="roleName" label="角色名称" />
         <el-table-column prop="roleCode" label="角色编码" />
         <el-table-column prop="description" label="描述" />
-        <el-table-column prop="createdAt" label="创建时间" />
+        <el-table-column label="创建时间" width="170">
+          <template #default="{ row }">
+            {{ formatDateTime(row.createdAt) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="220" fixed="right">
           <template #default="{ row }">
             <el-button size="small" v-if="userStore.hasPermission('sys:role:update')" @click="openDialog(row)">编辑</el-button>
@@ -250,6 +254,16 @@ async function fetchMenus() {
   } catch (e: any) {
     ElMessage.error(e?.response?.data?.message || '获取菜单失败')
   }
+}
+
+function formatDateTime(dt: string) {
+  if (!dt) return '-'
+  const d = new Date(dt)
+  if (isNaN(d.getTime())) return dt
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit'
+  })
 }
 
 onMounted(() => {

@@ -47,7 +47,7 @@
       </el-form>
 
       <el-table :data="list" v-loading="loading" border>
-        <el-table-column prop="id" label="ID" width="90" />
+        <el-table-column prop="id" label="ID" width="100" show-overflow-tooltip />
         <el-table-column prop="deviceName" label="设备名称" width="140" />
         <el-table-column prop="deviceCode" label="设备编码" width="120" />
         <el-table-column prop="alarmType" label="类型" width="120">
