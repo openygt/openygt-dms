@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" v-loading="loading">
     <el-card v-for="d in devices" :key="d.id" class="device-card" :class="{ 'is-fault': d.status === 'FAULT' }">
       <template #header>
         <div class="device-header">
@@ -42,47 +42,59 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
+import { useDeviceStore, type DeviceState } from '@/stores/device'
 
-interface Device {
-  id: number; deviceCode: string; name: string; status: string
-  manufacturer?: string; modelNum?: string
-}
+const deviceStore = useDeviceStore()
 
-const devices = ref<Device[]>([])
+const loading = ref(false)
+
+const devices = computed(() =>
+  deviceStore.deviceList.filter(d => d.deviceType === 3)
+)
 
 async function fetchDevices() {
+  loading.value = true
   try {
     const res: any = await request.get('/v1/eq/devices', { params: { deviceType: 3, size: 50 } })
-    devices.value = res.data?.records || []
+    const records = res.data?.records || []
+    records.forEach((d: any) => {
+      deviceStore.updateDevice(d.deviceCode, {
+        deviceCode: d.deviceCode, name: d.name, status: d.status || 'IDLE',
+        detailStatus: d.detailStatus || d.status || 'IDLE', deviceType: 3,
+        manufacturer: d.manufacturer, modelNum: d.modelNum,
+        lastHeartbeat: d.lastHeartbeat,
+      })
+    })
   } catch (e) { ElMessage.error('获取设备列表失败') }
+  finally { loading.value = false }
 }
 
-async function powerOn(d: Device) {
+async function powerOn(d: DeviceState) {
   await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'IDLE' })
+  deviceStore.updateDevice(d.deviceCode, { status: 'IDLE', detailStatus: 'IDLE' })
   ElMessage.success(`${d.name} 已开机`)
-  fetchDevices()
 }
-async function powerOff(d: Device) {
+async function powerOff(d: DeviceState) {
   await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'OFFLINE' })
+  deviceStore.updateDevice(d.deviceCode, { status: 'OFFLINE', detailStatus: 'OFFLINE' })
   ElMessage.success(`${d.name} 已关机`)
-  fetchDevices()
 }
-async function printWorkorder(d: Device) {
+async function printWorkorder(d: DeviceState) {
   await request.post('/v1/eq/commands', { deviceCode: d.deviceCode, commandType: 'PRINT_WORKORDER' })
   await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'BUSY' })
+  deviceStore.updateDevice(d.deviceCode, { status: 'BUSY', detailStatus: 'BUSY' })
   ElMessage.success(`已向 ${d.name} 发送工单打印指令`)
-  fetchDevices()
 }
-async function cancelPrint(d: Device) {
+async function cancelPrint(d: DeviceState) {
   await request.post('/v1/eq/commands', { deviceCode: d.deviceCode, commandType: 'CANCEL_PRINT' })
   await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'IDLE' })
+  deviceStore.updateDevice(d.deviceCode, { status: 'IDLE', detailStatus: 'IDLE' })
   ElMessage.success('已取消打印任务')
-  fetchDevices()
 }
-async function retryPrint(d: Device) {
+async function retryPrint(d: DeviceState) {
   try {
     await request.post(`/v1/prt/tasks/${d.id}/retry`, null, { params: { deviceCode: d.deviceCode, operatorId: 'SIM' } })
     ElMessage.success('重试成功')
@@ -90,15 +102,16 @@ async function retryPrint(d: Device) {
     ElMessage.warning('重试失败（无失败任务）')
   }
 }
-async function injectFault(d: Device, code: string) {
+async function injectFault(d: DeviceState, code: string) {
   if (code === 'CLEAR') {
     await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'IDLE', detailStatus: 'IDLE', faultCode: null })
+    deviceStore.updateDevice(d.deviceCode, { status: 'IDLE', detailStatus: 'IDLE', faultCode: undefined })
     ElMessage.success(`${d.name} 故障已清除`)
   } else {
     await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'FAULT', detailStatus: 'FAULT', faultCode: code })
+    deviceStore.updateDevice(d.deviceCode, { status: 'FAULT', detailStatus: 'FAULT', faultCode: code })
     ElMessage.error(`${d.name} 故障注入：${code}`)
   }
-  fetchDevices()
 }
 
 function statusTag(s: string) {

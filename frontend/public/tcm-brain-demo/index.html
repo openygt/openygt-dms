@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中医大脑 - TCM Brain</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">
+        <span class="logo-icon">☯</span>
+        <span class="logo-text">中医大脑</span>
+      </div>
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-title">🧠 方剂大脑</div>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title active">📚 学习大脑</div>
+          <div class="nav-items">
+            <a href="#diagnosis" class="nav-item active" data-page="diagnosis">
+              <span class="nav-icon">🔍</span>诊断
+            </a>
+            <a href="#herbs" class="nav-item" data-page="herbs">
+              <span class="nav-icon">🌿</span>方药
+            </a>
+            <a href="#acupuncture" class="nav-item" data-page="acupuncture">
+              <span class="nav-icon">📍</span>针灸
+            </a>
+            <a href="#symptoms" class="nav-item" data-page="symptoms">
+              <span class="nav-icon">🤒</span>病症
+            </a>
+          </div>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-title">📖 针灸大脑</div>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="breadcrumb" id="breadcrumb">学习大脑 / 诊断</div>
+        <div class="user">
+          <span class="bell">🔔</span>
+          <span class="avatar">👤</span>
+          <span>张医师</span>
+        </div>
+      </header>
+
+      <!-- Page: Diagnosis -->
+      <section class="page active" id="page-diagnosis">
+        <h1 class="page-title">诊断</h1>
+        <div class="card-grid">
+          <div class="diagnosis-card" onclick="showToast('证型诊断：根据症状判断中医证型')">
+            <div class="card-icon">📋</div>
+            <div class="card-name">证型</div>
+            <div class="card-desc">八纲辨证 · 脏腑辨证</div>
+          </div>
+          <div class="diagnosis-card" onclick="showToast('脉诊：寸关尺三部九候')">
+            <div class="card-icon">💓</div>
+            <div class="card-name">脉诊</div>
+            <div class="card-desc">浮沉迟数 · 虚实滑涩</div>
+          </div>
+          <div class="diagnosis-card" onclick="showToast('舌诊：舌质舌苔综合判断')">
+            <div class="card-icon">👅</div>
+            <div class="card-name">舌诊</div>
+            <div class="card-desc">舌质色泽 · 舌苔厚薄</div>
+          </div>
+          <div class="diagnosis-card" onclick="showToast('腹诊：腹部按诊查病')">
+            <div class="card-icon">🫃</div>
+            <div class="card-name">腹诊</div>
+            <div class="card-desc">腹部软硬 · 压痛部位</div>
+          </div>
+        </div>
+
+        <div class="section-divider"></div>
+
+        <h2 class="section-title">🧭 诊断思维导图</h2>
+        <div class="mindmap">
+          <div class="mindmap-node root">
+            <div class="node-label">辨证</div>
+          </div>
+          <div class="mindmap-branches">
+            <div class="branch">
+              <div class="mindmap-node">
+                <div class="node-label">八纲</div>
+              </div>
+              <div class="sub-nodes">
+                <span class="sub-node">表里</span>
+                <span class="sub-node">寒热</span>
+                <span class="sub-node">虚实</span>
+                <span class="sub-node">阴阳</span>
+              </div>
+            </div>
+            <div class="branch">
+              <div class="mindmap-node">
+                <div class="node-label">脏腑</div>
+              </div>
+              <div class="sub-nodes">
+                <span class="sub-node">心肝</span>
+                <span class="sub-node">脾肺</span>
+                <span class="sub-node">肾膀胱</span>
+              </div>
+            </div>
+            <div class="branch">
+              <div class="mindmap-node">
+                <div class="node-label">气血</div>
+              </div>
+              <div class="sub-nodes">
+                <span class="sub-node">气虚</span>
+                <span class="sub-node">血虚</span>
+                <span class="sub-node">气滞</span>
+                <span class="sub-node">血瘀</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page: Herbs -->
+      <section class="page" id="page-herbs">
+        <div class="page-header">
+          <h1 class="page-title">🌿 中药</h1>
+          <button class="btn-primary" onclick="showToast('药材分析功能开发中')">💊 药材分析</button>
+        </div>
+
+        <div class="herb-tags">
+          <span class="herb-tag active">麻黄</span>
+          <span class="herb-tag active">荆芥</span>
+          <span class="herb-tag">防风</span>
+          <span class="herb-tag">羌活</span>
+          <span class="herb-tag">白芷</span>
+          <span class="herb-tag">细辛</span>
+        </div>
+
+        <div class="herb-category">
+          <h3 class="category-title">🍃 解表药</h3>
+          <div class="category-sub">发散风寒药</div>
+          <div class="checkbox-grid">
+            <label class="checkbox-item checked">
+              <input type="checkbox" checked> <span>麻黄</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>桂枝</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>紫苏叶</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>生姜</span>
+            </label>
+            <label class="checkbox-item checked">
+              <input type="checkbox" checked> <span>荆芥</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>防风</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>羌活</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>白芷</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>细辛</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>藁本</span>
+            </label>
+          </div>
+
+          <div class="category-sub">发散风热药</div>
+          <div class="checkbox-grid">
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>薄荷</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>牛蒡子</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>蝉蜕</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>桑叶</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>菊花</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>柴胡</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>升麻</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>葛根</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="herb-category">
+          <h3 class="category-title">🔥 清热药</h3>
+          <div class="category-sub">清热泻火药</div>
+          <div class="checkbox-grid">
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>石膏</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>知母</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>栀子</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>芦根</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>天花粉</span>
+            </label>
+            <label class="checkbox-item">
+              <input type="checkbox"> <span>竹叶</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page: Acupuncture -->
+      <section class="page" id="page-acupuncture">
+        <div class="page-header">
+          <h1 class="page-title">📍 经络穴位</h1>
+          <div class="search-box">
+            <input type="text" placeholder="请输入经络穴位名称" class="search-input">
+            <button class="search-btn">🔍</button>
+          </div>
+        </div>
+
+        <div class="meridian-tags">
+          <span class="meridian-tag">手太阴肺经</span>
+          <span class="meridian-tag">手阳明大肠经</span>
+          <span class="meridian-tag">足阳明胃经</span>
+          <span class="meridian-tag">足太阴脾经</span>
+          <span class="meridian-tag active">督脉</span>
+          <span class="meridian-tag">任脉</span>
+          <span class="meridian-tag">手少阴心经</span>
+          <span class="meridian-tag">手太阳小肠经</span>
+          <span class="meridian-tag">足太阳膀胱经</span>
+          <span class="meridian-tag">足少阴肾经</span>
+          <span class="meridian-tag">手厥阴心包经</span>
+          <span class="meridian-tag">手少阳三焦经</span>
+          <span class="meridian-tag">足少阳胆经</span>
+          <span class="meridian-tag">足厥阴肝经</span>
+          <span class="meridian-tag">冲脉</span>
+          <span class="meridian-tag">带脉</span>
+        </div>
+
+        <div class="acupoint-section">
+          <h3 class="section-title">🐉 督脉</h3>
+          <div class="acupoint-grid">
+            <div class="acupoint-card">长强</div>
+            <div class="acupoint-card">腰俞</div>
+            <div class="acupoint-card">腰阳关</div>
+            <div class="acupoint-card">命门</div>
+            <div class="acupoint-card">悬枢</div>
+            <div class="acupoint-card">脊中</div>
+            <div class="acupoint-card">中枢</div>
+            <div class="acupoint-card">筋缩</div>
+            <div class="acupoint-card">至阳</div>
+            <div class="acupoint-card">灵台</div>
+            <div class="acupoint-card">神道</div>
+            <div class="acupoint-card">身柱</div>
+            <div class="acupoint-card">陶道</div>
+            <div class="acupoint-card">大椎</div>
+            <div class="acupoint-card">哑门</div>
+            <div class="acupoint-card">风府</div>
+            <div class="acupoint-card">脑户</div>
+            <div class="acupoint-card">强间</div>
+            <div class="acupoint-card">百会</div>
+            <div class="acupoint-card">前顶</div>
+            <div class="acupoint-card">囟会</div>
+            <div class="acupoint-card">上星</div>
+            <div class="acupoint-card">神庭</div>
+            <div class="acupoint-card">素髎</div>
+            <div class="acupoint-card">水沟</div>
+            <div class="acupoint-card">兑端</div>
+            <div class="acupoint-card">龈交</div>
+          </div>
+        </div>
+
+        <div class="acupoint-section">
+          <h3 class="section-title">🌊 任脉</h3>
+          <div class="acupoint-grid">
+            <div class="acupoint-card">会阴</div>
+            <div class="acupoint-card">曲骨</div>
+            <div class="acupoint-card">中极</div>
+            <div class="acupoint-card">关元</div>
+            <div class="acupoint-card">石门</div>
+            <div class="acupoint-card">气海</div>
+            <div class="acupoint-card">阴交</div>
+            <div class="acupoint-card">神阙</div>
+            <div class="acupoint-card">水分</div>
+            <div class="acupoint-card">下脘</div>
+            <div class="acupoint-card">建里</div>
+            <div class="acupoint-card">中脘</div>
+            <div class="acupoint-card">上脘</div>
+            <div class="acupoint-card">巨阙</div>
+            <div class="acupoint-card">鸠尾</div>
+            <div class="acupoint-card">膻中</div>
+            <div class="acupoint-card">玉堂</div>
+            <div class="acupoint-card">紫宫</div>
+            <div class="acupoint-card">华盖</div>
+            <div class="acupoint-card">璇玑</div>
+            <div class="acupoint-card">天突</div>
+            <div class="acupoint-card">廉泉</div>
+            <div class="acupoint-card">承浆</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Page: Symptoms -->
+      <section class="page" id="page-symptoms">
+        <h1 class="page-title">🤒 病症</h1>
+        <div class="symptom-grid">
+          <div class="symptom-card" onclick="showToast('外感感冒：风寒/风热辨证')">
+            <div class="symptom-icon">🤧</div>
+            <div class="symptom-name">外感·感冒</div>
+          </div>
+          <div class="symptom-card" onclick="showToast('发烧：阳明经证/腑证')">
+            <div class="symptom-icon">🌡️</div>
+            <div class="symptom-name">发烧</div>
+          </div>
+          <div class="symptom-card" onclick="showToast('失眠：心肾不交/肝郁化火')">
+            <div class="symptom-icon">😴</div>
+            <div class="symptom-name">失眠</div>
+          </div>
+          <div class="symptom-card" onclick="showToast('全身痛证：太阳经证/寒湿痹阻')">
+            <div class="symptom-icon">💢</div>
+            <div class="symptom-name">全身痛证</div>
+          </div>
+          <div class="symptom-card" onclick="showToast('食积：脾虚食滞/胃热食积')">
+            <div class="symptom-icon">🍽️</div>
+            <div class="symptom-name">食积</div>
+          </div>
+          <div class="symptom-card" onclick="showToast('胃酸过多：肝胃不和/脾胃虚寒')">
+            <div class="symptom-icon">🔥</div>
+            <div class="symptom-name">胃酸过多</div>
+          </div>
+          <div class="symptom-card" onclick="showToast('腹痛：寒凝/气滞/血瘀')">
+            <div class="symptom-icon">😣</div>
+            <div class="symptom-name">腹痛</div>
+          </div>
+          <div class="symptom-card" onclick="showToast('腹胀：脾虚气滞/肝郁脾虚')">
+            <div class="symptom-icon">🎈</div>
+            <div class="symptom-name">腹胀</div>
+          </div>
+          <div class="symptom-card" onclick="showToast('呕吐：胃气上逆/寒热错杂')">
+            <div class="symptom-icon">🤮</div>
+            <div class="symptom-name">呕吐</div>
+          </div>
+          <div class="symptom-card" onclick="showToast('下利腹泻水泻：寒湿/湿热/脾虚')">
+            <div class="symptom-icon">💩</div>
+            <div class="symptom-name">下利·腹泻·水泻</div>
+          </div>
+          <div class="symptom-card" onclick="showToast('便秘：热结/气滞/血虚')">
+            <div class="symptom-icon">🚽</div>
+            <div class="symptom-name">便秘</div>
+          </div>
+          <div class="symptom-card" onclick="showToast('头痛：风寒/风热/肝阳上亢')">
+            <div class="symptom-icon">🤕</div>
+            <div class="symptom-name">头痛</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

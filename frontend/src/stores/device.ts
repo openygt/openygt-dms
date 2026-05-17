@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export interface DeviceState {
+  id?: number
   deviceCode: string
   name: string
   deviceType?: number
@@ -25,8 +26,12 @@ export interface DeviceState {
   printCopies?: number
   printStatus?: string
   labelMode?: string
+  decoctMode?: number
+  pressureMode?: number
+  slowFireTime?: number
   groupId?: number
   groupName?: string
+  communicationId?: string
   _networkOffline?: boolean
 }
 
