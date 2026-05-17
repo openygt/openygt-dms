@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" v-loading="loading">
     <el-card v-for="d in devices" :key="d.id" class="device-card" :class="{ 'is-fault': d.status === 'FAULT' }">
       <template #header>
         <div class="device-header">
@@ -46,61 +46,80 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { computed, ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import request from '@/api/request'
+import { useDeviceStore, type DeviceState } from '@/stores/device'
 
-interface Device {
-  id: number; deviceCode: string; name: string; status: string
-  manufacturer?: string; modelNum?: string; currentTemp?: number
-  packageCapacity?: number; packageNum?: number
-}
+const deviceStore = useDeviceStore()
 
-const devices = ref<Device[]>([])
+const loading = ref(false)
 const packageCapacityInput = reactive<Record<string, number>>({})
 
+const devices = computed(() =>
+  deviceStore.deviceList.filter(d => d.deviceType === 2)
+)
+
 async function fetchDevices() {
+  loading.value = true
   try {
     const res: any = await request.get('/v1/eq/devices', { params: { deviceType: 2, size: 50 } })
-    devices.value = res.data?.records || []
-    devices.value.forEach(d => { if (!packageCapacityInput[d.deviceCode]) packageCapacityInput[d.deviceCode] = d.packageCapacity || 200 })
+    const records = res.data?.records || []
+    records.forEach((d: any) => {
+      deviceStore.updateDevice(d.deviceCode, {
+        deviceCode: d.deviceCode, name: d.name, status: d.status || 'IDLE',
+        detailStatus: d.detailStatus || d.status || 'IDLE', deviceType: 2,
+        currentTemp: d.currentTemp, manufacturer: d.manufacturer, modelNum: d.modelNum,
+        packageCapacity: d.packageCapacity, packageNum: d.packageNum,
+        lastHeartbeat: d.lastHeartbeat,
+      })
+      if (!packageCapacityInput[d.deviceCode]) packageCapacityInput[d.deviceCode] = d.packageCapacity || 200
+    })
   } catch (e) { ElMessage.error('获取设备列表失败') }
+  finally { loading.value = false }
 }
 
-async function powerOn(d: Device) {
+async function powerOn(d: DeviceState) {
   await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'IDLE' })
+  deviceStore.updateDevice(d.deviceCode, { status: 'IDLE', detailStatus: 'IDLE' })
   ElMessage.success(`${d.name} 已开机`)
   fetchDevices()
 }
-async function powerOff(d: Device) {
+async function powerOff(d: DeviceState) {
   await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'OFFLINE' })
+  deviceStore.updateDevice(d.deviceCode, { status: 'OFFLINE', detailStatus: 'OFFLINE' })
   ElMessage.success(`${d.name} 已关机`)
   fetchDevices()
 }
-async function startPack(d: Device) {
+async function startPack(d: DeviceState) {
   await request.post('/v1/eq/commands', { deviceCode: d.deviceCode, commandType: 'START_PACKAGING' })
   await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'BUSY' })
+  deviceStore.updateDevice(d.deviceCode, { status: 'BUSY', detailStatus: 'BUSY' })
   ElMessage.success(`${d.name} 开始包装`)
   fetchDevices()
 }
-async function stopPack(d: Device) {
+async function stopPack(d: DeviceState) {
   await request.post('/v1/eq/commands', { deviceCode: d.deviceCode, commandType: 'STOP_PACKAGING' })
   await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'IDLE' })
+  deviceStore.updateDevice(d.deviceCode, { status: 'IDLE', detailStatus: 'IDLE' })
   ElMessage.success(`${d.name} 停止包装`)
   fetchDevices()
 }
-async function setCapacity(d: Device) {
+async function setCapacity(d: DeviceState) {
   const val = packageCapacityInput[d.deviceCode]
   await request.put(`/v1/eq/devices/${d.id}`, { ...d, packageCapacity: val })
+  deviceStore.updateDevice(d.deviceCode, { packageCapacity: val })
   ElMessage.success(`${d.name} 包装容量已设为 ${val} ml/袋`)
   fetchDevices()
 }
-async function injectFault(d: Device, code: string) {
+async function injectFault(d: DeviceState, code: string) {
   if (code === 'CLEAR') {
     await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'IDLE', detailStatus: 'IDLE', faultCode: null })
+    deviceStore.updateDevice(d.deviceCode, { status: 'IDLE', detailStatus: 'IDLE', faultCode: undefined })
     ElMessage.success(`${d.name} 故障已清除`)
   } else {
     await request.put(`/v1/eq/devices/${d.id}`, { ...d, status: 'FAULT', detailStatus: 'FAULT', faultCode: code })
+    deviceStore.updateDevice(d.deviceCode, { status: 'FAULT', detailStatus: 'FAULT', faultCode: code })
     ElMessage.error(`${d.name} 故障注入：${code}`)
   }
   fetchDevices()

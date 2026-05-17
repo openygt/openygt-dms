@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" v-loading="loading">
     <div class="hub-grid">
       <el-card v-for="item in items" :key="item.type" class="hub-card" shadow="hover">
         <div class="hub-card-inner">
@@ -39,8 +39,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, onMounted, reactive, computed } from 'vue'
 import request from '@/api/request'
+import { useDeviceStore } from '@/stores/device'
 
 interface HubItem {
   type: number
@@ -54,6 +55,9 @@ interface HubItem {
   fault: number
 }
 
+const deviceStore = useDeviceStore()
+
+const loading = ref(false)
 const items = reactive<HubItem[]>([
   { type: 1, label: '煎药机', icon: 'Monitor', color: 'var(--el-color-primary)', path: '/simulator/decoction', online: 0, total: 0, busy: 0, fault: 0 },
   { type: 2, label: '包装机', icon: 'Box', color: 'var(--el-color-success)', path: '/simulator/packaging', online: 0, total: 0, busy: 0, fault: 0 },
@@ -62,16 +66,48 @@ const items = reactive<HubItem[]>([
   { type: 4, label: 'PDA', icon: 'Iphone', color: 'var(--el-color-info)', path: '/simulator/pda', online: 0, total: 0, busy: 0, fault: 0 },
 ])
 
-async function loadStats() {
+function updateFromStore() {
   for (const item of items) {
-    try {
-      const res: any = await request.get('/v1/eq/devices', { params: { deviceType: item.type, size: 200 } })
-      const list = res.data?.records || []
-      item.total = list.length
-      item.online = list.filter((d: any) => d.status === 'IDLE' || d.status === 'ONLINE').length
-      item.busy = list.filter((d: any) => d.status === 'BUSY' || d.status === 'RUNNING' || d.status === 'WORKING').length
-      item.fault = list.filter((d: any) => d.status === 'FAULT' || d.status === 'ERROR').length
-    } catch (e) { /* ignore */ }
+    const list = deviceStore.deviceList.filter(d => d.deviceType === item.type)
+    item.total = list.length
+    item.online = list.filter(d => d.status === 'IDLE' || d.status === 'ONLINE').length
+    item.busy = list.filter(d => d.status === 'BUSY' || d.status === 'RUNNING' || d.status === 'WORKING').length
+    item.fault = list.filter(d => d.status === 'FAULT' || d.status === 'ERROR').length
+  }
+}
+
+// Watch store changes reactively
+const storeWatcher = computed(() => deviceStore.deviceList.length)
+computed(() => { storeWatcher.value; updateFromStore(); return null })
+
+async function loadStats() {
+  loading.value = true
+  // Fetch all device types to populate store
+  try {
+    const results = await Promise.allSettled(
+      items.map(item =>
+        request.get('/v1/eq/devices', { params: { deviceType: item.type, size: 200 } })
+      )
+    )
+    results.forEach((r, i) => {
+      if (r.status === 'fulfilled') {
+        const records = (r.value as any).data?.records || []
+        records.forEach((d: any) => {
+          deviceStore.updateDevice(d.deviceCode, {
+            deviceCode: d.deviceCode, name: d.name, status: d.status || 'IDLE',
+            detailStatus: d.detailStatus || d.status || 'IDLE', deviceType: items[i].type,
+            manufacturer: d.manufacturer, modelNum: d.modelNum,
+            currentTemp: d.currentTemp, targetTemp: d.targetTemp,
+            packageCapacity: d.packageCapacity, packageNum: d.packageNum,
+            labelMode: d.labelMode, communicationId: d.communicationId,
+            lastHeartbeat: d.lastHeartbeat,
+          })
+        })
+      }
+    })
+  } finally {
+    updateFromStore()
+    loading.value = false
   }
 }
 
