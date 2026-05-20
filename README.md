@@ -223,9 +223,26 @@ openygt-dms/
 - **用户手册 & 部署指南** → [openygt-docs](https://gitee.com/openygt/openygt-docs)
 - **在线阅读** → https://openygt.org.cn/docs
 - **架构设计** → [ARCHITECTURE.md](./ARCHITECTURE.md)
+---
+## 📋 方案适配
+
+本系统已应用于以下政策场景：
+
+| 政策场景 | 说明 | 文档 |
+|:---|:---|:---|
+| 智慧中医医院-智慧中药房型 | 院内煎药中心管理 | [功能清单](https://gitee.com/openygt/openygt-tcm-solution/blob/master/01-智慧中医医院/02-智慧中药房型/功能清单.md) |
+| 紧密型县域医共体-共享中药房 | 区域集中煎药、配送到基层 | [功能清单](https://gitee.com/openygt/openygt-tcm-solution/blob/master/03-紧密型县域医共体/共享中药房/功能清单.md) |
+| 基层中医药能力提升-中医馆 | 乡镇卫生院小型煎药室 | [功能清单](https://gitee.com/openygt/openygt-tcm-solution/blob/master/04-基层中医药能力提升/中医馆/功能清单.md) |
 
 ---
+## 解决方案
 
+| 方案 | 仓库 | 说明 |
+|:---|:---|:---|
+| 技术方案库 | [openygt-tcm-solution](https://gitee.com/openygt/openygt-tcm-solution) | 智慧中医医院、医共体、基层能力提升政策适配 |
+| 实施与验收 | [openygt-tcm-delivery](https://gitee.com/openygt/openygt-tcm-delivery) | 项目实施方法论、验收应答模板、踩坑记录 |
+
+---
 ## 🤝 贡献指南
 
 欢迎提交 Issue 和 Pull Request！
@@ -255,7 +272,7 @@ OpenYGT-DMS 采用 **双协议模式**：
 |------|----------|
 | 🐛 [Gitee Issues](https://gitee.com/openygt/openygt-dms/issues) | Bug 报告、功能建议 |
 | 📧 luobin@openygt.org.cn | 商务合作、设备对接 |
-| 💬 社区微信 openygt | 日常交流、提问 |
+| 💬 社区微信 openygt | 方案，实施日常交流、提问 |
 
 ---
 
