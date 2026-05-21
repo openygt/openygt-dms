@@ -264,6 +264,16 @@ OpenYGT-DMS 采用 **双协议模式**：
 | 开源版 | [AGPL-3.0](LICENSE) | 免费用，SaaS/云端部署需开源修改代码 |
 | 商业版 | [商业授权协议](LICENSE.commercial.md) | 医院闭源部署、豁免开源义务 |
 
+### 如何选择协议？
+
+| 你的场景 | 适用协议 | 费用 |
+|:---|:---|:---|
+| 学习/研究/测试 | AGPL-3.0（开源版） | 免费 |
+| 自用部署且修改代码愿意开源 | AGPL-3.0（开源版） | 免费 |
+| SaaS服务且愿意开源修改部分 | AGPL-3.0（开源版） | 免费 |
+| 医院闭源部署、不公开修改代码 | 商业授权 | 联系 luobin@openygt.org.cn |
+| 不确定 | 联系我们 | — |
+
 > 如需商业授权，请联系：luobin@openygt.org.cn
 
 ---
@@ -273,8 +283,20 @@ OpenYGT-DMS 采用 **双协议模式**：
 | 渠道 | 适用场景 |
 |------|----------|
 | 🐛 [Gitee Issues](https://gitee.com/openygt/openygt-dms/issues) | Bug 报告、功能建议 |
-| 📧 luobin@openygt.org.cn | 商务合作、设备对接 |
-| 💬 社区微信 openygt | 方案，实施日常交流、提问 |
+| 💬 社区微信 `openygt` | 日常交流、提问 |
+
+---
+
+## 🗺️ 文档导航
+
+| 文档 | 仓库 | 说明 |
+|:---|:---|:---|
+| [用户手册](https://openygt.org.cn/docs) | [openygt-docs](https://gitee.com/openygt/openygt-docs) | 安装部署、功能操作说明 |
+| [架构设计](./ARCHITECTURE.md) | 本仓库 | 系统架构、模块说明、技术选型 |
+| [技术方案库](https://gitee.com/openygt/openygt-tcm-solution) | openygt-tcm-solution | 智慧中医医院、医共体、基层政策适配 |
+| [实施与验收](https://gitee.com/openygt/openygt-tcm-delivery) | openygt-tcm-delivery | 实施方法论、验收模板、踩坑记录 |
+| [更新日志](./CHANGELOG.md) | 本仓库 | 版本变更记录 |
+| [贡献指南](./CONTRIBUTING.md) | 本仓库 | 如何参与开发 |
 
 ---
 
