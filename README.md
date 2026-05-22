@@ -18,6 +18,7 @@
 
 | 项目 | 地址 |
 |------|------|
+| 🏠 官方网站 | https://dms.openygt.org.cn |
 | 🌐 演示站点 | https://demo.dms.openygt.org.cn |
 | 💬 体验账号 | 请微信联系 `openygt-wx` 获取账号与密码 |
 
@@ -417,6 +418,7 @@ OpenYGT-DMS 采用 **双协议模式**：
 
 | 文档 | 仓库 | 说明 |
 |:---|:---|:---|
+| [官方网站](https://dms.openygt.org.cn) | — | 产品介绍、功能预览、合作咨询 |
 | [用户手册](https://openygt.org.cn/docs) | [openygt-docs](https://gitee.com/openygt/openygt-docs) | 安装部署、功能操作说明 |
 | [架构设计](./ARCHITECTURE.md) | 本仓库 | 系统架构、模块说明、技术选型 |
 | [技术方案库](https://gitee.com/openygt/openygt-tcm-solution) | openygt-tcm-solution | 智慧中医医院、医共体、基层政策适配 |

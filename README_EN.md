@@ -18,6 +18,7 @@ A full-process intelligent management system for traditional Chinese medicine (T
 
 | Item | Address |
 |------|---------|
+| 🏠 Official Website | https://dms.openygt.org.cn |
 | 🌐 Demo Site | https://demo.dms.openygt.org.cn |
 | 💬 Demo Account | Contact `openygt-wx` on WeChat for credentials |
 
@@ -417,6 +418,7 @@ OpenYGT-DMS adopts a **dual-license model**:
 
 | Document | Repository | Description |
 |:---|:---|:---|
+| [Official Website](https://dms.openygt.org.cn) | — | Product introduction, feature preview, cooperation inquiry |
 | [User Manual](https://openygt.org.cn/docs) | [openygt-docs](https://gitee.com/openygt/openygt-docs) | Installation, deployment, feature operation guide |
 | [Architecture Design](./ARCHITECTURE.md) | This repo | System architecture, module description, technology selection |
 | [Technical Solutions](https://gitee.com/openygt/openygt-tcm-solution) | openygt-tcm-solution | Smart TCM hospital, medical community, grassroots policy adaptation |
