@@ -430,7 +430,7 @@ OpenYGT-DMS adopts a **dual-license model**:
 
 We are committed to partnering with TCM slice enterprises and TCM informatization enterprises to build an open and mutually beneficial industrial ecosystem. We sincerely invite partners from all sectors to join hands and explore the path of TCM digital transformation.
 
-**Business Cooperation**: luobin@openygt.org.cn
+**Business Cooperation**: luobin@openygt.org.cn ｜ WeChat **openygt-wx** ｜ Phone **+86 18610976706**
 
 ---
 
