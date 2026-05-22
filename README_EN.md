@@ -363,14 +363,6 @@ openygt-dms/
 | **Staffing** | Licensed pharmacist + review pharmacist + dispenser + decoctionist + QC | Pharmacy director + review pharmacist + dispenser + decoctionist + QC (most complete) | Review pharmacist + dispenser + decoctionist + QC + customer service | Licensed pharmacist + dispenser + decoctionist (more concentrated under HQ-managed mode) | Licensed pharmacist + dispenser兼任decoctionist (1-2 people multitasking) |
 | **Scale** | Large/Medium | Medium | Large/Medium | Small/Medium (store-managed) or Large/Medium (HQ-managed) | Micro |
 
----
-
-## 🤝 Welcome to Cooperate
-
-We are committed to partnering with TCM slice enterprises and TCM informatization enterprises to build an open and mutually beneficial industrial ecosystem. We sincerely invite partners from all sectors to join hands and explore the path of TCM digital transformation.
-
-**Business Cooperation**: luobin@openygt.org.cn
-
 ## Solutions
 
 | Solution | Repository | Description |
@@ -431,6 +423,14 @@ OpenYGT-DMS adopts a **dual-license model**:
 | [Implementation & Acceptance](https://gitee.com/openygt/openygt-tcm-delivery) | openygt-tcm-delivery | Implementation methodology, acceptance templates, lessons learned |
 | [Changelog](./CHANGELOG.md) | This repo | Version change records |
 | [Contributing Guide](./CONTRIBUTING.md) | This repo | How to participate in development |
+
+---
+
+## 🤝 Welcome to Cooperate
+
+We are committed to partnering with TCM slice enterprises and TCM informatization enterprises to build an open and mutually beneficial industrial ecosystem. We sincerely invite partners from all sectors to join hands and explore the path of TCM digital transformation.
+
+**Business Cooperation**: luobin@openygt.org.cn
 
 ---
 
