@@ -10,7 +10,7 @@
 
 面向中药房汤剂煎煮场景的全流程智能管理系统，覆盖从处方接收到患者取药的完整链路。
 
-> 系统内置设备物联网对接能力，支持煎药机、包装机、标签打印机等设备的实时监控与智能调度。
+> 内置 IoT 网关，支持通过 MQTT 协议对接主流煎药机、包装机、标签打印机，实现设备状态实时监控、故障告警、产量统计。
 
 ---
 
@@ -48,7 +48,7 @@
 > 支持：Windows、macOS、Linux
 
 **前置要求**
-- [Docker](https://www.docker.com/products/docker-desktop) 20.10+
+- [Docker](https://www.docker.com/products/docker-desktop) 24.0+ 或兼容版本
 - [Docker Compose](https://docs.docker.com/compose/install/) 2.0+
 
 **安装步骤**
@@ -216,7 +216,7 @@ openygt-dms/
 | 缓存 | Redis | 7+ |
 | 消息 | MQTT | — |
 | 构建 | Maven | 3.8+ |
-| 部署 | Docker + Docker Compose | 20.10+ |
+| 部署 | Docker + Docker Compose | 24.0+ 或兼容版本 |
 
 ---
 
