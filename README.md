@@ -210,11 +210,11 @@ openygt-dms/
 | 层级 | 技术选型 | 版本 |
 |------|----------|------|
 | 前端（Web） | Vue 3 + TypeScript + Element Plus | Vue 3.4 |
-| 前端（PDA） | uni-app（Vue 3） | — |
+| 前端（PDA） | uni-app（Vue 3） | uni-app 3.x / Vue 3.3+ |
 | 后端 | Spring Boot + MyBatis-Plus | Spring Boot 2.7.18 |
 | 数据库 | MySQL | 8.0+ |
 | 缓存 | Redis | 7+ |
-| 消息 | MQTT | — |
+| 消息 | MQTT | MQTT 3.1/3.1.1 |
 | 构建 | Maven | 3.8+ |
 | 部署 | Docker + Docker Compose | 24.0+ 或兼容版本 |
 
