@@ -348,17 +348,6 @@ openygt-dms/
 
 **商务合作**：luobin@openygt.org.cn
 
-## 📋 方案适配
-
-本系统已应用于以下政策场景：
-
-| 政策场景 | 说明 | 文档 |
-|:---|:---|:---|
-| 智慧中医医院-智慧中药房型 | 院内煎药中心管理 | [功能清单](https://gitee.com/openygt/openygt-tcm-solution/blob/master/01-智慧中医医院/02-智慧中药房型/功能清单.md) |
-| 紧密型县域医共体-共享中药房 | 区域集中煎药、配送到基层 | [功能清单](https://gitee.com/openygt/openygt-tcm-solution/blob/master/03-紧密型县域医共体/共享中药房/功能清单.md) |
-| 基层中医药能力提升-中医馆 | 乡镇卫生院小型煎药室 | [功能清单](https://gitee.com/openygt/openygt-tcm-solution/blob/master/04-基层中医药能力提升/中医馆/功能清单.md) |
-
----
 ## 解决方案
 
 | 方案 | 仓库 | 说明 |
