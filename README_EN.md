@@ -8,7 +8,7 @@
 [![Vue](https://img.shields.io/badge/Vue-3-4FC08D.svg)]()
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7-6DB33F.svg)]()
 
-A full-process intelligent management system for traditional Chinese medicine (TCM) decoction scenarios, covering the complete chain from prescription receipt to patient medication pickup. This system can be used for bidding on outsourced decoction service contracts by TCM decoction enterprises. For proposal support, please contact us on WeChat: openygt-wx.
+A full-process intelligent management system for traditional Chinese medicine (TCM) decoction scenarios, covering the complete chain from prescription receipt to patient medication pickup. This system can be used for bidding on outsourced decoction service contracts by TCM decoction enterprises. For proposal support, please contact us on WeChat: openygt-wx or call +86 18610976706.
 
 > Built-in IoT gateway, supporting mainstream decoction machines (requires device support for MQTT 3.1/3.1.1 protocol), packaging machines, and label printers via MQTT protocol, enabling real-time equipment status monitoring, fault alarms, and production statistics.
 
