@@ -19,9 +19,9 @@ A full-process intelligent management system for traditional Chinese medicine (T
 | Item | Address |
 |------|---------|
 | 🌐 Demo Site | https://demo.dms.openygt.org.cn |
-| 💬 Demo Account | Contact `openygt` on WeChat for credentials |
+| 💬 Demo Account | Contact `openygt-wx` on WeChat for credentials |
 
-> Demo data resets automatically at midnight. Contact `openygt` on WeChat to request a trial account.
+> Demo data resets automatically at midnight. Contact `openygt-wx` on WeChat to request a trial account.
 
 ### Feature Overview
 
@@ -417,7 +417,7 @@ OpenYGT-DMS adopts a **dual-license model**:
 | Channel | Scenario |
 |---------|----------|
 | 🐛 [Gitee Issues](https://gitee.com/openygt/openygt-dms/issues) | Bug reports, feature suggestions |
-| 💬 WeChat `openygt` | Daily communication, questions |
+| 💬 WeChat `openygt-wx` | Daily communication, questions |
 
 ---
 

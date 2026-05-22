@@ -19,9 +19,9 @@
 | 项目 | 地址 |
 |------|------|
 | 🌐 演示站点 | https://demo.dms.openygt.org.cn |
-| 💬 体验账号 | 请微信联系 `openygt` 获取账号与密码 |
+| 💬 体验账号 | 请微信联系 `openygt-wx` 获取账号与密码 |
 
-> 演示数据每日凌晨自动重置，如需体验请添加微信 `openygt` 申请试用账号。
+> 演示数据每日凌晨自动重置，如需体验请添加微信 `openygt-wx` 申请试用账号。
 
 ### 主要功能预览
 
@@ -417,7 +417,7 @@ OpenYGT-DMS 采用 **双协议模式**：
 | 渠道 | 适用场景 |
 |------|----------|
 | 🐛 [Gitee Issues](https://gitee.com/openygt/openygt-dms/issues) | Bug 报告、功能建议 |
-| 💬 社区微信 `openygt` | 日常交流、提问 |
+| 💬 社区微信 `openygt-wx` | 日常交流、提问 |
 
 ---
 
