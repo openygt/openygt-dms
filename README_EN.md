@@ -8,7 +8,7 @@
 [![Vue](https://img.shields.io/badge/Vue-3-4FC08D.svg)]()
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-2.7-6DB33F.svg)]()
 
-A full-process intelligent management system for traditional Chinese medicine (TCM) decoction scenarios, covering the complete chain from prescription receipt to patient medication pickup. This system can be used for bidding on outsourced decoction service contracts by TCM decoction enterprises. For proposal support, please contact us on WeChat: openygt-wx or call +86 18610976706.
+A full-process intelligent management system for traditional Chinese medicine (TCM) decoction scenarios, covering the complete chain from prescription receipt to patient medication pickup. This system can be used for bidding on outsourced decoction service contracts by TCM decoction enterprises. For proposal support, please visit the [County TCM Decoction & Distribution Empowerment Platform](https://dj.openygt.org.cn).
 
 > Built-in IoT gateway, supporting mainstream decoction machines (requires device support for MQTT 3.1/3.1.1 protocol), packaging machines, and label printers via MQTT protocol, enabling real-time equipment status monitoring, fault alarms, and production statistics.
 
@@ -432,7 +432,7 @@ OpenYGT-DMS adopts a **dual-license model**:
 
 We are committed to partnering with TCM slice enterprises and TCM informatization enterprises to build an open and mutually beneficial industrial ecosystem. We sincerely invite partners from all sectors to join hands and explore the path of TCM digital transformation.
 
-**Business Cooperation**: luobin@openygt.org.cn ｜ WeChat **openygt-wx** ｜ Phone **+86 18610976706**
+**Business Cooperation**: luobin@openygt.org.cn ｜ WeChat **openygt-wx** ｜ Scan QR code to add WeChat
 
 ---
 
