@@ -21,7 +21,7 @@
     <properties>
         <java.version>1.8</java.version>
         <mybatis.plus.version>3.5.7</mybatis.plus.version>
-        <sqlite.version>3.45.3.0</sqlite.version>
+        <sqlite.version>3.53.1.0</sqlite.version>
         <paho.version>1.2.5</paho.version>
         <jjwt.version>0.9.1</jjwt.version>
         <shedlock.version>4.47.0</shedlock.version>
