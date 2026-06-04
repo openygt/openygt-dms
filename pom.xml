@@ -124,7 +124,7 @@
             <dependency>
                 <groupId>org.springframework.security</groupId>
                 <artifactId>spring-security-crypto</artifactId>
-                <version>5.7.11</version>
+                <version>7.0.5</version>
             </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
