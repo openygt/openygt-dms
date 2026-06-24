@@ -20,7 +20,7 @@
     "pinia": "^2.1.7",
     "sockjs-client": "^1.6.1",
     "vue": "^3.4.21",
-    "vue-router": "^4.3.0"
+    "vue-router": "^5.0.7"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
